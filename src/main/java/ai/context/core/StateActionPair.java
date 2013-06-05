@@ -1,0 +1,127 @@
+package ai.context.core;
+
+import ai.context.util.learning.AmalgamateUtils;
+
+import java.util.Map;
+import java.util.TreeMap;
+
+public class StateActionPair {
+
+    private final String id;
+    private final int[] amalgamate;
+    private double actionResolution;
+    private TreeMap<Integer, Double> actionDistribution = new TreeMap<Integer, Double>();
+
+    private double totalWeight = 0.0;
+
+    public StateActionPair(String id, int[] amalgamate, double actionResolution)
+    {
+        this.id = id;
+        this.amalgamate = amalgamate;
+        this.actionResolution = actionResolution;
+    }
+
+    public void newMovement(double movement, double weight)
+    {
+        int actionClass = (int) (movement/actionResolution);
+        double currentWeight = 0;
+
+        if(!actionDistribution.containsKey(actionClass))
+        {
+            actionDistribution.put(actionClass, 0.0);
+        }
+        currentWeight = actionDistribution.get(actionClass);
+        actionDistribution.put(actionClass, weight + currentWeight);
+        totalWeight += weight;
+    }
+
+    public void populate(int actionClass, double weight)
+    {
+        if(!actionDistribution.containsKey(actionClass))
+        {
+            actionDistribution.put(actionClass, 0.0);
+        }
+        double currentWeight = actionDistribution.get(actionClass);
+        actionDistribution.put(actionClass, weight + currentWeight);
+        totalWeight += weight;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public int[] getAmalgamate() {
+        return amalgamate;
+    }
+
+    public double getActionResolution() {
+        return actionResolution;
+    }
+
+    public TreeMap<Integer, Double> getRawActionDistribution() {
+
+        return actionDistribution;
+    }
+
+    public TreeMap<Integer, Double> getActionDistribution() {
+
+        TreeMap<Integer, Double> distribution = new TreeMap<Integer, Double>();
+        for(Map.Entry<Integer, Double> entry : actionDistribution.entrySet())
+        {
+            distribution.put(entry.getKey(), entry.getValue()/totalWeight);
+        }
+
+        return distribution;
+    }
+
+    public double getTotalWeight() {
+        return totalWeight;
+    }
+
+    public StateActionPair merge(StateActionPair counterpart)
+    {
+        int[] mergedAmalgamate = new int[amalgamate.length];
+        StateActionPair merged = null;
+        double counterpartWeight = counterpart.getTotalWeight();
+        double netWeight = totalWeight + counterpartWeight;
+
+        for(int i = 0; i < amalgamate.length; i++)
+        {
+            mergedAmalgamate[i] = (int) (((amalgamate[i] * totalWeight) + (counterpart.getAmalgamate()[i] * counterpartWeight))/netWeight);
+        }
+
+        merged = new StateActionPair(AmalgamateUtils.getAmalgamateString(mergedAmalgamate), mergedAmalgamate, actionResolution);
+
+        for(Map.Entry<Integer, Double> entry : actionDistribution.entrySet())
+        {
+            merged.populate(entry.getKey(), entry.getValue());
+        }
+
+        for(Map.Entry<Integer, Double> entry : counterpart.getRawActionDistribution().entrySet())
+        {
+            merged.populate(entry.getKey(), entry.getValue());
+        }
+
+        return merged;
+    }
+
+    public double getDeviation(int[] counterpart, double[] correlationWeights)
+    {
+        double deviation = 0;
+
+        for(int i = 0; i < amalgamate.length || i < counterpart.length; i++)
+        {
+            if(correlationWeights[i] >= 0)
+            {
+                deviation += (Math.abs(amalgamate[i] - counterpart[i]) * correlationWeights[i]);
+            }
+        }
+
+        if(deviation == Double.NaN)
+        {
+            deviation = 0;
+        }
+        return deviation;
+    }
+
+}
