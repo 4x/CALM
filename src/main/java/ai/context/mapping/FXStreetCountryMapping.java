@@ -7,10 +7,10 @@ public class FXStreetCountryMapping {
     private static HashMap<String, String> map = new HashMap<String, String>();
 
     static {
-        map.put("United Kingdom", "UK");
-        map.put("United States", "US");
-        map.put("France", "FR");
-        map.put("Germany", "DE");
+        map.put("UK","United Kingdom");
+        map.put("US", "United States");
+        map.put("FR", "France");
+        map.put("DE", "Germany");
     }
 
     public static String getMapping(String country)

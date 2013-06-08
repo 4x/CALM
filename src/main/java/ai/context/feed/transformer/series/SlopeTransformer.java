@@ -18,7 +18,7 @@ public class SlopeTransformer extends BufferedTransformer{
         this.span = span;
         this.feed = feed;
 
-        pushBackOutput(span - 1);
+        pushBackOutput(span);
     }
 
     @Override

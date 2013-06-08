@@ -4,6 +4,8 @@ import java.util.Date;
 
 public class OpenPosition {
 
+    private double amount = 1.0;
+    private double cost = 0.0;
     private long timeOpen;
     private double target;
     private double start;
@@ -29,13 +31,6 @@ public class OpenPosition {
         if(!isLong)
         {
             multiplier = -1;
-        }
-
-        if(isLong){
-            System.out.println(new Date(timeOpen) + ": Opening LONG position open at " + start + " TP: " + takeProfit + ", SL: " + stopLoss);
-        }
-        else{
-            System.out.println(new Date(timeOpen) + ": Opening SHORT position open at " + start + " TP: " + takeProfit + ", SL: " + stopLoss);
         }
     }
 
@@ -88,13 +83,25 @@ public class OpenPosition {
         return false;
     }
 
+    public void setAmount(double amount) {
+        this.amount = amount;
+    }
+
+    public void setCost(double cost) {
+        this.cost = cost;
+    }
+
     public String getClosingMessage() {
         return closingMessage;
     }
 
     public double getPnL()
     {
-        return multiplier * (price - start);
+        return amount * ((multiplier * (price - start)) - cost);
+    }
+
+    public double getClosingAmount(){
+        return amount + getPnL();
     }
 
     public double getTarget()
@@ -104,5 +111,25 @@ public class OpenPosition {
 
     public long getTimeOpen() {
         return timeOpen;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public boolean isLong() {
+        return isLong;
+    }
+
+    public double getStart() {
+        return start;
+    }
+
+    public double getTakeProfit() {
+        return takeProfit;
+    }
+
+    public double getStopLoss() {
+        return stopLoss;
     }
 }

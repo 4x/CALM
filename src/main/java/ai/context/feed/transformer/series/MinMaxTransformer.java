@@ -15,7 +15,7 @@ public class MinMaxTransformer extends BufferedTransformer{
         super(span*10, new Feed[]{feed});
         this.feed = feed;
         this.span = span;
-        pushBackOutput(span - 1);
+        pushBackOutput(span);
     }
 
     @Override

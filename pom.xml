@@ -47,7 +47,43 @@
         </pluginManagement>
     </build>
 
-	<dependencies>
+    <repositories>
+        <repository>
+            <id>dc_public</id>
+            <name>Dukascopy public repository</name>
+            <url>http://www.dukascopy.com/client/jforexlib/publicrepo/</url>
+        </repository>
+    </repositories>
+    <dependencies>
+        <dependency>
+            <groupId>com.dukascopy.dds2</groupId>
+            <artifactId>DDS2-jClient-JForex</artifactId>
+            <!-- find the latest available version here:
+                   http://publicrepo.site.dukascopy.com/jforexlib/publicrepo/com/dukascopy/dds2/DDS2-jClient-JForex/
+               -->
+            <version>2.23</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-jdk14</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- find the latest available version here:
+              http://publicrepo.site.dukascopy.com/jforexlib/publicrepo/com/dukascopy/api/JForex-API/
+          -->
+        <dependency>
+            <groupId>com.dukascopy.api</groupId>
+            <artifactId>JForex-API</artifactId>
+            <version>2.7.8</version>
+            <classifier>sources</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.6.4</version>
+            <optional>true</optional>
+        </dependency>
 		<dependency>
 			<groupId>commons-logging</groupId>
 			<artifactId>commons-logging</artifactId>

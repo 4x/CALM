@@ -22,7 +22,7 @@ public class MATransformer extends BufferedTransformer{
         this.type = type;
         this.feed = feed;
 
-        pushBackOutput(span - 1);
+        pushBackOutput(span);
     }
 
     @Override

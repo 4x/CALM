@@ -3,7 +3,12 @@ package ai.context.runner;
 import ai.context.feed.DataType;
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
+import ai.context.feed.fx.DukascopyFeed;
 import ai.context.feed.row.CSVFeed;
+import ai.context.feed.row.FXStreetCalendarRSSFeed;
+import ai.context.feed.stitchable.StitchableFXRate;
+import ai.context.feed.stitchable.StitchableFXStreetCalendarRSS;
+import ai.context.feed.stitchable.StitchableFeed;
 import ai.context.feed.surgical.AbstractSurgicalFeed;
 import ai.context.feed.surgical.ExtractOneFromListFeed;
 import ai.context.feed.synchronised.SmartDiscretiserOnSynchronisedFeed;
@@ -12,6 +17,7 @@ import ai.context.feed.transformer.compound.AmplitudeWavelengthTransformer;
 import ai.context.feed.transformer.compound.SubtractTransformer;
 import ai.context.feed.transformer.filtered.RowBasedTransformer;
 import ai.context.feed.transformer.series.RSITransformer;
+import ai.context.feed.transformer.series.SlopeTransformer;
 import ai.context.feed.transformer.series.StandardDeviationTransformer;
 import ai.context.feed.transformer.single.TimeVariablesAppenderFeed;
 import ai.context.feed.transformer.single.unpadded.LinearDiscretiser;
@@ -19,33 +25,113 @@ import ai.context.learning.DataObject;
 import ai.context.learning.Learner;
 import ai.context.learning.LearnerFeed;
 import ai.context.learning.LearnerFeedFromSynchronisedFeed;
+import ai.context.trading.DukascopyConnection;
+import ai.context.util.communication.Notifiable;
+import ai.context.util.io.GetFirstLine;
 import ai.context.util.measurement.LoggerTimer;
+import ai.context.util.trading.BlackBox;
 import ai.context.util.trading.PositionFactory;
+import com.dukascopy.api.Period;
+import com.dukascopy.api.system.IClient;
 import com.tictactec.ta.lib.MAType;
 
 import java.util.List;
 
-public class LearnHistorical {
+public class LearnHistorical implements Notifiable{
 
     private Learner trader;
     private LearnerFeed learnerFeed;
 
+    private StitchableFeed liveFXCalendar;
+    private StitchableFeed liveFXRate;
+    private BlackBox blackBox;
+    private IClient client;
 
     public static void main(String[] args)
     {
         LearnHistorical test = new LearnHistorical();
-        String path = "C:\\Users\\Oblene\\Desktop\\Sandbox\\Data\\";
+        String path = "C:/Users/Oblene/Desktop/Sandbox/Data/";
         if(!(args == null || args.length == 0))
         {
             path = args[0];
         }
+        test.initFXAPI();
+
+        test.setLiveFXCalendar(new StitchableFXStreetCalendarRSS(path + "tmp/FXCalendar.csv", new FXStreetCalendarRSSFeed()));
+        test.setLiveFXRate(new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(test.getClient(), Period.FIVE_MINS)));
+
+        System.out.println("Please wait while live feeds are initialised");
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        /*try {
+            System.out.println("Live feeds are up and running, press enter to see the starts of the live feeds");
+            System.in.read();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }*/
+
+        System.out.println("From FXCalendar:\n" + GetFirstLine.fromFile(test.getLiveFXCalendar().getLiveFileName()));
+        System.out.println("From FXRate:\n" + GetFirstLine.fromFile(test.getLiveFXRate().getLiveFileName()));
+
+        /*System.out.println("\nPlease patch the relevant historical files and press enter to start");
+        try {
+            System.in.read();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }*/
+
         test.setTraderOutput(path);
         test.setup(path);
         test.trade();
     }
 
+    public void initFXAPI(){
+        try {
+            client = new DukascopyConnection("DEMO2XTAcY", "XTAcY").getClient();
+            blackBox = new BlackBox(client);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public void setTraderOutput(String output){
         trader = new Learner(output);
+        trader.setBlackBox(blackBox);
+    }
+
+    public void setLiveFXCalendar(final StitchableFeed liveFXCalendar) {
+        this.liveFXCalendar = liveFXCalendar;
+        liveFXCalendar.setNotifiable(this);
+        Runnable liveFeed = new Runnable() {
+            @Override
+            public void run() {
+                liveFXCalendar.startPadding();
+            }
+        };
+        new Thread(liveFeed).start();
+    }
+
+    public void setLiveFXRate(final StitchableFeed liveFXRate) {
+        this.liveFXRate = liveFXRate;
+        liveFXRate.setNotifiable(this);
+        Runnable liveFeed = new Runnable() {
+            @Override
+            public void run() {
+                liveFXRate.startPadding();
+            }
+        };
+        new Thread(liveFeed).start();
+    }
+
+    public StitchableFeed getLiveFXCalendar() {
+        return liveFXCalendar;
+    }
+
+    public StitchableFeed getLiveFXRate() {
+        return liveFXRate;
     }
 
     public void setup(String path)
@@ -59,6 +145,7 @@ public class LearnHistorical {
                 DataType.EXTRACTABLE_DOUBLE};
 
         CSVFeed feedCalendar = new CSVFeed(path + "feeds/Calendar_2008.csv", "yyyyMMdd HH:mm:ss", typesCalendar);
+        feedCalendar.setStitchableFeed(liveFXCalendar);
         RowBasedTransformer f1 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0}, new String[]{"Nonfarm Payrolls"}, new int[]{3, 4, 5}, trader);
         feedCalendar.addChild(f1);
 
@@ -143,8 +230,11 @@ public class LearnHistorical {
         trader.setTolerance(5);
 
         PositionFactory.setConfidenceThreshold(0.625);
-        PositionFactory.setRewardRiskRatio(2.0);
-        PositionFactory.setMinTakeProfit(0.005);
+        PositionFactory.setRewardRiskRatio(3.0);
+        PositionFactory.setMinTakeProfit(0.0050);
+        PositionFactory.setAmount(10000);
+        PositionFactory.setCost(0.00008);
+        PositionFactory.setTradeToCapRatio(0.01);
         LoggerTimer.turn(false);
 
         i = 0;
@@ -186,6 +276,21 @@ public class LearnHistorical {
             FXHLDiffFeed feedDiff = new FXHLDiffFeed(feed);
             feed.addChild(feedDiff);
 
+            SlopeTransformer gradH = new SlopeTransformer(12, feedH);
+            feedH.addChild(gradH);
+            SlopeTransformer gradL = new SlopeTransformer(12, feedL);
+            feedL.addChild(gradL);
+
+            SlopeTransformer gradH2 = new SlopeTransformer(100, feedH);
+            feedH.addChild(gradH2);
+            SlopeTransformer gradL2 = new SlopeTransformer(100, feedL);
+            feedL.addChild(gradL2);
+
+            SlopeTransformer gradH3 = new SlopeTransformer(200, feedH);
+            feedH.addChild(gradH3);
+            SlopeTransformer gradL3 = new SlopeTransformer(200, feedL);
+            feedL.addChild(gradL3);
+
             StandardDeviationTransformer stdFeedH = new StandardDeviationTransformer(12, 2, feedH);
             feedH.addChild(stdFeedH);
             StandardDeviationTransformer stdFeedL = new StandardDeviationTransformer(12, 2, feedL);
@@ -213,10 +318,22 @@ public class LearnHistorical {
             feedV.addChild(awFeedV);
             stdFeedV.addChild(awFeedV);
 
+            AmplitudeWavelengthTransformer awFeedH2 = new AmplitudeWavelengthTransformer(feedH, stdFeedH, 4, 0.5);
+            feedH.addChild(awFeedH2);
+            stdFeedH.addChild(awFeedH2);
+            AmplitudeWavelengthTransformer awFeedL2 = new AmplitudeWavelengthTransformer(feedL, stdFeedL, 4, 0.5);
+            feedL.addChild(awFeedL2);
+            stdFeedL.addChild(awFeedL2);
+
             RSITransformer rsiH = new RSITransformer(20, 5, 5, MAType.Sma, feedH);
             feedH.addChild(rsiH);
             RSITransformer rsiL = new RSITransformer(20, 5, 5, MAType.Sma, feedL);
             feedH.addChild(rsiL);
+
+            RSITransformer rsiH2 = new RSITransformer(100, 25, 25, MAType.Sma, feedH);
+            feedH.addChild(rsiH2);
+            RSITransformer rsiL2 = new RSITransformer(100, 25, 25, MAType.Sma, feedL);
+            feedH.addChild(rsiL2);
 
             /*StandardDeviationTransformer stdFeedH1 = new StandardDeviationTransformer(5, 2, feedH);
             feedH.addChild(stdFeedH1);
@@ -253,6 +370,14 @@ public class LearnHistorical {
 
             synch = new SynchronisedFeed(feedDiff, synch);
 
+            synch = new SynchronisedFeed(gradH, synch);
+            synch = new SynchronisedFeed(gradH2, synch);
+            synch = new SynchronisedFeed(gradH3, synch);
+
+            synch = new SynchronisedFeed(gradL, synch);
+            synch = new SynchronisedFeed(gradL2, synch);
+            synch = new SynchronisedFeed(gradL3, synch);
+
             synch = new SynchronisedFeed(stdFeedH, synch);
             synch = new SynchronisedFeed(stdFeedL, synch);
             /*synch = new SynchronisedFeed(stdFeedC, synch);
@@ -264,9 +389,14 @@ public class LearnHistorical {
             /*synch = new SynchronisedFeed(awFeedC, synch);
             synch = new SynchronisedFeed(awFeedO, synch);*/
             synch = new SynchronisedFeed(awFeedV, synch);
+
+            synch = new SynchronisedFeed(awFeedH2, synch);
+            synch = new SynchronisedFeed(awFeedL2, synch);
+
             synch = new SynchronisedFeed(rsiH, synch);
             synch = new SynchronisedFeed(rsiL, synch);
-
+            synch = new SynchronisedFeed(rsiH2, synch);
+            synch = new SynchronisedFeed(rsiL2, synch);
             /*synch = new SynchronisedFeed(stdFeedH1, synch);
             synch = new SynchronisedFeed(stdFeedL1, synch);
             synch = new SynchronisedFeed(stdFeedC1, synch);
@@ -313,6 +443,19 @@ public class LearnHistorical {
         feed = new SynchronisedFeed(l3, feed);
 
         return feed;
+    }
+
+    int countLive = 0;
+    @Override
+    public void notifyFor(String event) {
+        countLive++;
+        if(countLive == 2){
+            trader.setLive();
+        }
+    }
+
+    public IClient getClient() {
+        return client;
     }
 }
 

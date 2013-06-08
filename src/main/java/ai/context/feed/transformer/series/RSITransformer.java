@@ -26,7 +26,7 @@ public class RSITransformer extends BufferedTransformer {
         this.fastKPeriod = fastKPeriod;
         this.feed = feed;
 
-        pushBackOutput(span - 1);
+        pushBackOutput(span);
     }
 
     @Override

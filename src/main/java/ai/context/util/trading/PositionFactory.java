@@ -6,9 +6,16 @@ import java.util.*;
 
 public class PositionFactory {
 
+    private static double tradeToCapRatio = 0.025;
+    private static double leverage = 100;
+    private static double amount = 1.0;
+    private static double cost = 0.0;
     private static double confidenceThreshold = 0.5;
     private static double rewardRiskRatio = 2.0;
     private static double minTakeProfit = 0.001;
+
+    private static boolean live = false;
+
     public static OpenPosition getPosition(long time, double pivot, TreeMap<Double, Double> histogram)
     {
         SortedMap<Double, Double> shortMap = histogram.descendingMap().tailMap(pivot, false);
@@ -93,8 +100,34 @@ public class PositionFactory {
                                     break;
                                 }
                             }
-                            if(found && tpAmp > minTakeProfit){
-                                return new OpenPosition(time, pivot, multiplier * tpAmp, multiplier * (tick + minTakeProfit/5) , true);
+                            if(found && tpAmp > minTakeProfit && amount > 100){
+
+                                Double min = null;
+                                Double slAmp = null;
+                                for(Map.Entry<Double, Double> entry : sFreq.tailMap(tick, true).entrySet()){
+                                    if(entry.getKey() > tpAmp/rewardRiskRatio){
+                                        break;
+                                    }
+                                    if(min == null){
+                                        min = entry.getValue() * entry.getKey();
+                                        slAmp = entry.getKey();
+                                    }
+                                    else {
+                                        if(min < (entry.getValue() * entry.getKey())){
+                                            min = entry.getValue() * entry.getKey();
+                                            slAmp = entry.getKey();
+                                        }
+                                    }
+                                }
+                                if(slAmp != null){
+                                    OpenPosition position = new OpenPosition(time, pivot, multiplier * tpAmp, multiplier * slAmp, true);
+                                    if(!live){
+                                        position.setAmount(amount * tradeToCapRatio * leverage);
+                                        position.setCost(cost);
+                                        amount -= position.getAmount()/leverage;
+                                    }
+                                    return position;
+                                }
                             }
                         }
                     }
@@ -118,76 +151,66 @@ public class PositionFactory {
                                     break;
                                 }
                             }
-                            if(found && tpAmp > minTakeProfit){
-                                return new OpenPosition(time, pivot, multiplier * tpAmp, multiplier * (tick + minTakeProfit/5) , false);
+                            if(found && tpAmp > minTakeProfit && amount > 100){
+
+                                Double min = null;
+                                Double slAmp = null;
+                                for(Map.Entry<Double, Double> entry : lFreq.tailMap(tick, true).entrySet()){
+                                    if(entry.getKey() > tpAmp/rewardRiskRatio){
+                                        break;
+                                    }
+                                    if(min == null){
+                                        min = entry.getValue() * entry.getKey();
+                                        slAmp = entry.getKey();
+                                    }
+                                    else {
+                                        if(min < (entry.getValue() * entry.getKey())){
+                                            min = entry.getValue() * entry.getKey();
+                                            slAmp = entry.getKey();
+                                        }
+                                    }
+                                }
+                                if(slAmp != null){
+                                    OpenPosition position = new OpenPosition(time, pivot, multiplier * tpAmp, multiplier * slAmp, false);
+                                    if(!live){
+                                        position.setAmount(amount * tradeToCapRatio * leverage);
+                                        position.setCost(cost);
+                                        amount -= position.getAmount()/leverage;
+                                    }
+                                    return position;
+                                }
                             }
                         }
                     }
                 }
             }
         }
+        return null;
+    }
 
-        /*for(Map.Entry<Double, Double> entry : directionalFreq.entrySet())
-        {
+    public static double getAmount() {
+        return amount;
+    }
 
-            if(entry.getValue() > 0)
-            {
-                if(goLong)
-                {
-                    if(entry.getValue() > confidenceThreshold)
-                    {
-                        amplitude = entry.getKey();
-                        confidence++;
-                    }
-                    else if(confidence > ticks.size()/2 && confidence > 5)
-                    {
-                        int multiplier = 1;
-                        if(!goLong)
-                        {
-                            multiplier = -1;
-                        }
-                        return new OpenPosition(time, pivot, multiplier * amplitude, multiplier * amplitude/2, goLong);
-                    }
-                }
-                else {
-                    goLong = true;
-                    confidence = 0;
-                }
-            }
-            else {
-                if(!goLong)
-                {
-                    if(entry.getValue() < -confidenceThreshold)
-                    {
-                        amplitude = entry.getKey();
-                        confidence++;
-                    }
-                    else if(confidence > ticks.size()/2 && confidence > 5)
-                    {
-                        int multiplier = 1;
-                        if(!goLong)
-                        {
-                            multiplier = -1;
-                        }
-                        return new OpenPosition(time, pivot, multiplier * amplitude, multiplier * amplitude/2, goLong);
-                    }
-                }
-                else {
-                    goLong = false;
-                    confidence = 0;
-                }
-            }
-            if(confidence > ticks.size()/2 && confidence > 5)
-            {
-                int multiplier = 1;
-                if(!goLong)
-                {
-                    multiplier = -1;
-                }
-                return new OpenPosition(time, pivot, multiplier * amplitude, multiplier * amplitude/2, goLong);
-            }
-        }
-        */return null;
+    public static void setLeverage(double leverage) {
+        PositionFactory.leverage = leverage;
+    }
+
+    public static void setAmount(double amount) {
+        PositionFactory.amount = amount;
+    }
+
+    public static void positionClosed(OpenPosition position){
+        amount += position.getAmount()/leverage;
+        amount += position.getPnL();
+    }
+
+    public static void incrementAmount(double increment){
+        amount += increment;
+    }
+
+    public static void setCost(double cost) {
+        PositionFactory.cost = cost;
     }
 
     public static void setConfidenceThreshold(double confidenceThreshold) {
@@ -200,5 +223,13 @@ public class PositionFactory {
 
     public static void setMinTakeProfit(double minTakeProfit) {
         PositionFactory.minTakeProfit = minTakeProfit;
+    }
+
+    public static void setTradeToCapRatio(double ratio) {
+        tradeToCapRatio = ratio;
+    }
+
+    public static void setLive(boolean live) {
+        PositionFactory.live = live;
     }
 }

@@ -2,6 +2,7 @@ package ai.context.feed.row;
 
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
+import ai.context.mapping.FXStreetCountryMapping;
 import ai.context.util.StringUtils;
 import com.sun.syndication.feed.synd.SyndEntry;
 import com.sun.syndication.feed.synd.SyndFeed;
@@ -56,7 +57,7 @@ public class FXStreetCalendarRSSFeed extends RowFeed{
 
                             String title = entry.getTitle();
 
-                            String country = title.split(":")[0];
+                            String country = FXStreetCountryMapping.getMapping(title.split(":")[0]);
                             String event = title.split(":")[1].substring(1);
 
                             if(reached < date.getTime())
@@ -69,11 +70,13 @@ public class FXStreetCalendarRSSFeed extends RowFeed{
                             String content = entry.getDescription().getValue();
                             String[] parts = content.split("<td>");
 
-                            double consensus = StringUtils.extractDouble(parts[8]);
-                            double actual = StringUtils.extractDouble(parts[8]);
-                            double previous = StringUtils.extractDouble(parts[8]);
+                            int volatility = 0;
 
-                            Object[] data = new Object[]{event, country, actual, previous, consensus};
+                            double consensus = StringUtils.extractDouble(parts[8]);
+                            double actual = StringUtils.extractDouble(parts[9]);
+                            double previous = StringUtils.extractDouble(parts[10]);
+
+                            Object[] data = new Object[]{event, country, volatility, actual, previous, consensus};
                             queue.add(new FeedObject(date.getTime(), data));
                         }
                     }

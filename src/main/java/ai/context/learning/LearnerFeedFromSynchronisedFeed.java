@@ -26,7 +26,7 @@ public class LearnerFeedFromSynchronisedFeed implements LearnerFeed, Feed {
 
         FeedObject data = feed.getNextComposite(this);
         List<Object> content = ((List)data.getData());
-        double[] value = new double[]{(Double) content.get(0), (Double) content.get(1), (Double) content.get(2), (Double) content.get(3)};
+        double[] value = new double[]{(Double) content.get(3), (Double) content.get(1), (Double) content.get(2), (Double) content.get(0)};
         int[] signal = new int[content.size() - 5];
         if(signal == null)
         {

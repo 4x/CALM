@@ -2,9 +2,11 @@ package ai.context;
 
 import ai.context.feed.FeedObject;
 import ai.context.feed.row.FXStreetCalendarRSSFeed;
+import ai.context.feed.stitchable.StitchableFXStreetCalendarRSS;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class TestRSS {
@@ -14,7 +16,7 @@ public class TestRSS {
 
         FXStreetCalendarRSSFeed feed = new FXStreetCalendarRSSFeed();
 
-        for(int i = 0; i < 10; i++)
+        for(int i = 0; i < 1000; i++)
         {
             FeedObject data = feed.readNext(this);
             Object[] array = (Object[]) data.getData();
@@ -23,7 +25,7 @@ public class TestRSS {
             {
                 list.add(o);
             }
-            System.out.println(data.getTimeStamp() + " " + list);
+            System.out.println(new Date(data.getTimeStamp()) + " " + list);
         }
         feed.close();
     }
@@ -40,5 +42,21 @@ public class TestRSS {
             System.out.println(part);
         }
 
+    }
+
+    @Test
+    public void testRSSInStitch(){
+        StitchableFXStreetCalendarRSS feed = new StitchableFXStreetCalendarRSS("src/test/resources/TestRSS.csv", new FXStreetCalendarRSSFeed());
+        for(int i = 0; i < 1000; i++)
+        {
+            FeedObject data = feed.readNext(this);
+            Object[] array = (Object[]) data.getData();
+            List<Object> list = new ArrayList<Object>();
+            for(Object o : array)
+            {
+                list.add(o);
+            }
+            System.out.println(new Date(data.getTimeStamp()) + " " + list);
+        }
     }
 }

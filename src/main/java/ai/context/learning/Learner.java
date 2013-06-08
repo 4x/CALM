@@ -5,7 +5,9 @@ import ai.context.core.LearnerService;
 import ai.context.util.mathematics.MinMaxAggregator;
 import ai.context.util.measurement.OpenPosition;
 import ai.context.util.measurement.LoggerTimer;
+import ai.context.util.trading.BlackBox;
 import ai.context.util.trading.PositionFactory;
+import com.dukascopy.api.JFException;
 
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
@@ -39,6 +41,9 @@ public class Learner implements Runnable, TimedContainer{
     private double accruedPnL = 0;
 
     private BufferedWriter fileOutputStream;
+
+    private boolean inLiveTrading = false;
+    private BlackBox blackBox;
 
     public Learner(String outputDir){
         try {
@@ -135,8 +140,11 @@ public class Learner implements Runnable, TimedContainer{
                     int x = (int) (position.getTarget()/actionResolution);
                     int y = (int) (position.getPnL()/actionResolution);
                     accruedPnL += position.getPnL();
-                    System.out.println(position.getClosingMessage() + " PNL: " + accruedPnL + " CHANGE: " + position.getPnL());
-                    appendToFile(position.getClosingMessage() + " PNL: " + accruedPnL + " CHANGE: " + position.getPnL());
+                    PositionFactory.positionClosed(position);
+
+                    System.out.println(position.getClosingMessage() + " PNL: " + accruedPnL + " CHANGE: " + position.getPnL() + " CAPITAL: " + PositionFactory.getAmount());
+                    appendToFile(position.getClosingMessage() + " PNL: " + accruedPnL + " CHANGE: " + position.getPnL() + " CAPITAL: " + PositionFactory.getAmount());
+
                     double count = 0.0;
                     if(!successMap.containsKey(x))
                     {
@@ -159,75 +167,20 @@ public class Learner implements Runnable, TimedContainer{
             OpenPosition position = PositionFactory.getPosition(tNow, data.getValue()[0], prediction);
             if(position != null)
             {
-                positions.add(position);
+                if(inLiveTrading){
+                    try {
+                        blackBox.onDecision(position);
+                    } catch (JFException e) {
+                        e.printStackTrace();
+                    }
+                }
+                else {
+                    positions.add(position);
+                }
             }
             LoggerTimer.printTimeDelta("10", this);
 
         }
-
-        /*if(liveLearnerFeed == null)
-        {
-            return;
-        }
-        while (liveLearnerFeed.hasNext())
-        {
-            DataObject data = liveLearnerFeed.readNext();
-            tNow = data.getTimeStamp();
-
-            if(tNow % (6 * 3600 * 1000L) == 0)
-            {
-                System.out.println("It is now: " + new Date(tNow));
-            }
-
-            int[] signal = data.getSignal();
-            TreeMap<Integer, Double> distribution = learner.getActionDistribution(signal);
-            TreeMap<Double, Double> prediction = new TreeMap<Double, Double>();
-            for(Map.Entry<Integer, Double> entry : distribution.entrySet())
-            {
-                prediction.put(data.getValue()[3] + entry.getKey() * actionResolution, entry.getValue());
-            }
-
-            recentPredictions.add(prediction);
-            while (!recentData.isEmpty() && recentData.getFirst().getTimeStamp() < (tNow - timeShift))
-            {
-                recentData.removeFirst();
-                removeFromPrediction(recentPredictions.removeFirst());
-            }
-            updateOverallPrediction(prediction);
-            recentData.add(data);
-
-            HashSet<OpenPosition> closed = new HashSet<OpenPosition>();
-            for(OpenPosition position : positions)
-            {
-                if(     position.getTimeOpen() > tNow &&
-                        position.canCloseOnBar_Pessimistic(tNow, data.getValue()[1], data.getValue()[2]))
-                {
-                    closed.add(position);
-                    int x = (int) (position.getTarget()/actionResolution);
-                    int y = (int) (position.getPnL()/actionResolution);
-                    double count = 0.0;
-                    if(!successMap.containsKey(x))
-                    {
-                        successMap.put(x, new TreeMap<Integer, Double>());
-                    }
-                    if(!successMap.get(x).containsKey(y))
-                    {
-                        successMap.get(x).put(y, 0.0);
-                    }
-                    else {
-                        count = successMap.get(x).get(y);
-                    }
-                    successMap.get(x).put(y, 1.0 + count);
-                }
-            }
-            positions.removeAll(closed);
-
-            OpenPosition position = PositionFactory.getPosition(tNow, data.getValue()[0], prediction);
-            if(position != null)
-            {
-                positions.add(position);
-            }
-        }*/
     }
 
     private void updateOverallPrediction(TreeMap<Double, Double> newPrediction)
@@ -301,5 +254,13 @@ public class Learner implements Runnable, TimedContainer{
     public long getTime()
     {
         return tNow;
+    }
+
+    public void setLive() {
+        inLiveTrading = true;
+    }
+
+    public void setBlackBox(BlackBox blackBox) {
+        this.blackBox = blackBox;
     }
 }

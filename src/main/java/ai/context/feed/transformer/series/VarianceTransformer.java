@@ -20,7 +20,7 @@ public class VarianceTransformer extends BufferedTransformer{
         this.nDeviations = nDeviations;
         this.feed = feed;
 
-        pushBackOutput(span - 1);
+        pushBackOutput(span);
     }
 
     @Override
