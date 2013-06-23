@@ -1,7 +1,6 @@
 package ai.context.feed.transformer.compound;
 
 import ai.context.feed.Feed;
-import ai.context.feed.transformer.series.StandardDeviationTransformer;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -21,9 +20,9 @@ public class AmplitudeWavelengthTransformer extends CompoundedTransformer{
     private double lambda;
 
     private Feed rawFeed;
-    private StandardDeviationTransformer stdDevFeed;
+    private Feed stdDevFeed;
 
-    public AmplitudeWavelengthTransformer(Feed rawFeed, StandardDeviationTransformer stdDevFeed, double nDeviations, double lambda) {
+    public AmplitudeWavelengthTransformer(Feed rawFeed, Feed stdDevFeed, double nDeviations, double lambda) {
         super(new Feed[]{rawFeed, stdDevFeed});
         this.nDeviations = nDeviations;
         this.lambda = lambda;

@@ -32,4 +32,8 @@ public class SynchronisedFeed extends SynchronisableFeed{
         }
         return copy;
     }
+
+    public Feed getRawFeed() {
+        return rawFeed;
+    }
 }

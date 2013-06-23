@@ -30,7 +30,7 @@
                         </descriptorRefs>
                         <archive>
                             <manifest>
-                                <mainClass>ai.context.runner.LearnHistorical</mainClass>
+                                <mainClass>ai.context.runner.Main</mainClass>
                             </manifest>
                         </archive>
                     </configuration>

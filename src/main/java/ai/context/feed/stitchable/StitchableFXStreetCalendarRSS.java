@@ -19,7 +19,6 @@ public class StitchableFXStreetCalendarRSS extends StitchableFeed{
 
     @Override
     protected FeedObject formatForCSVFeed(FeedObject data) {
-
         Object[] parts = (Object[]) data.getData();
         try {
             writer.write(format.format(new Date(data.getTimeStamp())) + "," + parts[0] + "," + parts[1] + "," + parts[2] + "," + parts[3] + "," + parts[4] + "," + parts[5] + "\n");

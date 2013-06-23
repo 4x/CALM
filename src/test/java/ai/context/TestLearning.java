@@ -2,6 +2,7 @@ package ai.context;
 
 import ai.context.core.LearnerService;
 import ai.context.util.analysis.SuccessMap;
+import ai.context.util.measurement.LoggerTimer;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,6 +27,7 @@ public class TestLearning {
     @Before
     public void setup()
     {
+        LoggerTimer.turn(false);
         learner.setActionResolution(actionResolution);
         learner.setMaxPopulation(maxPopulation);
         learner.setTolerance(tolerance);
@@ -36,7 +38,7 @@ public class TestLearning {
 
             double movement = getBlackBoxMovement(signal);
             learner.addStateAction(signal, movement);
-            System.out.println("Learned: point " + i + ": " + movement);
+            //System.out.println("Learned: point " + i + ": " + movement);
         }
     }
 

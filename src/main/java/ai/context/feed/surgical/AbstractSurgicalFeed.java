@@ -11,6 +11,7 @@ import java.util.List;
 
 public abstract class AbstractSurgicalFeed implements Feed{
 
+    private long timeStamp;
     private Feed feed;
     private HashMap<Feed, LinkedList<FeedObject>> buffers = new HashMap<>();
 
@@ -25,7 +26,7 @@ public abstract class AbstractSurgicalFeed implements Feed{
     }
 
     @Override
-    public FeedObject readNext(Object caller) {
+    public synchronized FeedObject readNext(Object caller) {
 
         if(buffers.containsKey(caller) && buffers.get(caller).size() > 0)
         {
@@ -40,6 +41,7 @@ public abstract class AbstractSurgicalFeed implements Feed{
                 buffers.get(listener).add(feedObject);
             }
         }
+        timeStamp = feedObject.getTimeStamp();
         return feedObject;
     }
 
@@ -48,5 +50,10 @@ public abstract class AbstractSurgicalFeed implements Feed{
     @Override
     public void addChild(Feed feed) {
         buffers.put(feed, new LinkedList<FeedObject>());
+    }
+
+    @Override
+    public long getLatestTime() {
+        return timeStamp;
     }
 }

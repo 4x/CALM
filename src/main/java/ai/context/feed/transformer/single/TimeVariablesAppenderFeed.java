@@ -8,6 +8,7 @@ import java.util.Date;
 public class TimeVariablesAppenderFeed implements Feed {
 
     private Feed rawFeed;
+    private long timeStamp;
     public TimeVariablesAppenderFeed(Feed rawFeed)
     {
         this.rawFeed = rawFeed;
@@ -18,10 +19,10 @@ public class TimeVariablesAppenderFeed implements Feed {
     }
 
     @Override
-    public FeedObject readNext(Object caller) {
+    public synchronized FeedObject readNext(Object caller) {
 
         FeedObject data = rawFeed.readNext(this);
-
+        timeStamp = data.getTimeStamp();
         Date date = new Date(data.getTimeStamp());
         int day = date.getDay();
         int dayOfMonth = date.getDate();
@@ -40,5 +41,10 @@ public class TimeVariablesAppenderFeed implements Feed {
     @Override
     public void addChild(Feed feed) {
         //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public long getLatestTime() {
+        return timeStamp;
     }
 }

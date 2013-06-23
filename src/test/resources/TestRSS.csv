@@ -1,47 +1,46 @@
-20130606 02:30:00,Trade Balance,AU,0,28.0,555.0,215.0
-20130606 06:30:00,ILO Unemployment,France,0,10.8,10.5,0.0
-20130606 06:58:00,Purchasing Manager Index Services,IE,0,52.7,55.2,0.0
-20130606 08:00:00,Halifax House Prices (3m/YoY),United Kingdom,0,2.6,2.0,2.5
-20130606 08:15:00,Consumer Price Index (YoY),CH,0,0.5,0.6,0.6
-20130606 09:50:00,10-y Obligaciones Auction,ES,0,4.517,4.612,0.0
-20130606 10:00:00,Unemployment Rate (MoM),GR,0,26.8,26.7,0.0
-20130606 10:09:11,10-y Bond Auction,France,0,2.04,1.81,0.0
-20130606 11:00:00,Factory Orders n.s.a. (YoY),Germany,0,0.4,0.3,0.2
-20130606 12:00:00,BoE Asset Purchase Facility,United Kingdom,0,375.0,375.0,375.0
-20130606 12:00:00,BoE Interest Rate Decision,United Kingdom,0,0.5,0.5,0.5
-20130606 12:30:00,Challenger Job Cuts (YoY),United States,0,36.398,38.121,0.0
-20130606 12:45:00,ECB Interest Rate Decision,EMU,0,0.5,0.5,0.5
-20130606 13:30:00,Initial Jobless Claims,United States,0,346.0,357.0,345.0
-20130606 08:15:00,Consumer Price Index (MoM),CH,0,0.1,0.0,0.1
-20130606 11:00:00,Factory Orders s.a. (MoM),Germany,0,2.3,2.3,1.0
-20130606 15:00:00,Ivey Purchasing Managers Index s.a,CA,0,63.1,52.2,57.0
-20130606 15:30:00,EIA Natural Gas Storage change,United States,0,111.0,88.0,101.0
-20130607 00:30:00,AiG Performance of Construction Index,AU,0,35.3,35.2,0.0
-20130607 00:00:00,Gross Domestic Product Growth (YoY),KR,0,1.5,1.5,0.0
-20130607 00:00:00,Gross Domestic Product Growth (QoQ) ,KR,0,0.8,0.8,0.0
-20130607 06:00:00,Coincident Index,JP,0,94.8,93.8,94.9
-20130607 06:00:00,Leading Economic Index,JP,0,99.3,98.0,98.6
-20130607 07:00:00,Exports (MoM),Germany,0,1.9,0.5,0.2
-20130607 07:00:00,Imports (MoM),Germany,0,2.3,0.8,0.5
-20130607 07:00:00,Trade Balance s.a.,Germany,0,17.7,17.6,17.2
-20130607 07:00:00,Current Account n.s.a.,Germany,0,17.6,20.2,13.0
-20130607 07:45:00,Exports, EUR,France,0,37.8,36.204,0.0
-20130607 07:45:00,Budget,France,0,66.8,31.026,0.0
-20130607 07:45:00,Trade Balance EUR,France,0,4.5,4.5,4.5
-20130607 08:00:00,Foreign Currency Reserves,CH,0,441.4,436.1,0.0
-20130607 08:00:00,Construction output (YoY),CZ,0,11.4,20.6,0.0
-20130607 09:30:00,Goods Trade Balance,United Kingdom,0,8.224,9.056,8.8
-20130607 09:30:00,Consumer Inflation Expectations,United Kingdom,0,3.6,3.6,0.0
-20130607 09:30:00,Total Trade Balance,United Kingdom,0,2.579,3.249,3.0
-20130607 10:00:00,Gross Domestic Product n.s.a (YoY),GR,0,5.6,5.7,0.0
-20130606 00:50:00,Foreign investment in Japan stocks,JP,0,191.1,68.5,0.0
-20130607 11:00:00,Industrial Production s.a. w.d.a. (YoY),Germany,0,1.0,2.4,0.8
-20130607 11:00:00,Global Trade Balance,PT,0,1.992,1.86,0.0
-20130607 13:30:00,Unemployment Rate,United States,0,7.6,7.5,7.5
-20130607 13:30:00,Net Change in Employment,CA,0,95.0,12.5,15.0
-20130607 13:30:00,Nonfarm Payrolls,United States,0,175.0,165.0,170.0
-20130607 13:30:00,Labor Productivity (QoQ),CA,0,0.2,0.1,0.2
-20130607 13:30:00,Average Hourly Earnings (YoY),United States,0,2.0,1.9,2.1
-20130608 03:16:54,Imports (YoY),CN,0,0.3,16.8,0.0
-20130608 03:16:57,Exports (YoY),CN,0,1.0,14.7,0.0
-20130608 03:30:35,Trade Balance,CN,0,20.4,18.16,19.3
+20130612 06:45:00,Inflation ex-tobacco (MoM),France,0,0.1,0.2,0.0
+20130612 06:45:00,Consumer Price Index (EU norm) final (YoY),France,0,0.9,0.8,0.9
+20130612 07:00:00,Consumer Price Index (YoY),ES,0,1.7,1.4,1.7
+20130612 07:00:00,HICP (YoY),ES,0,1.8,1.5,1.8
+20130612 08:00:00,Consumer Price Index (EU Norm) (MoM),IT,0,0.0,0.3,0.0
+20130612 08:00:00,Consumer Price Index (YoY),IT,0,1.1,1.1,1.2
+20130612 08:00:00,Consumer Price Index (MoM),IT,0,0.0,0.4,0.1
+20130612 08:30:00,Claimant Count Change,United Kingdom,0,8.6,11.8,5.0
+20130612 08:30:00,Claimant Count Rate,United Kingdom,0,4.5,4.5,0.0
+20130612 08:30:00,Average Earnings excluding Bonus (3Mo/Yr),United Kingdom,0,0.9,0.8,0.7
+20130612 08:30:00,Average Earnings including Bonus (3Mo/Yr),United Kingdom,0,1.3,0.4,0.3
+20130612 09:00:00,Industrial Production w.d.a. (YoY),EMU,0,0.6,1.4,1.2
+20130612 10:00:00,Consumer Price Index (MoM),PT,0,0.2,0.0,0.0
+20130612 11:00:00,MBA Mortgage Applications,United States,0,5.0,11.5,0.0
+20130612 14:30:00,EIA Crude Oil Stocks change,United States,0,2.523,6.267,1.4
+20130612 17:00:00,10-Year Note Auction,United States,0,2.209,1.81,0.0
+20130612 18:00:00,Monthly Budget Statement,United States,0,139.0,112.9,110.0
+20130612 21:00:00,RBNZ Interest Rate Decision,NZ,0,2.5,2.5,2.5
+20130612 23:50:00,Foreign bond investment,JP,0,386.9,1172.5,0.0
+20130613 01:00:00,BoK Interest Rate Decision,KR,0,2.5,2.5,0.0
+20130613 01:00:00,Consumer Inflation Expectation,AU,0,2.3,2.3,0.0
+20130613 01:30:00,Employment Change s.a.,AU,0,1100.0,45000.0,10000.0
+20130613 01:30:00,Fulltime employment,AU,0,5300.0,34500.0,0.0
+20130613 01:30:00,Part-time employment,AU,0,6400.0,15600.0,0.0
+20130613 04:00:00,Bank Indonesia Rate,ID,0,6.0,5.75,0.0
+20130613 06:00:00,Wholesale Price Index (YoY),Germany,0,0.1,0.4,0.0
+20130613 07:00:00,Headline Inflation (MoM),SK,0,0.1,0.0,0.0
+20130613 07:15:00,Producer and Import Prices (YoY),CH,0,0.2,0.1,0.3
+20130613 09:00:00,Unemployment Rate (QoQ),GR,0,27.4,26.0,0.0
+20130613 10:00:00,HICP (MoM),IE,0,0.0,0.4,0.0
+20130613 10:00:00,HICP (YoY),IE,0,0.5,0.6,0.0
+20130613 10:00:00,Consumer Price Index (MoM),IE,0,0.1,0.4,0.0
+20130613 12:00:00,Retail Sales (MoM),BR,0,0.5,0.1,0.0
+20130613 12:30:00,New Housing Price Index (YoY),CA,0,2.0,2.0,0.0
+20130613 12:30:00,Export Price Index (YoY),United States,0,0.9,0.9,0.0
+20130613 12:30:00,Import Price Index (YoY),United States,0,1.9,2.6,0.0
+20130613 12:30:00,Retail Sales ex Autos (MoM),United States,0,0.3,0.0,0.3
+20130613 12:30:00,Retail Sales (MoM),United States,0,0.6,0.1,0.4
+20130613 12:30:00,New Housing Price Index (MoM),CA,0,0.2,0.1,0.1
+20130613 12:30:00,Export Price Index (MoM),United States,0,0.5,0.7,0.0
+20130613 12:30:00,Initial Jobless Claims,United States,0,334.0,346.0,345.0
+20130613 12:30:00,Capacity Utilization,CA,0,81.1,80.5,81.5
+20130613 12:30:00,Import Price Index (MoM),United States,0,0.6,0.5,0.0
+20130613 14:00:00,Business Inventories,United States,0,0.3,0.1,0.3
+20130613 14:30:00,EIA Natural Gas Storage change,United States,0,95.0,111.0,96.0
+20130613 17:00:00,30-Year Bond Auction,United States,0,3.355,2.98,0.0

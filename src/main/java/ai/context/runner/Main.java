@@ -26,8 +26,6 @@ import ai.context.learning.Learner;
 import ai.context.learning.LearnerFeed;
 import ai.context.learning.LearnerFeedFromSynchronisedFeed;
 import ai.context.trading.DukascopyConnection;
-import ai.context.util.communication.Notifiable;
-import ai.context.util.io.GetFirstLine;
 import ai.context.util.measurement.LoggerTimer;
 import ai.context.util.trading.BlackBox;
 import ai.context.util.trading.PositionFactory;
@@ -35,103 +33,40 @@ import com.dukascopy.api.Instrument;
 import com.dukascopy.api.Period;
 import com.dukascopy.api.system.IClient;
 import com.tictactec.ta.lib.MAType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-public class LearnHistorical implements Notifiable{
+public class Main {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
     private Learner trader;
-    private LearnerFeed learnerFeed;
+    private boolean isLive = false;
 
     private Set<BufferedTransformer> bufferedTransformers = new HashSet<>();
     private StitchableFeed liveFXCalendar;
-    private StitchableFeed liveFXRate;
-    private BlackBox blackBox;
-    private IClient client;
+    private StitchableFeed liveFXRateEUR;
+    private StitchableFeed liveFXRateGBP;
+    private StitchableFeed liveFXRateCHF;
 
-    private boolean live = false;
+    private IClient client;
+    private BlackBox blackBox;
+
+    private boolean testing = false;
 
     public static void main(String[] args)
     {
-        final LearnHistorical test = new LearnHistorical();
+        Main test = new Main();
         String path = "C:/Users/Oblene/Desktop/Sandbox/Data/";
         if(!(args == null || args.length == 0))
         {
             path = args[0];
         }
-        test.initFXAPI();
-
-        test.setLiveFXCalendar(new StitchableFXStreetCalendarRSS(path + "tmp/FXCalendar.csv", new FXStreetCalendarRSSFeed()));
-        test.setLiveFXRate(new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(test.getClient(), Period.FIVE_MINS, Instrument.EURUSD)));
-
-        System.out.println("Please wait while live feeds are initialised");
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        /*try {
-            System.out.println("Live feeds are up and running, press enter to see the starts of the live feeds");
-            System.in.read();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
-
-        System.out.println("From FXCalendar:\n" + GetFirstLine.fromFile(test.getLiveFXCalendar().getLiveFileName()));
-        System.out.println("From FXRate:\n" + GetFirstLine.fromFile(test.getLiveFXRate().getLiveFileName()));
-
-        /*System.out.println("\nPlease patch the relevant historical files and press enter to start");
-        try {
-            System.in.read();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
-
-
-
-        TimerTask checkIfGoLive = new TimerTask() {
-            @Override
-            public void run() {
-                if(!test.live && test.trader.getTime() > 1368342049000L){
-                    for(BufferedTransformer transformer : test.bufferedTransformers){
-                        transformer.goLive();
-                        System.err.println(transformer + " going live...");
-                    }
-                    test.live = true;
-                    System.err.println("Going LIVE!!!");
-                }
-            }
-        };
-
-        TimerTask checkIfGoTrading = new TimerTask() {
-            @Override
-            public void run() {
-                if(Math.abs(test.trader.getTime() - System.currentTimeMillis()) < 10 * 60 * 1000L){
-                    test.trader.setLive();
-                }
-            }
-        };
-
-        Timer timer = new Timer();
-        //timer.schedule(checkIfGoLive, 6 * 60 * 60000L, 60000);
-        timer.schedule(checkIfGoLive, 10000L, 1000);
-
-        timer.schedule(checkIfGoTrading, 6 * 60 * 60000L, 60000);
-
         test.setTraderOutput(path);
         test.setup(path);
         test.trade();
-    }
-
-    public void initFXAPI(){
-        try {
-            //client = new DukascopyConnection("DEMO2UANZY", "UANZY").getClient();
-            client = new DukascopyConnection("DEMO2Ffpfg", "Ffpfg").getClient();
-
-            blackBox = new BlackBox(client);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     public void setTraderOutput(String output){
@@ -139,40 +74,53 @@ public class LearnHistorical implements Notifiable{
         trader.setBlackBox(blackBox);
     }
 
-    public void setLiveFXCalendar(final StitchableFeed liveFXCalendar) {
-        this.liveFXCalendar = liveFXCalendar;
-        //liveFXCalendar.setNotifiable(this);
-        /*Runnable liveFeed = new Runnable() {
-            @Override
-            public void run() {
-                liveFXCalendar.startPadding();
-            }
-        };
-        new Thread(liveFeed).start();*/
-    }
-
-    public void setLiveFXRate(final StitchableFeed liveFXRate) {
-        this.liveFXRate = liveFXRate;
-        //liveFXRate.setNotifiable(this);
-        /*Runnable liveFeed = new Runnable() {
-            @Override
-            public void run() {
-                liveFXRate.startPadding();
-            }
-        };
-        new Thread(liveFeed).start();*/
-    }
-
-    public StitchableFeed getLiveFXCalendar() {
-        return liveFXCalendar;
-    }
-
-    public StitchableFeed getLiveFXRate() {
-        return liveFXRate;
-    }
-
     public void setup(String path)
     {
+        initFXAPI();
+
+        long interval = 1*60000L;
+        setLiveFXCalendar(new StitchableFXStreetCalendarRSS(path + "tmp/FXCalendar.csv", new FXStreetCalendarRSSFeed()));
+        setLiveFXRates(
+                new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.EURUSD)),
+                new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.GBPUSD)),
+                new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.USDCHF)));
+
+        final Timer timer = new Timer();
+        TimerTask checkIfGoLive = new TimerTask() {
+            @Override
+            public void run() {
+                if(!isLive && trader.getTime() > 1368342049000L){
+                    for(final BufferedTransformer transformer : bufferedTransformers){
+
+                        Runnable makeAlive = new Runnable() {
+                            @Override
+                            public void run() {
+                                LOGGER.info(transformer + " going live...");
+                                transformer.goLive();
+                            }
+                        };
+                        new Thread(makeAlive).start();
+                    }
+                    isLive = true;
+                    LOGGER.info("Going LIVE!!!");
+                }
+            }
+        };
+
+        TimerTask checkIfGoTrading = new TimerTask() {
+            @Override
+            public void run() {
+                if(!trader.isLive() && Math.abs(trader.getTime() - System.currentTimeMillis()) < 15 * 60 * 1000L){
+                    trader.setLive();
+                    LOGGER.info("LIVE TRADING");
+                    timer.cancel();
+                }
+            }
+        };
+
+        timer.schedule(checkIfGoLive, 10000L, 500);
+        timer.schedule(checkIfGoTrading, 10000L, 500);
+
         DataType[] typesCalendar = new DataType[]{
                 DataType.OTHER,
                 DataType.OTHER,
@@ -181,10 +129,10 @@ public class LearnHistorical implements Notifiable{
                 DataType.EXTRACTABLE_DOUBLE,
                 DataType.EXTRACTABLE_DOUBLE};
 
-        CSVFeed feedCalendar = new CSVFeed(path + "feeds/Calendar_2008.csv", "yyyyMMdd HH:mm:ss", typesCalendar, null);
+        CSVFeed feedCalendar = new CSVFeed(path + "feeds/Calendar_2008.csv", "yyyyMMdd HH:mm:ss", typesCalendar, "20080101 00:00:00");
         feedCalendar.setStitchableFeed(liveFXCalendar);
-        feedCalendar.setInterval(5 * 60 * 1000L);
         feedCalendar.setPaddable(true);
+        feedCalendar.setInterval(interval);
         RowBasedTransformer f1 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0}, new String[]{"Nonfarm Payrolls"}, new int[]{3, 4, 5}, trader);
         feedCalendar.addChild(f1);
 
@@ -205,8 +153,10 @@ public class LearnHistorical implements Notifiable{
         feedCalendar.addChild(f8);
         RowBasedTransformer f9 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Producer Price Index \\(MoM\\)", "Germany"}, new int[]{3, 4, 5}, trader);
         feedCalendar.addChild(f9);
-
-
+        RowBasedTransformer f10 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"BoE Interest Rate Decision", "United Kingdom"}, new int[]{3, 4, 5}, trader);
+        feedCalendar.addChild(f10);
+        RowBasedTransformer f11 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Fed Interest Rate Decision", "United States"}, new int[]{3, 4, 5}, trader);
+        feedCalendar.addChild(f11);
 
 
         DataType[] typesPrice = new DataType[]{
@@ -216,15 +166,18 @@ public class LearnHistorical implements Notifiable{
                 DataType.DOUBLE,
                 DataType.DOUBLE};
 
-        CSVFeed feedPriceEUR = new CSVFeed(path + "feeds/EURUSD_5 Mins_Bid_2008.01.01_2012.12.31.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, null);
-        feedPriceEUR.setStitchableFeed(liveFXRate);
-        feedPriceEUR.setInterval(10 * 1000L);
-        //CSVFeed feedPriceGBP = new CSVFeed(path + "feeds/GBPUSD_5 Mins_Bid_2008.01.01_2012.12.31.csv", "yyyy.MM.dd HH:mm:ss", typesPrice);
-        //CSVFeed feedPriceCHF = new CSVFeed(path + "feeds/USDCHF_5 Mins_Bid_2008.01.01_2012.12.31.csv", "yyyy.MM.dd HH:mm:ss", typesPrice);
+        CSVFeed feedPriceEUR = new CSVFeed(path + "feeds/EURUSD_5 Mins_Bid_2008.01.01_2012.12.31.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  "2008.01.01 00:00:00");
+        feedPriceEUR.setStitchableFeed(liveFXRateEUR);
+        CSVFeed feedPriceGBP = new CSVFeed(path + "feeds/GBPUSD_5 Mins_Bid_2008.01.01_2012.12.31.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  "2008.01.01 00:00:00");
+        feedPriceGBP.setStitchableFeed(liveFXRateGBP);
+        CSVFeed feedPriceCHF = new CSVFeed(path + "feeds/USDCHF_5 Mins_Bid_2008.01.01_2012.12.31.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  "2008.01.01 00:00:00");
+        feedPriceCHF.setStitchableFeed(liveFXRateCHF);
         //CSVFeed feedPriceAUD = new CSVFeed(path + "feeds/AUDUSD_5 Mins_Bid_2008.01.01_2012.12.31.csv", "yyyy.MM.dd HH:mm:ss", typesPrice);
 
 
-        SynchronisedFeed feed = buildSynchFeed(feedPriceEUR);
+        SynchronisedFeed feed = buildSynchFeed(null, feedPriceEUR);
+        feed = buildSynchFeed(feed, feedPriceGBP);
+        feed = buildSynchFeed(feed, feedPriceCHF);
         SmartDiscretiserOnSynchronisedFeed sFeed = new SmartDiscretiserOnSynchronisedFeed(feed, 500, 5);
         feed.addChild(sFeed);
         TimeVariablesAppenderFeed tFeed = new TimeVariablesAppenderFeed(sFeed);
@@ -240,22 +193,33 @@ public class LearnHistorical implements Notifiable{
         feed = addToSynchFeed(feed, f7, 0.1, 0);
         feed = addToSynchFeed(feed, f8, 0.1, 0);
         feed = addToSynchFeed(feed, f9, 0.1, 0);
+        feed = addToSynchFeed(feed, f10, 0.1, 0);
+        feed = addToSynchFeed(feed, f11, 0.1, 0);
         feed = new SynchronisedFeed(tFeed, feed);
+
         int i = 0;
         while (true)
         {
             FeedObject data = feed.getNextComposite(this);
             trader.setCurrentTime(data.getTimeStamp());
-
             i++;
 
-            if(i  == 550000)
+            if(testing)
+            {
+                if(i == 550000){
+                    break;
+                }
+            }
+            else if(i  == 10000)
             {
                 break;
             }
         }
 
-        learnerFeed = new LearnerFeedFromSynchronisedFeed(feed);
+        /*for(final BufferedTransformer transformer : bufferedTransformers){
+            transformer.goLive();
+        }*/
+        LearnerFeed learnerFeed = new LearnerFeedFromSynchronisedFeed(feed);
 
         trader.setActionResolution(0.0001);
         trader.setTrainingLearnerFeed(learnerFeed);
@@ -263,11 +227,16 @@ public class LearnHistorical implements Notifiable{
         trader.setTimeShift(4 * 12 * 5 * 60 * 1000L);
         trader.setTolerance(5);
 
-        PositionFactory.setRewardRiskRatio(3.0);
+        PositionFactory.setRewardRiskRatio(4.0);
         PositionFactory.setMinTakeProfit(0.0050);
         PositionFactory.setAmount(10000);
-        PositionFactory.setCost(0.00008);
+        PositionFactory.setCost(0.00015);
         PositionFactory.setTradeToCapRatio(0.01);
+        PositionFactory.setLeverage(25);
+
+        PositionFactory.setMinProbFraction(0.75);
+        PositionFactory.setVerticalRisk(true);
+        PositionFactory.setMinTakeProfitVertical(0.0020);
         LoggerTimer.turn(false);
 
         i = 0;
@@ -276,26 +245,51 @@ public class LearnHistorical implements Notifiable{
             DataObject data = learnerFeed.readNext();
             trader.setCurrentTime(data.getTimeStamp());
 
-            System.out.println(new Date(data.getTimeStamp()) + " " + data);
+            if(testing){
+                System.out.println(new Date(data.getTimeStamp()) + " " + data);
+            }
             i++;
 
-            /*if(i  == 10000)
+            if(i  == 10000 && !testing)
             {
                 break;
-            }*/
+            }
         }
     }
 
     public void trade()
     {
-        //new Thread(trader).start();
         trader.run();
     }
 
+    public void initFXAPI(){
+        try {
+            if(!testing){
+                client = new DukascopyConnection("DEMO2LfagZ", "LfagZ").getClient();
+                //client = new DukascopyConnection("DEMO2CiisQ", "CiisQ").getClient();
+            }
+            else {
+                client = new DukascopyConnection("DEMO2Ffpfg", "Ffpfg").getClient();
+            }
 
-    private SynchronisedFeed buildSynchFeed(CSVFeed ... feeds)
+            blackBox = new BlackBox(client);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void setLiveFXCalendar(final StitchableFeed liveFXCalendar) {
+        this.liveFXCalendar = liveFXCalendar;
+    }
+
+    public void setLiveFXRates(StitchableFeed liveFXRateEUR,StitchableFeed liveFXRateGBP,StitchableFeed liveFXRateCHF) {
+        this.liveFXRateEUR = liveFXRateEUR;
+        this.liveFXRateGBP = liveFXRateGBP;
+        this.liveFXRateCHF = liveFXRateCHF;
+    }
+
+    private SynchronisedFeed buildSynchFeed( SynchronisedFeed synch, CSVFeed ... feeds)
     {
-        SynchronisedFeed synch = null;
         for(CSVFeed feed : feeds){
             ExtractOneFromListFeed feedH = new ExtractOneFromListFeed(feed, 1);
             feed.addChild(feedH);
@@ -303,8 +297,8 @@ public class LearnHistorical implements Notifiable{
             feed.addChild(feedL);
             ExtractOneFromListFeed feedC = new ExtractOneFromListFeed(feed, 3);
             feed.addChild(feedC);
-            ExtractOneFromListFeed feedO = new ExtractOneFromListFeed(feed, 0);
-            feed.addChild(feedO);
+            //ExtractOneFromListFeed feedO = new ExtractOneFromListFeed(feed, 0);
+            //feed.addChild(feedO);
             ExtractOneFromListFeed feedV = new ExtractOneFromListFeed(feed, 4);
             feed.addChild(feedV);
 
@@ -341,35 +335,20 @@ public class LearnHistorical implements Notifiable{
             StandardDeviationTransformer stdFeedC = new StandardDeviationTransformer(12, 2, feedC);
             feedC.addChild(stdFeedC);
             bufferedTransformers.add(stdFeedC);
-            StandardDeviationTransformer stdFeedO = new StandardDeviationTransformer(12, 2, feedO);
-            feedO.addChild(stdFeedO);
-            bufferedTransformers.add(stdFeedO);
+            //StandardDeviationTransformer stdFeedO = new StandardDeviationTransformer(12, 2, feedO);
+            //feedO.addChild(stdFeedO);
+            //bufferedTransformers.add(stdFeedO);
             StandardDeviationTransformer stdFeedV = new StandardDeviationTransformer(12, 2, feedV);
             feedV.addChild(stdFeedV);
             bufferedTransformers.add(stdFeedV);
 
             AmplitudeWavelengthTransformer awFeedH = new AmplitudeWavelengthTransformer(feedH, stdFeedH, 2, 0.5);
-            feedH.addChild(awFeedH);
-            stdFeedH.addChild(awFeedH);
             AmplitudeWavelengthTransformer awFeedL = new AmplitudeWavelengthTransformer(feedL, stdFeedL, 2, 0.5);
-            feedL.addChild(awFeedL);
-            stdFeedL.addChild(awFeedL);
             /*AmplitudeWavelengthTransformer awFeedC = new AmplitudeWavelengthTransformer(feedC, stdFeedC, 2, 0.5);
-            feedC.addChild(awFeedC);
-            stdFeedC.addChild(awFeedC);
-            AmplitudeWavelengthTransformer awFeedO = new AmplitudeWavelengthTransformer(feedO, stdFeedO, 2, 0.5);
-            feedO.addChild(awFeedO);
-            stdFeedO.addChild(awFeedO);*/
+            AmplitudeWavelengthTransformer awFeedO = new AmplitudeWavelengthTransformer(feedO, stdFeedO, 2, 0.5);*/
             AmplitudeWavelengthTransformer awFeedV = new AmplitudeWavelengthTransformer(feedV, stdFeedV, 2, 0.5);
-            feedV.addChild(awFeedV);
-            stdFeedV.addChild(awFeedV);
-
             AmplitudeWavelengthTransformer awFeedH2 = new AmplitudeWavelengthTransformer(feedH, stdFeedH, 4, 0.5);
-            feedH.addChild(awFeedH2);
-            stdFeedH.addChild(awFeedH2);
             AmplitudeWavelengthTransformer awFeedL2 = new AmplitudeWavelengthTransformer(feedL, stdFeedL, 4, 0.5);
-            feedL.addChild(awFeedL2);
-            stdFeedL.addChild(awFeedL2);
 
             RSITransformer rsiH = new RSITransformer(20, 5, 5, MAType.Sma, feedH);
             feedH.addChild(rsiH);
@@ -385,33 +364,12 @@ public class LearnHistorical implements Notifiable{
             feedL.addChild(rsiL2);
             bufferedTransformers.add(rsiL2);
 
-            /*LiveStandardDeviationTransformer stdFeedH1 = new LiveStandardDeviationTransformer(5, 2, feedH);
-            feedH.addChild(stdFeedH1);
-            LiveStandardDeviationTransformer stdFeedL1 = new LiveStandardDeviationTransformer(5, 2, feedL);
-            feedL.addChild(stdFeedL1);
-            LiveStandardDeviationTransformer stdFeedC1 = new LiveStandardDeviationTransformer(5, 2, feedC);
-            feedC.addChild(stdFeedC1);
-            LiveStandardDeviationTransformer stdFeedO1 = new LiveStandardDeviationTransformer(5, 2, feedO);
-            feedO.addChild(stdFeedO1);
-            LiveStandardDeviationTransformer stdFeedV1 = new LiveStandardDeviationTransformer(5, 2, feedV);
-            feedV.addChild(stdFeedV1);
-
-            AmplitudeWavelengthTransformer awFeedH1 = new AmplitudeWavelengthTransformer(feedH, stdFeedH1, 2, 0.5);
-            feedH.addChild(awFeedH1);
-            stdFeedH1.addChild(awFeedH1);
+            /*AmplitudeWavelengthTransformer awFeedH1 = new AmplitudeWavelengthTransformer(feedH, stdFeedH1, 2, 0.5);
             AmplitudeWavelengthTransformer awFeedL1 = new AmplitudeWavelengthTransformer(feedL, stdFeedL1, 2, 0.5);
-            feedL.addChild(awFeedL1);
-            stdFeedL1.addChild(awFeedL1);
             AmplitudeWavelengthTransformer awFeedC1 = new AmplitudeWavelengthTransformer(feedC, stdFeedC1, 2, 0.5);
-            feedC.addChild(awFeedC1);
-            stdFeedC1.addChild(awFeedC1);
-            AmplitudeWavelengthTransformer awFeedO1 = new AmplitudeWavelengthTransformer(feedO, stdFeedO1, 2, 0.5);
-            feedO.addChild(awFeedO1);
-            stdFeedO1.addChild(awFeedO1);
-            AmplitudeWavelengthTransformer awFeedV1 = new AmplitudeWavelengthTransformer(feedV, stdFeedV1, 2, 0.5);
-            feedV.addChild(awFeedV1);
-            stdFeedV1.addChild(awFeedV1);
-*/
+            AmplitudeWavelengthTransformer awFeedO1 = new AmplitudeWavelengthTransformer(feedO, stdFeedO1, 2, 0.5);;
+            AmplitudeWavelengthTransformer awFeedV1 = new AmplitudeWavelengthTransformer(feedV, stdFeedV1, 2, 0.5);*/
+
             synch = new SynchronisedFeed(feedH, synch);
             synch = new SynchronisedFeed(feedL, synch);
             synch = new SynchronisedFeed(feedC, synch);
@@ -493,16 +451,5 @@ public class LearnHistorical implements Notifiable{
         feed = new SynchronisedFeed(l3, feed);
 
         return feed;
-    }
-
-    int countLive = 0;
-    @Override
-    public void notifyFor(String event) {
-        countLive++;
-        trader.setLive();
-    }
-
-    public IClient getClient() {
-        return client;
     }
 }

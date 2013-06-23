@@ -16,4 +16,12 @@ public class FeedObject<T> {
     public T getData() {
         return data;
     }
+
+    @Override
+    public String toString() {
+        return "FeedObject{" +
+                "timeStamp=" + timeStamp +
+                ", data=" + data +
+                '}';
+    }
 }

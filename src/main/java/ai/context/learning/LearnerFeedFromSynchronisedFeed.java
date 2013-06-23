@@ -9,11 +9,11 @@ import java.util.List;
 public class LearnerFeedFromSynchronisedFeed implements LearnerFeed, Feed {
 
     SynchronisedFeed feed;
+    private long timeStamp;
     public LearnerFeedFromSynchronisedFeed(SynchronisedFeed feed)
     {
         this.feed = feed;
         feed.addChild(this);
-        feed.init();
     }
 
     @Override
@@ -45,6 +45,7 @@ public class LearnerFeedFromSynchronisedFeed implements LearnerFeed, Feed {
             }
             index++;
         }
+        timeStamp = data.getTimeStamp();
         return new DataObject(data.getTimeStamp(), signal, value);
     }
 
@@ -61,5 +62,10 @@ public class LearnerFeedFromSynchronisedFeed implements LearnerFeed, Feed {
     @Override
     public void addChild(Feed feed) {
         //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public long getLatestTime() {
+        return timeStamp;
     }
 }

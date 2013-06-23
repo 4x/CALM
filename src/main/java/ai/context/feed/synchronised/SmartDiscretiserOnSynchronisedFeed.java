@@ -15,6 +15,8 @@ public class SmartDiscretiserOnSynchronisedFeed implements Feed {
     private long criticalMass = 10000;
     private int clusters = 5;
 
+    private long timeStamp;
+
     private ArrayList<SmartDiscretiser> discretisers = new ArrayList<SmartDiscretiser>();
     private HashMap<Feed, LinkedList<FeedObject>> buffers = new HashMap<>();
 
@@ -43,6 +45,7 @@ public class SmartDiscretiserOnSynchronisedFeed implements Feed {
         {
             if(o == null || !(o instanceof Double))
             {
+                timeStamp = time;
                 return new FeedObject(time, null);
             }
         }
@@ -67,6 +70,7 @@ public class SmartDiscretiserOnSynchronisedFeed implements Feed {
                 buffers.get(listener).add(feedObject);
             }
         }
+        timeStamp = feedObject.getTimeStamp();
         return feedObject;
     }
 
@@ -78,5 +82,10 @@ public class SmartDiscretiserOnSynchronisedFeed implements Feed {
     @Override
     public void addChild(Feed feed) {
         buffers.put(feed, new LinkedList<FeedObject>());
+    }
+
+    @Override
+    public long getLatestTime() {
+        return timeStamp;
     }
 }

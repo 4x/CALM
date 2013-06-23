@@ -16,12 +16,14 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class FXStreetCalendarRSSFeed extends RowFeed{
 
     private Thread updater;
-    private long pollingFrequency = 5000;
+    private long pollingFrequency = 10000;
     private long reached = 0;
     private HashSet<Integer> existing = new HashSet<Integer>();
 
     private XmlReader reader = null;
     private SyndFeed feed;
+
+    private long timeStamp;
 
     private int max = 100;
     private Queue<FeedObject> queue = new ArrayBlockingQueue<FeedObject>(max);
@@ -30,9 +32,17 @@ public class FXStreetCalendarRSSFeed extends RowFeed{
 
 
     private boolean closed = false;
+    private URL url;
 
     public FXStreetCalendarRSSFeed() {
 
+        try {
+            url = new URL("http://feeds.fxstreet.com/fundamental/economic-calendar?format=xml");
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
         updater = new Thread() {
             @Override
             public void run() {
@@ -40,44 +50,67 @@ public class FXStreetCalendarRSSFeed extends RowFeed{
                 {
                     if(queue.size() < max)
                     {
-                        Stack<SyndEntry> stack = new Stack<SyndEntry>();
+                        try{
+                            if(reader != null){
+                                reader.close();
+                            }
+                            reader = new XmlReader(url);
+                            feed = new SyndFeedInput().build(reader);
+                        }
+                        catch (Exception e){
+                            e.printStackTrace();
+                        }
+
+                        TreeMap<Long, LinkedList<SyndEntry>> list = new TreeMap<>();
                         for (Iterator i = feed.getEntries().iterator(); i.hasNext();) {
                             SyndEntry entry = (SyndEntry) i.next();
 
-                            if(entry.getPublishedDate().getTime() >= reached && !existing.contains(entry.getTitle().hashCode()))
+                            long t = entry.getPublishedDate().getTime();
+                            if(t >= reached && !existing.contains(entry.getTitle().hashCode()))
                             {
-                                stack.add(entry);
+                                if(!list.containsKey(t)) {
+                                    list.put(t, new LinkedList<SyndEntry>());
+                                }
+                                list.get(t).add(entry);
                             }
                         }
 
-                        while(!stack.empty())
+                        while(!list.isEmpty())
                         {
-                            SyndEntry entry = stack.pop();
-                            Date date = entry.getPublishedDate();
+                            try{
+                                SyndEntry entry = list.firstEntry().getValue().poll();
+                                if(list.firstEntry().getValue().isEmpty()){
+                                    list.remove(list.firstKey());
+                                }
+                                Date date = entry.getPublishedDate();
 
-                            String title = entry.getTitle();
+                                String title = entry.getTitle();
 
-                            String country = FXStreetCountryMapping.getMapping(title.split(":")[0]);
-                            String event = title.split(":")[1].substring(1);
+                                String country = FXStreetCountryMapping.getMapping(title.split(":")[0]);
+                                String event = title.split(":")[1].substring(1);
 
-                            if(reached < date.getTime())
-                            {
-                                reached = date.getTime();
-                                existing.clear();
+                                if(reached < date.getTime())
+                                {
+                                    reached = date.getTime();
+                                    existing.clear();
+                                }
+                                existing.add(title.hashCode());
+
+                                String content = entry.getDescription().getValue();
+                                String[] parts = content.split("<td>");
+
+                                int volatility = 0;
+
+                                double consensus = StringUtils.extractDouble(parts[8]);
+                                double actual = StringUtils.extractDouble(parts[9]);
+                                double previous = StringUtils.extractDouble(parts[10]);
+
+                                Object[] data = new Object[]{event, country, volatility, actual, previous, consensus};
+                                queue.add(new FeedObject(date.getTime(), data));
                             }
-                            existing.add(title.hashCode());
-
-                            String content = entry.getDescription().getValue();
-                            String[] parts = content.split("<td>");
-
-                            int volatility = 0;
-
-                            double consensus = StringUtils.extractDouble(parts[8]);
-                            double actual = StringUtils.extractDouble(parts[9]);
-                            double previous = StringUtils.extractDouble(parts[10]);
-
-                            Object[] data = new Object[]{event, country, volatility, actual, previous, consensus};
-                            queue.add(new FeedObject(date.getTime(), data));
+                            catch (Exception e){
+                                e.printStackTrace();
+                            }
                         }
                     }
                     try {
@@ -88,16 +121,6 @@ public class FXStreetCalendarRSSFeed extends RowFeed{
                 }
             }
         };
-
-        try {
-            URL url = new URL("http://feeds.fxstreet.com/fundamental/economic-calendar?format=xml");
-            reader = new XmlReader(url);
-            feed = new SyndFeedInput().build(reader);
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
 
         updater.start();
     }
@@ -120,7 +143,7 @@ public class FXStreetCalendarRSSFeed extends RowFeed{
     }
 
     @Override
-    public FeedObject readNext(Object caller) {
+    public synchronized FeedObject readNext(Object caller) {
         if(buffers.containsKey(caller) && buffers.get(caller).size() > 0)
         {
             return buffers.get(caller).pollFirst();
@@ -142,6 +165,7 @@ public class FXStreetCalendarRSSFeed extends RowFeed{
                     buffers.get(listener).add(feedObject);
                 }
             }
+            timeStamp = feedObject.getTimeStamp();
             return feedObject;
         }
     }
@@ -154,5 +178,10 @@ public class FXStreetCalendarRSSFeed extends RowFeed{
     @Override
     public void addChild(Feed feed) {
         buffers.put(feed, new LinkedList<FeedObject>());
+    }
+
+    @Override
+    public long getLatestTime() {
+        return timeStamp;
     }
 }

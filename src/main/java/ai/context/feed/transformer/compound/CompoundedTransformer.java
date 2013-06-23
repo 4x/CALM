@@ -11,15 +11,15 @@ public abstract class CompoundedTransformer implements Feed {
     private SynchronisedFeed feed;
     private HashMap<Feed, LinkedList<FeedObject>> buffers = new HashMap<>();
 
+    private long timeStamp;
     protected CompoundedTransformer(Feed[] feeds) {
         for(Feed feed : feeds)
         {
             this.feed = new SynchronisedFeed(feed, this.feed);
         }
-        this.feed.init();
     }
 
-    public FeedObject readNext(Object caller)
+    public synchronized FeedObject readNext(Object caller)
     {
         if(buffers.containsKey(caller) && buffers.get(caller).size() > 0)
         {
@@ -27,7 +27,7 @@ public abstract class CompoundedTransformer implements Feed {
         }
 
         FeedObject data = feed.getNextComposite(this);
-
+        timeStamp = data.getTimeStamp();
         FeedObject feedObject = new FeedObject(data.getTimeStamp(), getOutput(data.getData()));
         for(Feed listener : buffers.keySet()){
             if(listener != caller){
@@ -47,5 +47,10 @@ public abstract class CompoundedTransformer implements Feed {
     @Override
     public void addChild(Feed feed) {
         buffers.put(feed, new LinkedList<FeedObject>());
+    }
+
+    @Override
+    public long getLatestTime() {
+        return timeStamp;
     }
 }

@@ -6,15 +6,16 @@ import ai.context.feed.FeedObject;
 public abstract class UnPaddedTransformer implements Feed{
     private Feed[] feeds;
 
+    private long timeStamp = 0;
+
     protected UnPaddedTransformer(Feed[] feeds) {
         this.feeds = feeds;
     }
 
-    public FeedObject readNext(Object caller)
+    public synchronized FeedObject readNext(Object caller)
     {
         Object[] data = new Object[feeds.length];
         int index = 0;
-        long timeStamp = 0;
 
         for(Feed feed : feeds)
         {
@@ -34,5 +35,8 @@ public abstract class UnPaddedTransformer implements Feed{
         return true;
     }
 
-
+    @Override
+    public long getLatestTime() {
+        return timeStamp;
+    }
 }

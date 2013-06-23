@@ -17,6 +17,8 @@ public class LinearDiscretiser implements Feed{
 
     private Feed feed;
 
+    private long timeStamp;
+
     public LinearDiscretiser(double resolution, double benchmark, Feed feed, int feedComponent)
     {
         this.benchmark = benchmark;
@@ -25,7 +27,7 @@ public class LinearDiscretiser implements Feed{
         this.feed = feed;
     }
 
-    public FeedObject readNext(Object caller) {
+    public synchronized FeedObject readNext(Object caller) {
 
         FeedObject in = feed.readNext(this);
         Object input = in.getData();
@@ -45,6 +47,7 @@ public class LinearDiscretiser implements Feed{
         value = (Double)list.get(feedComponent);
 
         Object data = getLinearDiscretisation(value, benchmark, resolution);
+        timeStamp = in.getTimeStamp();
         return new FeedObject(in.getTimeStamp(), data);
     }
 
@@ -61,5 +64,10 @@ public class LinearDiscretiser implements Feed{
     @Override
     public boolean hasNext() {
         return feed.hasNext();
+    }
+
+    @Override
+    public long getLatestTime() {
+        return timeStamp;
     }
 }

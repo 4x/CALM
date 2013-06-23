@@ -26,7 +26,7 @@ public class TestCSVFeeds {
                 DataType.EXTRACTABLE_DOUBLE,
                 DataType.EXTRACTABLE_DOUBLE};
 
-        CSVFeed feed = new CSVFeed("C:\\Users\\Oblene\\Desktop\\Sandbox\\Data\\feeds\\Calendar_2008.csv", "yyyyMMdd HH:mm:ss", types);
+        CSVFeed feed = new CSVFeed("C:\\Users\\Oblene\\Desktop\\Sandbox\\Data\\feeds\\Calendar_2008.csv", "yyyyMMdd HH:mm:ss", types, null);
 
         for(int i = 0; i < 100; i++)
         {
@@ -52,10 +52,9 @@ public class TestCSVFeeds {
         RowBasedTransformer filtered = new RowBasedTransformer(feed.getCopy(), 60*60*1000L,  new int[]{0}, new String[]{"Nonfarm Payrolls"}, new int[]{3, 4, 5}, container);
         feed.addChild(filtered);
 
-        feed = new CSVFeed("C:\\Users\\Oblene\\Desktop\\Sandbox\\Data\\feeds\\EURUSD_5 Mins_Bid_2008.01.01_2012.12.31.csv", "yyyy.MM.dd HH:mm:ss", typesPrice);
+        feed = new CSVFeed("C:\\Users\\Oblene\\Desktop\\Sandbox\\Data\\feeds\\EURUSD_5 Mins_Bid_2008.01.01_2012.12.31.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, null);
         SynchronisedFeed sFeed = new SynchronisedFeed(feed, null);
         sFeed = new SynchronisedFeed(filtered, sFeed);
-        sFeed.init();
 
         for(int i = 0; i < 4000; i++)
         {

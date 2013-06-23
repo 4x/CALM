@@ -7,6 +7,8 @@ import com.dukascopy.api.system.IClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -17,6 +19,8 @@ public class BlackBox implements IStrategy{
     private long maxWaitForFill = 1000L * 60L * 5L;
     private double available = 0;
     private IEngine engine = null;
+
+    private List<OpenPosition> waitingPositions = new ArrayList<>();
 
     private TreeMap<String, IOrder> positions = new TreeMap<>();
 
@@ -32,6 +36,39 @@ public class BlackBox implements IStrategy{
 
     @Override
     public void onTick(Instrument instrument, ITick tick) throws JFException {
+
+        synchronized (waitingPositions){
+            for(OpenPosition position : waitingPositions){
+                try{
+                    double amount = Operations.roundFloor(((available / 100) * leverage) / 1000000, 4);
+                    if(amount > 0){
+                        long tNow = System.currentTimeMillis();
+                        IOrder out = null;
+                        String direction = "LONG";
+                        if(position.isLong()){
+                            out = engine.submitOrder("" + tNow, Instrument.EURUSD, IEngine.OrderCommand.BUYLIMIT, amount,
+                                    Operations.roundFloor(position.getStart(), 5), 0.8,
+                                    Operations.roundFloor(position.getStopLoss(), 5),
+                                    Operations.roundFloor(position.getTakeProfit(), 5));
+                        }
+                        else {
+                            direction = "SHORT";
+                            out = engine.submitOrder("" + tNow, Instrument.EURUSD, IEngine.OrderCommand.SELLLIMIT, amount,
+                                    Operations.roundFloor(position.getStart(), 5), 0.8,
+                                    Operations.roundFloor(position.getStopLoss(), 5),
+                                    Operations.roundFloor(position.getTakeProfit(), 5));
+                        }
+
+                        LOGGER.info("OPENING: " + out.getLabel() + ", " + out.getOriginalAmount() + ", " + direction);
+                        positions.put("" + tNow, out);
+                    }
+                }
+                catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+            waitingPositions.clear();
+        }
     }
 
     @Override
@@ -41,6 +78,7 @@ public class BlackBox implements IStrategy{
             IOrder order = out.getValue();
             if(tNow - order.getCreationTime() > maxWaitForFill && order.getState() == IOrder.State.OPENED){
                 order.close();
+                LOGGER.info("Order " + order.getLabel() + " has not been filled yet, closing it...");
             }
         }
     }
@@ -51,6 +89,11 @@ public class BlackBox implements IStrategy{
             IOrder order = message.getOrder();
             positions.remove(order.getLabel());
             LOGGER.info(order.getLabel() + " has closed, PNL: " + order.getProfitLossInUSD() + ", COMMISSION: " + order.getCommissionInUSD());
+        }
+        else if(message.getType() == IMessage.Type.ORDER_FILL_OK){
+            IOrder order = message.getOrder();
+            positions.remove(order.getLabel());
+            LOGGER.info(order.getLabel() + " has been filled at " + order.getOpenPrice() + " for " + order.getOriginalAmount());
         }
     }
 
@@ -74,27 +117,8 @@ public class BlackBox implements IStrategy{
 
     public void onDecision(OpenPosition position) throws JFException {
 
-        double amount = Operations.roundFloor(((available / 100) * leverage)/1000000, 4);
-        if(amount > 0){
-            long tNow = System.currentTimeMillis();
-            IOrder out = null;
-            String direction = "LONG";
-            if(position.isLong()){
-                out = engine.submitOrder("" + tNow, Instrument.EURUSD, IEngine.OrderCommand.BUYLIMIT, amount,
-                        Operations.roundFloor(position.getStart(), 5), 0.8,
-                        Operations.roundFloor(position.getStopLoss(), 5),
-                        Operations.roundFloor(position.getTakeProfit(), 5));
-            }
-            else {
-                direction = "SHORT";
-                out = engine.submitOrder("" + tNow, Instrument.EURUSD, IEngine.OrderCommand.SELLLIMIT, amount,
-                        Operations.roundFloor(position.getStart(), 5), 0.8,
-                        Operations.roundFloor(position.getStopLoss(), 5),
-                        Operations.roundFloor(position.getTakeProfit(), 5));
-            }
-
-            LOGGER.info("OPENING: " + out.getLabel() + ", " + out.getOriginalAmount() + ", " + direction);
-            positions.put("" + tNow, out);
+        synchronized (waitingPositions){
+            waitingPositions.add(position);
         }
     }
 }

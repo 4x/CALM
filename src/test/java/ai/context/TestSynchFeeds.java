@@ -38,8 +38,6 @@ public class TestSynchFeeds {
         f[2].add(new FeedObject<Integer>(25, 3));
         f[2].add(new FeedObject<Integer>(35, 4));
         f[2].add(new FeedObject<Integer>(45, 5));
-
-        f[0].init();
     }
 
     @Test

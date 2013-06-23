@@ -3,15 +3,41 @@ package ai.context;
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
 import ai.context.feed.transformer.compound.AmplitudeWavelengthTransformer;
-import ai.context.feed.transformer.series.RSITransformer;
-import ai.context.feed.transformer.series.StandardDeviationTransformer;
-import ai.context.feed.transformer.series.VarianceTransformer;
+import ai.context.feed.transformer.series.learning.MATransformer;
+import ai.context.feed.transformer.series.learning.RSITransformer;
+import ai.context.feed.transformer.series.learning.StandardDeviationTransformer;
+import ai.context.feed.transformer.series.learning.VarianceTransformer;
 import ai.context.feed.transformer.single.unpadded.LinearDiscretiser;
 import ai.context.feed.transformer.single.unpadded.LogarithmicDiscretiser;
 import com.tictactec.ta.lib.MAType;
 import org.junit.Test;
 
 public class TestTransformer {
+
+    @Test
+    public void testGoLive()
+    {
+        TestFeed1 primary = new TestFeed1();
+        MATransformer transformer = new MATransformer(MAType.Sma, 10, primary);
+        primary.addChild(transformer);
+
+        long t = System.currentTimeMillis();
+        for (int i = 0; i < 145; i++)
+        {
+            FeedObject data = transformer.readNext(this);
+            System.out.println("[" + i + "] " + data.getTimeStamp() + " " + data.getData() + " " + primary.getLatestTime());
+        }
+        System.err.println(System.currentTimeMillis() - t);
+
+        transformer.goLive();
+        t = System.currentTimeMillis();
+        for (int i = 0; i < 100; i++)
+        {
+            FeedObject data = transformer.readNext(this);
+            System.out.println("[" + i + "] " + data.getTimeStamp() + " " + data.getData() + " " + primary.getLatestTime());
+        }
+        System.err.println(System.currentTimeMillis() - t);
+    }
 
     @Test
     public void testVariance()
@@ -98,6 +124,7 @@ class TestFeed1 implements Feed{
     @Override
     public FeedObject readNext(Object caller) {
         t++;
+        System.out.println("From primary source: " + t);
         return new FeedObject(t, (double) t % 20);
     }
 
@@ -109,5 +136,10 @@ class TestFeed1 implements Feed{
     @Override
     public void addChild(Feed feed) {
         //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public long getLatestTime() {
+        return t;
     }
 }

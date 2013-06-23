@@ -5,16 +5,26 @@ import ai.context.feed.FeedObject;
 import ai.context.util.io.Channel;
 import com.dukascopy.api.*;
 import com.dukascopy.api.system.IClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Date;
 
 public class DukascopyFeed implements IStrategy, Feed {
 
-    private IClient client;
-    private Channel<FeedObject> channel = new Channel(100);
-    private Period interval;
+    private static final Logger LOGGER = LoggerFactory.getLogger(DukascopyFeed.class);
 
-    public DukascopyFeed(IClient client, Period interval){
+    private IClient client;
+    private Channel<FeedObject> channel = new Channel(10000);
+    private Period interval;
+    private long timeStamp;
+
+    private Instrument instrument;
+
+    public DukascopyFeed(IClient client, Period interval, Instrument instrument){
         this.client = client;
         this.interval = interval;
+        this.instrument = instrument;
         client.startStrategy(this);
     }
 
@@ -29,10 +39,11 @@ public class DukascopyFeed implements IStrategy, Feed {
 
     @Override
     public void onBar(Instrument instrument, Period period, IBar askBar, IBar bidBar) throws JFException {
-        if(period == interval){
-            long timeStamp = askBar.getTime();
+        if(period == interval && instrument == this.instrument){
+            timeStamp = askBar.getTime();
             Double[] data = new Double[] {bidBar.getOpen(), bidBar.getHigh(), bidBar.getLow(), bidBar.getClose(), bidBar.getVolume()};
 
+            LOGGER.info("ADDED candlestick: " + new Date(timeStamp) + " at " + new Date());
             channel.put(new FeedObject(timeStamp, data));
         }
     }
@@ -69,5 +80,10 @@ public class DukascopyFeed implements IStrategy, Feed {
 
     @Override
     public void addChild(Feed feed) {
+    }
+
+    @Override
+    public long getLatestTime() {
+        return timeStamp;
     }
 }

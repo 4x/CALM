@@ -4,7 +4,6 @@ import ai.context.container.TimedContainer;
 import ai.context.core.LearnerService;
 import ai.context.util.mathematics.MinMaxAggregator;
 import ai.context.util.measurement.OpenPosition;
-import ai.context.util.measurement.LoggerTimer;
 import ai.context.util.trading.BlackBox;
 import ai.context.util.trading.PositionFactory;
 import com.dukascopy.api.JFException;
@@ -44,6 +43,7 @@ public class Learner implements Runnable, TimedContainer{
 
     private boolean inLiveTrading = false;
     private BlackBox blackBox;
+    private boolean live;
 
     public Learner(String outputDir){
         try {
@@ -72,50 +72,44 @@ public class Learner implements Runnable, TimedContainer{
 
         while (true)
         {
-            LoggerTimer.printTimeDelta("1", this);
-
             DataObject data = trainingLearnerFeed.readNext();
             if(data == null)
             {
                 break;
             }
-            LoggerTimer.printTimeDelta("2", this);
-
             tNow = data.getTimeStamp();
             if(tNow % (6 * 3600 * 1000L) == 0)
             {
                 System.out.println("It is now: " + new Date(tNow));
             }
 
-            LoggerTimer.printTimeDelta("3", this);
-
             int[] signal = data.getSignal();
-            LoggerTimer.printTimeDelta("4", this);
-
             TreeMap<Integer, Double> distribution = learner.getActionDistribution(signal);
             TreeMap<Double, Double> prediction = new TreeMap<Double, Double>();
             for(Map.Entry<Integer, Double> entry : distribution.entrySet())
             {
                 prediction.put(data.getValue()[0] + entry.getKey() * actionResolution, entry.getValue());
             }
-            LoggerTimer.printTimeDelta("5", this);
-
             recentPredictions.add(prediction);
             while (!recentData.isEmpty() && recentData.firstEntry().getValue().getTimeStamp() < (tNow - timeShift))
             {
                 int[] s = recentData.firstEntry().getValue().getSignal();
                 long t =  recentData.firstEntry().getValue().getTimeStamp();
-                learner.addStateAction(s, recentAggregators.get(t).getMax());
-                learner.addStateAction(s, recentAggregators.get(t).getMin());
 
-                recentAggregators.remove(t);
-                recentData.remove(t);
-                if(!recentPredictions.isEmpty()) {
-                    removeFromPrediction(recentPredictions.removeFirst());
+                if(recentAggregators.get(t).getMax() != null){
+                    learner.addStateAction(s, recentAggregators.get(t).getMax());
+                    learner.addStateAction(s, recentAggregators.get(t).getMin());
+
+                    recentAggregators.remove(t);
+                    recentData.remove(t);
+                    if(!recentPredictions.isEmpty()) {
+                        removeFromPrediction(recentPredictions.removeFirst());
+                    }
+                }
+                else {
+                    break;
                 }
             }
-            LoggerTimer.printTimeDelta("6", this);
-
 
             for(DataObject cursor : recentData.values()){
 
@@ -123,13 +117,9 @@ public class Learner implements Runnable, TimedContainer{
                 recentAggregators.get(cursor.getTimeStamp()).addValue(data.getValue()[2] - cursor.getValue()[0]);
             }
 
-            LoggerTimer.printTimeDelta("7", this);
-
             updateOverallPrediction(prediction);
             recentData.put(data.getTimeStamp(), data);
             recentAggregators.put(data.getTimeStamp(), new MinMaxAggregator());
-
-            LoggerTimer.printTimeDelta("8", this);
 
             HashSet<OpenPosition> closed = new HashSet<OpenPosition>();
             for(OpenPosition position : positions)
@@ -160,8 +150,6 @@ public class Learner implements Runnable, TimedContainer{
                     successMap.get(x).put(y, 1.0 + count);
                 }
             }
-            LoggerTimer.printTimeDelta("9", this);
-
             positions.removeAll(closed);
 
             OpenPosition position = PositionFactory.getPosition(tNow, data.getValue()[0], prediction);
@@ -178,8 +166,6 @@ public class Learner implements Runnable, TimedContainer{
                     positions.add(position);
                 }
             }
-            LoggerTimer.printTimeDelta("10", this);
-
         }
     }
 
@@ -206,6 +192,7 @@ public class Learner implements Runnable, TimedContainer{
     private void appendToFile(String data){
         try {
             fileOutputStream.write(data + "\n");
+            fileOutputStream.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -258,9 +245,14 @@ public class Learner implements Runnable, TimedContainer{
 
     public void setLive() {
         inLiveTrading = true;
+        PositionFactory.setLive(true);
     }
 
     public void setBlackBox(BlackBox blackBox) {
         this.blackBox = blackBox;
+    }
+
+    public boolean isLive() {
+        return inLiveTrading;
     }
 }

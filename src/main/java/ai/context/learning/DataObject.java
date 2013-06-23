@@ -1,5 +1,7 @@
 package ai.context.learning;
 
+import java.util.Arrays;
+
 public class DataObject {
 
     private final long timeStamp;
@@ -22,5 +24,14 @@ public class DataObject {
 
     public long getTimeStamp() {
         return timeStamp;
+    }
+
+    @Override
+    public String toString() {
+        return "DataObject{" +
+                "timeStamp=" + timeStamp +
+                ", signal=" + Arrays.toString(signal) +
+                ", value=" + Arrays.toString(value) +
+                '}';
     }
 }

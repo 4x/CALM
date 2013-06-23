@@ -3,14 +3,14 @@ package ai.context.core;
 import ai.context.util.learning.AmalgamateUtils;
 import ai.context.util.learning.ClusteredCopulae;
 import ai.context.util.mathematics.CorrelationCalculator;
-import ai.context.util.measurement.LoggerTimer;
 
 import java.util.*;
+import java.util.concurrent.*;
 
 public class LearnerService {
 
-    private HashMap<String, StateActionPair> population = new HashMap<String, StateActionPair>();
-    private TreeMap<Integer, TreeMap<Integer, HashSet<StateActionPair>>> indices = new TreeMap<Integer, TreeMap<Integer, HashSet<StateActionPair>>>();
+    private ConcurrentHashMap<String, StateActionPair> population = new ConcurrentHashMap<String, StateActionPair>();
+    private ConcurrentSkipListMap<Integer, ConcurrentSkipListMap<Integer, CopyOnWriteArraySet<StateActionPair>>> indices = new ConcurrentSkipListMap<>();
 
     private double [] correlationWeights;
 
@@ -28,6 +28,36 @@ public class LearnerService {
     private int tolerance = 10;
     private double copulaToUniversal = 20.0;
     private double minDevForMerge = 0.0;
+    private boolean merging = false;
+
+    private LearnerService thisService = this;
+
+    private ExecutorService mergeExecutor = Executors.newCachedThreadPool();
+
+    private Runnable batchMergeTask = new Runnable() {
+        @Override
+        public void run() {
+            if(!merging){
+                thisService.mergeStates();
+            }
+        }
+    };
+
+    private class MergeTask implements Runnable{
+
+        private StateActionPair sap1;
+        private StateActionPair sap2;
+
+        private MergeTask(StateActionPair sap1, StateActionPair sap2) {
+            this.sap1 = sap1;
+            this.sap2 = sap2;
+        }
+
+        @Override
+        public void run() {
+            thisService.merge(sap1, sap2);
+        }
+    };
 
     private TreeMap<Integer, Long> distribution = new TreeMap<Integer, Long>();
 
@@ -73,7 +103,6 @@ public class LearnerService {
 
     public synchronized void addStateAction(int[] state, double movement){
 
-        LoggerTimer.printTimeDelta("Adding observation", this);
         int actionClass = (int) (movement / actionResolution);
         if(!distribution.containsKey(actionClass))
         {
@@ -82,7 +111,6 @@ public class LearnerService {
 
         distribution.put(actionClass, distribution.get(actionClass) + 1);
 
-        LoggerTimer.printTimeDelta("Refreshing correlations", this);
         refreshCorrelations(state, movement);
         boolean newState = false;
 
@@ -90,26 +118,22 @@ public class LearnerService {
 
         if(!population.containsKey(id))
         {
-            LoggerTimer.printTimeDelta("Adding new state", this);
             newState = true;
             StateActionPair stateActionPair = new StateActionPair(id, state, actionResolution);
             addState(stateActionPair);
         }
 
-        LoggerTimer.printTimeDelta("Getting similar", this);
         Set<Map.Entry<StateActionPair, Double>> entries = getSimilarStates(state).entrySet();
         for(Map.Entry<StateActionPair, Double> entry : entries)
         {
-            LoggerTimer.printTimeDelta("Getting weight for deviation", this);
             double weight = getWeightForDeviation(entry.getValue());
-            LoggerTimer.printTimeDelta("Adding movement", this);
             entry.getKey().newMovement(movement, weight);
-            LoggerTimer.printTimeDelta("Finished adding", this);
         }
 
         if(newState && population.size() > maxPopulation)
         {
-            mergeStates();
+            mergeExecutor.execute(batchMergeTask);
+            //mergeStates();
         }
 
     }
@@ -137,7 +161,7 @@ public class LearnerService {
         }
     }
 
-    private synchronized Map<StateActionPair, Double> getSimilarStates(int[] state)
+    private Map<StateActionPair, Double> getSimilarStates(int[] state)
     {
         correlationWeights = copulae.getCorrelationWeights(state);
         if(correlations != null)
@@ -169,9 +193,9 @@ public class LearnerService {
             {
                 int positionInTree = state[index];
 
-                TreeMap<Integer, HashSet<StateActionPair>> head = new TreeMap<Integer, HashSet<StateActionPair>>();
+                TreeMap<Integer, CopyOnWriteArraySet<StateActionPair>> head = new TreeMap<Integer, CopyOnWriteArraySet<StateActionPair>>();
                 head.putAll(indices.get(index).headMap(positionInTree));
-                TreeMap<Integer, HashSet<StateActionPair>> tail = new TreeMap<Integer, HashSet<StateActionPair>>();
+                TreeMap<Integer, CopyOnWriteArraySet<StateActionPair>> tail = new TreeMap<Integer, CopyOnWriteArraySet<StateActionPair>>();
                 tail.putAll(indices.get(index).tailMap(positionInTree));
 
                 for(int position : head.descendingKeySet())
@@ -212,8 +236,6 @@ public class LearnerService {
                 break;
             }
         }
-        LoggerTimer.printTimeDelta("MAP: " + map.size(), this);
-
         return map;
     }
 
@@ -246,6 +268,7 @@ public class LearnerService {
 
     private synchronized void mergeStates()
     {
+        merging = true;
         double minDevForMerge = 2 * getMinDevForMerge();
         long t = System.currentTimeMillis();
         System.err.println("Starting merge process (" + minDevForMerge + ")");
@@ -262,11 +285,7 @@ public class LearnerService {
                     StateActionPair counterpart = entry.getKey();
                     if(entry.getValue() < minDevForMerge && !pair.getId().equals(counterpart.getId()))
                     {
-                        StateActionPair newState = pair.merge(counterpart);
-                        removeState(pair);
-                        removeState(counterpart);
-
-                        addState(newState);
+                        merge(pair, counterpart);
                         merged = true;
                         break;
                     }
@@ -284,6 +303,18 @@ public class LearnerService {
         }
 
         System.err.println("Ending merge: " + (System.currentTimeMillis() - t) + "ms");
+        merging = false;
+    }
+
+    private void merge(StateActionPair sap1, StateActionPair sap2){
+
+        if(population.containsKey(sap1.getId()) && population.containsKey(sap2.getId())){
+            StateActionPair newState = sap1.merge(sap2);
+            removeState(sap1);
+            removeState(sap2);
+
+            addState(newState);
+        }
     }
 
     private double getMinDevForMerge()
@@ -314,33 +345,37 @@ public class LearnerService {
 
     private synchronized void removeState(StateActionPair pair)
     {
-        population.remove(pair.getId());
+        if(population.containsKey(pair.getId())){
+            population.remove(pair.getId());
 
-        for(int index = 0; index < pair.getAmalgamate().length; index++)
-        {
-            int signalValue = pair.getAmalgamate()[index];
-            indices.get(index).get(signalValue).remove(pair);
+            for(int index = 0; index < pair.getAmalgamate().length; index++)
+            {
+                int signalValue = pair.getAmalgamate()[index];
+                indices.get(index).get(signalValue).remove(pair);
+            }
         }
     }
 
     private synchronized void addState(StateActionPair pair)
     {
-        population.put(pair.getId(), pair);
-        int[] state = pair.getAmalgamate();
-        for(int index = 0; index < state.length; index++)
-        {
-            int signalValue = state[index];
-            TreeMap<Integer, HashSet<StateActionPair>> subIndex = indices.get(index);
-            if(!indices.containsKey(index))
+        if(!population.containsKey(pair.getId())){
+            population.put(pair.getId(), pair);
+            int[] state = pair.getAmalgamate();
+            for(int index = 0; index < state.length; index++)
             {
-                subIndex = new TreeMap<Integer, HashSet<StateActionPair>>();
-                indices.put(index, subIndex);
+                int signalValue = state[index];
+                ConcurrentSkipListMap<Integer, CopyOnWriteArraySet<StateActionPair>> subIndex = indices.get(index);
+                if(!indices.containsKey(index))
+                {
+                    subIndex = new ConcurrentSkipListMap<Integer, CopyOnWriteArraySet<StateActionPair>>();
+                    indices.put(index, subIndex);
+                }
+                if(!subIndex.containsKey(signalValue))
+                {
+                    subIndex.put(signalValue, new CopyOnWriteArraySet<StateActionPair>());
+                }
+                subIndex.get(signalValue).add(pair);
             }
-            if(!subIndex.containsKey(signalValue))
-            {
-                subIndex.put(signalValue, new HashSet<StateActionPair>());
-            }
-            subIndex.get(signalValue).add(pair);
         }
     }
 
@@ -376,7 +411,7 @@ public class LearnerService {
         return correlations;
     }
 
-    public TreeMap<Integer, HashSet<StateActionPair>> getIndexForVariable(int variable)
+    public ConcurrentSkipListMap<Integer, CopyOnWriteArraySet<StateActionPair>> getIndexForVariable(int variable)
     {
         return indices.get(variable);
     }

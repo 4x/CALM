@@ -12,6 +12,7 @@ import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class CSVFeed extends RowFeed {
 
@@ -25,21 +26,65 @@ public class CSVFeed extends RowFeed {
     private String timeStampRegex;
 
     private StitchableFeed stitchableFeed;
-    private CSVReader stitchReader;
     private boolean stitching = false;
-    private long timeStamp;
+    private long timeStamp = 0;
     private int lastLineHash = 0;
+    private String startDateTime;
+
+    private long interval = 1000;
+
+    protected boolean paddable = false;
+
+    private Object[] paddingData;
+
+    private boolean testing = false;
+
+    private Object previousData;
+    private FeedObject previousLive;
+    private ArrayBlockingQueue<FeedObject> liveData = new ArrayBlockingQueue<FeedObject>(1000);
 
     private HashMap<Feed, LinkedList<FeedObject>> buffers = new HashMap<>();
 
-    public CSVFeed(String fileName, String timeStampRegex, DataType[] types)
+    public CSVFeed(String fileName, String timeStampRegex, DataType[] types, String startDateTime)
     {
         this.format = new SimpleDateFormat(timeStampRegex);
         this.fileName = fileName;
         this.timeStampRegex = timeStampRegex;
+        this.startDateTime = startDateTime;
         format.setTimeZone(TimeZone.getTimeZone("GMT"));
+        if(startDateTime != null){
+            try {
+                this.timeStamp = format.parse(startDateTime).getTime();
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }
 
         this.types = types;
+        paddingData = new Object[types.length];
+        int i = 0;
+        for (DataType type : types){
+            switch (type){
+                case DOUBLE:
+                    paddingData[i] = 0.0;
+                    break;
+                case EXTRACTABLE_DOUBLE:
+                    paddingData[i] = 0.0;
+                    break;
+                case INTEGER:
+                    paddingData[i] = 0;
+                    break;
+                case LONG:
+                    paddingData[i] = 0L;
+                    break;
+                case OTHER:
+                    paddingData[i] = "PADDING";
+                    break;
+                default:
+                    paddingData[i] = "PADDING";
+            }
+            i++;
+        }
         InputStream inputStream = null;
         try {
             inputStream = new FileInputStream(fileName);
@@ -62,7 +107,7 @@ public class CSVFeed extends RowFeed {
     }
 
     @Override
-    public FeedObject readNext(Object caller){
+    public synchronized FeedObject readNext(Object caller){
 
         if(buffers.containsKey(caller) && buffers.get(caller).size() > 0)
         {
@@ -79,80 +124,74 @@ public class CSVFeed extends RowFeed {
                         }
                         else {
                             stitching = true;
-                            System.out.println("Switched to stitching");
-                            InputStream inputStream = null;
-                            try {
-                                inputStream = new FileInputStream(stitchableFeed.getLiveFileName());
-                            } catch (FileNotFoundException e) {
-                                e.printStackTrace();
-                            }
-                            stitchReader = new CSVReader(new InputStreamReader(inputStream), ',', '"', 1);
-                            nextLine = stitchReader.readNext();
-                            if(nextLine == null){
-                                stitchableFeed.catchUp();
-                                System.out.println("Caught up");
-                                FeedObject toReturn = stitchableFeed.readNext(this);
-                                append(toReturn);
-                                return toReturn;
-                            }
-                        }
-                    }
-                }
-                else {
-                    if(stitchableFeed.isCaughtUp()){
-                        FeedObject toReturn = stitchableFeed.readNext(this);
-                        append(toReturn);
-                        return toReturn;
-                    }
-                    else{
-                        nextLine = stitchReader.readNext();
-                        if(nextLine == null){
-                            stitchableFeed.catchUp();
-                            System.out.println("Caught up");
-                            FeedObject toReturn = stitchableFeed.readNext(this);
+                            System.out.println("Switched to stitching " + fileName);
+                            startCollectingLive();
+                            FeedObject toReturn = getNextLive();
                             append(toReturn);
+                            this.timeStamp = toReturn.getTimeStamp();
+                            for(Feed listener : buffers.keySet()){
+                                if(listener != caller){
+                                    buffers.get(listener).add(toReturn);
+                                }
+                            }
                             return toReturn;
                         }
                     }
                 }
+                else {
+                    FeedObject toReturn = getNextLive();
+                    append(toReturn);
+                    this.timeStamp = toReturn.getTimeStamp();
+                    for(Feed listener : buffers.keySet()){
+                        if(listener != caller){
+                            buffers.get(listener).add(toReturn);
+                        }
+                    }
+                    return toReturn;
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
 
             try {
                 timeStamp = format.parse(nextLine[0]).getTime();
             } catch (ParseException e) {
                 e.printStackTrace();
             }
-            if(!stitching || timeStamp > this.timeStamp || (timeStamp == this.timeStamp && nextLine.hashCode() == lastLineHash)){
+            if(timeStamp > this.timeStamp || (timeStamp == this.timeStamp && nextLine.hashCode() != lastLineHash)){
                 break;
             }
         }
         lastLineHash = nextLine.hashCode();
 
-        Object[] data = new Object[types.length];
-        for (int i = 0; i < types.length; i++)
-        {
-            switch (types[i])
+        try{
+            Object[] data = new Object[types.length];
+            for (int i = 0; i < types.length; i++)
             {
-                case DOUBLE:
-                    data[i] = Double.parseDouble(nextLine[i + 1]);
-                    break;
-                case INTEGER:
-                    data[i] = Integer.parseInt(nextLine[i + 1]);
-                    break;
-                case LONG:
-                    data[i] = Long.parseLong(nextLine[i + 1]);
-                    break;
-                case EXTRACTABLE_DOUBLE:
-                    data[i] = StringUtils.extractDouble(nextLine[i + 1]);
-                    break;
-                default:
-                    data[i] = nextLine[i + 1];
+                switch (types[i])
+                {
+                    case DOUBLE:
+                        data[i] = Double.parseDouble(nextLine[i + 1]);
+                        break;
+                    case INTEGER:
+                        data[i] = Integer.parseInt(nextLine[i + 1]);
+                        break;
+                    case LONG:
+                        data[i] = Long.parseLong(nextLine[i + 1]);
+                        break;
+                    case EXTRACTABLE_DOUBLE:
+                        data[i] = StringUtils.extractDouble(nextLine[i + 1]);
+                        break;
+                    default:
+                        data[i] = nextLine[i + 1];
+                }
             }
+            previousData = data;
         }
-        FeedObject feedObject = new FeedObject(timeStamp, data);
+        catch (Exception e){
+            e.printStackTrace();
+        }
+        FeedObject feedObject = new FeedObject(timeStamp, previousData);
         for(Feed listener : buffers.keySet()){
             if(listener != caller){
                 buffers.get(listener).add(feedObject);
@@ -160,15 +199,13 @@ public class CSVFeed extends RowFeed {
         }
 
         this.timeStamp = feedObject.getTimeStamp();
-        if(stitching){
-            append(feedObject);
-        }
+        previousLive = feedObject;
         return feedObject;
     }
 
     public CSVFeed getCopy()
     {
-        return new CSVFeed(fileName, timeStampRegex, types);
+        return new CSVFeed(fileName, timeStampRegex, types, startDateTime);
     }
 
     @Override
@@ -185,18 +222,77 @@ public class CSVFeed extends RowFeed {
     }
 
     private void append(FeedObject feedObject){
-        List list = new ArrayList<>();
-        DataSetUtils.add(feedObject.getData(), list);
+        if(!testing){
+            List list = new ArrayList<>();
+            DataSetUtils.add(feedObject.getData(), list);
 
-        String toAppend = format.format(new Date(feedObject.getTimeStamp()));
-        for(Object column : list){
-            toAppend += "," + column;
+            String toAppend = format.format(new Date(feedObject.getTimeStamp()));
+            for(Object column : list){
+                toAppend += "," + column;
+            }
+            try {
+                writer.write(toAppend + "\n");
+                writer.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+    }
+
+    private void startCollectingLive(){
+        Runnable collector = new Runnable() {
+            @Override
+            public void run() {
+                while(true){
+                    previousLive = stitchableFeed.readNext(this);
+                    liveData.add(previousLive);
+                }
+            }
+        };
+        new Thread(collector).start();
         try {
-            writer.write(toAppend + "\n");
-            writer.flush();
-        } catch (IOException e) {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    private FeedObject getNextLive(){
+
+        FeedObject data = null;
+        while(true){
+            data = liveData.poll();
+            if(data == null){
+                if(paddable){
+                    long t = System.currentTimeMillis();
+                    t = t - (t % interval) + interval;
+                    return new FeedObject(t, paddingData);
+                }
+                else{
+                    try {
+                        Thread.sleep(interval);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            else if(data.getTimeStamp() >= timeStamp){
+                break;
+            }
+        }
+        return data;
+    }
+
+    @Override
+    public long getLatestTime() {
+        return timeStamp;
+    }
+
+    public void setInterval(long interval) {
+        this.interval = interval;
+    }
+
+    public void setPaddable(boolean paddable) {
+        this.paddable = paddable;
     }
 }

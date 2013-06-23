@@ -11,6 +11,8 @@ public abstract class PaddedTransformer implements Feed{
     private int padding;
     private Feed[] feeds;
 
+    private long timeStamp;
+
     private Queue<FeedObject[]> inputBuildUp;
 
     protected PaddedTransformer(int padding, Feed[] feeds) {
@@ -20,7 +22,7 @@ public abstract class PaddedTransformer implements Feed{
         inputBuildUp = new ArrayBlockingQueue<FeedObject[]>(padding);
     }
 
-    public FeedObject readNext(Object caller)
+    public synchronized FeedObject readNext(Object caller)
     {
         FeedObject[] data = new FeedObject[feeds.length];
         int index = 0;
@@ -37,7 +39,8 @@ public abstract class PaddedTransformer implements Feed{
         }
         inputBuildUp.add(data);
 
-        return new FeedObject(data[0].getTimeStamp(), getOutput(getPaddedInput()));
+        timeStamp = data[0].getTimeStamp();
+        return new FeedObject(timeStamp, getOutput(getPaddedInput()));
     }
 
     private Object[][] getPaddedInput()
@@ -69,5 +72,10 @@ public abstract class PaddedTransformer implements Feed{
     @Override
     public boolean hasNext() {
         return true;
+    }
+
+    @Override
+    public long getLatestTime() {
+        return timeStamp;
     }
 }

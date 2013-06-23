@@ -15,7 +15,6 @@ public abstract class SynchronisableFeed implements Feed {
     private SharedMutableObject<Long> timeStamp = new SharedMutableObject<Long>(-1L);
     private HashMap<Feed, LinkedList<FeedObject>> buffers = new HashMap<>();
 
-
     protected List<SynchronisableFeed> feeds = new ArrayList<SynchronisableFeed>();
     private SharedMutableObject<SynchronisableFeed> leader = new SharedMutableObject<SynchronisableFeed>(this);
 
@@ -32,19 +31,15 @@ public abstract class SynchronisableFeed implements Feed {
         feeds.add(this);
     }
 
-    public void init()
-    {
-        for(SynchronisableFeed feed : feeds)
-        {
-            feed.checkLeader();
-        }
-    }
-
-    public FeedObject getNextComposite(Object caller)
+    public synchronized FeedObject getNextComposite(Object caller)
     {
         if(buffers.containsKey(caller) && buffers.get(caller).size() > 0)
         {
             return buffers.get(caller).pollFirst();
+        }
+        for(SynchronisableFeed feed : feeds)
+        {
+            feed.checkLeader();
         }
         List<Object> data = new ArrayList<Object>();
 
@@ -71,11 +66,6 @@ public abstract class SynchronisableFeed implements Feed {
         long timeToReturn = timeStamp.getValue();
         timeStamp.setValue(-1L);
 
-        for(SynchronisableFeed feed : feeds)
-        {
-            feed.checkLeader();
-        }
-
         FeedObject feedObject = new FeedObject(timeToReturn, data);
         for(Feed listener : buffers.keySet()){
             if(listener != caller){
@@ -85,7 +75,7 @@ public abstract class SynchronisableFeed implements Feed {
         return feedObject;
     }
 
-    public FeedObject getNext()
+    public synchronized FeedObject getNext()
     {
         FeedObject toReturn = null;
 
@@ -140,5 +130,10 @@ public abstract class SynchronisableFeed implements Feed {
     @Override
     public void addChild(Feed feed) {
         buffers.put(feed, new LinkedList<FeedObject>());
+    }
+
+    @Override
+    public long getLatestTime() {
+        return timeStamp.getValue();
     }
 }

@@ -24,13 +24,11 @@ public class StateActionPair {
     public void newMovement(double movement, double weight)
     {
         int actionClass = (int) (movement/actionResolution);
-        double currentWeight = 0;
-
         if(!actionDistribution.containsKey(actionClass))
         {
             actionDistribution.put(actionClass, 0.0);
         }
-        currentWeight = actionDistribution.get(actionClass);
+        double currentWeight = actionDistribution.get(actionClass);
         actionDistribution.put(actionClass, weight + currentWeight);
         totalWeight += weight;
     }
@@ -81,7 +79,6 @@ public class StateActionPair {
     public StateActionPair merge(StateActionPair counterpart)
     {
         int[] mergedAmalgamate = new int[amalgamate.length];
-        StateActionPair merged = null;
         double counterpartWeight = counterpart.getTotalWeight();
         double netWeight = totalWeight + counterpartWeight;
 
@@ -90,7 +87,7 @@ public class StateActionPair {
             mergedAmalgamate[i] = (int) (((amalgamate[i] * totalWeight) + (counterpart.getAmalgamate()[i] * counterpartWeight))/netWeight);
         }
 
-        merged = new StateActionPair(AmalgamateUtils.getAmalgamateString(mergedAmalgamate), mergedAmalgamate, actionResolution);
+        StateActionPair merged = new StateActionPair(AmalgamateUtils.getAmalgamateString(mergedAmalgamate), mergedAmalgamate, actionResolution);
 
         for(Map.Entry<Integer, Double> entry : actionDistribution.entrySet())
         {
@@ -115,11 +112,6 @@ public class StateActionPair {
             {
                 deviation += (Math.abs(amalgamate[i] - counterpart[i]) * correlationWeights[i]);
             }
-        }
-
-        if(deviation == Double.NaN)
-        {
-            deviation = 0;
         }
         return deviation;
     }

@@ -5,6 +5,7 @@ import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
 import ai.context.feed.row.CSVFeed;
 import ai.context.feed.stitchable.StitchableFeed;
+import ai.context.feed.synchronised.SynchronisedFeed;
 import ai.context.util.DataSetUtils;
 import org.junit.Test;
 
@@ -19,7 +20,7 @@ public class TestStitch {
     @Test
     public void testStitch(){
 
-        CSVFeed feed = new CSVFeed("src/test/resources/Test.csv", "yyyyMMdd HH:mm:ss", new DataType[]{DataType.LONG});
+        CSVFeed feed = new CSVFeed("src/test/resources/Test.csv", "yyyyMMdd HH:mm:ss", new DataType[]{DataType.LONG}, null);
         final TestStitcher stitcher = new TestStitcher("src/test/resources/TestLive.csv", new TestFeed3());
 
         Runnable liveFeed = new Runnable() {
@@ -32,6 +33,23 @@ public class TestStitch {
 
         feed.setStitchableFeed(stitcher);
 
+
+        CSVFeed feed2 = new CSVFeed("src/test/resources/Test2.csv", "yyyyMMdd HH:mm:ss", new DataType[]{DataType.LONG}, null);
+        final TestStitcher stitcher2 = new TestStitcher("src/test/resources/TestLive2.csv", new TestFeed4());
+
+        Runnable liveFeed2 = new Runnable() {
+            @Override
+            public void run() {
+                stitcher2.startPadding();
+            }
+        };
+        new Thread(liveFeed2).start();
+
+        feed2.setStitchableFeed(stitcher2);
+
+        SynchronisedFeed sFeed = new SynchronisedFeed(feed, null);
+        sFeed = new SynchronisedFeed(feed2, sFeed);
+
         int waiting = 150;
         for(int i = 0; i < 400; i++){
             try {
@@ -39,9 +57,9 @@ public class TestStitch {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            FeedObject data = feed.readNext(this);
+            FeedObject data = sFeed.getNextComposite(this);
             if(feed.isStitching()){
-                waiting = 50;
+                waiting = 25;
             }
             List list = new ArrayList<>();
             DataSetUtils.add(data.getData(), list);
@@ -78,6 +96,48 @@ class TestFeed3 implements Feed{
 
     @Override
     public void addChild(Feed feed) {
+    }
+
+    @Override
+    public long getLatestTime() {
+        return 0;
+    }
+}
+
+class TestFeed4 implements Feed{
+
+    long i = 0;
+    @Override
+    public boolean hasNext() {
+        return false;
+    }
+
+    @Override
+    public FeedObject readNext(Object caller) {
+
+        double r = Math.random();
+        try {
+            Thread.sleep((long) (100 * r));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        i++;
+        return new FeedObject((long) ((i* 10000) + (10000 * r)), i);
+    }
+
+    @Override
+    public Feed getCopy() {
+        return null;
+    }
+
+    @Override
+    public void addChild(Feed feed) {
+    }
+
+    @Override
+    public long getLatestTime() {
+        return 0;
     }
 }
 

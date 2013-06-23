@@ -37,7 +37,7 @@ public class StringUtils {
                 break;
             }
         }
-        if(number.length() > 0 && number.matches("[0-9]*[\\.[0-9]*]*"))
+        if(number.length() > 0 && !number.equals(".") && number.matches("[0-9]*[\\.[0-9]*]*"))
         {
             return Double.parseDouble(number);
         }

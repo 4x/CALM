@@ -5,6 +5,7 @@ import ai.context.feed.FeedObject;
 import ai.context.util.communication.Notifiable;
 
 import java.io.*;
+import java.util.LinkedList;
 
 public abstract class StitchableFeed implements Feed {
 
@@ -13,6 +14,9 @@ public abstract class StitchableFeed implements Feed {
     private String liveFileName;
     protected Notifiable notifiable;
     protected BufferedWriter writer;
+    private long timeStamp;
+
+    private LinkedList<FeedObject> queue = new LinkedList<>();
 
     public StitchableFeed(String liveFileName, Feed liveFeed){
         this.liveFeed = liveFeed;
@@ -29,7 +33,7 @@ public abstract class StitchableFeed implements Feed {
 
     public void startPadding(){
         while (!caughtUp){
-            readNext(this);
+            queue.add(readNext(this));
         }
     }
 
@@ -41,8 +45,9 @@ public abstract class StitchableFeed implements Feed {
     }
 
     @Override
-    public FeedObject readNext(Object caller) {
+    public synchronized FeedObject readNext(Object caller) {
         FeedObject data = liveFeed.readNext(this);
+        timeStamp = data.getTimeStamp();
 
         return formatForCSVFeed(data);
     }
@@ -58,7 +63,10 @@ public abstract class StitchableFeed implements Feed {
     }
 
     public void catchUp() {
-        notifiable.notifyFor("CATCH UP");
+        if(notifiable != null){
+            notifiable.notifyFor("CATCH UP");
+        }
+        System.out.println("CAUGHT UP");
         this.caughtUp = true;
     }
 
@@ -72,5 +80,10 @@ public abstract class StitchableFeed implements Feed {
 
     public void setNotifiable(Notifiable notifiable) {
         this.notifiable = notifiable;
+    }
+
+    @Override
+    public long getLatestTime() {
+        return timeStamp;
     }
 }
