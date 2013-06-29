@@ -27,7 +27,7 @@ import ai.context.learning.LearnerFeed;
 import ai.context.learning.LearnerFeedFromSynchronisedFeed;
 import ai.context.trading.DukascopyConnection;
 import ai.context.util.communication.Notifiable;
-import ai.context.util.io.GetFirstLine;
+import ai.context.util.common.GetFirstLine;
 import ai.context.util.measurement.LoggerTimer;
 import ai.context.util.trading.BlackBox;
 import ai.context.util.trading.PositionFactory;

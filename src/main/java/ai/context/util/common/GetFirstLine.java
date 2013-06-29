@@ -1,4 +1,4 @@
-package ai.context.util.io;
+package ai.context.util.common;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

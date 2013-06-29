@@ -26,6 +26,7 @@ import ai.context.learning.Learner;
 import ai.context.learning.LearnerFeed;
 import ai.context.learning.LearnerFeedFromSynchronisedFeed;
 import ai.context.trading.DukascopyConnection;
+import ai.context.util.configuration.DynamicPropertiesLoader;
 import ai.context.util.measurement.LoggerTimer;
 import ai.context.util.trading.BlackBox;
 import ai.context.util.trading.PositionFactory;
@@ -37,6 +38,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+
+import static ai.context.util.common.DateUtils.getTimeFromString_YYYYMMddHHmmss;
 
 public class Main {
 
@@ -56,6 +59,8 @@ public class Main {
 
     private boolean testing = false;
 
+    private boolean successfullMemeryLoading = false;
+
     public static void main(String[] args)
     {
         Main test = new Main();
@@ -72,6 +77,7 @@ public class Main {
     public void setTraderOutput(String output){
         trader = new Learner(output);
         trader.setBlackBox(blackBox);
+        successfullMemeryLoading = trader.loadMemories("./memories", getTimeFromString_YYYYMMddHHmmss("20130201000000"));
     }
 
     public void setup(String path)
@@ -129,7 +135,11 @@ public class Main {
                 DataType.EXTRACTABLE_DOUBLE,
                 DataType.EXTRACTABLE_DOUBLE};
 
-        CSVFeed feedCalendar = new CSVFeed(path + "feeds/Calendar_2008.csv", "yyyyMMdd HH:mm:ss", typesCalendar, "20080101 00:00:00");
+        String dateFC = "20080101 00:00:00";
+        if(successfullMemeryLoading){
+            dateFC = "20130201 00:00:00";
+        }
+        CSVFeed feedCalendar = new CSVFeed(path + "feeds/Calendar_2008.csv", "yyyyMMdd HH:mm:ss", typesCalendar, dateFC);
         feedCalendar.setStitchableFeed(liveFXCalendar);
         feedCalendar.setPaddable(true);
         feedCalendar.setInterval(interval);
@@ -166,11 +176,15 @@ public class Main {
                 DataType.DOUBLE,
                 DataType.DOUBLE};
 
-        CSVFeed feedPriceEUR = new CSVFeed(path + "feeds/EURUSD_5 Mins_Bid_2008.01.01_2012.12.31.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  "2008.01.01 00:00:00");
+        String dateFP = "2008.01.01 00:00:00";
+        if(successfullMemeryLoading){
+            dateFP = "2013.02.01 00:00:00";
+        }
+        CSVFeed feedPriceEUR = new CSVFeed(path + "feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  dateFP);
         feedPriceEUR.setStitchableFeed(liveFXRateEUR);
-        CSVFeed feedPriceGBP = new CSVFeed(path + "feeds/GBPUSD_5 Mins_Bid_2008.01.01_2012.12.31.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  "2008.01.01 00:00:00");
+        CSVFeed feedPriceGBP = new CSVFeed(path + "feeds/GBPUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  dateFP);
         feedPriceGBP.setStitchableFeed(liveFXRateGBP);
-        CSVFeed feedPriceCHF = new CSVFeed(path + "feeds/USDCHF_5 Mins_Bid_2008.01.01_2012.12.31.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  "2008.01.01 00:00:00");
+        CSVFeed feedPriceCHF = new CSVFeed(path + "feeds/USDCHF.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  dateFP);
         feedPriceCHF.setStitchableFeed(liveFXRateCHF);
         //CSVFeed feedPriceAUD = new CSVFeed(path + "feeds/AUDUSD_5 Mins_Bid_2008.01.01_2012.12.31.csv", "yyyy.MM.dd HH:mm:ss", typesPrice);
 
@@ -239,6 +253,8 @@ public class Main {
         PositionFactory.setMinTakeProfitVertical(0.0020);
         LoggerTimer.turn(false);
 
+        DynamicPropertiesLoader.start();
+
         i = 0;
         while (true)
         {
@@ -265,8 +281,8 @@ public class Main {
     public void initFXAPI(){
         try {
             if(!testing){
-                client = new DukascopyConnection("DEMO2LfagZ", "LfagZ").getClient();
-                //client = new DukascopyConnection("DEMO2CiisQ", "CiisQ").getClient();
+                //client = new DukascopyConnection("DEMO2LfagZ", "LfagZ").getClient();
+                client = new DukascopyConnection("DEMO2NcuEq", "NcuEq").getClient();
             }
             else {
                 client = new DukascopyConnection("DEMO2Ffpfg", "Ffpfg").getClient();

@@ -69,7 +69,7 @@ public class SuccessMap extends JPanel{
 
                 Color color = new Color(1F, 1F, 1F, (float)(intensity / maxIntensity));
                 g2d.setColor(color);
-                g2d.fillRect(w * (x - xMin) / (xMax - xMin), h - (h * (y - yMin) / (yMax - yMin)), 2 , 2);
+                g2d.fillRect(w * (x - xMin) / (xMax - xMin), h - (h * (y - yMin) / (yMax - yMin)), 4 , 4);
             }
         }
         Color color = new Color(1F, 0.5F, 0.5F, 0.5F);

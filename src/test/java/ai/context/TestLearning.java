@@ -1,5 +1,6 @@
 package ai.context;
 
+import ai.context.builder.LearnerServiceBuilder;
 import ai.context.core.LearnerService;
 import ai.context.util.analysis.SuccessMap;
 import ai.context.util.measurement.LoggerTimer;
@@ -32,26 +33,31 @@ public class TestLearning {
         learner.setMaxPopulation(maxPopulation);
         learner.setTolerance(tolerance);
 
+        int[] signal = null;
         for(int i = 0; i < numPoints; i++)
         {
-            int[] signal = getRandomSignal();
+            signal = getRandomSignal();
 
             double movement = getBlackBoxMovement(signal);
             learner.addStateAction(signal, movement);
-            //System.out.println("Learned: point " + i + ": " + movement);
+            System.out.println("Learned: point " + i + ": Signal: " + getStringFromSignal(signal) + " Movement: "+ movement);
         }
+
+        LearnerServiceBuilder.save(learner,"src/test/resources", 1);
     }
 
     @Test
     public void testLearning()
     {
+        learner = LearnerServiceBuilder.load("src/test/resources", 1);
+
         TreeMap<Integer, TreeMap<Integer, Double>> successMap = new TreeMap<Integer, TreeMap<Integer, Double>>();
         TreeSet<Integer> ySet = new TreeSet<Integer>();
 
         for(int iTest = 0; iTest < numPredict; iTest++)
         {
             int[] signal = getRandomSignal();
-            TreeMap<Integer, Double> distribution =learner.getActionDistribution(signal);
+            TreeMap<Integer, Double> distribution = learner.getActionDistribution(signal);
 
             int observed = (int) getBlackBoxMovement(signal) / 10;
 
@@ -119,5 +125,21 @@ public class TestLearning {
         TestLearning test = new TestLearning();
         test.setup();
         test.testLearning();
+    }
+
+    public String getStringFromSignal(int[] signal){
+        String sig = "[";
+
+        for(int i : signal){
+            sig += i + ",";
+        }
+
+        if(sig.length() > 1){
+            sig = sig.substring(0, sig.length() - 1);
+        }
+
+        sig += "]";
+
+        return sig;
     }
 }

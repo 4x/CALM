@@ -1,5 +1,6 @@
 package ai.context.util.trading;
 
+import ai.context.util.configuration.DynamicPropertiesLoader;
 import ai.context.util.measurement.OpenPosition;
 
 import java.util.*;
@@ -20,8 +21,16 @@ public class PositionFactory {
 
     private static double minProbFraction = 0.25;
 
+    private static PositionEngine engine;
+    private static String engineChecksum = "";
+    private static String configChecksum = "";
+
     public static OpenPosition getPosition(long time, double pivot, TreeMap<Double, Double> histogram)
     {
+        if(engine != null){
+            return engine.getPosition(time, pivot, histogram);
+        }
+
         SortedMap<Double, Double> shortMap = histogram.descendingMap().tailMap(pivot, false);
         SortedMap<Double, Double> longMap = histogram.tailMap(pivot, false);
         TreeMap<Double, Double> directionalFreq = new TreeMap<Double, Double>();
@@ -318,5 +327,10 @@ public class PositionFactory {
 
     public static void setMinProbFraction(double minProbFraction) {
         PositionFactory.minProbFraction = minProbFraction;
+    }
+
+
+    public static void setEngine(PositionEngine engine) {
+        PositionFactory.engine = engine;
     }
 }

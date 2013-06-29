@@ -3,11 +3,19 @@ package ai.context.util.learning;
 import ai.context.util.mathematics.CorrelationCalculator;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.TreeMap;
 
 public class ClusteredCopulae {
 
     private HashMap<Integer, HashMap<Integer, TreeMap<Integer, CorrelationCalculator>>> variableClusteredCorrelations = new HashMap<Integer, HashMap<Integer, TreeMap<Integer, CorrelationCalculator>>>();
+
+    public ClusteredCopulae() {
+    }
+
+    public ClusteredCopulae(HashMap<Integer, HashMap<Integer, TreeMap<Integer, CorrelationCalculator>>> variableClusteredCorrelations) {
+        this.variableClusteredCorrelations = variableClusteredCorrelations;
+    }
 
     public synchronized void addObservation(int state[], double value)
     {
@@ -111,5 +119,25 @@ public class ClusteredCopulae {
             weights[i] = Math.abs(weights[i]/state.length);
         }
         return weights;
+    }
+
+    @Override
+    public String toString() {
+
+        String data = "";
+
+        for(Map.Entry<Integer, HashMap<Integer, TreeMap<Integer, CorrelationCalculator>>> e1 : variableClusteredCorrelations.entrySet()){
+            for(Map.Entry<Integer, TreeMap<Integer, CorrelationCalculator>> e2 : e1.getValue().entrySet()){
+                for(Map.Entry<Integer, CorrelationCalculator> e3 : e2.getValue().entrySet()){
+                    data += e1.getKey() + ":" + e2.getKey() + ":" + e3.getKey() + ":" + System.identityHashCode(e3.getValue()) + ";";
+                }
+            }
+        }
+        return "id=" + System.identityHashCode(this) +
+                ", variableClusteredCorrelations=" + data;
+    }
+
+    public HashMap<Integer, HashMap<Integer, TreeMap<Integer, CorrelationCalculator>>> getVariableClusteredCorrelations() {
+        return variableClusteredCorrelations;
     }
 }

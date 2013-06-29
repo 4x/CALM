@@ -14,6 +14,14 @@ public class StateActionPair {
 
     private double totalWeight = 0.0;
 
+    public StateActionPair(String id, int[] amalgamate, double actionResolution, TreeMap<Integer, Double> actionDistribution, double totalWeight) {
+        this.id = id;
+        this.amalgamate = amalgamate;
+        this.actionResolution = actionResolution;
+        this.actionDistribution = actionDistribution;
+        this.totalWeight = totalWeight;
+    }
+
     public StateActionPair(String id, int[] amalgamate, double actionResolution)
     {
         this.id = id;
@@ -116,4 +124,18 @@ public class StateActionPair {
         return deviation;
     }
 
+    @Override
+    public String toString() {
+
+        String data = "";
+        for(Map.Entry<Integer, Double> entry : actionDistribution.entrySet()){
+            data += entry.getKey() + ":" + entry.getValue() + ";";
+        }
+
+        return "id=" + System.identityHashCode(this) +
+                ", amalgamate=" + AmalgamateUtils.getArrayString(amalgamate) +
+                ", actionResolution=" + actionResolution +
+                ", actionDistribution=" + data +
+                ", totalWeight=" + totalWeight;
+    }
 }

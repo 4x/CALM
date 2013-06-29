@@ -1,5 +1,6 @@
 package ai.context.learning;
 
+import ai.context.builder.LearnerServiceBuilder;
 import ai.context.container.TimedContainer;
 import ai.context.core.LearnerService;
 import ai.context.util.mathematics.MinMaxAggregator;
@@ -8,11 +9,10 @@ import ai.context.util.trading.BlackBox;
 import ai.context.util.trading.PositionFactory;
 import com.dukascopy.api.JFException;
 
-import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
+
+import static ai.context.util.common.DateUtils.getTimeFromString_YYYYMMddHHmmss;
 
 public class Learner implements Runnable, TimedContainer{
 
@@ -20,6 +20,7 @@ public class Learner implements Runnable, TimedContainer{
 
     private TreeMap<Long, DataObject> recentData = new TreeMap<Long, DataObject>();
     private TreeMap<Long, MinMaxAggregator> recentAggregators = new TreeMap<>();
+    //private TreeMap<Long, Integer> recentPos = new TreeMap<>();
 
     private LinkedList<TreeMap<Double, Double>> recentPredictions = new LinkedList<TreeMap<Double, Double>>();
     private TreeMap<Double, Double> prediction = new TreeMap<Double, Double>();
@@ -35,7 +36,6 @@ public class Learner implements Runnable, TimedContainer{
     private long tNow = 0;
 
     private LearnerFeed trainingLearnerFeed;
-    private LearnerFeed liveLearnerFeed;
 
     private double accruedPnL = 0;
 
@@ -44,6 +44,9 @@ public class Learner implements Runnable, TimedContainer{
     private boolean inLiveTrading = false;
     private BlackBox blackBox;
     private boolean live;
+
+    private boolean saved = false;
+    private long timeToSave = getTimeFromString_YYYYMMddHHmmss("20130201000000");
 
     public Learner(String outputDir){
         try {
@@ -57,10 +60,6 @@ public class Learner implements Runnable, TimedContainer{
 
     public void setTrainingLearnerFeed(LearnerFeed trainingLearnerFeed) {
         this.trainingLearnerFeed = trainingLearnerFeed;
-    }
-
-    public void setLiveLearnerFeed(LearnerFeed liveLearnerFeed) {
-        this.liveLearnerFeed = liveLearnerFeed;
     }
 
     @Override
@@ -78,6 +77,13 @@ public class Learner implements Runnable, TimedContainer{
                 break;
             }
             tNow = data.getTimeStamp();
+
+            if(!learner.isMerging() && !saved && tNow > timeToSave){
+                System.out.println("Saving at " + new Date(tNow) + " " + new Date(timeToSave));
+                LearnerServiceBuilder.save(learner, "./memories", timeToSave);
+                saved = true;
+            }
+
             if(tNow % (6 * 3600 * 1000L) == 0)
             {
                 System.out.println("It is now: " + new Date(tNow));
@@ -97,6 +103,19 @@ public class Learner implements Runnable, TimedContainer{
                 long t =  recentData.firstEntry().getValue().getTimeStamp();
 
                 if(recentAggregators.get(t).getMax() != null){
+
+                    /*int[] state = new int[s.length + 1];
+                    int dir = 0;
+                    if(recentPos.containsKey(t)){
+                        dir = recentPos.get(t);
+                        recentPos.remove(t);
+                    }
+
+                    for(int i = 0; i < s.length; i++){
+                        state[i] = s[i];
+                    }
+                    state[s.length] = dir;*/
+
                     learner.addStateAction(s, recentAggregators.get(t).getMax());
                     learner.addStateAction(s, recentAggregators.get(t).getMin());
 
@@ -165,6 +184,12 @@ public class Learner implements Runnable, TimedContainer{
                 else {
                     positions.add(position);
                 }
+
+                int dir = -1;
+                if(position.isLong()){
+                    dir = 1;
+                }
+                //recentPos.put(data.getTimeStamp(), dir);
             }
         }
     }
@@ -196,6 +221,15 @@ public class Learner implements Runnable, TimedContainer{
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public boolean loadMemories(String folder, long time){
+        if(new File(folder + "/LearnerService_" + time).exists()){
+            learner = LearnerServiceBuilder.load(folder, time);
+            saved = true;
+            return true;
+        }
+        return false;
     }
 
     public LearnerService getLearner() {
