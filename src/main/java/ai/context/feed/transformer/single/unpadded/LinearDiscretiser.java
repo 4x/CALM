@@ -70,4 +70,9 @@ public class LinearDiscretiser implements Feed{
     public long getLatestTime() {
         return timeStamp;
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+        return padding + "[" + startIndex + "] Linear dicretiser with benchmark: "+benchmark+", resolution: "+resolution+", feed component: "+feedComponent+" for: " + feed.getDescription(startIndex, padding);
+    }
 }

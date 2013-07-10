@@ -19,7 +19,9 @@ public class OpenPosition {
 
     private String closingMessage;
 
-    public OpenPosition(long timeOpen, double start, double targetProfit, double targetLoss, boolean isLong) {
+    private long goodTillTime;
+
+    public OpenPosition(long timeOpen, double start, double targetProfit, double targetLoss, boolean isLong, long goodTillTime) {
         this.timeOpen = timeOpen;
         this.start = start;
         this.price = start;
@@ -27,6 +29,7 @@ public class OpenPosition {
         this.stopLoss = start - targetLoss;
         this.isLong = isLong;
         this.target = targetProfit;
+        this.goodTillTime = goodTillTime;
 
         if(!isLong)
         {
@@ -47,8 +50,30 @@ public class OpenPosition {
         return false;
     }
 
-    public boolean canCloseOnBar_Pessimistic(long time, double high, double low)
+    public boolean canCloseOnBar_Pessimistic(long time, double high, double low, double close)
     {
+        if(time >= goodTillTime){
+            price = close;
+
+            if(isLong){
+                if(price > start){
+                    closingMessage = new Date(time) + ": PROFIT: Closing [LONG] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high +"} TIMEOUT";
+                }
+                else {
+                    closingMessage = new Date(time) + ": LOSS: Closing [LONG] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high +"} TIMEOUT";
+                }
+            }
+            else{
+                if(price < start){
+                    closingMessage = new Date(time) + ": PROFIT: Closing [SHORT] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high +"} TIMEOUT";
+                }
+                else {
+                    closingMessage = new Date(time) + ": LOSS: Closing [SHORT] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high +"} TIMEOUT";
+                }
+            }
+            return true;
+        }
+
         if(isLong)
         {
             if(low <= stopLoss)
@@ -131,5 +156,9 @@ public class OpenPosition {
 
     public double getStopLoss() {
         return stopLoss;
+    }
+
+    public long getGoodTillTime() {
+        return goodTillTime;
     }
 }

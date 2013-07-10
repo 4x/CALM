@@ -9,6 +9,7 @@ public class FXStreetCountryMapping {
     static {
         map.put("UK","United Kingdom");
         map.put("US", "United States");
+        map.put("EMU", "European Monetary Union");
         map.put("FR", "France");
         map.put("DE", "Germany");
     }

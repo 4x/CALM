@@ -48,4 +48,10 @@ public class SlopeTransformer extends BufferedTransformer{
     public void goLive(){
         goLive(span);
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+
+        return padding + "["+startIndex+"] SLOPE with span: " + span + " for feed: " + feed.getDescription(startIndex, padding);
+    }
 }

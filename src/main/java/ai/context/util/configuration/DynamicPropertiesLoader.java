@@ -137,6 +137,9 @@ public class DynamicPropertiesLoader {
                     else if(parts[0].equals("minTakeProfitVertical")){
                         PositionFactory.setMinTakeProfitVertical(Double.parseDouble(parts[1]));
                     }
+                    else if(parts[0].equals("timeSpan")){
+                        PositionFactory.setTimeSpan(Long.parseLong(parts[1]));
+                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();

@@ -6,17 +6,21 @@ import ai.context.feed.FeedObject;
 import java.util.List;
 
 
-public class FXHLDiffFeed extends AbstractSurgicalFeed{
+public class FXModuloFeed extends AbstractSurgicalFeed{
 
     private Feed rawFeed;
-    public FXHLDiffFeed(Feed rawFeed) {
+    private double resolution;
+    private int modulo;
+    public FXModuloFeed(Feed rawFeed, double resolution, int modulo) {
         super(rawFeed);
         this.rawFeed = rawFeed;
+        this.resolution = resolution;
+        this.modulo = modulo;
     }
 
     @Override
     protected synchronized FeedObject operate(long time, List row) {
-        return new FeedObject(time, ((Double)row.get(1) - (Double)row.get(2)));
+        return new FeedObject(time, ((Double)row.get(3)/resolution) % modulo);
     }
 
     @Override
@@ -26,6 +30,6 @@ public class FXHLDiffFeed extends AbstractSurgicalFeed{
 
     @Override
     public String getDescription(int startIndex, String padding) {
-        return padding + "[" + startIndex + "] Difference between high and low for: " + rawFeed.getDescription(startIndex, padding);
+        return padding + "[" + startIndex + "] Modulo 100 for CLOSE from: " + rawFeed.getDescription(startIndex, padding);
     }
 }

@@ -56,61 +56,62 @@ public class FXStreetCalendarRSSFeed extends RowFeed{
                             }
                             reader = new XmlReader(url);
                             feed = new SyndFeedInput().build(reader);
+
+
+                            TreeMap<Long, LinkedList<SyndEntry>> list = new TreeMap<>();
+                            for (Iterator i = feed.getEntries().iterator(); i.hasNext();) {
+                                SyndEntry entry = (SyndEntry) i.next();
+
+                                long t = entry.getPublishedDate().getTime();
+                                if(t >= reached && !existing.contains(entry.getTitle().hashCode()))
+                                {
+                                    if(!list.containsKey(t)) {
+                                        list.put(t, new LinkedList<SyndEntry>());
+                                    }
+                                    list.get(t).add(entry);
+                                }
+                            }
+
+                            while(!list.isEmpty())
+                            {
+                                try{
+                                    SyndEntry entry = list.firstEntry().getValue().poll();
+                                    if(list.firstEntry().getValue().isEmpty()){
+                                        list.remove(list.firstKey());
+                                    }
+                                    Date date = entry.getPublishedDate();
+
+                                    String title = entry.getTitle();
+
+                                    String country = FXStreetCountryMapping.getMapping(title.split(":")[0]);
+                                    String event = title.split(":")[1].substring(1);
+
+                                    if(reached < date.getTime())
+                                    {
+                                        reached = date.getTime();
+                                        existing.clear();
+                                    }
+                                    existing.add(title.hashCode());
+
+                                    String content = entry.getDescription().getValue();
+                                    String[] parts = content.split("<td>");
+
+                                    int volatility = 0;
+
+                                    double consensus = StringUtils.extractDouble(parts[8]);
+                                    double actual = StringUtils.extractDouble(parts[9]);
+                                    double previous = StringUtils.extractDouble(parts[10]);
+
+                                    Object[] data = new Object[]{event, country, volatility, actual, previous, consensus};
+                                    queue.add(new FeedObject(date.getTime(), data));
+                                }
+                                catch (Exception e){
+                                    e.printStackTrace();
+                                }
+                            }
                         }
                         catch (Exception e){
-                            e.printStackTrace();
-                        }
-
-                        TreeMap<Long, LinkedList<SyndEntry>> list = new TreeMap<>();
-                        for (Iterator i = feed.getEntries().iterator(); i.hasNext();) {
-                            SyndEntry entry = (SyndEntry) i.next();
-
-                            long t = entry.getPublishedDate().getTime();
-                            if(t >= reached && !existing.contains(entry.getTitle().hashCode()))
-                            {
-                                if(!list.containsKey(t)) {
-                                    list.put(t, new LinkedList<SyndEntry>());
-                                }
-                                list.get(t).add(entry);
-                            }
-                        }
-
-                        while(!list.isEmpty())
-                        {
-                            try{
-                                SyndEntry entry = list.firstEntry().getValue().poll();
-                                if(list.firstEntry().getValue().isEmpty()){
-                                    list.remove(list.firstKey());
-                                }
-                                Date date = entry.getPublishedDate();
-
-                                String title = entry.getTitle();
-
-                                String country = FXStreetCountryMapping.getMapping(title.split(":")[0]);
-                                String event = title.split(":")[1].substring(1);
-
-                                if(reached < date.getTime())
-                                {
-                                    reached = date.getTime();
-                                    existing.clear();
-                                }
-                                existing.add(title.hashCode());
-
-                                String content = entry.getDescription().getValue();
-                                String[] parts = content.split("<td>");
-
-                                int volatility = 0;
-
-                                double consensus = StringUtils.extractDouble(parts[8]);
-                                double actual = StringUtils.extractDouble(parts[9]);
-                                double previous = StringUtils.extractDouble(parts[10]);
-
-                                Object[] data = new Object[]{event, country, volatility, actual, previous, consensus};
-                                queue.add(new FeedObject(date.getTime(), data));
-                            }
-                            catch (Exception e){
-                                e.printStackTrace();
-                            }
+                            //e.printStackTrace();
                         }
                     }
                     try {
@@ -183,5 +184,10 @@ public class FXStreetCalendarRSSFeed extends RowFeed{
     @Override
     public long getLatestTime() {
         return timeStamp;
+    }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+        return padding + "[" + startIndex + "] FX Street Calendar Feed";
     }
 }

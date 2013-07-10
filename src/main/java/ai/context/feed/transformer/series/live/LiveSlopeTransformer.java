@@ -42,4 +42,10 @@ public class LiveSlopeTransformer extends LiveBufferedTransformer{
     public Feed getCopy() {
         return new LiveSlopeTransformer(span, feed.getCopy());
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+
+        return padding + "["+startIndex+"] Live SLOPE with span: " + span + " for feed: " + feed.getDescription(startIndex, padding);
+    }
 }

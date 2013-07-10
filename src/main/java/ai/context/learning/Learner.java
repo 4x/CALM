@@ -3,6 +3,7 @@ package ai.context.learning;
 import ai.context.builder.LearnerServiceBuilder;
 import ai.context.container.TimedContainer;
 import ai.context.core.LearnerService;
+import ai.context.core.StateActionPair;
 import ai.context.util.mathematics.MinMaxAggregator;
 import ai.context.util.measurement.OpenPosition;
 import ai.context.util.trading.BlackBox;
@@ -32,7 +33,6 @@ public class Learner implements Runnable, TimedContainer{
     private double actionResolution = 1.0;
     private int maxPopulation = 2000;
 
-    private long timeShift = 0;
     private long tNow = 0;
 
     private LearnerFeed trainingLearnerFeed;
@@ -44,6 +44,9 @@ public class Learner implements Runnable, TimedContainer{
     private boolean inLiveTrading = false;
     private BlackBox blackBox;
     private boolean live;
+
+
+    private boolean alive = true;
 
     private boolean saved = false;
     private long timeToSave = getTimeFromString_YYYYMMddHHmmss("20130201000000");
@@ -69,7 +72,7 @@ public class Learner implements Runnable, TimedContainer{
         learner.setMaxPopulation(maxPopulation);
         learner.setTolerance(tolerance);
 
-        while (true)
+        while (alive)
         {
             DataObject data = trainingLearnerFeed.readNext();
             if(data == null)
@@ -97,7 +100,7 @@ public class Learner implements Runnable, TimedContainer{
                 prediction.put(data.getValue()[0] + entry.getKey() * actionResolution, entry.getValue());
             }
             recentPredictions.add(prediction);
-            while (!recentData.isEmpty() && recentData.firstEntry().getValue().getTimeStamp() < (tNow - timeShift))
+            while (!recentData.isEmpty() && recentData.firstEntry().getValue().getTimeStamp() < (tNow - PositionFactory.getTimeSpan()))
             {
                 int[] s = recentData.firstEntry().getValue().getSignal();
                 long t =  recentData.firstEntry().getValue().getTimeStamp();
@@ -143,7 +146,7 @@ public class Learner implements Runnable, TimedContainer{
             HashSet<OpenPosition> closed = new HashSet<OpenPosition>();
             for(OpenPosition position : positions)
             {
-                if(position.canCloseOnBar_Pessimistic(tNow, data.getValue()[1], data.getValue()[2]))
+                if(position.canCloseOnBar_Pessimistic(tNow, data.getValue()[1], data.getValue()[2], data.getValue()[3]))
                 {
                     closed.add(position);
                     int x = (int) (position.getTarget()/actionResolution);
@@ -260,14 +263,6 @@ public class Learner implements Runnable, TimedContainer{
         this.maxPopulation = maxPopulation;
     }
 
-    public long getTimeShift() {
-        return timeShift;
-    }
-
-    public void setTimeShift(long timeShift) {
-        this.timeShift = timeShift;
-    }
-
     public void setCurrentTime(long time){
         tNow = time;
     }
@@ -289,4 +284,17 @@ public class Learner implements Runnable, TimedContainer{
     public boolean isLive() {
         return inLiveTrading;
     }
+
+    public void kill(){
+        alive = false;
+    }
+
+    public TreeMap<Double, StateActionPair> getAlphas(){
+        return learner.getAlphaStates();
+    }
+
+    public double[] getVarCorrelations(int[] state){
+        return learner.updateAndGetCorrelationWeights(state);
+    }
+
 }

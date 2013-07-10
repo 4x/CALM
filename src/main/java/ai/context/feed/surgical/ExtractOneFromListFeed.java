@@ -29,4 +29,9 @@ public class ExtractOneFromListFeed extends AbstractSurgicalFeed {
     public Feed getCopy() {
         return new ExtractOneFromListFeed(rawFeed.getCopy(), interestedIndex);
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+        return padding + "[" + startIndex + "] Extracting element: " + interestedIndex + " from Feed: " + rawFeed.getDescription(startIndex, padding);
+    }
 }

@@ -46,4 +46,10 @@ public class LiveMATransformer extends LiveBufferedTransformer{
     public Feed getCopy() {
         return new LiveMATransformer(type, span, feed.getCopy());
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+
+        return padding + "["+startIndex+"] Live MA with type: " + type + " and span: " + span + " for feed: " + feed.getDescription(startIndex, padding);
+    }
 }

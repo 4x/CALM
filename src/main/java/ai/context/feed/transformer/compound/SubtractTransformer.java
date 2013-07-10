@@ -29,4 +29,8 @@ public class SubtractTransformer extends CompoundedTransformer{
     public Feed getCopy() {
         return new SubtractTransformer(subtractFrom.getCopy(), subtractThis.getCopy());
     }
+
+    public String getDescription(int startIndex, String padding) {
+        return padding + "["+startIndex+"] Subtractor of feed " + subtractThis.getDescription(startIndex, padding) + " from feed " + subtractFrom.getDescription(startIndex, padding);
+    }
 }

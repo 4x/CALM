@@ -142,4 +142,9 @@ class TestFeed1 implements Feed{
     public long getLatestTime() {
         return t;
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
 }

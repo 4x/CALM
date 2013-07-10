@@ -8,6 +8,8 @@ import ai.context.util.mathematics.CorrelationCalculator;
 import java.util.*;
 import java.util.concurrent.*;
 
+import static ai.context.util.mathematics.Operations.sum;
+
 public class LearnerService {
 
     private ConcurrentHashMap<String, StateActionPair> population = new ConcurrentHashMap<String, StateActionPair>();
@@ -187,8 +189,7 @@ public class LearnerService {
         }
     }
 
-    private Map<StateActionPair, Double> getSimilarStates(int[] state)
-    {
+    public double[] updateAndGetCorrelationWeights(int[] state){
         correlationWeights = copulae.getCorrelationWeights(state);
         if(correlations != null)
         {
@@ -201,6 +202,12 @@ public class LearnerService {
                 }
             }
         }
+        return correlationWeights;
+    }
+
+    private Map<StateActionPair, Double> getSimilarStates(int[] state)
+    {
+        updateAndGetCorrelationWeights(state);
 
         HashSet<StateActionPair> set = new HashSet<StateActionPair>();
         TreeMap<Double, Integer> priorityOrderedSignals = new TreeMap<Double, Integer>();
@@ -435,6 +442,15 @@ public class LearnerService {
         }
 
         return correlations;
+    }
+
+    public TreeMap<Double, StateActionPair> getAlphaStates(){
+        TreeMap<Double, StateActionPair> alpha = new TreeMap<>();
+        for(StateActionPair pair : population.values()){
+            double score = sum(updateAndGetCorrelationWeights(pair.getAmalgamate()));
+            alpha.put(score, pair);
+        }
+        return alpha;
     }
 
     public ConcurrentSkipListMap<Integer, CopyOnWriteArraySet<StateActionPair>> getIndexForVariable(int variable)

@@ -1,5 +1,6 @@
 package ai.context.trading;
 
+import ai.context.core.StateActionPair;
 import ai.context.feed.DataType;
 import ai.context.feed.FeedObject;
 import ai.context.feed.row.CSVFeed;
@@ -24,6 +25,7 @@ import ai.context.learning.DataObject;
 import ai.context.learning.Learner;
 import ai.context.learning.LearnerFeed;
 import ai.context.learning.LearnerFeedFromSynchronisedFeed;
+import ai.context.util.learning.AmalgamateUtils;
 import ai.context.util.measurement.LoggerTimer;
 import ai.context.util.trading.PositionFactory;
 import com.tictactec.ta.lib.MAType;
@@ -42,6 +44,8 @@ public class TestHistorical {
     private Set<BufferedTransformer> bufferedTransformers = new HashSet<>();
     private StitchableFeed liveFXCalendar;
     private StitchableFeed liveFXRate;
+
+    private Map<Integer, String> feedDescriptions = new TreeMap<>();
 
 
     public static void main(String[] args)
@@ -166,26 +170,48 @@ public class TestHistorical {
         feed = addToSynchFeed(feed, f9, 0.1, 0);
         feed = new SynchronisedFeed(tFeed, feed);
         int i = 0;
+        FeedObject data;
         while (true)
         {
-            FeedObject data = feed.getNextComposite(this);
+            data = feed.getNextComposite(this);
             trader.setCurrentTime(data.getTimeStamp());
             i++;
 
-            if(i  == 550000)
+            if(i  == 10000)
             {
                 break;
             }
         }
+        System.out.println(((ArrayList)(data.getData())).size());
+
 
         learnerFeed = new LearnerFeedFromSynchronisedFeed(feed);
+        String description = learnerFeed.getDescription();
+        System.out.println(description);
+
+        for(String line : description.split("\n")){
+            line = line.trim();
+            int varID = Integer.parseInt(line.split("]")[0].substring(1));
+            if(!feedDescriptions.containsKey(varID)){
+                feedDescriptions.put(varID, line);
+            }
+            else{
+                feedDescriptions.put(varID, feedDescriptions.get(varID) + ", " + line);
+            }
+        }
+
+        try {
+            Thread.sleep(60000);
+        } catch (InterruptedException e) {
+
+        }
 
         trader.setActionResolution(0.0001);
         trader.setTrainingLearnerFeed(learnerFeed);
         trader.setMaxPopulation(5000);
-        trader.setTimeShift(4 * 12 * 5 * 60 * 1000L);
         trader.setTolerance(5);
 
+        PositionFactory.setTimeSpan(4 * 12 * 5 * 60 * 1000L);
         PositionFactory.setRewardRiskRatio(3.0);
         PositionFactory.setMinTakeProfit(0.0050);
         PositionFactory.setAmount(10000);
@@ -194,25 +220,61 @@ public class TestHistorical {
         LoggerTimer.turn(false);
 
         i = 0;
+
         while (true)
         {
-            DataObject data = learnerFeed.readNext();
-            trader.setCurrentTime(data.getTimeStamp());
+            DataObject data1 = learnerFeed.readNext();
+            trader.setCurrentTime(data1.getTimeStamp());
 
-            System.out.println(new Date(data.getTimeStamp()) + " " + data);
+            //System.out.println(new Date(data.getTimeStamp()) + " " + data);
             i++;
 
-            /*if(i  == 10000)
+            if(i  == 10000)
             {
                 break;
-            }*/
+            }
         }
+
     }
 
     @Test
     public void trade()
     {
-        trader.run();
+        new Thread(trader).start();
+
+        try {
+            Thread.sleep(60*60000L);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        trader.kill();
+
+        TreeMap<Double, StateActionPair> alphas = trader.getAlphas();
+        int top = 10;
+        for(Map.Entry<Double, StateActionPair> alpha : alphas.descendingMap().entrySet()){
+            System.out.println(alpha.getKey() + " -> " + AmalgamateUtils.getArrayString(alpha.getValue().getAmalgamate()));
+
+            TreeMap<Double, Integer> topVars = new TreeMap<>();
+            int var = 0;
+            for(double correlation : trader.getVarCorrelations(alpha.getValue().getAmalgamate())){
+                topVars.put(correlation, var);
+                var++;
+            }
+
+            int showVars = 10;
+            for(Map.Entry<Double, Integer> varEntry : topVars.descendingMap().entrySet()){
+                System.out.println(varEntry.getValue() + ": " + feedDescriptions.get(varEntry.getValue()) + " -> " + alpha.getValue().getAmalgamate()[varEntry.getValue()]);
+                showVars--;
+                if(showVars == 0){
+                    break;
+                }
+            }
+
+            top--;
+            if(top == 0){
+                break;
+            }
+        }
     }
 
     public void initFXAPI(){

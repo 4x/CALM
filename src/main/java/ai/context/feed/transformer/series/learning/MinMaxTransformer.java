@@ -45,4 +45,10 @@ public class MinMaxTransformer extends BufferedTransformer{
     public void goLive(){
         goLive(span);
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+
+        return padding + "["+startIndex+"] MINMAX with span: " + span + " for feed: " + feed.getDescription(startIndex, padding);
+    }
 }

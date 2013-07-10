@@ -26,4 +26,9 @@ public class AdditionTransformer extends CompoundedTransformer{
     public Feed getCopy() {
         return new AdditionTransformer(addTo.getCopy(), addThis.getCopy());
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+        return padding + "["+startIndex+"] Addition of feed " + addThis + " to feed " + addTo;
+    }
 }

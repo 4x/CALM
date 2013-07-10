@@ -27,5 +27,10 @@ public class DividerTransformer extends CompoundedTransformer{
     public Feed getCopy() {
         return new DividerTransformer(numerator.getCopy(), denominator.getCopy());
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+        return padding + "["+startIndex+"] Division of feed " + numerator + " by feed " + denominator;
+    }
 }
 

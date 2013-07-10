@@ -10,13 +10,13 @@ import ai.context.feed.stitchable.StitchableFXStreetCalendarRSS;
 import ai.context.feed.stitchable.StitchableFeed;
 import ai.context.feed.surgical.ExtractOneFromListFeed;
 import ai.context.feed.surgical.FXHLDiffFeed;
+import ai.context.feed.surgical.FXModuloFeed;
 import ai.context.feed.synchronised.SmartDiscretiserOnSynchronisedFeed;
 import ai.context.feed.synchronised.SynchronisedFeed;
 import ai.context.feed.transformer.compound.AmplitudeWavelengthTransformer;
 import ai.context.feed.transformer.compound.SubtractTransformer;
 import ai.context.feed.transformer.filtered.RowBasedTransformer;
 import ai.context.feed.transformer.series.learning.BufferedTransformer;
-import ai.context.feed.transformer.series.learning.RSITransformer;
 import ai.context.feed.transformer.series.learning.SlopeTransformer;
 import ai.context.feed.transformer.series.learning.StandardDeviationTransformer;
 import ai.context.feed.transformer.single.TimeVariablesAppenderFeed;
@@ -33,7 +33,6 @@ import ai.context.util.trading.PositionFactory;
 import com.dukascopy.api.Instrument;
 import com.dukascopy.api.Period;
 import com.dukascopy.api.system.IClient;
-import com.tictactec.ta.lib.MAType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +57,8 @@ public class Main {
     private BlackBox blackBox;
 
     private boolean testing = false;
+    private String dukascopyUsername = "DEMO2LfagZ";
+    private String dukascopyPassword = "LfagZ";
 
     private boolean successfullMemeryLoading = false;
 
@@ -80,39 +81,35 @@ public class Main {
         successfullMemeryLoading = trader.loadMemories("./memories", getTimeFromString_YYYYMMddHHmmss("20130201000000"));
     }
 
+    private void goLive(){
+        for(final BufferedTransformer transformer : bufferedTransformers){
+
+            Runnable makeAlive = new Runnable() {
+                @Override
+                public void run() {
+                    LOGGER.info(transformer + " going live...");
+                    transformer.goLive();
+                }
+            };
+            new Thread(makeAlive).start();
+        }
+        isLive = true;
+        LOGGER.info("Going LIVE!!!");
+    }
+
     public void setup(String path)
     {
-        initFXAPI();
+        if(!testing){
+            initFXAPI();
 
-        long interval = 1*60000L;
-        setLiveFXCalendar(new StitchableFXStreetCalendarRSS(path + "tmp/FXCalendar.csv", new FXStreetCalendarRSSFeed()));
-        setLiveFXRates(
-                new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.EURUSD)),
-                new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.GBPUSD)),
-                new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.USDCHF)));
+            setLiveFXCalendar(new StitchableFXStreetCalendarRSS(path + "tmp/FXCalendar.csv", new FXStreetCalendarRSSFeed()));
+            setLiveFXRates(
+                    new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.EURUSD)),
+                    new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.GBPUSD)),
+                    new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.USDCHF)));
+        }
 
         final Timer timer = new Timer();
-        TimerTask checkIfGoLive = new TimerTask() {
-            @Override
-            public void run() {
-                if(!isLive && trader.getTime() > 1368342049000L){
-                    for(final BufferedTransformer transformer : bufferedTransformers){
-
-                        Runnable makeAlive = new Runnable() {
-                            @Override
-                            public void run() {
-                                LOGGER.info(transformer + " going live...");
-                                transformer.goLive();
-                            }
-                        };
-                        new Thread(makeAlive).start();
-                    }
-                    isLive = true;
-                    LOGGER.info("Going LIVE!!!");
-                }
-            }
-        };
-
         TimerTask checkIfGoTrading = new TimerTask() {
             @Override
             public void run() {
@@ -124,7 +121,6 @@ public class Main {
             }
         };
 
-        timer.schedule(checkIfGoLive, 10000L, 500);
         timer.schedule(checkIfGoTrading, 10000L, 500);
 
         DataType[] typesCalendar = new DataType[]{
@@ -139,6 +135,8 @@ public class Main {
         if(successfullMemeryLoading){
             dateFC = "20130201 00:00:00";
         }
+
+        long interval = 1*60000L;
         CSVFeed feedCalendar = new CSVFeed(path + "feeds/Calendar_2008.csv", "yyyyMMdd HH:mm:ss", typesCalendar, dateFC);
         feedCalendar.setStitchableFeed(liveFXCalendar);
         feedCalendar.setPaddable(true);
@@ -192,13 +190,14 @@ public class Main {
         SynchronisedFeed feed = buildSynchFeed(null, feedPriceEUR);
         feed = buildSynchFeed(feed, feedPriceGBP);
         feed = buildSynchFeed(feed, feedPriceCHF);
-        SmartDiscretiserOnSynchronisedFeed sFeed = new SmartDiscretiserOnSynchronisedFeed(feed, 500, 5);
+        SmartDiscretiserOnSynchronisedFeed sFeed = new SmartDiscretiserOnSynchronisedFeed(feed, 5000, 10);
+        //MinMaxAggregatorDiscretiser sFeed = new MinMaxAggregatorDiscretiser(feed, 5000, 10);
         feed.addChild(sFeed);
         TimeVariablesAppenderFeed tFeed = new TimeVariablesAppenderFeed(sFeed);
         sFeed.addChild(tFeed);
 
         feed = new SynchronisedFeed(feedPriceEUR, null);
-        feed = addToSynchFeed(feed, f1, 50, 0);
+        feed = addToSynchFeed(feed, f1, 25, 100);
         feed = addToSynchFeed(feed, f2, 0.1, 0);
         feed = addToSynchFeed(feed, f3, 0.1, 0);
         feed = addToSynchFeed(feed, f4, 0.1, 0);
@@ -218,27 +217,18 @@ public class Main {
             trader.setCurrentTime(data.getTimeStamp());
             i++;
 
-            if(testing)
-            {
-                if(i == 550000){
-                    break;
-                }
-            }
-            else if(i  == 10000)
+            if(i  == 20000)
             {
                 break;
             }
         }
 
-        /*for(final BufferedTransformer transformer : bufferedTransformers){
-            transformer.goLive();
-        }*/
         LearnerFeed learnerFeed = new LearnerFeedFromSynchronisedFeed(feed);
+        LOGGER.info(learnerFeed.getDescription());
 
         trader.setActionResolution(0.0001);
         trader.setTrainingLearnerFeed(learnerFeed);
         trader.setMaxPopulation(5000);
-        trader.setTimeShift(4 * 12 * 5 * 60 * 1000L);
         trader.setTolerance(5);
 
         PositionFactory.setRewardRiskRatio(4.0);
@@ -247,13 +237,16 @@ public class Main {
         PositionFactory.setCost(0.00015);
         PositionFactory.setTradeToCapRatio(0.01);
         PositionFactory.setLeverage(25);
+        PositionFactory.setTimeSpan(4 * 12 * 5 * 60 * 1000L);
 
         PositionFactory.setMinProbFraction(0.75);
         PositionFactory.setVerticalRisk(true);
         PositionFactory.setMinTakeProfitVertical(0.0020);
         LoggerTimer.turn(false);
 
-        DynamicPropertiesLoader.start();
+        if(!testing){
+            DynamicPropertiesLoader.start();
+        }
 
         i = 0;
         while (true)
@@ -280,15 +273,9 @@ public class Main {
 
     public void initFXAPI(){
         try {
-            if(!testing){
-                //client = new DukascopyConnection("DEMO2LfagZ", "LfagZ").getClient();
-                client = new DukascopyConnection("DEMO2NcuEq", "NcuEq").getClient();
-            }
-            else {
-                client = new DukascopyConnection("DEMO2Ffpfg", "Ffpfg").getClient();
-            }
-
+            client = new DukascopyConnection(dukascopyUsername, dukascopyPassword).getClient();
             blackBox = new BlackBox(client);
+            trader.setBlackBox(blackBox);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -321,10 +308,45 @@ public class Main {
             FXHLDiffFeed feedDiff = new FXHLDiffFeed(feed);
             feed.addChild(feedDiff);
 
-            SlopeTransformer gradH = new SlopeTransformer(12, feedH);
+            /*Map<String, Object> param = new HashMap<>();
+            param.put("period", 10);
+            TALibTransformer adx = new TALibTransformer(10, TALibTransformer.TYPE_ADX, param, new Feed[]{feedH, feedL, feedC});
+            feedH.addChild(adx);
+            feedL.addChild(adx);
+            feedC.addChild(adx);
+            bufferedTransformers.add(adx);
+
+            param = new HashMap<>();
+            param.put("period", 20);
+            TALibTransformer adx1 = new TALibTransformer(20, TALibTransformer.TYPE_ADX, param, new Feed[]{feedH, feedL, feedC});
+            feedH.addChild(adx1);
+            feedL.addChild(adx1);
+            feedC.addChild(adx1);
+            bufferedTransformers.add(adx1);
+
+            param = new HashMap<>();
+            param.put("period", 50);
+            TALibTransformer adx2 = new TALibTransformer(50, TALibTransformer.TYPE_ADX, param, new Feed[]{feedH, feedL, feedC});
+            feedH.addChild(adx2);
+            feedL.addChild(adx2);
+            feedC.addChild(adx2);
+            bufferedTransformers.add(adx2);
+
+            param = new HashMap<>();
+            param.put("period", 100);
+            TALibTransformer adx3 = new TALibTransformer(100, TALibTransformer.TYPE_ADX, param, new Feed[]{feedH, feedL, feedC});
+            feedH.addChild(adx3);
+            feedL.addChild(adx3);
+            feedC.addChild(adx3);
+            bufferedTransformers.add(adx3);*/
+
+            FXModuloFeed feedModulo = new FXModuloFeed(feed, 0.0001, 100);
+            feed.addChild(feedModulo);
+
+            SlopeTransformer gradH = new SlopeTransformer(20, feedH);
             feedH.addChild(gradH);
             bufferedTransformers.add(gradH);
-            SlopeTransformer gradL = new SlopeTransformer(12, feedL);
+            SlopeTransformer gradL = new SlopeTransformer(20, feedL);
             feedL.addChild(gradL);
             bufferedTransformers.add(gradL);
 
@@ -366,19 +388,26 @@ public class Main {
             AmplitudeWavelengthTransformer awFeedH2 = new AmplitudeWavelengthTransformer(feedH, stdFeedH, 4, 0.5);
             AmplitudeWavelengthTransformer awFeedL2 = new AmplitudeWavelengthTransformer(feedL, stdFeedL, 4, 0.5);
 
-            RSITransformer rsiH = new RSITransformer(20, 5, 5, MAType.Sma, feedH);
+            /*RSITransformer rsiH = new RSITransformer(20, 5, 5, MAType.Sma, feedH);
             feedH.addChild(rsiH);
             bufferedTransformers.add(rsiH);
             RSITransformer rsiL = new RSITransformer(20, 5, 5, MAType.Sma, feedL);
             feedL.addChild(rsiL);
             bufferedTransformers.add(rsiL);
 
+            RSITransformer rsiH3 = new RSITransformer(50, 10, 10, MAType.Sma, feedH);
+            feedH.addChild(rsiH3);
+            bufferedTransformers.add(rsiH3);
+            RSITransformer rsiL3 = new RSITransformer(50, 10, 10, MAType.Sma, feedL);
+            feedL.addChild(rsiL3);
+            bufferedTransformers.add(rsiL3);
+
             RSITransformer rsiH2 = new RSITransformer(100, 25, 25, MAType.Sma, feedH);
             feedH.addChild(rsiH2);
             bufferedTransformers.add(rsiH2);
             RSITransformer rsiL2 = new RSITransformer(100, 25, 25, MAType.Sma, feedL);
             feedL.addChild(rsiL2);
-            bufferedTransformers.add(rsiL2);
+            bufferedTransformers.add(rsiL2);*/
 
             /*AmplitudeWavelengthTransformer awFeedH1 = new AmplitudeWavelengthTransformer(feedH, stdFeedH1, 2, 0.5);
             AmplitudeWavelengthTransformer awFeedL1 = new AmplitudeWavelengthTransformer(feedL, stdFeedL1, 2, 0.5);
@@ -393,6 +422,7 @@ public class Main {
             synch = new SynchronisedFeed(feedV, synch);
 
             synch = new SynchronisedFeed(feedDiff, synch);
+            synch = new SynchronisedFeed(feedModulo, synch);
 
             synch = new SynchronisedFeed(gradH, synch);
             synch = new SynchronisedFeed(gradH2, synch);
@@ -417,10 +447,18 @@ public class Main {
             synch = new SynchronisedFeed(awFeedH2, synch);
             synch = new SynchronisedFeed(awFeedL2, synch);
 
-            synch = new SynchronisedFeed(rsiH, synch);
+            /*synch = new SynchronisedFeed(rsiH, synch);
             synch = new SynchronisedFeed(rsiL, synch);
             synch = new SynchronisedFeed(rsiH2, synch);
             synch = new SynchronisedFeed(rsiL2, synch);
+            synch = new SynchronisedFeed(rsiH3, synch);
+            synch = new SynchronisedFeed(rsiL3, synch);
+
+            synch = new SynchronisedFeed(adx, synch);
+            synch = new SynchronisedFeed(adx1, synch);
+            synch = new SynchronisedFeed(adx2, synch);
+            synch = new SynchronisedFeed(adx3, synch);*/
+
             /*synch = new SynchronisedFeed(stdFeedH1, synch);
             synch = new SynchronisedFeed(stdFeedL1, synch);
             synch = new SynchronisedFeed(stdFeedC1, synch);
@@ -458,8 +496,11 @@ public class Main {
         e3.addChild(s2);
 
         LinearDiscretiser l1 = new LinearDiscretiser(resolution, benchmark, s1, 0);
+        s1.addChild(l1);
         feed = new SynchronisedFeed(l1, feed);
+
         LinearDiscretiser l2 = new LinearDiscretiser(resolution, benchmark, s2, 0);
+        s2.addChild(l2);
         feed = new SynchronisedFeed(l2, feed);
 
         LinearDiscretiser l3 = new LinearDiscretiser(0.1, 0, raw, 3);

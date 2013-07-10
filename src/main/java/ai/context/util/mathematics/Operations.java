@@ -10,4 +10,12 @@ public class Operations {
 
         return number;
     }
+
+    public static double sum(double[] values){
+        double sum = 0;
+        for(double value : values){
+            sum += value;
+        }
+        return sum;
+    }
 }

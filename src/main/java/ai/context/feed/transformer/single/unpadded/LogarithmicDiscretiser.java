@@ -47,4 +47,9 @@ public class LogarithmicDiscretiser extends UnPaddedTransformer{
     public void addChild(Feed feed) {
         //To change body of implemented methods use File | Settings | File Templates.
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+        return padding + "[" + startIndex + "] Logarithmic dicretiser with benchmark: "+benchmark+", resolution: "+resolution+", feed component: "+feedComponent+" for: " + feed.getDescription(startIndex, padding);
+    }
 }

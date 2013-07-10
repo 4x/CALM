@@ -2,14 +2,14 @@ package ai.context.feed.synchronised;
 
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
-import ai.context.util.mathematics.SmartDiscretiser;
+import ai.context.util.mathematics.MinMaxDiscretiser;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-public class SmartDiscretiserOnSynchronisedFeed implements Feed {
+public class MinMaxAggregatorDiscretiser implements Feed {
 
     private SynchronisedFeed feed;
     private long criticalMass = 10000;
@@ -17,10 +17,10 @@ public class SmartDiscretiserOnSynchronisedFeed implements Feed {
 
     private long timeStamp;
 
-    private ArrayList<SmartDiscretiser> discretisers = new ArrayList<SmartDiscretiser>();
+    private ArrayList<MinMaxDiscretiser> discretisers = new ArrayList<MinMaxDiscretiser>();
     private HashMap<Feed, LinkedList<FeedObject>> buffers = new HashMap<>();
 
-    public SmartDiscretiserOnSynchronisedFeed(SynchronisedFeed feed, long criticalMass, int clusters) {
+    public MinMaxAggregatorDiscretiser(SynchronisedFeed feed, long criticalMass, int clusters) {
         this.feed = feed;
         this.criticalMass = criticalMass;
         this.clusters = clusters;
@@ -58,7 +58,7 @@ public class SmartDiscretiserOnSynchronisedFeed implements Feed {
 
             if(discretisers.size() <= index)
             {
-                discretisers.add(new SmartDiscretiser(criticalMass, clusters));
+                discretisers.add(new MinMaxDiscretiser(criticalMass, clusters));
             }
             output.add(discretisers.get(index).discretise(d));
 

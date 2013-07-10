@@ -1,6 +1,5 @@
 package ai.context.util.trading;
 
-import ai.context.util.configuration.DynamicPropertiesLoader;
 import ai.context.util.measurement.OpenPosition;
 
 import java.util.*;
@@ -21,9 +20,9 @@ public class PositionFactory {
 
     private static double minProbFraction = 0.25;
 
+    private static long timeSpan = 6 * 3600 * 1000L;
+
     private static PositionEngine engine;
-    private static String engineChecksum = "";
-    private static String configChecksum = "";
 
     public static OpenPosition getPosition(long time, double pivot, TreeMap<Double, Double> histogram)
     {
@@ -152,7 +151,7 @@ public class PositionFactory {
                 }
 
                 if(amp > minTakeProfitVertical){
-                    OpenPosition position = new OpenPosition(time, pivot, multiplier * amp, multiplier * amp, dirLong);
+                    OpenPosition position = new OpenPosition(time, pivot, multiplier * amp, multiplier * amp, dirLong, time + timeSpan);
                     if(!live){
                         position.setAmount(amount * tradeToCapRatio * leverage);
                         position.setCost(cost);
@@ -207,7 +206,7 @@ public class PositionFactory {
                                         }
                                     }
                                     if(slAmp != null){
-                                        OpenPosition position = new OpenPosition(time, pivot, multiplier * tpAmp, multiplier * slAmp, true);
+                                        OpenPosition position = new OpenPosition(time, pivot, multiplier * tpAmp, multiplier * slAmp, true, time + timeSpan);
                                         if(!live){
                                             position.setAmount(amount * tradeToCapRatio * leverage);
                                             position.setCost(cost);
@@ -258,7 +257,7 @@ public class PositionFactory {
                                         }
                                     }
                                     if(slAmp != null){
-                                        OpenPosition position = new OpenPosition(time, pivot, multiplier * tpAmp, multiplier * slAmp, false);
+                                        OpenPosition position = new OpenPosition(time, pivot, multiplier * tpAmp, multiplier * slAmp, false, time + timeSpan);
                                         if(!live){
                                             position.setAmount(amount * tradeToCapRatio * leverage);
                                             position.setCost(cost);
@@ -332,5 +331,13 @@ public class PositionFactory {
 
     public static void setEngine(PositionEngine engine) {
         PositionFactory.engine = engine;
+    }
+
+    public static void setTimeSpan(long timeSpan) {
+        PositionFactory.timeSpan = timeSpan;
+    }
+
+    public static long getTimeSpan() {
+        return timeSpan;
     }
 }

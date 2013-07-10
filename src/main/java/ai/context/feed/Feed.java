@@ -7,4 +7,6 @@ public interface Feed<T> {
 
     public long getLatestTime();
     public void addChild(Feed feed);
+
+    public String getDescription(int startIndex, String padding);
 }

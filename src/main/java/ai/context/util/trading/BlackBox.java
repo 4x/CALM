@@ -37,48 +37,54 @@ public class BlackBox implements IStrategy{
     @Override
     public void onTick(Instrument instrument, ITick tick) throws JFException {
 
-        synchronized (waitingPositions){
-            for(OpenPosition position : waitingPositions){
-                try{
-                    double amount = Operations.roundFloor(((available / 100) * leverage) / 1000000, 4);
-                    if(amount > 0){
-                        long tNow = System.currentTimeMillis();
-                        IOrder out = null;
-                        String direction = "LONG";
-                        if(position.isLong()){
-                            out = engine.submitOrder("" + tNow, Instrument.EURUSD, IEngine.OrderCommand.BUYLIMIT, amount,
-                                    Operations.roundFloor(position.getStart(), 5), 0.8,
-                                    Operations.roundFloor(position.getStopLoss(), 5),
-                                    Operations.roundFloor(position.getTakeProfit(), 5));
-                        }
-                        else {
-                            direction = "SHORT";
-                            out = engine.submitOrder("" + tNow, Instrument.EURUSD, IEngine.OrderCommand.SELLLIMIT, amount,
-                                    Operations.roundFloor(position.getStart(), 5), 0.8,
-                                    Operations.roundFloor(position.getStopLoss(), 5),
-                                    Operations.roundFloor(position.getTakeProfit(), 5));
-                        }
+        if(instrument == Instrument.EURUSD){
+            synchronized (waitingPositions){
+                while(!waitingPositions.isEmpty()){
+                    try{
+                        OpenPosition position = waitingPositions.remove(0);
+                        double amount = Operations.roundFloor(((available / 100) * leverage) / 1000000, 4);
+                        if(amount > 0){
+                            long tNow = System.currentTimeMillis();
+                            IOrder out = null;
+                            String direction = "LONG";
+                            if(position.isLong()){
+                                out = engine.submitOrder("EUR_" + tNow, Instrument.EURUSD, IEngine.OrderCommand.BUYLIMIT, amount,
+                                        Operations.roundFloor(position.getStart() - 0.0001, 5), 0.8,
+                                        Operations.roundFloor(position.getStopLoss(), 5),
+                                        Operations.roundFloor(position.getTakeProfit(), 5),
+                                        position.getGoodTillTime() + Period.FIVE_MINS.getInterval());
+                            }
+                            else {
+                                direction = "SHORT";
+                                out = engine.submitOrder("EUR_" + tNow, Instrument.EURUSD, IEngine.OrderCommand.SELLLIMIT, amount,
+                                        Operations.roundFloor(position.getStart() + 0.0001, 5), 0.8,
+                                        Operations.roundFloor(position.getStopLoss(), 5),
+                                        Operations.roundFloor(position.getTakeProfit(), 5),
+                                        position.getGoodTillTime() + Period.FIVE_MINS.getInterval());
+                            }
 
-                        LOGGER.info("OPENING: " + out.getLabel() + ", " + out.getOriginalAmount() + ", " + direction);
-                        positions.put("" + tNow, out);
+                            LOGGER.info("OPENING: " + out.getLabel() + ", " + (out.getOriginalAmount()*1000000D) + ", " + direction);
+                            positions.put("EUR_" + tNow, out);
+                        }
+                    }
+                    catch (Exception e){
+                        e.printStackTrace();
                     }
                 }
-                catch (Exception e){
-                    e.printStackTrace();
-                }
             }
-            waitingPositions.clear();
         }
     }
 
     @Override
     public void onBar(Instrument instrument, Period period, IBar askBar, IBar bidBar) throws JFException {
-        long tNow = System.currentTimeMillis();
-        for(Map.Entry<String, IOrder> out : positions.entrySet()){
-            IOrder order = out.getValue();
-            if(tNow - order.getCreationTime() > maxWaitForFill && order.getState() == IOrder.State.OPENED){
-                order.close();
-                LOGGER.info("Order " + order.getLabel() + " has not been filled yet, closing it...");
+        if(instrument == Instrument.EURUSD){
+            long tNow = System.currentTimeMillis();
+            for(Map.Entry<String, IOrder> out : positions.entrySet()){
+                IOrder order = out.getValue();
+                if(tNow - order.getCreationTime() > maxWaitForFill && order.getState() == IOrder.State.OPENED){
+                    order.close();
+                    LOGGER.info("Order " + order.getLabel() + " has not been filled yet, closing it...");
+                }
             }
         }
     }
@@ -88,7 +94,7 @@ public class BlackBox implements IStrategy{
         if(message.getType() == IMessage.Type.ORDER_CLOSE_OK){
             IOrder order = message.getOrder();
             positions.remove(order.getLabel());
-            LOGGER.info(order.getLabel() + " has closed, PNL: " + order.getProfitLossInUSD() + ", COMMISSION: " + order.getCommissionInUSD());
+            LOGGER.info(order.getLabel() + " has closed, PNL: " + order.getProfitLossInUSD() + ", COMMISSION: " + order.getCommissionInUSD() + ", AVAILABLE: " + available);
         }
         else if(message.getType() == IMessage.Type.ORDER_FILL_OK){
             IOrder order = message.getOrder();
@@ -99,7 +105,8 @@ public class BlackBox implements IStrategy{
 
     @Override
     public void onAccount(IAccount account) throws JFException {
-        available = account.getBalance() - getOpen()/leverage;
+        available = account.getBalance() - (1000000D*getOpen())/leverage;
+        //available = account.getCreditLine();
     }
 
     @Override

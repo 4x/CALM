@@ -52,4 +52,10 @@ public class MATransformer extends BufferedTransformer{
     public void goLive(){
         goLive(span);
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+
+        return padding + "["+startIndex+"] MA with type: " + type + " and span: " + span + " for feed: " + feed.getDescription(startIndex, padding);
+    }
 }

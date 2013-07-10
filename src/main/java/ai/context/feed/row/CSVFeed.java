@@ -295,4 +295,9 @@ public class CSVFeed extends RowFeed {
     public void setPaddable(boolean paddable) {
         this.paddable = paddable;
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+        return padding + "[" + startIndex + "] CSV File: " + fileName;
+    }
 }

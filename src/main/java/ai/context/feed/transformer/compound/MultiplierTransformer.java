@@ -26,4 +26,9 @@ public class MultiplierTransformer extends CompoundedTransformer{
     public Feed getCopy() {
         return new MultiplierTransformer(fA.getCopy(), fB.getCopy());
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+        return padding + "["+startIndex+"] Multiplier of feed " + fA + " by feed " + fB;
+    }
 }

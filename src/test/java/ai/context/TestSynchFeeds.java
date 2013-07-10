@@ -90,4 +90,9 @@ class TestFeed extends SynchronisableFeed{
     public Feed getCopy() {
         return null;
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
 }

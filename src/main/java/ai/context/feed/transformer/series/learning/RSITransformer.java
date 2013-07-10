@@ -40,7 +40,7 @@ public class RSITransformer extends BufferedTransformer {
             inputArray[i] = ((Double)value).floatValue();
         }
 
-        taLib.stochRsi(0, input.length - 1, inputArray, span, fastKPeriod, fastDPeriod, fastDMAType, new MInteger(), new MInteger(), outputArray[0], outputArray[1]);
+        taLib.stochRsi(0, input.length - 1, inputArray, span/2 + 1, fastKPeriod, fastDPeriod, fastDMAType, new MInteger(), new MInteger(), outputArray[0], outputArray[1]);
 
         for(int i = 0; i < input.length; i++){
             output[i] = new FeedObject(input[i].getTimeStamp(), new Double[]{outputArray[0][i], outputArray[1][i]});
@@ -55,5 +55,11 @@ public class RSITransformer extends BufferedTransformer {
 
     public void goLive(){
         goLive(span);
+    }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+
+        return padding + "["+startIndex+"] RSI with span: " + span + ", fast D period " + fastDPeriod + ", fast K period " + fastKPeriod + " and fastD MA type: " +fastDMAType+ " for feed: " + feed.getDescription(startIndex, padding);
     }
 }

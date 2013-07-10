@@ -153,4 +153,22 @@ public class AmplitudeWavelengthTransformer extends CompoundedTransformer{
     public Feed getCopy() {
         return new AmplitudeWavelengthTransformer(rawFeed.getCopy(), stdDevFeed.getCopy(), nDeviations, lambda);
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+
+        String desciption = padding + "[" + startIndex + "] Amplitude-Wavelength transformer with nDeviations: " + nDeviations + " and Lambda: " + lambda + " giving: \n";
+
+        desciption += padding + " [" + startIndex + "] Wavelength\n";
+        startIndex++;
+        desciption += padding + " [" + startIndex + "] Amplitude\n";
+        startIndex++;
+        desciption += padding + " [" + startIndex + "] Dist last Crest\n";
+        startIndex++;
+        desciption += padding + " [" + startIndex + "] Dist last trough";
+
+        desciption += padding + " for feed: " + rawFeed.getDescription(startIndex, "") + ", using Standard Deviation feed: " + stdDevFeed.getDescription(startIndex, "");
+
+        return desciption;
+    }
 }

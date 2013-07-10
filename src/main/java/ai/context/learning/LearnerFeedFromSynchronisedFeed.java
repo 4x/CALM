@@ -68,4 +68,14 @@ public class LearnerFeedFromSynchronisedFeed implements LearnerFeed, Feed {
     public long getLatestTime() {
         return timeStamp;
     }
+
+    @Override
+    public String getDescription() {
+        return getDescription(0, "");
+    }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+        return "[" + startIndex + "] Learner feed from: \n" + feed.getDescription(startIndex, padding + "   ");
+    }
 }

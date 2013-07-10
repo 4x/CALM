@@ -40,4 +40,10 @@ public class LiveMinMaxTransformer extends LiveBufferedTransformer{
     public Feed getCopy() {
         return new LiveMinMaxTransformer((int)span, feed.getCopy());
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+
+        return padding + "["+startIndex+"] Live MINMAX with span: " + span + " for feed: " + feed.getDescription(startIndex, padding);
+    }
 }

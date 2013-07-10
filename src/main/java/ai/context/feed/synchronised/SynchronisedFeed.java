@@ -36,4 +36,17 @@ public class SynchronisedFeed extends SynchronisableFeed{
     public Feed getRawFeed() {
         return rawFeed;
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+
+        String description = "";
+        for(SynchronisableFeed feed : feeds){
+            description += ((SynchronisedFeed)feed).getRawFeed().getDescription(startIndex, padding + " ") + "\n";
+            String[] lines = description.split("\n");
+            startIndex = Integer.parseInt(lines[lines.length - 1].trim().split("]")[0].substring(1));
+            startIndex++;
+        }
+        return description;
+    }
 }

@@ -86,4 +86,9 @@ public abstract class StitchableFeed implements Feed {
     public long getLatestTime() {
         return timeStamp;
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+        return padding + "[" + startIndex + "] Spliced live feed: " + liveFeed.getDescription(startIndex, padding);
+    }
 }

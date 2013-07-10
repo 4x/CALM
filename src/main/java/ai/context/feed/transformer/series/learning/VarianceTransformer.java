@@ -50,4 +50,10 @@ public class VarianceTransformer extends BufferedTransformer{
     public void goLive(){
         goLive(span);
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+
+        return padding + "["+startIndex+"] VARIANCE with span: " + span + " for feed: " + feed.getDescription(startIndex, padding);
+    }
 }

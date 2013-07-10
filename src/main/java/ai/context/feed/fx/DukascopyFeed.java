@@ -86,4 +86,9 @@ public class DukascopyFeed implements IStrategy, Feed {
     public long getLatestTime() {
         return timeStamp;
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+        return padding + "[" + startIndex + "] Dukascopy feed for OHLC for Instrument: " + instrument + " and Period: " + interval;
+    }
 }

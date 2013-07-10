@@ -44,4 +44,10 @@ public class LiveVarianceTransformer extends LiveBufferedTransformer{
     public Feed getCopy() {
         return new LiveVarianceTransformer(span, nDeviations, feed.getCopy());
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+
+        return padding + "["+startIndex+"] Live VARIANCE with span: " + span + " for feed: " + feed.getDescription(startIndex, padding);
+    }
 }

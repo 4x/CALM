@@ -50,4 +50,10 @@ public class LiveRSITransformer extends LiveBufferedTransformer {
     public Feed getCopy() {
         return new LiveRSITransformer(span, fastDPeriod, fastKPeriod, fastDMAType, feed.getCopy());
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+
+        return padding + "["+startIndex+"] Live RSI with span: " + span + ", fast D period " + fastDPeriod + " for feed: " + ", fast K period " + fastKPeriod + " and fastD MA type: " +fastDMAType+ " for feed: " + feed.getDescription(startIndex, padding);
+    }
 }

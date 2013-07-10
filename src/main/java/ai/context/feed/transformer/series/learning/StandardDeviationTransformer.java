@@ -50,4 +50,10 @@ public class StandardDeviationTransformer extends BufferedTransformer{
     public void goLive(){
         goLive(span);
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+
+        return padding + "["+startIndex+"] STDDEV with span: " + span + " for feed: " + feed.getDescription(startIndex, padding);
+    }
 }

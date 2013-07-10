@@ -102,6 +102,11 @@ class TestFeed3 implements Feed{
     public long getLatestTime() {
         return 0;
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
 }
 
 class TestFeed4 implements Feed{
@@ -138,6 +143,11 @@ class TestFeed4 implements Feed{
     @Override
     public long getLatestTime() {
         return 0;
+    }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 }
 

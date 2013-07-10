@@ -44,4 +44,10 @@ public class LiveStandardDeviationTransformer extends LiveBufferedTransformer{
     public LiveStandardDeviationTransformer getCopy() {
         return new LiveStandardDeviationTransformer(span, nDeviations, feed.getCopy());
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+
+        return padding + "["+startIndex+"] Live STDDEV with span: " + span + " for feed: " + feed.getDescription(startIndex, padding);
+    }
 }

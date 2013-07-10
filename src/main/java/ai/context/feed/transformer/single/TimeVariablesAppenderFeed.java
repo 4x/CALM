@@ -47,4 +47,21 @@ public class TimeVariablesAppenderFeed implements Feed {
     public long getLatestTime() {
         return timeStamp;
     }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+        String description = padding + "[" + startIndex + "] Time series appender with  [" + startIndex + "] Day of week" + "\n";
+        startIndex++;
+        description += padding + "  [" + startIndex + "] day of month" + "\n";
+        startIndex++;
+        description += padding + "  [" + startIndex + "] month of year" + "\n";
+        startIndex++;
+        description += padding + "  [" + startIndex + "] hour of day" + "\n";
+        startIndex++;
+        description += padding + "  [" + startIndex + "] minute of hour" + "\n";
+        startIndex++;
+        description += rawFeed.getDescription(startIndex, padding + " ") + "\n";
+
+        return description;
+    }
 }
