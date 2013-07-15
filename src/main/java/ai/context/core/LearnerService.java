@@ -71,7 +71,7 @@ public class LearnerService {
     public LearnerService() {
     }
 
-    public LearnerService(ConcurrentHashMap<String, StateActionPair> population, ConcurrentSkipListMap<Integer, ConcurrentSkipListMap<Integer, CopyOnWriteArraySet<StateActionPair>>> indices, double[] correlationWeights, TreeMap<Integer, CorrelationCalculator> correlationCalculators, double[] correlations, ClusteredCopulae copulae, TreeMap<Integer, Long> deviationDistributions, long deviationDistributionSize, double actionResolution, int maxPopulation, int tolerance, double copulaToUniversal, double minDevForMerge, TreeMap<Integer, Long> distribution) {
+    public LearnerService(ConcurrentHashMap<String, StateActionPair> population, ConcurrentSkipListMap<Integer, ConcurrentSkipListMap<Integer, CopyOnWriteArraySet<StateActionPair>>> indices, double[] correlationWeights, TreeMap<Integer, CorrelationCalculator> correlationCalculators, double[] correlations, ClusteredCopulae copulae, TreeMap<Integer, Long> deviationDistributions, long deviationDistributionSize, double actionResolution, int maxPopulation, double tolerance, double copulaToUniversal, double minDevForMerge, TreeMap<Integer, Long> distribution) {
         this.population = population;
         this.indices = indices;
         this.correlationWeights = correlationWeights;
@@ -109,11 +109,11 @@ public class LearnerService {
         this.actionResolution = actionResolution;
     }
 
-    public int getTolerance() {
+    public double getTolerance() {
         return PropertiesHolder.tolerance;
     }
 
-    public void setTolerance(int tolerance) {
+    public void setTolerance(double tolerance) {
         PropertiesHolder.tolerance = tolerance;
     }
 
@@ -209,7 +209,7 @@ public class LearnerService {
     {
         updateAndGetCorrelationWeights(state);
 
-        HashSet<StateActionPair> set = new HashSet<StateActionPair>();
+        /*HashSet<StateActionPair> set = new HashSet<StateActionPair>();
         TreeMap<Double, Integer> priorityOrderedSignals = new TreeMap<Double, Integer>();
         int signalIndex = 0;
 
@@ -234,7 +234,7 @@ public class LearnerService {
                 for(int position : head.descendingKeySet())
                 {
                     set.addAll(head.get(position));
-                    if(set.size() > PropertiesHolder.toleranceSearch*PropertiesHolder.tolerance*index)
+                    if(set.size() > PropertiesHolder.maxPopulation*PropertiesHolder.tolerance*index/state.length)
                     {
                         break;
                     }
@@ -242,19 +242,18 @@ public class LearnerService {
                 for(int position : tail.keySet())
                 {
                     set.addAll(tail.get(position));
-                    if(set.size() > 2*PropertiesHolder.toleranceSearch*PropertiesHolder.tolerance*index)
+                    if(set.size() > 2*PropertiesHolder.maxPopulation*PropertiesHolder.tolerance*index/state.length)
                     {
                         break;
                     }
                 }
             }
-        }
+        }*/
 
         TreeMap<Double, StateActionPair> top = new TreeMap<Double, StateActionPair>();
-        for(StateActionPair pair : set)
+        for(StateActionPair pair : population.values())
         {
-            double deviation = pair.getDeviation(state, correlationWeights) / Math.pow(Math.log(Math.E + pair.getTotalWeight()), 1 / PropertiesHolder.recencyBias);
-            top.put(deviation, pair);
+            top.put(getDeviation(state, pair), pair);
         }
 
         HashMap<StateActionPair, Double> map = new HashMap<StateActionPair, Double>();
@@ -264,12 +263,16 @@ public class LearnerService {
 
             populateDeviationPopulation(pair.getKey());
             i++;
-            if(i == PropertiesHolder.tolerance)
+            if(i >= population.size()*PropertiesHolder.tolerance && i >= 2)
             {
                 break;
             }
         }
         return map;
+    }
+
+    private double getDeviation(int[] state, StateActionPair pair){
+        return pair.getDeviation(state, correlationWeights) / Math.pow(Math.log(Math.E + pair.getTotalWeight()), 1 / PropertiesHolder.recencyBias);
     }
 
     private synchronized void populateDeviationPopulation(double deviation)
@@ -295,7 +298,7 @@ public class LearnerService {
             nBetter += entry.getValue();
         }
         double weight = 1.0 - ((double) nBetter / (double) deviationDistributionSize);
-        weight = weight * Math.log(weight * (Math.E - 1) + 1);
+        weight = Math.pow(weight * Math.log(weight * (Math.E - 1) + 1), 3);
         return weight;
     }
 
@@ -312,11 +315,20 @@ public class LearnerService {
             for(StateActionPair pair : population.values())
             {
                 merged = false;
-
-                for(Map.Entry<StateActionPair, Double> entry : getSimilarStates(pair.getAmalgamate()).entrySet())
+                updateAndGetCorrelationWeights(pair.getAmalgamate());
+                /*for(Map.Entry<StateActionPair, Double> entry : getSimilarStates(pair.getAmalgamate()).entrySet())
                 {
                     StateActionPair counterpart = entry.getKey();
                     if(entry.getValue() < minDevForMerge && !pair.getId().equals(counterpart.getId()))
+                    {
+                        merge(pair, counterpart);
+                        merged = true;
+                        break;
+                    }
+                }*/
+
+                for(StateActionPair counterpart : population.values()){
+                    if(getDeviation(pair.getAmalgamate(), counterpart) < minDevForMerge && !pair.getId().equals(counterpart.getId()))
                     {
                         merge(pair, counterpart);
                         merged = true;

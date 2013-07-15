@@ -60,8 +60,10 @@ public class TALibTransformer extends BufferedTransformer {
 
             taLib.adx(0, input.length - 1, high, low, close, ((Integer)parameters.get("period")).intValue()/2, new MInteger(), new MInteger(), outputArray);
             //TODO prepare output
+            //System.out.println("ADX");
             for(int i = 0; i < input.length; i++){
                 output[i] = new FeedObject(input[i].getTimeStamp(), outputArray[i]);
+                //System.out.println(i + " " + outputArray[i]);
             }
 
         }
@@ -88,6 +90,7 @@ public class TALibTransformer extends BufferedTransformer {
         else if(analyticsType.equals(TYPE_ADX)){
 
         }
+
         return output;
     }
 

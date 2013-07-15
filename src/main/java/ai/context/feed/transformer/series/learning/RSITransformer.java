@@ -42,8 +42,10 @@ public class RSITransformer extends BufferedTransformer {
 
         taLib.stochRsi(0, input.length - 1, inputArray, span/2 + 1, fastKPeriod, fastDPeriod, fastDMAType, new MInteger(), new MInteger(), outputArray[0], outputArray[1]);
 
+        //System.out.println("RSI");
         for(int i = 0; i < input.length; i++){
             output[i] = new FeedObject(input[i].getTimeStamp(), new Double[]{outputArray[0][i], outputArray[1][i]});
+            //System.out.println(i + " " + outputArray[0][i] + " " + outputArray[1][i]);
         }
         return output;
     }

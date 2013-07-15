@@ -158,7 +158,7 @@ public class LearnerServiceBuilder{
             double actionResolution = Double.parseDouble(data[9].split("=")[1]);
 
             int maxPopulation = Integer.parseInt(data[10].split("=")[1]);
-            int tolerance = Integer.parseInt(data[11].split("=")[1]);
+            double tolerance = Double.parseDouble(data[11].split("=")[1]);
             double copulaToUniversal = Double.parseDouble(data[12].split("=")[1]);
             double minDevForMerge = Double.parseDouble(data[13].split("=")[1]);
 

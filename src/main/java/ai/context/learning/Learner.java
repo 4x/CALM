@@ -29,7 +29,7 @@ public class Learner implements Runnable, TimedContainer{
     private HashSet<OpenPosition> positions = new HashSet<OpenPosition>();
     private TreeMap<Integer, TreeMap<Integer, Double>> successMap = new TreeMap<Integer, TreeMap<Integer, Double>>();
 
-    private int tolerance = 2;
+    private double tolerance = 0.1;
     private double actionResolution = 1.0;
     private int maxPopulation = 2000;
 
@@ -239,11 +239,11 @@ public class Learner implements Runnable, TimedContainer{
         return learner;
     }
 
-    public int getTolerance() {
+    public double getTolerance() {
         return tolerance;
     }
 
-    public void setTolerance(int tolerance) {
+    public void setTolerance(double tolerance) {
         this.tolerance = tolerance;
     }
 

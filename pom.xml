@@ -106,12 +106,12 @@
 			<version>1.4</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
+		<!--<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-all</artifactId>
 			<version>1.8.5</version>
 			<scope>test</scope>
-		</dependency>
+		</dependency>-->
         <dependency>
             <groupId>org</groupId>
             <artifactId>ta-lib</artifactId>
@@ -127,7 +127,7 @@
             <artifactId>rome</artifactId>
             <version>1.0</version>
         </dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-math</artifactId>
             <version>2.0</version>
@@ -136,7 +136,7 @@
             <groupId>net.sourceforge.parallelcolt</groupId>
             <artifactId>parallelcolt</artifactId>
             <version>0.10.0</version>
-        </dependency>
+        </dependency>-->
     </dependencies>
 
 </project>

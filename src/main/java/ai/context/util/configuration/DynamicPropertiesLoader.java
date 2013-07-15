@@ -72,7 +72,7 @@ public class DynamicPropertiesLoader {
                     PropertiesHolder.recencyBias = Double.parseDouble(parts[1]);
                 }
                 else if(parts[0].equals("tolerance")){
-                    PropertiesHolder.tolerance = Integer.parseInt(parts[1]);
+                    PropertiesHolder.tolerance = Double.parseDouble(parts[1]);
                 }
                 else if(parts[0].equals("maxPopulation")){
                     PropertiesHolder.maxPopulation = Integer.parseInt(parts[1]);

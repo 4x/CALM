@@ -1,6 +1,7 @@
 package ai.context.runner;
 
 import ai.context.feed.DataType;
+import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
 import ai.context.feed.fx.DukascopyFeed;
 import ai.context.feed.row.CSVFeed;
@@ -16,9 +17,7 @@ import ai.context.feed.synchronised.SynchronisedFeed;
 import ai.context.feed.transformer.compound.AmplitudeWavelengthTransformer;
 import ai.context.feed.transformer.compound.SubtractTransformer;
 import ai.context.feed.transformer.filtered.RowBasedTransformer;
-import ai.context.feed.transformer.series.learning.BufferedTransformer;
-import ai.context.feed.transformer.series.learning.SlopeTransformer;
-import ai.context.feed.transformer.series.learning.StandardDeviationTransformer;
+import ai.context.feed.transformer.series.learning.*;
 import ai.context.feed.transformer.single.TimeVariablesAppenderFeed;
 import ai.context.feed.transformer.single.unpadded.LinearDiscretiser;
 import ai.context.learning.DataObject;
@@ -33,6 +32,7 @@ import ai.context.util.trading.PositionFactory;
 import com.dukascopy.api.Instrument;
 import com.dukascopy.api.Period;
 import com.dukascopy.api.system.IClient;
+import com.tictactec.ta.lib.MAType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +56,7 @@ public class Main {
     private IClient client;
     private BlackBox blackBox;
 
-    private boolean testing = false;
+    private boolean testing = true;
     private String dukascopyUsername = "DEMO2LfagZ";
     private String dukascopyPassword = "LfagZ";
 
@@ -190,7 +190,7 @@ public class Main {
         SynchronisedFeed feed = buildSynchFeed(null, feedPriceEUR);
         feed = buildSynchFeed(feed, feedPriceGBP);
         feed = buildSynchFeed(feed, feedPriceCHF);
-        SmartDiscretiserOnSynchronisedFeed sFeed = new SmartDiscretiserOnSynchronisedFeed(feed, 5000, 10);
+        SmartDiscretiserOnSynchronisedFeed sFeed = new SmartDiscretiserOnSynchronisedFeed(feed, 5000, 5);
         //MinMaxAggregatorDiscretiser sFeed = new MinMaxAggregatorDiscretiser(feed, 5000, 10);
         feed.addChild(sFeed);
         TimeVariablesAppenderFeed tFeed = new TimeVariablesAppenderFeed(sFeed);
@@ -229,9 +229,9 @@ public class Main {
         trader.setActionResolution(0.0001);
         trader.setTrainingLearnerFeed(learnerFeed);
         trader.setMaxPopulation(5000);
-        trader.setTolerance(5);
+        trader.setTolerance(0.05);
 
-        PositionFactory.setRewardRiskRatio(4.0);
+        PositionFactory.setRewardRiskRatio(1.25);
         PositionFactory.setMinTakeProfit(0.0050);
         PositionFactory.setAmount(10000);
         PositionFactory.setCost(0.00015);
@@ -239,14 +239,13 @@ public class Main {
         PositionFactory.setLeverage(25);
         PositionFactory.setTimeSpan(4 * 12 * 5 * 60 * 1000L);
 
-        PositionFactory.setMinProbFraction(0.75);
+        PositionFactory.setMinProbFraction(0.5);
         PositionFactory.setVerticalRisk(true);
         PositionFactory.setMinTakeProfitVertical(0.0020);
         LoggerTimer.turn(false);
 
-        if(!testing){
-            DynamicPropertiesLoader.start();
-        }
+        DynamicPropertiesLoader.start();
+        goLive();
 
         i = 0;
         while (true)
@@ -254,12 +253,10 @@ public class Main {
             DataObject data = learnerFeed.readNext();
             trader.setCurrentTime(data.getTimeStamp());
 
-            if(testing){
-                System.out.println(new Date(data.getTimeStamp()) + " " + data);
-            }
+            //System.out.println(new Date(data.getTimeStamp()) + " " + data);
             i++;
 
-            if(i  == 10000 && !testing)
+            if(i  == 10000)
             {
                 break;
             }
@@ -300,15 +297,13 @@ public class Main {
             feed.addChild(feedL);
             ExtractOneFromListFeed feedC = new ExtractOneFromListFeed(feed, 3);
             feed.addChild(feedC);
-            //ExtractOneFromListFeed feedO = new ExtractOneFromListFeed(feed, 0);
-            //feed.addChild(feedO);
             ExtractOneFromListFeed feedV = new ExtractOneFromListFeed(feed, 4);
             feed.addChild(feedV);
 
             FXHLDiffFeed feedDiff = new FXHLDiffFeed(feed);
             feed.addChild(feedDiff);
 
-            /*Map<String, Object> param = new HashMap<>();
+            Map<String, Object> param = new HashMap<>();
             param.put("period", 10);
             TALibTransformer adx = new TALibTransformer(10, TALibTransformer.TYPE_ADX, param, new Feed[]{feedH, feedL, feedC});
             feedH.addChild(adx);
@@ -338,7 +333,23 @@ public class Main {
             feedH.addChild(adx3);
             feedL.addChild(adx3);
             feedC.addChild(adx3);
-            bufferedTransformers.add(adx3);*/
+            bufferedTransformers.add(adx3);
+
+            param = new HashMap<>();
+            param.put("period", 200);
+            TALibTransformer adx4 = new TALibTransformer(200, TALibTransformer.TYPE_ADX, param, new Feed[]{feedH, feedL, feedC});
+            feedH.addChild(adx4);
+            feedL.addChild(adx4);
+            feedC.addChild(adx4);
+            bufferedTransformers.add(adx4);
+
+            param = new HashMap<>();
+            param.put("period", 400);
+            TALibTransformer adx5 = new TALibTransformer(400, TALibTransformer.TYPE_ADX, param, new Feed[]{feedH, feedL, feedC});
+            feedH.addChild(adx5);
+            feedL.addChild(adx5);
+            feedC.addChild(adx5);
+            bufferedTransformers.add(adx5);
 
             FXModuloFeed feedModulo = new FXModuloFeed(feed, 0.0001, 100);
             feed.addChild(feedModulo);
@@ -364,41 +375,72 @@ public class Main {
             feedL.addChild(gradL3);
             bufferedTransformers.add(gradL3);
 
+            SlopeTransformer gradH4 = new SlopeTransformer(400, feedH);
+            feedH.addChild(gradH4);
+            bufferedTransformers.add(gradH4);
+            SlopeTransformer gradL4 = new SlopeTransformer(400, feedL);
+            feedL.addChild(gradL4);
+            bufferedTransformers.add(gradL4);
+
             StandardDeviationTransformer stdFeedH = new StandardDeviationTransformer(12, 2, feedH);
             feedH.addChild(stdFeedH);
             bufferedTransformers.add(stdFeedH);
             StandardDeviationTransformer stdFeedL = new StandardDeviationTransformer(12, 2, feedL);
             feedL.addChild(stdFeedL);
             bufferedTransformers.add(stdFeedL);
-            StandardDeviationTransformer stdFeedC = new StandardDeviationTransformer(12, 2, feedC);
-            feedC.addChild(stdFeedC);
-            bufferedTransformers.add(stdFeedC);
-            //StandardDeviationTransformer stdFeedO = new StandardDeviationTransformer(12, 2, feedO);
-            //feedO.addChild(stdFeedO);
-            //bufferedTransformers.add(stdFeedO);
             StandardDeviationTransformer stdFeedV = new StandardDeviationTransformer(12, 2, feedV);
             feedV.addChild(stdFeedV);
             bufferedTransformers.add(stdFeedV);
 
             AmplitudeWavelengthTransformer awFeedH = new AmplitudeWavelengthTransformer(feedH, stdFeedH, 2, 0.5);
             AmplitudeWavelengthTransformer awFeedL = new AmplitudeWavelengthTransformer(feedL, stdFeedL, 2, 0.5);
-            /*AmplitudeWavelengthTransformer awFeedC = new AmplitudeWavelengthTransformer(feedC, stdFeedC, 2, 0.5);
-            AmplitudeWavelengthTransformer awFeedO = new AmplitudeWavelengthTransformer(feedO, stdFeedO, 2, 0.5);*/
             AmplitudeWavelengthTransformer awFeedV = new AmplitudeWavelengthTransformer(feedV, stdFeedV, 2, 0.5);
             AmplitudeWavelengthTransformer awFeedH2 = new AmplitudeWavelengthTransformer(feedH, stdFeedH, 4, 0.5);
             AmplitudeWavelengthTransformer awFeedL2 = new AmplitudeWavelengthTransformer(feedL, stdFeedL, 4, 0.5);
 
-            /*RSITransformer rsiH = new RSITransformer(20, 5, 5, MAType.Sma, feedH);
+            StandardDeviationTransformer stdFeedH2 = new StandardDeviationTransformer(50, 2, feedH);
+            feedH.addChild(stdFeedH2);
+            bufferedTransformers.add(stdFeedH2);
+            StandardDeviationTransformer stdFeedL2 = new StandardDeviationTransformer(50, 2, feedL);
+            feedL.addChild(stdFeedL2);
+            bufferedTransformers.add(stdFeedL2);
+            StandardDeviationTransformer stdFeedV2 = new StandardDeviationTransformer(50, 2, feedV);
+            feedV.addChild(stdFeedV2);
+            bufferedTransformers.add(stdFeedV2);
+
+            AmplitudeWavelengthTransformer awFeedH50 = new AmplitudeWavelengthTransformer(feedH, stdFeedH2, 2, 0.5);
+            AmplitudeWavelengthTransformer awFeedL50 = new AmplitudeWavelengthTransformer(feedL, stdFeedL2, 2, 0.5);
+            AmplitudeWavelengthTransformer awFeedV50 = new AmplitudeWavelengthTransformer(feedV, stdFeedV2, 2, 0.5);
+            AmplitudeWavelengthTransformer awFeedH2_50 = new AmplitudeWavelengthTransformer(feedH, stdFeedH2, 4, 0.5);
+            AmplitudeWavelengthTransformer awFeedL2_50 = new AmplitudeWavelengthTransformer(feedL, stdFeedL2, 4, 0.5);
+
+            StandardDeviationTransformer stdFeedH3 = new StandardDeviationTransformer(100, 2, feedH);
+            feedH.addChild(stdFeedH3);
+            bufferedTransformers.add(stdFeedH3);
+            StandardDeviationTransformer stdFeedL3 = new StandardDeviationTransformer(100, 2, feedL);
+            feedL.addChild(stdFeedL3);
+            bufferedTransformers.add(stdFeedL3);
+            StandardDeviationTransformer stdFeedV3 = new StandardDeviationTransformer(100, 2, feedV);
+            feedV.addChild(stdFeedV3);
+            bufferedTransformers.add(stdFeedV3);
+
+            AmplitudeWavelengthTransformer awFeedH100 = new AmplitudeWavelengthTransformer(feedH, stdFeedH2, 2, 0.5);
+            AmplitudeWavelengthTransformer awFeedL100 = new AmplitudeWavelengthTransformer(feedL, stdFeedL2, 2, 0.5);
+            AmplitudeWavelengthTransformer awFeedV100 = new AmplitudeWavelengthTransformer(feedV, stdFeedV2, 2, 0.5);
+            AmplitudeWavelengthTransformer awFeedH2_100 = new AmplitudeWavelengthTransformer(feedH, stdFeedH2, 4, 0.5);
+            AmplitudeWavelengthTransformer awFeedL2_100 = new AmplitudeWavelengthTransformer(feedL, stdFeedL2, 4, 0.5);
+
+            RSITransformer rsiH = new RSITransformer(20, 5, 5, MAType.Sma, feedH);
             feedH.addChild(rsiH);
             bufferedTransformers.add(rsiH);
             RSITransformer rsiL = new RSITransformer(20, 5, 5, MAType.Sma, feedL);
             feedL.addChild(rsiL);
             bufferedTransformers.add(rsiL);
 
-            RSITransformer rsiH3 = new RSITransformer(50, 10, 10, MAType.Sma, feedH);
+            RSITransformer rsiH3 = new RSITransformer(40, 10, 10, MAType.Sma, feedH);
             feedH.addChild(rsiH3);
             bufferedTransformers.add(rsiH3);
-            RSITransformer rsiL3 = new RSITransformer(50, 10, 10, MAType.Sma, feedL);
+            RSITransformer rsiL3 = new RSITransformer(40, 10, 10, MAType.Sma, feedL);
             feedL.addChild(rsiL3);
             bufferedTransformers.add(rsiL3);
 
@@ -407,18 +449,25 @@ public class Main {
             bufferedTransformers.add(rsiH2);
             RSITransformer rsiL2 = new RSITransformer(100, 25, 25, MAType.Sma, feedL);
             feedL.addChild(rsiL2);
-            bufferedTransformers.add(rsiL2);*/
+            bufferedTransformers.add(rsiL2);
 
-            /*AmplitudeWavelengthTransformer awFeedH1 = new AmplitudeWavelengthTransformer(feedH, stdFeedH1, 2, 0.5);
-            AmplitudeWavelengthTransformer awFeedL1 = new AmplitudeWavelengthTransformer(feedL, stdFeedL1, 2, 0.5);
-            AmplitudeWavelengthTransformer awFeedC1 = new AmplitudeWavelengthTransformer(feedC, stdFeedC1, 2, 0.5);
-            AmplitudeWavelengthTransformer awFeedO1 = new AmplitudeWavelengthTransformer(feedO, stdFeedO1, 2, 0.5);;
-            AmplitudeWavelengthTransformer awFeedV1 = new AmplitudeWavelengthTransformer(feedV, stdFeedV1, 2, 0.5);*/
+            RSITransformer rsiH5 = new RSITransformer(200, 50, 50, MAType.Sma, feedH);
+            feedH.addChild(rsiH5);
+            bufferedTransformers.add(rsiH5);
+            RSITransformer rsiL5 = new RSITransformer(100, 50, 50, MAType.Sma, feedL);
+            feedL.addChild(rsiL5);
+            bufferedTransformers.add(rsiL5);
+
+            RSITransformer rsiH4 = new RSITransformer(400, 100, 100, MAType.Sma, feedH);
+            feedH.addChild(rsiH4);
+            bufferedTransformers.add(rsiH4);
+            RSITransformer rsiL4 = new RSITransformer(400, 100, 100, MAType.Sma, feedL);
+            feedL.addChild(rsiL4);
+            bufferedTransformers.add(rsiL4);
 
             synch = new SynchronisedFeed(feedH, synch);
             synch = new SynchronisedFeed(feedL, synch);
             synch = new SynchronisedFeed(feedC, synch);
-            /*synch = new SynchronisedFeed(feedO, synch);*/
             synch = new SynchronisedFeed(feedV, synch);
 
             synch = new SynchronisedFeed(feedDiff, synch);
@@ -427,49 +476,60 @@ public class Main {
             synch = new SynchronisedFeed(gradH, synch);
             synch = new SynchronisedFeed(gradH2, synch);
             synch = new SynchronisedFeed(gradH3, synch);
+            synch = new SynchronisedFeed(gradH4, synch);
 
             synch = new SynchronisedFeed(gradL, synch);
             synch = new SynchronisedFeed(gradL2, synch);
             synch = new SynchronisedFeed(gradL3, synch);
+            synch = new SynchronisedFeed(gradL4, synch);
 
             synch = new SynchronisedFeed(stdFeedH, synch);
             synch = new SynchronisedFeed(stdFeedL, synch);
-            /*synch = new SynchronisedFeed(stdFeedC, synch);
-            synch = new SynchronisedFeed(stdFeedO, synch);*/
             synch = new SynchronisedFeed(stdFeedV, synch);
+
+            synch = new SynchronisedFeed(stdFeedH2, synch);
+            synch = new SynchronisedFeed(stdFeedL2, synch);
+            synch = new SynchronisedFeed(stdFeedV2, synch);
+
+            synch = new SynchronisedFeed(stdFeedH3, synch);
+            synch = new SynchronisedFeed(stdFeedL3, synch);
+            synch = new SynchronisedFeed(stdFeedV3, synch);
 
             synch = new SynchronisedFeed(awFeedH, synch);
             synch = new SynchronisedFeed(awFeedL, synch);
-            /*synch = new SynchronisedFeed(awFeedC, synch);
-            synch = new SynchronisedFeed(awFeedO, synch);*/
             synch = new SynchronisedFeed(awFeedV, synch);
-
             synch = new SynchronisedFeed(awFeedH2, synch);
             synch = new SynchronisedFeed(awFeedL2, synch);
 
-            /*synch = new SynchronisedFeed(rsiH, synch);
+            synch = new SynchronisedFeed(awFeedH50, synch);
+            synch = new SynchronisedFeed(awFeedL50, synch);
+            synch = new SynchronisedFeed(awFeedV50, synch);
+            synch = new SynchronisedFeed(awFeedH2_50, synch);
+            synch = new SynchronisedFeed(awFeedL2_50, synch);
+
+            synch = new SynchronisedFeed(awFeedH100, synch);
+            synch = new SynchronisedFeed(awFeedL100, synch);
+            synch = new SynchronisedFeed(awFeedV100, synch);
+            synch = new SynchronisedFeed(awFeedH2_100, synch);
+            synch = new SynchronisedFeed(awFeedL2_100, synch);
+
+            synch = new SynchronisedFeed(rsiH, synch);
             synch = new SynchronisedFeed(rsiL, synch);
             synch = new SynchronisedFeed(rsiH2, synch);
             synch = new SynchronisedFeed(rsiL2, synch);
             synch = new SynchronisedFeed(rsiH3, synch);
             synch = new SynchronisedFeed(rsiL3, synch);
+            synch = new SynchronisedFeed(rsiH4, synch);
+            synch = new SynchronisedFeed(rsiL4, synch);
+            synch = new SynchronisedFeed(rsiH5, synch);
+            synch = new SynchronisedFeed(rsiL5, synch);
 
             synch = new SynchronisedFeed(adx, synch);
             synch = new SynchronisedFeed(adx1, synch);
             synch = new SynchronisedFeed(adx2, synch);
-            synch = new SynchronisedFeed(adx3, synch);*/
-
-            /*synch = new SynchronisedFeed(stdFeedH1, synch);
-            synch = new SynchronisedFeed(stdFeedL1, synch);
-            synch = new SynchronisedFeed(stdFeedC1, synch);
-            synch = new SynchronisedFeed(stdFeedO1, synch);
-            synch = new SynchronisedFeed(stdFeedV1, synch);
-
-            synch = new SynchronisedFeed(awFeedH1, synch);
-            synch = new SynchronisedFeed(awFeedL1, synch);
-            synch = new SynchronisedFeed(awFeedC1, synch);
-            synch = new SynchronisedFeed(awFeedO1, synch);
-            synch = new SynchronisedFeed(awFeedV1, synch);*/
+            synch = new SynchronisedFeed(adx3, synch);
+            synch = new SynchronisedFeed(adx4, synch);
+            synch = new SynchronisedFeed(adx5, synch);
         }
         return synch;
     }
