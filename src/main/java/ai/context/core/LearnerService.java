@@ -29,9 +29,6 @@ public class LearnerService {
 
     private double actionResolution = 1.0;
 
-    //private int maxPopulation = 1000;
-    //private int tolerance = 10;
-    //private double copulaToUniversal = 10.0;
     private double minDevForMerge = 0.0;
     private boolean merging = false;
 
@@ -253,7 +250,9 @@ public class LearnerService {
         TreeMap<Double, StateActionPair> top = new TreeMap<Double, StateActionPair>();
         for(StateActionPair pair : population.values())
         {
-            top.put(getDeviation(state, pair), pair);
+            double deviation = getDeviation(state, pair);
+            top.put(deviation, pair);
+            populateDeviationPopulation(deviation);
         }
 
         HashMap<StateActionPair, Double> map = new HashMap<StateActionPair, Double>();
@@ -261,10 +260,8 @@ public class LearnerService {
         for(Map.Entry<Double,StateActionPair> pair : top.entrySet()){
             map.put(pair.getValue(), pair.getKey());
 
-            populateDeviationPopulation(pair.getKey());
             i++;
-            if(i >= population.size()*PropertiesHolder.tolerance && i >= 2)
-            {
+            if(i >= population.size()*PropertiesHolder.tolerance && i >= 2){
                 break;
             }
         }
@@ -298,7 +295,7 @@ public class LearnerService {
             nBetter += entry.getValue();
         }
         double weight = 1.0 - ((double) nBetter / (double) deviationDistributionSize);
-        weight = Math.pow(weight * Math.log(weight * (Math.E - 1) + 1), 3);
+        weight = Math.pow(weight * Math.log(weight * (Math.E - 1) + 1), 2);
         return weight;
     }
 
@@ -316,16 +313,6 @@ public class LearnerService {
             {
                 merged = false;
                 updateAndGetCorrelationWeights(pair.getAmalgamate());
-                /*for(Map.Entry<StateActionPair, Double> entry : getSimilarStates(pair.getAmalgamate()).entrySet())
-                {
-                    StateActionPair counterpart = entry.getKey();
-                    if(entry.getValue() < minDevForMerge && !pair.getId().equals(counterpart.getId()))
-                    {
-                        merge(pair, counterpart);
-                        merged = true;
-                        break;
-                    }
-                }*/
 
                 for(StateActionPair counterpart : population.values()){
                     if(getDeviation(pair.getAmalgamate(), counterpart) < minDevForMerge && !pair.getId().equals(counterpart.getId()))
@@ -343,7 +330,7 @@ public class LearnerService {
             if(!merged)
             {
                 this.minDevForMerge = minDevForMerge;
-                minDevForMerge = 2 * minDevForMerge;
+                minDevForMerge = getMinDevForMerge();
             }
         }
 
@@ -364,28 +351,37 @@ public class LearnerService {
 
     private double getMinDevForMerge()
     {
-        long found = 0;
-        double minDev = minDevForMerge;
+        if(minDevForMerge == 0){
+            long found = 0;
+            double minDev = minDevForMerge;
 
-        long threshold = deviationDistributionSize/2;
+            long threshold = deviationDistributionSize/4;
 
-        for(Map.Entry<Integer, Long> entry : deviationDistributions.entrySet())
-        {
-            double dev = ((double) entry.getKey()) /100;
-            if(minDev < dev)
+            for(Map.Entry<Integer, Long> entry : deviationDistributions.entrySet())
             {
-                minDev = dev;
+                double dev = ((double) entry.getKey()) /100;
+                if(minDev < dev)
+                {
+                    minDev = dev;
+                }
+
+                found += entry.getValue();
+                if(found > threshold && minDev > 0)
+                {
+                    break;
+                }
             }
 
-            found += entry.getValue();
-            if(found > threshold && minDev > 0)
-            {
-                break;
-            }
+            minDevForMerge = minDev;
+            return minDev;
+        }
+        else {
+            double adjustment = ((double) (population.size() - getMaxPopulation()/2))/(getMaxPopulation()) + 1;
+            adjustment = Math.pow(adjustment, 2);
+            minDevForMerge = adjustment * minDevForMerge;
         }
 
-        minDevForMerge = minDev;
-        return minDev;
+        return minDevForMerge;
     }
 
     private synchronized void removeState(StateActionPair pair)

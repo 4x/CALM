@@ -15,7 +15,7 @@ public class TestLearning {
 
     private LearnerService learner = new LearnerService();
 
-    private int numInputs = 20;
+    private int numInputs = 200;
     private int degreesOfFreedom = 5;
     private int numPoints = 10000;
 

@@ -67,6 +67,9 @@ public abstract class SynchronisableFeed implements Feed {
         timeStamp.setValue(-1L);
 
         FeedObject feedObject = new FeedObject(timeToReturn, data);
+        if(feeds.size() == 1){
+            feedObject = new FeedObject(timeToReturn, currentData);
+        }
         for(Feed listener : buffers.keySet()){
             if(listener != caller){
                 buffers.get(listener).add(feedObject);

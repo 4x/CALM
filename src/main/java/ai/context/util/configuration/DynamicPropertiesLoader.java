@@ -15,7 +15,10 @@ public class DynamicPropertiesLoader {
     private static String positionFactoryConfigChecksum = "";
     private static String learnerServiceConfigCheckSum = "";
 
-    public static void start(){
+    private static String folder  = "";
+
+    public static void start(String folder){
+        DynamicPropertiesLoader.folder = folder + "/";
         TimerTask checkForUpdates = new TimerTask() {
             @Override
             public void run() {
@@ -35,9 +38,9 @@ public class DynamicPropertiesLoader {
     }
 
     private static void loadPositionFactoryEngine(){
-        if(new File("PositionEngineImplementation.class").exists()){
+        if(new File(folder + "PositionEngineImplementation.class").exists()){
             try {
-                String checksum = getMD5Checksum("PositionEngineImplementation.class");
+                String checksum = getMD5Checksum(folder + "PositionEngineImplementation.class");
 
                 if(!positionEngineChecksum.equals(checksum)){
                     positionEngineChecksum = checksum;
@@ -53,12 +56,12 @@ public class DynamicPropertiesLoader {
     }
 
     private static void loadLearnerServiceConf() throws Exception {
-        if(!learnerServiceConfigCheckSum.equals(getMD5Checksum("LearnerService.conf")))
+        if(!learnerServiceConfigCheckSum.equals(getMD5Checksum(folder + "LearnerService.conf")))
         {
-            learnerServiceConfigCheckSum = getMD5Checksum("LearnerService.conf");
+            learnerServiceConfigCheckSum = getMD5Checksum(folder + "LearnerService.conf");
             InputStream inputStream = null;
             try {
-                inputStream = new FileInputStream("LearnerService.conf");
+                inputStream = new FileInputStream(folder + "LearnerService.conf");
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
@@ -89,12 +92,12 @@ public class DynamicPropertiesLoader {
     }
 
     private static void loadPositionFactoryConf() throws Exception {
-        if(!positionFactoryConfigChecksum.equals(getMD5Checksum("PositionFactory.conf")))
+        if(!positionFactoryConfigChecksum.equals(getMD5Checksum(folder + "PositionFactory.conf")))
         {
-            positionFactoryConfigChecksum = getMD5Checksum("PositionFactory.conf");
+            positionFactoryConfigChecksum = getMD5Checksum(folder + "PositionFactory.conf");
             InputStream inputStream = null;
             try {
-                inputStream = new FileInputStream("PositionFactory.conf");
+                inputStream = new FileInputStream(folder + "PositionFactory.conf");
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }

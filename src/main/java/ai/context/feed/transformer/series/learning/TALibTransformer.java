@@ -9,6 +9,7 @@ import java.util.Map;
 
 public class TALibTransformer extends BufferedTransformer {
 
+    public static String TYPE_MACD = "MACD";
     public static String TYPE_ADX = "ADX";
     public static String TYPE_FTT = "FTT";
 
@@ -69,8 +70,7 @@ public class TALibTransformer extends BufferedTransformer {
         }
         else if(analyticsType.equals(TYPE_FTT)){
         }
-        else if(analyticsType.equals(TYPE_ADX)){
-
+        else if(analyticsType.equals(TYPE_MACD)){
         }
         else if(analyticsType.equals(TYPE_ADX)){
 
