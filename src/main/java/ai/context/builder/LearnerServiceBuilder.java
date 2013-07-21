@@ -6,9 +6,7 @@ import ai.context.util.learning.ClusteredCopulae;
 import ai.context.util.mathematics.CorrelationCalculator;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -78,7 +76,7 @@ public class LearnerServiceBuilder{
             ConcurrentHashMap<String, StateActionPair> population = StateActionPairBuilder.getPopulation();
             ConcurrentSkipListMap<Integer, ConcurrentSkipListMap<Integer, CopyOnWriteArraySet<StateActionPair>>> indices = new ConcurrentSkipListMap<>();
 
-            for(String indexData : data[1].split("=")[1].split(";")){
+            /*for(String indexData : data[1].split("=")[1].split(";")){
 
                 String[] parts = indexData.split(":");
                 int e1 = Integer.parseInt(parts[0]);
@@ -98,7 +96,7 @@ public class LearnerServiceBuilder{
                 else {
                     System.err.println("SAP not found: " + sapID);
                 }
-            }
+            }*/
 
             String[] cwParts = data[2].split("=")[1].split(":");
             double [] correlationWeights = new double[cwParts.length];
@@ -133,20 +131,8 @@ public class LearnerServiceBuilder{
                 System.err.println("Copulae not found: " + data[5].split("=")[1]);
             }
 
-            TreeMap<Integer, Long> deviationDistributions = new TreeMap<Integer, Long>();
-            for(String ddData : data[6].split("=")[1].split(";")){
-
-                String[] parts = ddData.split(":");
-                int e1 = Integer.parseInt(parts[0]);
-                long e2 = Long.parseLong(parts[1]);
-
-                deviationDistributions.put(e1, e2);
-            }
-
-            long deviationDistributionSize = Long.parseLong(data[7].split("=")[1]);
-
             TreeMap<Integer, Long> distribution = new TreeMap<Integer, Long>();
-            for(String dData : data[8].split("=")[1].split(";")){
+            for(String dData : data[6].split("=")[1].split(";")){
 
                 String[] parts = dData.split(":");
                 int e1 = Integer.parseInt(parts[0]);
@@ -155,14 +141,16 @@ public class LearnerServiceBuilder{
                 distribution.put(e1, e2);
             }
 
-            double actionResolution = Double.parseDouble(data[9].split("=")[1]);
+            double actionResolution = Double.parseDouble(data[7].split("=")[1]);
 
-            int maxPopulation = Integer.parseInt(data[10].split("=")[1]);
-            double tolerance = Double.parseDouble(data[11].split("=")[1]);
-            double copulaToUniversal = Double.parseDouble(data[12].split("=")[1]);
+            int maxPopulation = Integer.parseInt(data[8].split("=")[1]);
+            double tolerance = Double.parseDouble(data[9].split("=")[1]);
+            double copulaToUniversal = Double.parseDouble(data[10].split("=")[1]);
+            double minDev = Double.parseDouble(data[11].split("=")[1]);
+            double maxDev = Double.parseDouble(data[12].split("=")[1]);
             double minDevForMerge = Double.parseDouble(data[13].split("=")[1]);
 
-            return new LearnerService(population, indices, correlationWeights, correlationCalculators, correlations, copulae, deviationDistributions, deviationDistributionSize, actionResolution, maxPopulation, tolerance, copulaToUniversal,minDevForMerge, distribution);
+            return new LearnerService(population, indices, correlationWeights, correlationCalculators, correlations, copulae, actionResolution, maxPopulation, tolerance, copulaToUniversal, minDev, maxDev, minDevForMerge, distribution);
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();

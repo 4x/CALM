@@ -246,7 +246,8 @@ public class Main {
         PositionFactory.setMinTakeProfitVertical(0.0020);
         LoggerTimer.turn(false);
 
-        DynamicPropertiesLoader.start("C:/Dev/Source/CALM/src/main/resources");
+        //DynamicPropertiesLoader.start("C:/Dev/Source/CALM/src/main/resources");
+        DynamicPropertiesLoader.start("");
         goLive();
 
         i = 0;
@@ -255,7 +256,7 @@ public class Main {
             DataObject data = learnerFeed.readNext();
             trader.setCurrentTime(data.getTimeStamp());
 
-            System.out.println(new Date(data.getTimeStamp()) + " " + data);
+            //System.out.println(new Date(data.getTimeStamp()) + " " + data);
             i++;
 
             if(i  == 10000)
@@ -392,13 +393,13 @@ public class Main {
             RSIOnlineTransformer rsiL3 = new RSIOnlineTransformer(feedL, 5, 20, 0.1);
 
             ExtractOneFromListFeed kRSIH3 = new ExtractOneFromListFeed(rsiH3, 1);
-            rsiH.addChild(kRSIH3);
+            rsiH3.addChild(kRSIH3);
             ExtractOneFromListFeed dRSIH3 = new ExtractOneFromListFeed(rsiH3, 2);
-            rsiH.addChild(dRSIH3);
+            rsiH3.addChild(dRSIH3);
             ExtractOneFromListFeed kRSIL3 = new ExtractOneFromListFeed(rsiL3, 1);
-            rsiL.addChild(kRSIL3);
+            rsiL3.addChild(kRSIL3);
             ExtractOneFromListFeed dRSIL3 = new ExtractOneFromListFeed(rsiL3, 2);
-            rsiL.addChild(dRSIL3);
+            rsiL3.addChild(dRSIL3);
             CrossingSeriesOnlineTransformer crossH3 = new CrossingSeriesOnlineTransformer(kRSIH3, dRSIH3, 10);
             CrossingSeriesOnlineTransformer crossL3 = new CrossingSeriesOnlineTransformer(kRSIL3, dRSIL3, 10);
 
@@ -406,13 +407,13 @@ public class Main {
             RSIOnlineTransformer rsiL2 = new RSIOnlineTransformer(feedL, 5, 40, 0.05);
 
             ExtractOneFromListFeed kRSIH2 = new ExtractOneFromListFeed(rsiH2, 1);
-            rsiH.addChild(kRSIH2);
+            rsiH2.addChild(kRSIH2);
             ExtractOneFromListFeed dRSIH2 = new ExtractOneFromListFeed(rsiH2, 2);
-            rsiH.addChild(dRSIH2);
+            rsiH2.addChild(dRSIH2);
             ExtractOneFromListFeed kRSIL2 = new ExtractOneFromListFeed(rsiL2, 1);
-            rsiL.addChild(kRSIL2);
+            rsiL2.addChild(kRSIL2);
             ExtractOneFromListFeed dRSIL2 = new ExtractOneFromListFeed(rsiL2, 2);
-            rsiL.addChild(dRSIL2);
+            rsiL2.addChild(dRSIL2);
             CrossingSeriesOnlineTransformer crossH2 = new CrossingSeriesOnlineTransformer(kRSIH2, dRSIH2, 10);
             CrossingSeriesOnlineTransformer crossL2 = new CrossingSeriesOnlineTransformer(kRSIL2, dRSIL2, 10);
 
@@ -420,13 +421,13 @@ public class Main {
             RSIOnlineTransformer rsiL5 = new RSIOnlineTransformer(feedL, 5, 10, 0.025);
 
             ExtractOneFromListFeed kRSIH5 = new ExtractOneFromListFeed(rsiH5, 1);
-            rsiH.addChild(kRSIH5);
+            rsiH5.addChild(kRSIH5);
             ExtractOneFromListFeed dRSIH5 = new ExtractOneFromListFeed(rsiH5, 2);
-            rsiH.addChild(dRSIH5);
+            rsiH5.addChild(dRSIH5);
             ExtractOneFromListFeed kRSIL5 = new ExtractOneFromListFeed(rsiL5, 1);
-            rsiL.addChild(kRSIL5);
+            rsiL5.addChild(kRSIL5);
             ExtractOneFromListFeed dRSIL5 = new ExtractOneFromListFeed(rsiL5, 2);
-            rsiL.addChild(dRSIL5);
+            rsiL5.addChild(dRSIL5);
             CrossingSeriesOnlineTransformer crossH5 = new CrossingSeriesOnlineTransformer(kRSIH5, dRSIH5, 10);
             CrossingSeriesOnlineTransformer crossL5 = new CrossingSeriesOnlineTransformer(kRSIL5, dRSIL5, 10);
 
@@ -434,13 +435,13 @@ public class Main {
             RSIOnlineTransformer rsiL4 = new RSIOnlineTransformer(feedL, 5, 10, 0.2);
 
             ExtractOneFromListFeed kRSIH4 = new ExtractOneFromListFeed(rsiH4, 1);
-            rsiH.addChild(kRSIH4);
+            rsiH4.addChild(kRSIH4);
             ExtractOneFromListFeed dRSIH4 = new ExtractOneFromListFeed(rsiH4, 2);
-            rsiH.addChild(dRSIH4);
+            rsiH4.addChild(dRSIH4);
             ExtractOneFromListFeed kRSIL4 = new ExtractOneFromListFeed(rsiL4, 1);
-            rsiL.addChild(kRSIL4);
+            rsiL4.addChild(kRSIL4);
             ExtractOneFromListFeed dRSIL4 = new ExtractOneFromListFeed(rsiL4, 2);
-            rsiL.addChild(dRSIL4);
+            rsiL4.addChild(dRSIL4);
             CrossingSeriesOnlineTransformer crossH4 = new CrossingSeriesOnlineTransformer(kRSIH4, dRSIH4, 10);
             CrossingSeriesOnlineTransformer crossL4 = new CrossingSeriesOnlineTransformer(kRSIL4, dRSIL4, 10);
 

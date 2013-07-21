@@ -1,6 +1,5 @@
 package ai.context;
 
-import ai.context.builder.LearnerServiceBuilder;
 import ai.context.core.LearnerService;
 import ai.context.util.analysis.SuccessMap;
 import ai.context.util.measurement.LoggerTimer;
@@ -15,15 +14,15 @@ public class TestLearning {
 
     private LearnerService learner = new LearnerService();
 
-    private int numInputs = 200;
+    private int numInputs = 100;
     private int degreesOfFreedom = 5;
     private int numPoints = 10000;
 
     private int numPredict = 10000;
 
-    private double tolerance = 0.025;
+    private double tolerance = 0.01;
     private double actionResolution = 1.0;
-    private int maxPopulation = 200;
+    private int maxPopulation = 500;
 
     @Before
     public void setup()
@@ -43,13 +42,14 @@ public class TestLearning {
             System.out.println("Learned: point " + i + ": Signal: " + getStringFromSignal(signal) + " Movement: "+ movement);
         }
 
-        LearnerServiceBuilder.save(learner,"src/test/resources", 1);
+        System.out.println(learner.getPopulation().size());
+        //LearnerServiceBuilder.save(learner, "src/test/resources", 1);
     }
 
     @Test
     public void testLearning()
     {
-        learner = LearnerServiceBuilder.load("src/test/resources", 1);
+        //learner = LearnerServiceBuilder.load("src/test/resources", 1);
 
         TreeMap<Integer, TreeMap<Integer, Double>> successMap = new TreeMap<Integer, TreeMap<Integer, Double>>();
         TreeSet<Integer> ySet = new TreeSet<Integer>();

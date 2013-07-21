@@ -1,5 +1,6 @@
 package ai.context.util.trading;
 
+import ai.context.util.analysis.DecisionHistogram;
 import ai.context.util.measurement.OpenPosition;
 
 import java.util.*;
@@ -9,8 +10,8 @@ public class PositionFactory {
     private static double tradeToCapRatio = 0.025;
     private static double leverage = 100;
     private static double amount = 1.0;
-    private static double cost = 0.0;
-    private static double rewardRiskRatio = 2.0;
+    public static double cost = 0.0;
+    public static double rewardRiskRatio = 2.0;
     private static double minTakeProfit = 0.001;
     private static double minTakeProfitVertical = 0.001;
 
@@ -18,16 +19,19 @@ public class PositionFactory {
 
     private static boolean verticalRisk = false;
 
-    private static double minProbFraction = 0.25;
+    public static double minProbFraction = 0.25;
 
     private static long timeSpan = 6 * 3600 * 1000L;
 
     private static PositionEngine engine;
 
+    //private static DecisionHistogram decisionHistogram = new DecisionHistogram();
+
     public static OpenPosition getPosition(long time, double pivot, TreeMap<Double, Double> histogram)
     {
-        if(engine != null){
-            return engine.getPosition(time, pivot, histogram);
+        Date executionInstant = new Date(time);
+        if(executionInstant.getDay() == 0 || executionInstant.getDay() == 6){
+            return null;
         }
 
         SortedMap<Double, Double> shortMap = histogram.descendingMap().tailMap(pivot, false);
@@ -79,6 +83,26 @@ public class PositionFactory {
             lFreq.put(amplitude, longFreq);
 
             directionalFreq.put(amplitude, longFreq - shortFreq);
+        }
+
+        double decision = DecisionUtil.getDecision(sFreq, lFreq);
+        boolean dirL = true;
+        //decisionHistogram.update(sFreq, lFreq, minTakeProfit, rewardRiskRatio, Math.abs(decision));
+        if(decision < 0){
+            dirL = false;
+        }
+        if(decision != 0){
+        OpenPosition position = new OpenPosition(time, pivot, decision, decision, dirL, time + timeSpan);
+            if(!live){
+                position.setAmount(amount * tradeToCapRatio * leverage);
+                position.setCost(cost);
+                amount -= position.getAmount()/leverage;
+            }
+            return position;
+        }
+
+        if(engine != null){
+            return engine.getPosition(time, pivot, histogram);
         }
 
         double multiplier = 1.0;

@@ -18,7 +18,9 @@ public class DynamicPropertiesLoader {
     private static String folder  = "";
 
     public static void start(String folder){
-        DynamicPropertiesLoader.folder = folder + "/";
+        if(!folder.equals("")){
+            DynamicPropertiesLoader.folder = folder + "/";
+        }
         TimerTask checkForUpdates = new TimerTask() {
             @Override
             public void run() {

@@ -14,7 +14,6 @@ public class StateActionPairBuilder {
     private static String folderPath;
     private static BufferedWriter writer;
 
-
     public synchronized static void save(StateActionPair pair){
         String id = "" + System.identityHashCode(pair);
         try {
