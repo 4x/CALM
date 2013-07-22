@@ -259,7 +259,7 @@ public class LearnerService {
     {
         merging = true;
         if(minDevForMerge == -1){
-            minDevForMerge =  (minDev + maxDev)/getMaxPopulation();
+            minDevForMerge =  4*(minDev + maxDev)/getMaxPopulation();
         }
 
         long t = System.currentTimeMillis();
@@ -272,28 +272,29 @@ public class LearnerService {
             runs++;
             HashSet<StateActionPair> pairs = new HashSet<>();
             pairs.addAll(population.values());
+            for(StateActionPair pair : population.values()){
+                getSimilarStates(pair.getAmalgamate());
+            }
 
-            int i = 0;
-            int j = 0;
-            int k = 0;
             int x = 0;
+            int y = 0;
+            int z = 0;
+            HashSet<StateActionPair> check = new HashSet<>();
             for(StateActionPair pair : pairs){
-                i++;
-                if(population.values().contains(pair)){
-                    j++;
-                    for(StateActionPair counterpart : pair.getClosestNeighbours()){
-                        k++;
-                        if(pair != counterpart && population.values().contains(counterpart)){
-                            updateAndGetCorrelationWeights(pair.getAmalgamate());
-                            double deviation = getDeviation(pair.getAmalgamate(), counterpart);
-                            x++;
-                            if(deviation <= minDevForMerge){
-                                merge(pair, counterpart);
-                                if(population.size() < getMaxPopulation()/2){
-                                    targetReached = true;
-                                }
-                                break;
+                x++;
+                for(StateActionPair counterpart : pair.getClosestNeighbours()){
+                    check.addAll(pair.getClosestNeighbours());
+                    y++;
+                    if(pair != counterpart && population.values().contains(counterpart)){
+                        updateAndGetCorrelationWeights(pair.getAmalgamate());
+                        double deviation = getDeviation(pair.getAmalgamate(), counterpart);
+                        z++;
+                        if(deviation <= minDevForMerge){
+                            merge(pair, counterpart);
+                            if(population.size() < getMaxPopulation()/2){
+                                targetReached = true;
                             }
+                            break;
                         }
                     }
                 }
@@ -301,13 +302,9 @@ public class LearnerService {
                     break;
                 }
             }
-
-            if(!targetReached && runs % 2 == 0){
-                for(StateActionPair pair : population.values()){
-                    getSimilarStates(pair.getAmalgamate());
-                }
+            if(!targetReached && runs % 4 == 0){
                 minDevForMerge = minDevForMerge * ((double)population.size()/(getMaxPopulation()/2));
-                System.err.println("MinDevForMerge pushed to: " + minDevForMerge + " i: " + i  + " j: " + j  + " k: " + k + " x: " + x);
+                System.err.println("MinDevForMerge pushed to: " + minDevForMerge + " x: " + x  + " y: " + y + " z: " + z + " Check: " + check.size());
             }
             else if(targetReached){
                 break;
