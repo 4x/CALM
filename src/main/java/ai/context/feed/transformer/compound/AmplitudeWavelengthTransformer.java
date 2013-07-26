@@ -139,11 +139,11 @@ public class AmplitudeWavelengthTransformer extends CompoundedTransformer{
         double[] result = new double[4];
         if(wavelength != null)
         {
-            result[0] = wavelength;
-            result[1] = amplitude;
+            result[0] = Math.log(wavelength);
+            result[1] = Math.log(amplitude);
 
-            result[2] = ((history.size() + index) - lastCrestCoordinates[0])/wavelength;
-            result[3] = ((history.size() + index) - lastTroughCoordinates[0])/wavelength;
+            result[2] = Math.log(((history.size() + index) - lastCrestCoordinates[0])/wavelength);
+            result[3] = Math.log(((history.size() + index) - lastTroughCoordinates[0])/wavelength);
         }
 
         return result;

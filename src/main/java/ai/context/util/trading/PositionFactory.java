@@ -25,7 +25,7 @@ public class PositionFactory {
 
     private static PositionEngine engine;
 
-    //private static DecisionHistogram decisionHistogram = new DecisionHistogram();
+    private static DecisionHistogram decisionHistogram = new DecisionHistogram();
 
     public static OpenPosition getPosition(long time, double pivot, TreeMap<Double, Double> histogram)
     {
@@ -87,7 +87,7 @@ public class PositionFactory {
 
         double decision = DecisionUtil.getDecision(sFreq, lFreq);
         boolean dirL = true;
-        //decisionHistogram.update(sFreq, lFreq, minTakeProfit, rewardRiskRatio, Math.abs(decision));
+        decisionHistogram.update(sFreq, lFreq, minTakeProfit, rewardRiskRatio, Math.abs(decision));
         if(decision < 0){
             dirL = false;
         }
@@ -101,7 +101,7 @@ public class PositionFactory {
             return position;
         }
 
-        if(engine != null){
+        /*if(engine != null){
             return engine.getPosition(time, pivot, histogram);
         }
 
@@ -295,7 +295,7 @@ public class PositionFactory {
                     }
                 }
             }
-        }
+        }*/
         return null;
     }
 

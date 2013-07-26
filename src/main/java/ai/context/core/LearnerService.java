@@ -146,11 +146,26 @@ public class LearnerService {
             addState(stateActionPair);
         }
 
+        StateActionPair counterpart = null;
+        double currentDev = -1;
+
         Set<Map.Entry<StateActionPair, Double>> entries = getSimilarStates(state).entrySet();
         for(Map.Entry<StateActionPair, Double> entry : entries)
         {
             double weight = getWeightForDeviation(entry.getValue());
             entry.getKey().newMovement(movement, weight);
+
+            if(currentDev == -1){
+                currentDev = entry.getValue();
+            }
+            if(entry.getValue() <= currentDev && entry.getValue() < minDevForMerge && !entry.getKey().getId().equals(id)){
+                counterpart = entry.getKey();
+            }
+        }
+
+        if(counterpart != null){
+            merge(population.get(id), counterpart);
+            //System.err.println("Merging " + id + ", " + counterpart.getId());
         }
 
         if(newState && population.size() > PropertiesHolder.maxPopulation)
@@ -279,6 +294,7 @@ public class LearnerService {
             int x = 0;
             int y = 0;
             int z = 0;
+            int a = 0;
             HashSet<StateActionPair> check = new HashSet<>();
             for(StateActionPair pair : pairs){
                 x++;
@@ -291,6 +307,7 @@ public class LearnerService {
                         z++;
                         if(deviation <= minDevForMerge){
                             merge(pair, counterpart);
+                            a++;
                             if(population.size() < getMaxPopulation()/2){
                                 targetReached = true;
                             }
@@ -302,9 +319,11 @@ public class LearnerService {
                     break;
                 }
             }
-            if(!targetReached && runs % 4 == 0){
+
+            System.err.println("Run: " + runs  + " x: " + x  + " y: " + y + " z: " + z + " Check: " + check.size() + " a: " + a);
+            if(!targetReached && (runs % 4 == 0 || a < (double)population.size()/20)){
                 minDevForMerge = minDevForMerge * ((double)population.size()/(getMaxPopulation()/2));
-                System.err.println("MinDevForMerge pushed to: " + minDevForMerge + " x: " + x  + " y: " + y + " z: " + z + " Check: " + check.size());
+                System.err.println("MinDevForMerge pushed to: " + minDevForMerge);
             }
             else if(targetReached){
                 break;

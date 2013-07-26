@@ -11,7 +11,7 @@ import ai.context.feed.stitchable.StitchableFeed;
 import ai.context.feed.surgical.ExtractOneFromListFeed;
 import ai.context.feed.surgical.FXHLDiffFeed;
 import ai.context.feed.surgical.FXModuloFeed;
-import ai.context.feed.synchronised.SmartDiscretiserOnSynchronisedFeed;
+import ai.context.feed.synchronised.MinMaxAggregatorDiscretiser;
 import ai.context.feed.synchronised.SynchronisedFeed;
 import ai.context.feed.transformer.compound.AmplitudeWavelengthTransformer;
 import ai.context.feed.transformer.compound.SubtractTransformer;
@@ -23,6 +23,7 @@ import ai.context.feed.transformer.series.online.RSIOnlineTransformer;
 import ai.context.feed.transformer.series.online.StandardDeviationOnlineTransformer;
 import ai.context.feed.transformer.single.TimeVariablesAppenderFeed;
 import ai.context.feed.transformer.single.unpadded.LinearDiscretiser;
+import ai.context.feed.transformer.single.unpadded.LogarithmicDiscretiser;
 import ai.context.learning.DataObject;
 import ai.context.learning.Learner;
 import ai.context.learning.LearnerFeed;
@@ -38,7 +39,10 @@ import com.dukascopy.api.system.IClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static ai.context.util.common.DateUtils.getTimeFromString_YYYYMMddHHmmss;
 
@@ -192,8 +196,9 @@ public class Main {
         SynchronisedFeed feed = buildSynchFeed(null, feedPriceEUR);
         feed = buildSynchFeed(feed, feedPriceGBP);
         //feed = buildSynchFeed(feed, feedPriceCHF);
-        SmartDiscretiserOnSynchronisedFeed sFeed = new SmartDiscretiserOnSynchronisedFeed(feed, 5000, 5);
-        //MinMaxAggregatorDiscretiser sFeed = new MinMaxAggregatorDiscretiser(feed, 5000, 10);
+        //SmartDiscretiserOnSynchronisedFeed sFeed = new SmartDiscretiserOnSynchronisedFeed(feed, 5000, 5);
+        MinMaxAggregatorDiscretiser sFeed = new MinMaxAggregatorDiscretiser(feed, 5000, 10);
+        sFeed.lock();
         feed.addChild(sFeed);
         TimeVariablesAppenderFeed tFeed = new TimeVariablesAppenderFeed(sFeed);
         sFeed.addChild(tFeed);
@@ -219,7 +224,7 @@ public class Main {
             trader.setCurrentTime(data.getTimeStamp());
             i++;
 
-            if(i  == 20000)
+            if(i  == 5000)
             {
                 break;
             }
@@ -228,26 +233,26 @@ public class Main {
         LearnerFeed learnerFeed = new LearnerFeedFromSynchronisedFeed(feed);
         LOGGER.info(learnerFeed.getDescription());
 
-        trader.setActionResolution(0.0001);
+        trader.setActionResolution(0.00001);
         trader.setTrainingLearnerFeed(learnerFeed);
         trader.setMaxPopulation(5000);
-        trader.setTolerance(0.05);
+        trader.setTolerance(0.01);
 
-        PositionFactory.setRewardRiskRatio(1.25);
+        PositionFactory.setRewardRiskRatio(1.5);
         PositionFactory.setMinTakeProfit(0.0050);
         PositionFactory.setAmount(10000);
         PositionFactory.setCost(0.00015);
         PositionFactory.setTradeToCapRatio(0.01);
         PositionFactory.setLeverage(25);
-        PositionFactory.setTimeSpan(4 * 12 * 5 * 60 * 1000L);
+        PositionFactory.setTimeSpan(24 * 12 * 5 * 60 * 1000L);
 
-        PositionFactory.setMinProbFraction(0.5);
+        PositionFactory.setMinProbFraction(0.75);
         PositionFactory.setVerticalRisk(true);
         PositionFactory.setMinTakeProfitVertical(0.0020);
         LoggerTimer.turn(false);
 
-        //DynamicPropertiesLoader.start("C:/Dev/Source/CALM/src/main/resources");
-        DynamicPropertiesLoader.start("");
+        DynamicPropertiesLoader.start("C:/Dev/Source/CALM/src/main/resources");
+        //DynamicPropertiesLoader.start("");
         goLive();
 
         i = 0;
@@ -303,7 +308,7 @@ public class Main {
             ExtractOneFromListFeed feedV = new ExtractOneFromListFeed(feed, 4);
             feed.addChild(feedV);
 
-            DeltaOnlineTransformer dH = new DeltaOnlineTransformer(1, feedH);
+            /*DeltaOnlineTransformer dH = new DeltaOnlineTransformer(1, feedH);
             DeltaOnlineTransformer dL = new DeltaOnlineTransformer(1, feedH);
             DeltaOnlineTransformer dC = new DeltaOnlineTransformer(1, feedH);
             DeltaOnlineTransformer dV = new DeltaOnlineTransformer(1, feedH);
@@ -316,29 +321,35 @@ public class Main {
             DeltaOnlineTransformer dH2 = new DeltaOnlineTransformer(4, feedH);
             DeltaOnlineTransformer dL2 = new DeltaOnlineTransformer(4, feedH);
             DeltaOnlineTransformer dC2 = new DeltaOnlineTransformer(4, feedH);
-            DeltaOnlineTransformer dV2 = new DeltaOnlineTransformer(4, feedH);
+            DeltaOnlineTransformer dV2 = new DeltaOnlineTransformer(4, feedH);*/
 
             DeltaOnlineTransformer dH3 = new DeltaOnlineTransformer(8, feedH);
             DeltaOnlineTransformer dL3 = new DeltaOnlineTransformer(8, feedH);
-            DeltaOnlineTransformer dC3 = new DeltaOnlineTransformer(8, feedH);
-            DeltaOnlineTransformer dV3 = new DeltaOnlineTransformer(8, feedH);
+            //DeltaOnlineTransformer dC3 = new DeltaOnlineTransformer(8, feedH);
+            //DeltaOnlineTransformer dV3 = new DeltaOnlineTransformer(8, feedH);
 
-            DeltaOnlineTransformer dH4 = new DeltaOnlineTransformer(16, feedH);
-            DeltaOnlineTransformer dL4 = new DeltaOnlineTransformer(16, feedH);
-            DeltaOnlineTransformer dC4 = new DeltaOnlineTransformer(16, feedH);
-            DeltaOnlineTransformer dV4 = new DeltaOnlineTransformer(16, feedH);
+            //DeltaOnlineTransformer dH4 = new DeltaOnlineTransformer(16, feedH);
+            //DeltaOnlineTransformer dL4 = new DeltaOnlineTransformer(16, feedH);
+            //DeltaOnlineTransformer dC4 = new DeltaOnlineTransformer(16, feedH);
+            //DeltaOnlineTransformer dV4 = new DeltaOnlineTransformer(16, feedH);
 
-            DeltaOnlineTransformer dH5 = new DeltaOnlineTransformer(32, feedH);
-            DeltaOnlineTransformer dL5 = new DeltaOnlineTransformer(32, feedH);
-            DeltaOnlineTransformer dC5 = new DeltaOnlineTransformer(32, feedH);
-            DeltaOnlineTransformer dV5 = new DeltaOnlineTransformer(32, feedH);
+            //DeltaOnlineTransformer dH5 = new DeltaOnlineTransformer(32, feedH);
+            //DeltaOnlineTransformer dL5 = new DeltaOnlineTransformer(32, feedH);
+            //DeltaOnlineTransformer dC5 = new DeltaOnlineTransformer(32, feedH);
+            //DeltaOnlineTransformer dV5 = new DeltaOnlineTransformer(32, feedH);
 
             DeltaOnlineTransformer dH6 = new DeltaOnlineTransformer(64, feedH);
             DeltaOnlineTransformer dL6 = new DeltaOnlineTransformer(64, feedH);
-            DeltaOnlineTransformer dC6 = new DeltaOnlineTransformer(64, feedH);
-            DeltaOnlineTransformer dV6 = new DeltaOnlineTransformer(64, feedH);
+            //DeltaOnlineTransformer dC6 = new DeltaOnlineTransformer(64, feedH);
+            //DeltaOnlineTransformer dV6 = new DeltaOnlineTransformer(64, feedH);
 
-            FXHLDiffFeed feedDiff = new FXHLDiffFeed(feed);
+            DeltaOnlineTransformer dH7 = new DeltaOnlineTransformer(128, feedH);
+            DeltaOnlineTransformer dL7 = new DeltaOnlineTransformer(128, feedH);
+
+            DeltaOnlineTransformer dH8 = new DeltaOnlineTransformer(256, feedH);
+            DeltaOnlineTransformer dL8 = new DeltaOnlineTransformer(256, feedH);
+
+            FXHLDiffFeed feedDiff = new FXHLDiffFeed(feed, 0.0001);
             feed.addChild(feedDiff);
 
             FXModuloFeed feedModulo = new FXModuloFeed(feed, 0.0001, 100);
@@ -348,13 +359,18 @@ public class Main {
             StandardDeviationOnlineTransformer stdFeedL = new StandardDeviationOnlineTransformer(12, feedL);
             StandardDeviationOnlineTransformer stdFeedV = new StandardDeviationOnlineTransformer(12, feedV);
 
+            LogarithmicDiscretiser stdLH1 = new LogarithmicDiscretiser(0.00001, 0, stdFeedH, -1);
+            LogarithmicDiscretiser stdLL1 = new LogarithmicDiscretiser(0.00001, 0, stdFeedL, -1);
+            LogarithmicDiscretiser stdLV1 = new LogarithmicDiscretiser(0.00001, 0, stdFeedV, -1);
+
+
             AmplitudeWavelengthTransformer awFeedH = new AmplitudeWavelengthTransformer(feedH, stdFeedH, 2, 0.5);
             AmplitudeWavelengthTransformer awFeedL = new AmplitudeWavelengthTransformer(feedL, stdFeedL, 2, 0.5);
             AmplitudeWavelengthTransformer awFeedV = new AmplitudeWavelengthTransformer(feedV, stdFeedV, 2, 0.5);
-            AmplitudeWavelengthTransformer awFeedH2 = new AmplitudeWavelengthTransformer(feedH, stdFeedH, 4, 0.5);
-            AmplitudeWavelengthTransformer awFeedL2 = new AmplitudeWavelengthTransformer(feedL, stdFeedL, 4, 0.5);
+            /*AmplitudeWavelengthTransformer awFeedH2 = new AmplitudeWavelengthTransformer(feedH, stdFeedH, 4, 0.5);
+            AmplitudeWavelengthTransformer awFeedL2 = new AmplitudeWavelengthTransformer(feedL, stdFeedL, 4, 0.5);*/
 
-            StandardDeviationOnlineTransformer stdFeedH2 = new StandardDeviationOnlineTransformer(50, feedH);
+            /*StandardDeviationOnlineTransformer stdFeedH2 = new StandardDeviationOnlineTransformer(50, feedH);
             StandardDeviationOnlineTransformer stdFeedL2 = new StandardDeviationOnlineTransformer(50, feedL);
             StandardDeviationOnlineTransformer stdFeedV2 = new StandardDeviationOnlineTransformer(50, feedV);
 
@@ -362,20 +378,23 @@ public class Main {
             AmplitudeWavelengthTransformer awFeedL50 = new AmplitudeWavelengthTransformer(feedL, stdFeedL2, 2, 0.5);
             AmplitudeWavelengthTransformer awFeedV50 = new AmplitudeWavelengthTransformer(feedV, stdFeedV2, 2, 0.5);
             AmplitudeWavelengthTransformer awFeedH2_50 = new AmplitudeWavelengthTransformer(feedH, stdFeedH2, 4, 0.5);
-            AmplitudeWavelengthTransformer awFeedL2_50 = new AmplitudeWavelengthTransformer(feedL, stdFeedL2, 4, 0.5);
+            AmplitudeWavelengthTransformer awFeedL2_50 = new AmplitudeWavelengthTransformer(feedL, stdFeedL2, 4, 0.5);*/
 
-            StandardDeviationOnlineTransformer stdFeedH3 = new StandardDeviationOnlineTransformer(100, feedH);
-            StandardDeviationOnlineTransformer stdFeedL3 = new StandardDeviationOnlineTransformer(100, feedL);
-            StandardDeviationOnlineTransformer stdFeedV3 = new StandardDeviationOnlineTransformer(100, feedV);
+            StandardDeviationOnlineTransformer stdFeedH3 = new StandardDeviationOnlineTransformer(400, feedH);
+            StandardDeviationOnlineTransformer stdFeedL3 = new StandardDeviationOnlineTransformer(400, feedL);
 
-            AmplitudeWavelengthTransformer awFeedH100 = new AmplitudeWavelengthTransformer(feedH, stdFeedH2, 2, 0.5);
-            AmplitudeWavelengthTransformer awFeedL100 = new AmplitudeWavelengthTransformer(feedL, stdFeedL2, 2, 0.5);
-            AmplitudeWavelengthTransformer awFeedV100 = new AmplitudeWavelengthTransformer(feedV, stdFeedV2, 2, 0.5);
-            AmplitudeWavelengthTransformer awFeedH2_100 = new AmplitudeWavelengthTransformer(feedH, stdFeedH2, 4, 0.5);
-            AmplitudeWavelengthTransformer awFeedL2_100 = new AmplitudeWavelengthTransformer(feedL, stdFeedL2, 4, 0.5);
+            LogarithmicDiscretiser stdLH3 = new LogarithmicDiscretiser(0.00001, 0, stdFeedH3, -1);
+            LogarithmicDiscretiser stdLL3 = new LogarithmicDiscretiser(0.00001, 0, stdFeedL3, -1);
+            //StandardDeviationOnlineTransformer stdFeedV3 = new StandardDeviationOnlineTransformer(100, feedV);
+
+            AmplitudeWavelengthTransformer awFeedH100 = new AmplitudeWavelengthTransformer(feedH, stdFeedH3, 2, 0.5);
+            AmplitudeWavelengthTransformer awFeedL100 = new AmplitudeWavelengthTransformer(feedL, stdFeedL3, 2, 0.5);
+            //AmplitudeWavelengthTransformer awFeedV100 = new AmplitudeWavelengthTransformer(feedV, stdFeedV3, 2, 0.5);
+            /*AmplitudeWavelengthTransformer awFeedH2_100 = new AmplitudeWavelengthTransformer(feedH, stdFeedH3, 4, 0.5);
+            AmplitudeWavelengthTransformer awFeedL2_100 = new AmplitudeWavelengthTransformer(feedL, stdFeedL3, 4, 0.5);*/
 
 
-            RSIOnlineTransformer rsiH = new RSIOnlineTransformer(feedH, 5, 5, 0.5);
+            /*RSIOnlineTransformer rsiH = new RSIOnlineTransformer(feedH, 5, 5, 0.5);
             RSIOnlineTransformer rsiL = new RSIOnlineTransformer(feedL, 5, 5, 0.5);
             
             ExtractOneFromListFeed kRSIH1 = new ExtractOneFromListFeed(rsiH, 1);            
@@ -387,7 +406,7 @@ public class Main {
             ExtractOneFromListFeed dRSIL1 = new ExtractOneFromListFeed(rsiL, 2);
             rsiL.addChild(dRSIL1);
             CrossingSeriesOnlineTransformer crossH1 = new CrossingSeriesOnlineTransformer(kRSIH1, dRSIH1, 10);
-            CrossingSeriesOnlineTransformer crossL1 = new CrossingSeriesOnlineTransformer(kRSIL1, dRSIL1, 10);
+            CrossingSeriesOnlineTransformer crossL1 = new CrossingSeriesOnlineTransformer(kRSIL1, dRSIL1, 10);*/
 
             RSIOnlineTransformer rsiH3 = new RSIOnlineTransformer(feedH, 5, 20, 0.1);
             RSIOnlineTransformer rsiL3 = new RSIOnlineTransformer(feedL, 5, 20, 0.1);
@@ -403,7 +422,7 @@ public class Main {
             CrossingSeriesOnlineTransformer crossH3 = new CrossingSeriesOnlineTransformer(kRSIH3, dRSIH3, 10);
             CrossingSeriesOnlineTransformer crossL3 = new CrossingSeriesOnlineTransformer(kRSIL3, dRSIL3, 10);
 
-            RSIOnlineTransformer rsiH2 = new RSIOnlineTransformer(feedH, 5, 40, 0.05);
+            /*RSIOnlineTransformer rsiH2 = new RSIOnlineTransformer(feedH, 5, 40, 0.05);
             RSIOnlineTransformer rsiL2 = new RSIOnlineTransformer(feedL, 5, 40, 0.05);
 
             ExtractOneFromListFeed kRSIH2 = new ExtractOneFromListFeed(rsiH2, 1);
@@ -415,10 +434,10 @@ public class Main {
             ExtractOneFromListFeed dRSIL2 = new ExtractOneFromListFeed(rsiL2, 2);
             rsiL2.addChild(dRSIL2);
             CrossingSeriesOnlineTransformer crossH2 = new CrossingSeriesOnlineTransformer(kRSIH2, dRSIH2, 10);
-            CrossingSeriesOnlineTransformer crossL2 = new CrossingSeriesOnlineTransformer(kRSIL2, dRSIL2, 10);
+            CrossingSeriesOnlineTransformer crossL2 = new CrossingSeriesOnlineTransformer(kRSIL2, dRSIL2, 10);*/
 
-            RSIOnlineTransformer rsiH5 = new RSIOnlineTransformer(feedH, 5, 10, 0.025);
-            RSIOnlineTransformer rsiL5 = new RSIOnlineTransformer(feedL, 5, 10, 0.025);
+            RSIOnlineTransformer rsiH5 = new RSIOnlineTransformer(feedH, 5, 10, 0.01);
+            RSIOnlineTransformer rsiL5 = new RSIOnlineTransformer(feedL, 5, 10, 0.01);
 
             ExtractOneFromListFeed kRSIH5 = new ExtractOneFromListFeed(rsiH5, 1);
             rsiH5.addChild(kRSIH5);
@@ -431,7 +450,7 @@ public class Main {
             CrossingSeriesOnlineTransformer crossH5 = new CrossingSeriesOnlineTransformer(kRSIH5, dRSIH5, 10);
             CrossingSeriesOnlineTransformer crossL5 = new CrossingSeriesOnlineTransformer(kRSIL5, dRSIL5, 10);
 
-            RSIOnlineTransformer rsiH4 = new RSIOnlineTransformer(feedH, 5, 10, 0.2);
+            /*RSIOnlineTransformer rsiH4 = new RSIOnlineTransformer(feedH, 5, 10, 0.2);
             RSIOnlineTransformer rsiL4 = new RSIOnlineTransformer(feedL, 5, 10, 0.2);
 
             ExtractOneFromListFeed kRSIH4 = new ExtractOneFromListFeed(rsiH4, 1);
@@ -443,14 +462,14 @@ public class Main {
             ExtractOneFromListFeed dRSIL4 = new ExtractOneFromListFeed(rsiL4, 2);
             rsiL4.addChild(dRSIL4);
             CrossingSeriesOnlineTransformer crossH4 = new CrossingSeriesOnlineTransformer(kRSIH4, dRSIH4, 10);
-            CrossingSeriesOnlineTransformer crossL4 = new CrossingSeriesOnlineTransformer(kRSIL4, dRSIL4, 10);
+            CrossingSeriesOnlineTransformer crossL4 = new CrossingSeriesOnlineTransformer(kRSIL4, dRSIL4, 10);*/
 
             synch = new SynchronisedFeed(feedH, synch);
             synch = new SynchronisedFeed(feedL, synch);
             synch = new SynchronisedFeed(feedC, synch);
             synch = new SynchronisedFeed(feedV, synch);
 
-            synch = new SynchronisedFeed(dH, synch);
+            /*synch = new SynchronisedFeed(dH, synch);
             synch = new SynchronisedFeed(dL, synch);
             synch = new SynchronisedFeed(dC, synch);
             synch = new SynchronisedFeed(dV, synch);
@@ -463,77 +482,77 @@ public class Main {
             synch = new SynchronisedFeed(dH2, synch);
             synch = new SynchronisedFeed(dL2, synch);
             synch = new SynchronisedFeed(dC2, synch);
-            synch = new SynchronisedFeed(dV2, synch);
+            synch = new SynchronisedFeed(dV2, synch);*/
 
             synch = new SynchronisedFeed(dH3, synch);
             synch = new SynchronisedFeed(dL3, synch);
-            synch = new SynchronisedFeed(dC3, synch);
-            synch = new SynchronisedFeed(dV3, synch);
+            //synch = new SynchronisedFeed(dC3, synch);
+            //synch = new SynchronisedFeed(dV3, synch);
 
-            synch = new SynchronisedFeed(dH4, synch);
-            synch = new SynchronisedFeed(dL4, synch);
-            synch = new SynchronisedFeed(dC4, synch);
-            synch = new SynchronisedFeed(dV4, synch);
+            //synch = new SynchronisedFeed(dH4, synch);
+            //synch = new SynchronisedFeed(dL4, synch);
+            //synch = new SynchronisedFeed(dC4, synch);
+            //synch = new SynchronisedFeed(dV4, synch);
 
-            synch = new SynchronisedFeed(dH5, synch);
-            synch = new SynchronisedFeed(dL5, synch);
-            synch = new SynchronisedFeed(dC5, synch);
-            synch = new SynchronisedFeed(dV5, synch);
+            //synch = new SynchronisedFeed(dH5, synch);
+            //synch = new SynchronisedFeed(dL5, synch);
+            //synch = new SynchronisedFeed(dC5, synch);
+            //synch = new SynchronisedFeed(dV5, synch);
 
             synch = new SynchronisedFeed(dH6, synch);
             synch = new SynchronisedFeed(dL6, synch);
-            synch = new SynchronisedFeed(dC6, synch);
-            synch = new SynchronisedFeed(dV6, synch);
+            //synch = new SynchronisedFeed(dC6, synch);
+            //synch = new SynchronisedFeed(dV6, synch);
 
             synch = new SynchronisedFeed(feedDiff, synch);
             synch = new SynchronisedFeed(feedModulo, synch);
 
-            synch = new SynchronisedFeed(stdFeedH, synch);
-            synch = new SynchronisedFeed(stdFeedL, synch);
-            synch = new SynchronisedFeed(stdFeedV, synch);
+            synch = new SynchronisedFeed(stdLH1, synch);
+            synch = new SynchronisedFeed(stdLL1, synch);
+            synch = new SynchronisedFeed(stdLV1, synch);
 
-            synch = new SynchronisedFeed(stdFeedH2, synch);
+            /*synch = new SynchronisedFeed(stdFeedH2, synch);
             synch = new SynchronisedFeed(stdFeedL2, synch);
-            synch = new SynchronisedFeed(stdFeedV2, synch);
+            synch = new SynchronisedFeed(stdFeedV2, synch);*/
 
-            synch = new SynchronisedFeed(stdFeedH3, synch);
-            synch = new SynchronisedFeed(stdFeedL3, synch);
-            synch = new SynchronisedFeed(stdFeedV3, synch);
+            synch = new SynchronisedFeed(stdLH3, synch);
+            synch = new SynchronisedFeed(stdLL3, synch);
+            //synch = new SynchronisedFeed(stdFeedV3, synch);
 
             synch = new SynchronisedFeed(awFeedH, synch);
             synch = new SynchronisedFeed(awFeedL, synch);
             synch = new SynchronisedFeed(awFeedV, synch);
-            synch = new SynchronisedFeed(awFeedH2, synch);
-            synch = new SynchronisedFeed(awFeedL2, synch);
+            //synch = new SynchronisedFeed(awFeedH2, synch);
+            //synch = new SynchronisedFeed(awFeedL2, synch);
 
-            synch = new SynchronisedFeed(awFeedH50, synch);
+            /*synch = new SynchronisedFeed(awFeedH50, synch);
             synch = new SynchronisedFeed(awFeedL50, synch);
             synch = new SynchronisedFeed(awFeedV50, synch);
             synch = new SynchronisedFeed(awFeedH2_50, synch);
-            synch = new SynchronisedFeed(awFeedL2_50, synch);
+            synch = new SynchronisedFeed(awFeedL2_50, synch);*/
 
             synch = new SynchronisedFeed(awFeedH100, synch);
             synch = new SynchronisedFeed(awFeedL100, synch);
-            synch = new SynchronisedFeed(awFeedV100, synch);
-            synch = new SynchronisedFeed(awFeedH2_100, synch);
-            synch = new SynchronisedFeed(awFeedL2_100, synch);
+            //synch = new SynchronisedFeed(awFeedV100, synch);
+            //synch = new SynchronisedFeed(awFeedH2_100, synch);
+            //synch = new SynchronisedFeed(awFeedL2_100, synch);
 
-            synch = new SynchronisedFeed(rsiH, synch);
+            /*synch = new SynchronisedFeed(rsiH, synch);
             synch = new SynchronisedFeed(rsiL, synch);
             synch = new SynchronisedFeed(crossH1, synch);
-            synch = new SynchronisedFeed(crossL1, synch);
-            synch = new SynchronisedFeed(rsiH2, synch);
+            synch = new SynchronisedFeed(crossL1, synch);*/
+            /*synch = new SynchronisedFeed(rsiH2, synch);
             synch = new SynchronisedFeed(rsiL2, synch);
             synch = new SynchronisedFeed(crossH2, synch);
-            synch = new SynchronisedFeed(crossL2, synch);
+            synch = new SynchronisedFeed(crossL2, synch);*/
             synch = new SynchronisedFeed(rsiH3, synch);
             synch = new SynchronisedFeed(rsiL3, synch);
             synch = new SynchronisedFeed(crossH3, synch);
             synch = new SynchronisedFeed(crossL3, synch);
-            synch = new SynchronisedFeed(rsiH4, synch);
+            /*synch = new SynchronisedFeed(rsiH4, synch);
             synch = new SynchronisedFeed(rsiL4, synch);
             synch = new SynchronisedFeed(crossH4, synch);
-            synch = new SynchronisedFeed(crossL4, synch);
+            synch = new SynchronisedFeed(crossL4, synch);*/
             synch = new SynchronisedFeed(rsiH5, synch);
             synch = new SynchronisedFeed(rsiL5, synch);
             synch = new SynchronisedFeed(crossH5, synch);

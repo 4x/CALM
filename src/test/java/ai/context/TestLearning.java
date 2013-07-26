@@ -14,15 +14,15 @@ public class TestLearning {
 
     private LearnerService learner = new LearnerService();
 
-    private int numInputs = 100;
+    private int numInputs = 10;
     private int degreesOfFreedom = 5;
     private int numPoints = 10000;
 
-    private int numPredict = 10000;
+    private int numPredict = 5000;
 
     private double tolerance = 0.01;
     private double actionResolution = 1.0;
-    private int maxPopulation = 500;
+    private int maxPopulation = 5000;
 
     @Before
     public void setup()
@@ -106,6 +106,14 @@ public class TestLearning {
             }
             else {
                 movement -= val;
+            }
+
+            if(index == 5 && val < 3){
+                movement = -movement;
+            }
+
+            if(index == 8 && val < 2){
+                movement = -2 * movement;
             }
 
             index ++;

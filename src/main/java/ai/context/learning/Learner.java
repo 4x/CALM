@@ -93,6 +93,7 @@ public class Learner implements Runnable, TimedContainer{
             }
 
             int[] signal = data.getSignal();
+            //System.out.println(AmalgamateUtils.getArrayString(signal));
             TreeMap<Integer, Double> distribution = learner.getActionDistribution(signal);
             TreeMap<Double, Double> prediction = new TreeMap<Double, Double>();
             for(Map.Entry<Integer, Double> entry : distribution.entrySet())
@@ -100,6 +101,13 @@ public class Learner implements Runnable, TimedContainer{
                 prediction.put(data.getValue()[0] + entry.getKey() * actionResolution, entry.getValue());
             }
             recentPredictions.add(prediction);
+
+            for(DataObject cursor : recentData.values()){
+
+                recentAggregators.get(cursor.getTimeStamp()).addValue(data.getValue()[1] - cursor.getValue()[3]);
+                recentAggregators.get(cursor.getTimeStamp()).addValue(data.getValue()[2] - cursor.getValue()[3]);
+            }
+
             while (!recentData.isEmpty() && recentData.firstEntry().getValue().getTimeStamp() < (tNow - PositionFactory.getTimeSpan()))
             {
                 int[] s = recentData.firstEntry().getValue().getSignal();
@@ -107,20 +115,9 @@ public class Learner implements Runnable, TimedContainer{
 
                 if(recentAggregators.get(t).getMax() != null){
 
-                    /*int[] state = new int[s.length + 1];
-                    int dir = 0;
-                    if(recentPos.containsKey(t)){
-                        dir = recentPos.get(t);
-                        recentPos.remove(t);
-                    }
-
-                    for(int i = 0; i < s.length; i++){
-                        state[i] = s[i];
-                    }
-                    state[s.length] = dir;*/
-
                     learner.addStateAction(s, recentAggregators.get(t).getMax());
                     learner.addStateAction(s, recentAggregators.get(t).getMin());
+                    //learner.addStateAction(s, data.getValue()[3] - recentData.firstEntry().getValue().getValue()[3]);
 
                     recentAggregators.remove(t);
                     recentData.remove(t);
@@ -131,12 +128,6 @@ public class Learner implements Runnable, TimedContainer{
                 else {
                     break;
                 }
-            }
-
-            for(DataObject cursor : recentData.values()){
-
-                recentAggregators.get(cursor.getTimeStamp()).addValue(data.getValue()[1] - cursor.getValue()[0]);
-                recentAggregators.get(cursor.getTimeStamp()).addValue(data.getValue()[2] - cursor.getValue()[0]);
             }
 
             updateOverallPrediction(prediction);

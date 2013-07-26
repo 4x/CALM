@@ -25,7 +25,7 @@ public class FXModuloFeed extends AbstractSurgicalFeed{
 
     @Override
     public Feed getCopy() {
-        return new FXHLDiffFeed(rawFeed.getCopy());
+        return new FXModuloFeed(rawFeed.getCopy(), resolution, modulo);
     }
 
     @Override
