@@ -18,4 +18,37 @@ public class Operations {
         }
         return sum;
     }
+
+    public static double tanInverse(double x, double y){
+
+        if(x > 0 && y > 0){
+            return Math.atan(y/x);
+        }
+
+        if(y > 0 && x < 0){
+            return Math.PI - Math.atan(y/x);
+        }
+
+        if(y < 0 && x < 0){
+            return Math.PI + Math.atan(y/x);
+        }
+
+        if(x == 0 && y > 0){
+            return Math.PI/2;
+        }
+
+        if(x == 0 && y < 0){
+            return 3*Math.PI/2;
+        }
+
+        if(y == 0 && x >= 0){
+            return 0;
+        }
+
+        if(y == 0 && x < 0){
+            return Math.PI;
+        }
+
+        return 0;
+    }
 }

@@ -1,8 +1,15 @@
 package ai.context.util.common;
 
+import javax.swing.text.MutableAttributeSet;
+import javax.swing.text.html.HTML;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.parser.ParserDelegator;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 
 public class FileUtils {
     public static String getMD5Checksum(String filename) throws Exception {
@@ -31,5 +38,30 @@ public class FileUtils {
 
         fis.close();
         return complete.digest();
+    }
+
+    public static String extractText(String html) throws IOException {
+        final ArrayList<String> list = new ArrayList<String>();
+
+        ParserDelegator parserDelegator = new ParserDelegator();
+        HTMLEditorKit.ParserCallback parserCallback = new HTMLEditorKit.ParserCallback() {
+            public void handleText(final char[] data, final int pos) {
+                list.add(new String(data));
+            }
+            public void handleStartTag(HTML.Tag tag, MutableAttributeSet attribute, int pos) { }
+            public void handleEndTag(HTML.Tag t, final int pos) {  }
+            public void handleSimpleTag(HTML.Tag t, MutableAttributeSet a, final int pos) { }
+            public void handleComment(final char[] data, final int pos) { }
+            public void handleError(final java.lang.String errMsg, final int pos) { }
+        };
+        parserDelegator.parse(new StringReader(html), parserCallback, true);
+
+        String text = "";
+
+        for(String s : list) {
+            text += " " + s;
+        }
+
+        return text;
     }
 }

@@ -33,6 +33,8 @@ public class LearnerService {
 
     private LearnerService thisService = this;
 
+    private boolean correlating = false;
+
     private ExecutorService mergeExecutor = Executors.newSingleThreadExecutor();
 
     private Runnable batchMergeTask = new Runnable() {
@@ -135,48 +137,50 @@ public class LearnerService {
         distribution.put(actionClass, distribution.get(actionClass) + 1);
 
         refreshCorrelations(state, movement);
-        boolean newState = false;
 
-        String id = AmalgamateUtils.getAmalgamateString(state);
+        if(!correlating){
+            boolean newState = false;
 
-        if(!population.containsKey(id))
-        {
-            newState = true;
-            StateActionPair stateActionPair = new StateActionPair(id, state, actionResolution);
-            addState(stateActionPair);
-        }
+            String id = AmalgamateUtils.getAmalgamateString(state);
 
-        StateActionPair counterpart = null;
-        double currentDev = -1;
-
-        Set<Map.Entry<StateActionPair, Double>> entries = getSimilarStates(state).entrySet();
-        for(Map.Entry<StateActionPair, Double> entry : entries)
-        {
-            double weight = getWeightForDeviation(entry.getValue());
-            entry.getKey().newMovement(movement, weight);
-
-            if(currentDev == -1){
-                currentDev = entry.getValue();
+            if(!population.containsKey(id))
+            {
+                newState = true;
+                StateActionPair stateActionPair = new StateActionPair(id, state, actionResolution);
+                addState(stateActionPair);
             }
-            if(entry.getValue() <= currentDev && entry.getValue() < minDevForMerge && !entry.getKey().getId().equals(id)){
-                counterpart = entry.getKey();
+
+            StateActionPair counterpart = null;
+            double currentDev = -1;
+
+            Set<Map.Entry<StateActionPair, Double>> entries = getSimilarStates(state).entrySet();
+            for(Map.Entry<StateActionPair, Double> entry : entries)
+            {
+                double weight = getWeightForDeviation(entry.getValue());
+                entry.getKey().newMovement(movement, weight);
+
+                if(currentDev == -1){
+                    currentDev = entry.getValue();
+                }
+                if(entry.getValue() <= currentDev && entry.getValue() < minDevForMerge && !entry.getKey().getId().equals(id)){
+                    counterpart = entry.getKey();
+                }
+            }
+
+            if(counterpart != null){
+                merge(population.get(id), counterpart);
+                //System.err.println("Merging " + id + ", " + counterpart.getId());
+            }
+
+            if(newState && population.size() > PropertiesHolder.maxPopulation)
+            {
+                //mergeExecutor.execute(batchMergeTask);
+                mergeStates();
             }
         }
-
-        if(counterpart != null){
-            merge(population.get(id), counterpart);
-            //System.err.println("Merging " + id + ", " + counterpart.getId());
-        }
-
-        if(newState && population.size() > PropertiesHolder.maxPopulation)
-        {
-            //mergeExecutor.execute(batchMergeTask);
-            mergeStates();
-        }
-
     }
 
-    private synchronized void refreshCorrelations(int[] state, double movement)
+    public synchronized void refreshCorrelations(int[] state, double movement)
     {
         copulae.addObservation(state, movement);
 
@@ -190,12 +194,6 @@ public class LearnerService {
             }
             CorrelationCalculator calculator = correlationCalculators.get(index);
             correlations[index] = calculator.getCorrelationCoefficient(state[index], movement);
-        }
-
-        double[] weights = copulae.getCorrelationWeights(state);
-        for (int i = 0; i < weights.length; i++)
-        {
-            weights[i] += Math.abs((correlations[i])/PropertiesHolder.copulaToUniversal);
         }
     }
 
@@ -438,8 +436,20 @@ public class LearnerService {
         return correlationCalculators;
     }
 
+    public void setCorrelationCalculators(TreeMap<Integer, CorrelationCalculator> correlationCalculators) {
+        this.correlationCalculators = correlationCalculators;
+    }
+
+    public void setCopulae(ClusteredCopulae copulae) {
+        this.copulae = copulae;
+    }
+
     public StateActionPair getStateActionPair(String id){
         return population.get(id);
+    }
+
+    public void setCorrelating(boolean correlating) {
+        this.correlating = correlating;
     }
 
     @Override

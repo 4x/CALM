@@ -90,7 +90,7 @@ public class MinMaxAggregatorDiscretiser implements Feed {
 
             index++;
         }
-        appendToFile(toPrint);
+        //appendToFile(toPrint);
 
         FeedObject feedObject = new FeedObject(time, output);
         for(Feed listener : buffers.keySet()){

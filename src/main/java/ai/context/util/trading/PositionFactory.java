@@ -1,6 +1,5 @@
 package ai.context.util.trading;
 
-import ai.context.util.analysis.DecisionHistogram;
 import ai.context.util.measurement.OpenPosition;
 
 import java.util.*;
@@ -25,7 +24,7 @@ public class PositionFactory {
 
     private static PositionEngine engine;
 
-    private static DecisionHistogram decisionHistogram = new DecisionHistogram();
+    //private static DecisionHistogram decisionHistogram = new DecisionHistogram();
 
     public static OpenPosition getPosition(long time, double pivot, TreeMap<Double, Double> histogram)
     {
@@ -87,7 +86,7 @@ public class PositionFactory {
 
         double decision = DecisionUtil.getDecision(sFreq, lFreq);
         boolean dirL = true;
-        decisionHistogram.update(sFreq, lFreq, minTakeProfit, rewardRiskRatio, Math.abs(decision));
+        //decisionHistogram.update(sFreq, lFreq, minTakeProfit, rewardRiskRatio, Math.abs(decision));
         if(decision < 0){
             dirL = false;
         }

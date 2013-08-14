@@ -143,7 +143,7 @@ public class TimeSeriesChart extends JPanel{
             double lastX = 50;
 
             g2d.setColor(colors[index - 1]);
-            g2d.fillRect(0, (int)(lastY - cHeight), w, cHeight);
+            g2d.fillRect(0, (int)(lastY - cHeight) + 2, w, cHeight - 2);
 
             g2d.setColor(Color.BLACK);
             g2d.drawString(name, 30, (float) (lastY - cHeight/2));

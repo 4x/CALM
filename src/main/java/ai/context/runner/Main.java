@@ -17,10 +17,7 @@ import ai.context.feed.transformer.compound.AmplitudeWavelengthTransformer;
 import ai.context.feed.transformer.compound.SubtractTransformer;
 import ai.context.feed.transformer.filtered.RowBasedTransformer;
 import ai.context.feed.transformer.series.learning.BufferedTransformer;
-import ai.context.feed.transformer.series.online.CrossingSeriesOnlineTransformer;
-import ai.context.feed.transformer.series.online.DeltaOnlineTransformer;
-import ai.context.feed.transformer.series.online.RSIOnlineTransformer;
-import ai.context.feed.transformer.series.online.StandardDeviationOnlineTransformer;
+import ai.context.feed.transformer.series.online.*;
 import ai.context.feed.transformer.single.TimeVariablesAppenderFeed;
 import ai.context.feed.transformer.single.unpadded.LinearDiscretiser;
 import ai.context.feed.transformer.single.unpadded.LogarithmicDiscretiser;
@@ -39,10 +36,7 @@ import com.dukascopy.api.system.IClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 import static ai.context.util.common.DateUtils.getTimeFromString_YYYYMMddHHmmss;
 
@@ -105,14 +99,67 @@ public class Main {
 
     public void setup(String path)
     {
-        if(!testing){
-            initFXAPI();
+        Learner correlator = new Learner(path);
+        LearnerFeed learnerFeed = new LearnerFeedFromSynchronisedFeed(initFeed(path, correlator));
 
-            setLiveFXCalendar(new StitchableFXStreetCalendarRSS(path + "tmp/FXCalendar.csv", new FXStreetCalendarRSSFeed()));
-            setLiveFXRates(
-                    new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.EURUSD)),
-                    new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.GBPUSD)),
-                    new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.USDCHF)));
+        correlator.setActionResolution(0.00001);
+        correlator.setTrainingLearnerFeed(learnerFeed);
+        correlator.setAdapting(true);
+        int i = 0;
+        while (true)
+        {
+            DataObject data = learnerFeed.readNext();
+            correlator.setCurrentTime(data.getTimeStamp());
+
+            //System.out.println(new Date(data.getTimeStamp()) + " " + data);
+            i++;
+
+            if(i  == 10000)
+            {
+                break;
+            }
+        }
+        correlator.run();
+
+        LOGGER.info(learnerFeed.getDescription());
+
+        learnerFeed = new LearnerFeedFromSynchronisedFeed(initFeed(path, trader));
+        trader.setActionResolution(0.00001);
+        trader.setTrainingLearnerFeed(learnerFeed);
+        trader.setMaxPopulation(20000);
+        trader.setTolerance(0.01);
+        trader.setCorrelationTools(correlator.getCorrelationCalculators(), correlator.getCopulae());
+
+        PositionFactory.setRewardRiskRatio(1.5);
+        PositionFactory.setMinTakeProfit(0.0050);
+        PositionFactory.setAmount(10000);
+        PositionFactory.setCost(0.00015);
+        PositionFactory.setTradeToCapRatio(0.01);
+        PositionFactory.setLeverage(25);
+        PositionFactory.setTimeSpan(4 * 12 * 5 * 60 * 1000L);
+
+        PositionFactory.setMinProbFraction(0.75);
+        PositionFactory.setVerticalRisk(true);
+        PositionFactory.setMinTakeProfitVertical(0.0020);
+        LoggerTimer.turn(false);
+
+        //DynamicPropertiesLoader.start("C:/Dev/Source/CALM/src/main/resources");
+        DynamicPropertiesLoader.start("");
+        //goLive();
+
+        i = 0;
+        while (true)
+        {
+            DataObject data = learnerFeed.readNext();
+            trader.setCurrentTime(data.getTimeStamp());
+
+            //System.out.println(new Date(data.getTimeStamp()) + " " + data);
+            i++;
+
+            if(i  == 10000)
+            {
+                break;
+            }
         }
 
         final Timer timer = new Timer();
@@ -128,6 +175,44 @@ public class Main {
         };
 
         timer.schedule(checkIfGoTrading, 10000L, 500);
+    }
+
+    public void trade()
+    {
+        trader.run();
+    }
+
+    public void initFXAPI(){
+        try {
+            client = new DukascopyConnection(dukascopyUsername, dukascopyPassword).getClient();
+            blackBox = new BlackBox(client);
+            trader.setBlackBox(blackBox);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void setLiveFXCalendar(final StitchableFeed liveFXCalendar) {
+        this.liveFXCalendar = liveFXCalendar;
+    }
+
+    public void setLiveFXRates(StitchableFeed liveFXRateEUR,StitchableFeed liveFXRateGBP,StitchableFeed liveFXRateCHF) {
+        this.liveFXRateEUR = liveFXRateEUR;
+        this.liveFXRateGBP = liveFXRateGBP;
+        this.liveFXRateCHF = liveFXRateCHF;
+    }
+
+    private SynchronisedFeed initFeed(String path, Learner learner){
+        if(!testing){
+            initFXAPI();
+
+            setLiveFXCalendar(new StitchableFXStreetCalendarRSS(path + "tmp/FXCalendar.csv", new FXStreetCalendarRSSFeed()));
+            setLiveFXRates(
+                    new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.EURUSD)),
+                    new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.GBPUSD)),
+                    new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.USDCHF)));
+        }
+
 
         DataType[] typesCalendar = new DataType[]{
                 DataType.OTHER,
@@ -147,29 +232,29 @@ public class Main {
         feedCalendar.setStitchableFeed(liveFXCalendar);
         feedCalendar.setPaddable(true);
         feedCalendar.setInterval(interval);
-        RowBasedTransformer f1 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0}, new String[]{"Nonfarm Payrolls"}, new int[]{3, 4, 5}, trader);
+        RowBasedTransformer f1 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0}, new String[]{"Nonfarm Payrolls"}, new int[]{3, 4, 5}, learner);
         feedCalendar.addChild(f1);
 
-        RowBasedTransformer f2 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Consumer Price Index \\(MoM\\)", "United Kingdom"}, new int[]{3, 4, 5}, trader);
+        RowBasedTransformer f2 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Consumer Price Index \\(MoM\\)", "United Kingdom"}, new int[]{3, 4, 5}, learner);
         feedCalendar.addChild(f2);
-        RowBasedTransformer f3 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Consumer Price Index \\(MoM\\)", "United States"}, new int[]{3, 4, 5}, trader);
+        RowBasedTransformer f3 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Consumer Price Index \\(MoM\\)", "United States"}, new int[]{3, 4, 5}, learner);
         feedCalendar.addChild(f3);
-        RowBasedTransformer f4 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Consumer Price Index \\(MoM\\)", "Germany"}, new int[]{3, 4, 5}, trader);
+        RowBasedTransformer f4 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Consumer Price Index \\(MoM\\)", "Germany"}, new int[]{3, 4, 5}, learner);
         feedCalendar.addChild(f4);
 
-        RowBasedTransformer f5 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Producer Price Index \\(MoM\\)", "European Monetary Union"}, new int[]{3, 4, 5}, trader);
+        RowBasedTransformer f5 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Producer Price Index \\(MoM\\)", "European Monetary Union"}, new int[]{3, 4, 5}, learner);
         feedCalendar.addChild(f5);
-        RowBasedTransformer f6 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Producer Price Index \\(MoM\\)", "United States"}, new int[]{3, 4, 5}, trader);
+        RowBasedTransformer f6 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Producer Price Index \\(MoM\\)", "United States"}, new int[]{3, 4, 5}, learner);
         feedCalendar.addChild(f6);
-        RowBasedTransformer f7 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Retail Price Index \\(MoM\\)", "United Kingdom"}, new int[]{3, 4, 5}, trader);
+        RowBasedTransformer f7 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Retail Price Index \\(MoM\\)", "United Kingdom"}, new int[]{3, 4, 5}, learner);
         feedCalendar.addChild(f7);
-        RowBasedTransformer f8 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Manufacturing Production \\(MoM\\)", "United Kingdom"}, new int[]{3, 4, 5}, trader);
+        RowBasedTransformer f8 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Manufacturing Production \\(MoM\\)", "United Kingdom"}, new int[]{3, 4, 5}, learner);
         feedCalendar.addChild(f8);
-        RowBasedTransformer f9 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Producer Price Index \\(MoM\\)", "Germany"}, new int[]{3, 4, 5}, trader);
+        RowBasedTransformer f9 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Producer Price Index \\(MoM\\)", "Germany"}, new int[]{3, 4, 5}, learner);
         feedCalendar.addChild(f9);
-        RowBasedTransformer f10 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"BoE Interest Rate Decision", "United Kingdom"}, new int[]{3, 4, 5}, trader);
+        RowBasedTransformer f10 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"BoE Interest Rate Decision", "United Kingdom"}, new int[]{3, 4, 5}, learner);
         feedCalendar.addChild(f10);
-        RowBasedTransformer f11 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Fed Interest Rate Decision", "United States"}, new int[]{3, 4, 5}, trader);
+        RowBasedTransformer f11 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Fed Interest Rate Decision", "United States"}, new int[]{3, 4, 5}, learner);
         feedCalendar.addChild(f11);
 
 
@@ -221,79 +306,18 @@ public class Main {
         while (true)
         {
             FeedObject data = feed.getNextComposite(this);
-            trader.setCurrentTime(data.getTimeStamp());
+            learner.setCurrentTime(data.getTimeStamp());
             i++;
 
             if(i  == 5000)
             {
                 break;
             }
+
+            //System.out.println(learner.getTime() + " " + data);
         }
 
-        LearnerFeed learnerFeed = new LearnerFeedFromSynchronisedFeed(feed);
-        LOGGER.info(learnerFeed.getDescription());
-
-        trader.setActionResolution(0.00001);
-        trader.setTrainingLearnerFeed(learnerFeed);
-        trader.setMaxPopulation(5000);
-        trader.setTolerance(0.01);
-
-        PositionFactory.setRewardRiskRatio(1.5);
-        PositionFactory.setMinTakeProfit(0.0050);
-        PositionFactory.setAmount(10000);
-        PositionFactory.setCost(0.00015);
-        PositionFactory.setTradeToCapRatio(0.01);
-        PositionFactory.setLeverage(25);
-        PositionFactory.setTimeSpan(24 * 12 * 5 * 60 * 1000L);
-
-        PositionFactory.setMinProbFraction(0.75);
-        PositionFactory.setVerticalRisk(true);
-        PositionFactory.setMinTakeProfitVertical(0.0020);
-        LoggerTimer.turn(false);
-
-        DynamicPropertiesLoader.start("C:/Dev/Source/CALM/src/main/resources");
-        //DynamicPropertiesLoader.start("");
-        goLive();
-
-        i = 0;
-        while (true)
-        {
-            DataObject data = learnerFeed.readNext();
-            trader.setCurrentTime(data.getTimeStamp());
-
-            //System.out.println(new Date(data.getTimeStamp()) + " " + data);
-            i++;
-
-            if(i  == 10000)
-            {
-                break;
-            }
-        }
-    }
-
-    public void trade()
-    {
-        trader.run();
-    }
-
-    public void initFXAPI(){
-        try {
-            client = new DukascopyConnection(dukascopyUsername, dukascopyPassword).getClient();
-            blackBox = new BlackBox(client);
-            trader.setBlackBox(blackBox);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void setLiveFXCalendar(final StitchableFeed liveFXCalendar) {
-        this.liveFXCalendar = liveFXCalendar;
-    }
-
-    public void setLiveFXRates(StitchableFeed liveFXRateEUR,StitchableFeed liveFXRateGBP,StitchableFeed liveFXRateCHF) {
-        this.liveFXRateEUR = liveFXRateEUR;
-        this.liveFXRateGBP = liveFXRateGBP;
-        this.liveFXRateCHF = liveFXRateCHF;
+        return feed;
     }
 
     private SynchronisedFeed buildSynchFeed( SynchronisedFeed synch, CSVFeed ... feeds)
@@ -323,8 +347,8 @@ public class Main {
             DeltaOnlineTransformer dC2 = new DeltaOnlineTransformer(4, feedH);
             DeltaOnlineTransformer dV2 = new DeltaOnlineTransformer(4, feedH);*/
 
-            DeltaOnlineTransformer dH3 = new DeltaOnlineTransformer(8, feedH);
-            DeltaOnlineTransformer dL3 = new DeltaOnlineTransformer(8, feedH);
+            //DeltaOnlineTransformer dH3 = new DeltaOnlineTransformer(8, feedH);
+            //DeltaOnlineTransformer dL3 = new DeltaOnlineTransformer(8, feedH);
             //DeltaOnlineTransformer dC3 = new DeltaOnlineTransformer(8, feedH);
             //DeltaOnlineTransformer dV3 = new DeltaOnlineTransformer(8, feedH);
 
@@ -338,16 +362,16 @@ public class Main {
             //DeltaOnlineTransformer dC5 = new DeltaOnlineTransformer(32, feedH);
             //DeltaOnlineTransformer dV5 = new DeltaOnlineTransformer(32, feedH);
 
-            DeltaOnlineTransformer dH6 = new DeltaOnlineTransformer(64, feedH);
-            DeltaOnlineTransformer dL6 = new DeltaOnlineTransformer(64, feedH);
+            //DeltaOnlineTransformer dH6 = new DeltaOnlineTransformer(64, feedH);
+            //DeltaOnlineTransformer dL6 = new DeltaOnlineTransformer(64, feedH);
             //DeltaOnlineTransformer dC6 = new DeltaOnlineTransformer(64, feedH);
             //DeltaOnlineTransformer dV6 = new DeltaOnlineTransformer(64, feedH);
 
-            DeltaOnlineTransformer dH7 = new DeltaOnlineTransformer(128, feedH);
-            DeltaOnlineTransformer dL7 = new DeltaOnlineTransformer(128, feedH);
+            //DeltaOnlineTransformer dH7 = new DeltaOnlineTransformer(128, feedH);
+            //DeltaOnlineTransformer dL7 = new DeltaOnlineTransformer(128, feedH);
 
-            DeltaOnlineTransformer dH8 = new DeltaOnlineTransformer(256, feedH);
-            DeltaOnlineTransformer dL8 = new DeltaOnlineTransformer(256, feedH);
+            //DeltaOnlineTransformer dH8 = new DeltaOnlineTransformer(256, feedH);
+            //DeltaOnlineTransformer dL8 = new DeltaOnlineTransformer(256, feedH);
 
             FXHLDiffFeed feedDiff = new FXHLDiffFeed(feed, 0.0001);
             feed.addChild(feedDiff);
@@ -370,15 +394,15 @@ public class Main {
             /*AmplitudeWavelengthTransformer awFeedH2 = new AmplitudeWavelengthTransformer(feedH, stdFeedH, 4, 0.5);
             AmplitudeWavelengthTransformer awFeedL2 = new AmplitudeWavelengthTransformer(feedL, stdFeedL, 4, 0.5);*/
 
-            /*StandardDeviationOnlineTransformer stdFeedH2 = new StandardDeviationOnlineTransformer(50, feedH);
+            StandardDeviationOnlineTransformer stdFeedH2 = new StandardDeviationOnlineTransformer(50, feedH);
             StandardDeviationOnlineTransformer stdFeedL2 = new StandardDeviationOnlineTransformer(50, feedL);
-            StandardDeviationOnlineTransformer stdFeedV2 = new StandardDeviationOnlineTransformer(50, feedV);
+            //StandardDeviationOnlineTransformer stdFeedV2 = new StandardDeviationOnlineTransformer(50, feedV);
 
             AmplitudeWavelengthTransformer awFeedH50 = new AmplitudeWavelengthTransformer(feedH, stdFeedH2, 2, 0.5);
             AmplitudeWavelengthTransformer awFeedL50 = new AmplitudeWavelengthTransformer(feedL, stdFeedL2, 2, 0.5);
-            AmplitudeWavelengthTransformer awFeedV50 = new AmplitudeWavelengthTransformer(feedV, stdFeedV2, 2, 0.5);
+            //AmplitudeWavelengthTransformer awFeedV50 = new AmplitudeWavelengthTransformer(feedV, stdFeedV2, 2, 0.5);
             AmplitudeWavelengthTransformer awFeedH2_50 = new AmplitudeWavelengthTransformer(feedH, stdFeedH2, 4, 0.5);
-            AmplitudeWavelengthTransformer awFeedL2_50 = new AmplitudeWavelengthTransformer(feedL, stdFeedL2, 4, 0.5);*/
+            AmplitudeWavelengthTransformer awFeedL2_50 = new AmplitudeWavelengthTransformer(feedL, stdFeedL2, 4, 0.5);
 
             StandardDeviationOnlineTransformer stdFeedH3 = new StandardDeviationOnlineTransformer(400, feedH);
             StandardDeviationOnlineTransformer stdFeedL3 = new StandardDeviationOnlineTransformer(400, feedL);
@@ -464,10 +488,32 @@ public class Main {
             CrossingSeriesOnlineTransformer crossH4 = new CrossingSeriesOnlineTransformer(kRSIH4, dRSIH4, 10);
             CrossingSeriesOnlineTransformer crossL4 = new CrossingSeriesOnlineTransformer(kRSIL4, dRSIL4, 10);*/
 
-            synch = new SynchronisedFeed(feedH, synch);
+            MinMaxDistanceTransformer mmdT1 = new MinMaxDistanceTransformer(50, feedL, feedH, feedC);
+            MinMaxDistanceTransformer mmdT2 = new MinMaxDistanceTransformer(100, feedL, feedH, feedC);
+            MinMaxDistanceTransformer mmdT3 = new MinMaxDistanceTransformer(200, feedL, feedH, feedC);
+            MinMaxDistanceTransformer mmdT4 = new MinMaxDistanceTransformer(400, feedL, feedH, feedC);
+            MinMaxDistanceTransformer mmdT5 = new MinMaxDistanceTransformer(800, feedL, feedH, feedC);
+
+            /*synch = new SynchronisedFeed(feedH, synch);
             synch = new SynchronisedFeed(feedL, synch);
-            synch = new SynchronisedFeed(feedC, synch);
+            synch = new SynchronisedFeed(feedC, synch);*/
             synch = new SynchronisedFeed(feedV, synch);
+
+            synch = new SynchronisedFeed(mmdT1, synch);
+            synch = new SynchronisedFeed(mmdT2, synch);
+            synch = new SynchronisedFeed(mmdT3, synch);
+            synch = new SynchronisedFeed(mmdT4, synch);
+            synch = new SynchronisedFeed(mmdT5, synch);
+
+            RadarOnlineTransformer r1 = new RadarOnlineTransformer(100, feedL, feedH, feedC, 0.0001);
+            RadarOnlineTransformer r2 = new RadarOnlineTransformer(200, feedL, feedH, feedC, 0.0001);
+            RadarOnlineTransformer r3 = new RadarOnlineTransformer(400, feedL, feedH, feedC, 0.0001);
+            RadarOnlineTransformer r4 = new RadarOnlineTransformer(800, feedL, feedH, feedC, 0.0001);
+
+            synch = new SynchronisedFeed(r1, synch);
+            synch = new SynchronisedFeed(r2, synch);
+            synch = new SynchronisedFeed(r3, synch);
+            synch = new SynchronisedFeed(r4, synch);
 
             /*synch = new SynchronisedFeed(dH, synch);
             synch = new SynchronisedFeed(dL, synch);
@@ -484,8 +530,8 @@ public class Main {
             synch = new SynchronisedFeed(dC2, synch);
             synch = new SynchronisedFeed(dV2, synch);*/
 
-            synch = new SynchronisedFeed(dH3, synch);
-            synch = new SynchronisedFeed(dL3, synch);
+            //synch = new SynchronisedFeed(dH3, synch);
+            //synch = new SynchronisedFeed(dL3, synch);
             //synch = new SynchronisedFeed(dC3, synch);
             //synch = new SynchronisedFeed(dV3, synch);
 
@@ -499,8 +545,8 @@ public class Main {
             //synch = new SynchronisedFeed(dC5, synch);
             //synch = new SynchronisedFeed(dV5, synch);
 
-            synch = new SynchronisedFeed(dH6, synch);
-            synch = new SynchronisedFeed(dL6, synch);
+            //synch = new SynchronisedFeed(dH6, synch);
+            //synch = new SynchronisedFeed(dL6, synch);
             //synch = new SynchronisedFeed(dC6, synch);
             //synch = new SynchronisedFeed(dV6, synch);
 
@@ -525,11 +571,11 @@ public class Main {
             //synch = new SynchronisedFeed(awFeedH2, synch);
             //synch = new SynchronisedFeed(awFeedL2, synch);
 
-            /*synch = new SynchronisedFeed(awFeedH50, synch);
+            synch = new SynchronisedFeed(awFeedH50, synch);
             synch = new SynchronisedFeed(awFeedL50, synch);
-            synch = new SynchronisedFeed(awFeedV50, synch);
+            //synch = new SynchronisedFeed(awFeedV50, synch);
             synch = new SynchronisedFeed(awFeedH2_50, synch);
-            synch = new SynchronisedFeed(awFeedL2_50, synch);*/
+            synch = new SynchronisedFeed(awFeedL2_50, synch);
 
             synch = new SynchronisedFeed(awFeedH100, synch);
             synch = new SynchronisedFeed(awFeedL100, synch);

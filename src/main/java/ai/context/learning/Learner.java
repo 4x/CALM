@@ -4,6 +4,8 @@ import ai.context.builder.LearnerServiceBuilder;
 import ai.context.container.TimedContainer;
 import ai.context.core.LearnerService;
 import ai.context.core.StateActionPair;
+import ai.context.util.learning.ClusteredCopulae;
+import ai.context.util.mathematics.CorrelationCalculator;
 import ai.context.util.mathematics.MinMaxAggregator;
 import ai.context.util.measurement.OpenPosition;
 import ai.context.util.trading.BlackBox;
@@ -29,10 +31,6 @@ public class Learner implements Runnable, TimedContainer{
     private HashSet<OpenPosition> positions = new HashSet<OpenPosition>();
     private TreeMap<Integer, TreeMap<Integer, Double>> successMap = new TreeMap<Integer, TreeMap<Integer, Double>>();
 
-    private double tolerance = 0.1;
-    private double actionResolution = 1.0;
-    private int maxPopulation = 2000;
-
     private long tNow = 0;
 
     private LearnerFeed trainingLearnerFeed;
@@ -43,7 +41,8 @@ public class Learner implements Runnable, TimedContainer{
 
     private boolean inLiveTrading = false;
     private BlackBox blackBox;
-    private boolean live;
+
+    private boolean adapting;
 
 
     private boolean alive = true;
@@ -68,18 +67,19 @@ public class Learner implements Runnable, TimedContainer{
     @Override
     public void run() {
 
-        learner.setActionResolution(actionResolution);
-        learner.setMaxPopulation(maxPopulation);
-        learner.setTolerance(tolerance);
-
         while (alive)
         {
             DataObject data = trainingLearnerFeed.readNext();
+            tNow = data.getTimeStamp();
+
             if(data == null)
             {
                 break;
             }
-            tNow = data.getTimeStamp();
+
+            if(adapting && tNow > timeToSave){
+                break;
+            }
 
             if(!learner.isMerging() && !saved && tNow > timeToSave){
                 System.out.println("Saving at " + new Date(tNow) + " " + new Date(timeToSave));
@@ -92,15 +92,6 @@ public class Learner implements Runnable, TimedContainer{
                 System.out.println("It is now: " + new Date(tNow));
             }
 
-            int[] signal = data.getSignal();
-            //System.out.println(AmalgamateUtils.getArrayString(signal));
-            TreeMap<Integer, Double> distribution = learner.getActionDistribution(signal);
-            TreeMap<Double, Double> prediction = new TreeMap<Double, Double>();
-            for(Map.Entry<Integer, Double> entry : distribution.entrySet())
-            {
-                prediction.put(data.getValue()[0] + entry.getKey() * actionResolution, entry.getValue());
-            }
-            recentPredictions.add(prediction);
 
             for(DataObject cursor : recentData.values()){
 
@@ -130,60 +121,72 @@ public class Learner implements Runnable, TimedContainer{
                 }
             }
 
-            updateOverallPrediction(prediction);
             recentData.put(data.getTimeStamp(), data);
             recentAggregators.put(data.getTimeStamp(), new MinMaxAggregator());
 
-            HashSet<OpenPosition> closed = new HashSet<OpenPosition>();
-            for(OpenPosition position : positions)
-            {
-                if(position.canCloseOnBar_Pessimistic(tNow, data.getValue()[1], data.getValue()[2], data.getValue()[3]))
+            if(!adapting){
+                int[] signal = data.getSignal();
+                TreeMap<Integer, Double> distribution = learner.getActionDistribution(signal);
+                TreeMap<Double, Double> prediction = new TreeMap<Double, Double>();
+                for(Map.Entry<Integer, Double> entry : distribution.entrySet())
                 {
-                    closed.add(position);
-                    int x = (int) (position.getTarget()/actionResolution);
-                    int y = (int) (position.getPnL()/actionResolution);
-                    accruedPnL += position.getPnL();
-                    PositionFactory.positionClosed(position);
+                    prediction.put(data.getValue()[0] + entry.getKey() * learner.getActionResolution(), entry.getValue());
+                }
+                recentPredictions.add(prediction);
 
-                    System.out.println(position.getClosingMessage() + " PNL: " + accruedPnL + " CHANGE: " + position.getPnL() + " CAPITAL: " + PositionFactory.getAmount());
-                    appendToFile(position.getClosingMessage() + " PNL: " + accruedPnL + " CHANGE: " + position.getPnL() + " CAPITAL: " + PositionFactory.getAmount());
+                updateOverallPrediction(prediction);
 
-                    double count = 0.0;
-                    if(!successMap.containsKey(x))
+                HashSet<OpenPosition> closed = new HashSet<OpenPosition>();
+                for(OpenPosition position : positions)
+                {
+                    if(position.canCloseOnBar_Pessimistic(tNow, data.getValue()[1], data.getValue()[2], data.getValue()[3]))
                     {
-                        successMap.put(x, new TreeMap<Integer, Double>());
+                        closed.add(position);
+                        int x = (int) (position.getTarget()/learner.getActionResolution());
+                        int y = (int) (position.getPnL()/learner.getActionResolution());
+                        accruedPnL += position.getPnL();
+                        PositionFactory.positionClosed(position);
+
+                        System.out.println(position.getClosingMessage() + " PNL: " + accruedPnL + " CHANGE: " + position.getPnL() + " CAPITAL: " + PositionFactory.getAmount());
+                        appendToFile(position.getClosingMessage() + " PNL: " + accruedPnL + " CHANGE: " + position.getPnL() + " CAPITAL: " + PositionFactory.getAmount());
+
+                        double count = 0.0;
+                        if(!successMap.containsKey(x))
+                        {
+                            successMap.put(x, new TreeMap<Integer, Double>());
+                        }
+                        if(!successMap.get(x).containsKey(y))
+                        {
+                            successMap.get(x).put(y, 0.0);
+                        }
+                        else {
+                            count = successMap.get(x).get(y);
+                        }
+                        successMap.get(x).put(y, 1.0 + count);
                     }
-                    if(!successMap.get(x).containsKey(y))
-                    {
-                        successMap.get(x).put(y, 0.0);
+                }
+                positions.removeAll(closed);
+
+                OpenPosition position = PositionFactory.getPosition(tNow, data.getValue()[0], prediction);
+                if(position != null)
+                {
+                    if(inLiveTrading){
+                        try {
+                            blackBox.onDecision(position);
+                        } catch (JFException e) {
+                            e.printStackTrace();
+                        }
                     }
                     else {
-                        count = successMap.get(x).get(y);
+                        positions.add(position);
                     }
-                    successMap.get(x).put(y, 1.0 + count);
-                }
-            }
-            positions.removeAll(closed);
 
-            OpenPosition position = PositionFactory.getPosition(tNow, data.getValue()[0], prediction);
-            if(position != null)
-            {
-                if(inLiveTrading){
-                    try {
-                        blackBox.onDecision(position);
-                    } catch (JFException e) {
-                        e.printStackTrace();
+                    int dir = -1;
+                    if(position.isLong()){
+                        dir = 1;
                     }
+                    //recentPos.put(data.getTimeStamp(), dir);
                 }
-                else {
-                    positions.add(position);
-                }
-
-                int dir = -1;
-                if(position.isLong()){
-                    dir = 1;
-                }
-                //recentPos.put(data.getTimeStamp(), dir);
             }
         }
     }
@@ -230,28 +233,16 @@ public class Learner implements Runnable, TimedContainer{
         return learner;
     }
 
-    public double getTolerance() {
-        return tolerance;
-    }
-
     public void setTolerance(double tolerance) {
-        this.tolerance = tolerance;
-    }
-
-    public double getActionResolution() {
-        return actionResolution;
+        learner.setTolerance(tolerance);
     }
 
     public void setActionResolution(double actionResolution) {
-        this.actionResolution = actionResolution;
-    }
-
-    public int getMaxPopulation() {
-        return maxPopulation;
+        learner.setActionResolution(actionResolution);
     }
 
     public void setMaxPopulation(int maxPopulation) {
-        this.maxPopulation = maxPopulation;
+        learner.setMaxPopulation(maxPopulation);
     }
 
     public void setCurrentTime(long time){
@@ -288,4 +279,21 @@ public class Learner implements Runnable, TimedContainer{
         return learner.updateAndGetCorrelationWeights(state);
     }
 
+    public void setAdapting(boolean adapting) {
+        this.adapting = adapting;
+        learner.setCorrelating(adapting);
+    }
+
+    public TreeMap<Integer, CorrelationCalculator> getCorrelationCalculators(){
+        return learner.getCorrelationCalculators();
+    }
+
+    public ClusteredCopulae getCopulae(){
+        return learner.getCopulae();
+    }
+
+    public void setCorrelationTools(TreeMap<Integer, CorrelationCalculator> calculators, ClusteredCopulae copulae){
+        learner.setCopulae(copulae);
+        learner.setCorrelationCalculators(calculators);
+    }
 }

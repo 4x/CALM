@@ -32,6 +32,12 @@ public class MinMaxDistanceTransformer  extends OnlineTransformer{
         Double close = (Double) ((List)arriving.getData()).get(2);
 
         if(init){
+
+            mins.add(minA);
+            maxs.add(maxA);
+            mins.pollFirst();
+            maxs.pollFirst();
+
             if(minA < min){
                 min = minA;
             }
