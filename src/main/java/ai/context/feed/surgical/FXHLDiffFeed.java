@@ -32,4 +32,12 @@ public class FXHLDiffFeed extends AbstractSurgicalFeed{
     public String getDescription(int startIndex, String padding) {
         return padding + "[" + startIndex + "] Difference between high and low for: " + rawFeed.getDescription(startIndex, padding);
     }
+
+    //@Override
+    public String[] getConstructorArguments() {
+        return new String[]{
+                "Parent feed giving OHCL values",
+                "Resolution of values"
+        };
+    }
 }

@@ -31,4 +31,12 @@ public class MultiplierTransformer extends CompoundedTransformer{
     public String getDescription(int startIndex, String padding) {
         return padding + "["+startIndex+"] Multiplier of feed " + fA + " by feed " + fB;
     }
+
+    //@Override
+    public String[] getConstructorArguments() {
+        return new String[]{
+                "Feed A",
+                "Feed B"
+        };
+    }
 }

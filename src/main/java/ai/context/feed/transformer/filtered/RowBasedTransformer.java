@@ -67,4 +67,16 @@ public class RowBasedTransformer extends FilteredEventDecayFeed{
 
         return padding + "["+startIndex+"] Row based filter with half-life: "+halfLife+", filtering: "+data+" on feed: " + rawFeed.getDescription(startIndex, padding);
     }
+
+    //@Override
+    public String[] getConstructorArguments() {
+        return new String[]{
+                "RawFeed",
+                "HalfLife",
+                "int[] filterColumn",
+                "String[] regexMatch - to keep just rows that have the right values in the filterColumns",
+                "int[] interestedColumns - the columns whose values we are interested in",
+                "TimedContainer"
+        };
+    }
 }

@@ -91,4 +91,13 @@ public class DukascopyFeed implements IStrategy, Feed {
     public String getDescription(int startIndex, String padding) {
         return padding + "[" + startIndex + "] Dukascopy feed for OHLC for Instrument: " + instrument + " and Period: " + interval;
     }
+
+    //@Override
+    public String[] getConstructorArguments() {
+        return new String[]{
+                "Duckascopy Client Connection",
+                "Tick Period",
+                "Instrument"
+        };
+    }
 }

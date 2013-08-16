@@ -34,4 +34,12 @@ public class ExtractOneFromListFeed extends AbstractSurgicalFeed {
     public String getDescription(int startIndex, String padding) {
         return padding + "[" + startIndex + "] Extracting element: " + interestedIndex + " from Feed: " + rawFeed.getDescription(startIndex, padding);
     }
+
+    //@Override
+    public String[] getConstructorArguments() {
+        return new String[]{
+                "Parent Feed",
+                "Element to extract from parent output"
+        };
+    }
 }

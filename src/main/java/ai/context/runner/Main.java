@@ -1,5 +1,6 @@
 package ai.context.runner;
 
+import ai.context.core.StateActionPair;
 import ai.context.feed.DataType;
 import ai.context.feed.FeedObject;
 import ai.context.feed.fx.DukascopyFeed;
@@ -27,6 +28,7 @@ import ai.context.learning.LearnerFeed;
 import ai.context.learning.LearnerFeedFromSynchronisedFeed;
 import ai.context.trading.DukascopyConnection;
 import ai.context.util.configuration.DynamicPropertiesLoader;
+import ai.context.util.learning.AmalgamateUtils;
 import ai.context.util.measurement.LoggerTimer;
 import ai.context.util.trading.BlackBox;
 import ai.context.util.trading.PositionFactory;
@@ -60,7 +62,9 @@ public class Main {
     private String dukascopyUsername = "DEMO2LfagZ";
     private String dukascopyPassword = "LfagZ";
 
-    private boolean successfullMemeryLoading = false;
+    private boolean successfullMemoryLoading = false;
+
+    private Map<Integer, String> feedDescriptions = new TreeMap<>();
 
     public static void main(String[] args)
     {
@@ -78,7 +82,7 @@ public class Main {
     public void setTraderOutput(String output){
         trader = new Learner(output);
         trader.setBlackBox(blackBox);
-        successfullMemeryLoading = trader.loadMemories("./memories", getTimeFromString_YYYYMMddHHmmss("20130201000000"));
+        successfullMemoryLoading = trader.loadMemories("./memories", getTimeFromString_YYYYMMddHHmmss("20130201000000"));
     }
 
     private void goLive(){
@@ -122,6 +126,18 @@ public class Main {
         correlator.run();
 
         LOGGER.info(learnerFeed.getDescription());
+
+        String description = learnerFeed.getDescription();
+                        for(String line : description.split("\n")){
+            line = line.trim();
+            int varID = Integer.parseInt(line.split("]")[0].substring(1));
+            if(!feedDescriptions.containsKey(varID)){
+                    feedDescriptions.put(varID, line);
+                }
+            else{
+                    feedDescriptions.put(varID, feedDescriptions.get(varID) + ", " + line);
+                }
+        }
 
         learnerFeed = new LearnerFeedFromSynchronisedFeed(initFeed(path, trader));
         trader.setActionResolution(0.00001);
@@ -180,6 +196,34 @@ public class Main {
     public void trade()
     {
         trader.run();
+
+        TreeMap<Double, StateActionPair> alphas = trader.getAlphas();
+        int top = 10;
+        for(Map.Entry<Double, StateActionPair> alpha : alphas.descendingMap().entrySet()){
+            System.out.println(alpha.getKey() + " -> " + AmalgamateUtils.getArrayString(alpha.getValue().getAmalgamate()));
+
+            TreeMap<Double, Integer> topVars = new TreeMap<>();
+            int var = 0;
+            for(double correlation : trader.getVarCorrelations(alpha.getValue().getAmalgamate())){
+                topVars.put(correlation, var);
+                var++;
+            }
+
+            int showVars = 10;
+            for(Map.Entry<Double, Integer> varEntry : topVars.descendingMap().entrySet()){
+                System.out.println(varEntry.getValue() + ": " + feedDescriptions.get(varEntry.getValue()) + " -> " + alpha.getValue().getAmalgamate()[varEntry.getValue()]);
+                showVars--;
+                if(showVars == 0){
+                    break;
+                }
+            }
+
+            top--;
+            if(top == 0){
+                break;
+            }
+        }
+
     }
 
     public void initFXAPI(){
@@ -223,7 +267,7 @@ public class Main {
                 DataType.EXTRACTABLE_DOUBLE};
 
         String dateFC = "20080101 00:00:00";
-        if(successfullMemeryLoading){
+        if(successfullMemoryLoading){
             dateFC = "20130201 00:00:00";
         }
 
@@ -266,7 +310,7 @@ public class Main {
                 DataType.DOUBLE};
 
         String dateFP = "2008.01.01 00:00:00";
-        if(successfullMemeryLoading){
+        if(successfullMemoryLoading){
             dateFP = "2013.02.01 00:00:00";
         }
         CSVFeed feedPriceEUR = new CSVFeed(path + "feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  dateFP);

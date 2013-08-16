@@ -58,4 +58,16 @@ public class MATransformer extends BufferedTransformer{
 
         return padding + "["+startIndex+"] MA with type: " + type + " and span: " + span + " for feed: " + feed.getDescription(startIndex, padding);
     }
+
+    //@Override
+    public String[] getConstructorArguments() {
+        return new String[]{
+                "RawFeed",
+                "HalfLife",
+                "int[] filterColumn",
+                "String[] regexMatch - to keep just rows that have the right values in the filterColumns",
+                "int[] interestedColumns - the columns whose values we are interested in",
+                "TimedContainer"
+        };
+    }
 }

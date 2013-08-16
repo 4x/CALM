@@ -1,0 +1,3 @@
+Transformer Class,Transformer Name,Constructor Arguments
+ai.context.feed.transformer.series.online.StandardDeviationOnlineTransformer,STDDEV,A;B;C
+ai.context.feed.row.CSVFeed,CSVFeed,File Name;TimeStamp Regex;Column Types (DataType);StartDateTime

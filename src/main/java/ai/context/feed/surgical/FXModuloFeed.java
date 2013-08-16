@@ -32,4 +32,13 @@ public class FXModuloFeed extends AbstractSurgicalFeed{
     public String getDescription(int startIndex, String padding) {
         return padding + "[" + startIndex + "] Modulo 100 for CLOSE from: " + rawFeed.getDescription(startIndex, padding);
     }
+
+    //@Override
+    public String[] getConstructorArguments() {
+        return new String[]{
+                "Parent feed",
+                "Resolution of values",
+                "Modulo"
+        };
+    }
 }

@@ -9,4 +9,6 @@ public interface Feed<T> {
     public void addChild(Feed feed);
 
     public String getDescription(int startIndex, String padding);
+
+    //public String[] getConstructorArguments();
 }

@@ -190,4 +190,9 @@ public class FXStreetCalendarRSSFeed extends RowFeed{
     public String getDescription(int startIndex, String padding) {
         return padding + "[" + startIndex + "] FX Street Calendar Feed";
     }
+
+    //@Override
+    public String[] getConstructorArguments() {
+        return new String[0];
+    }
 }

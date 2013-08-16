@@ -32,5 +32,13 @@ public class DividerTransformer extends CompoundedTransformer{
     public String getDescription(int startIndex, String padding) {
         return padding + "["+startIndex+"] Division of feed " + numerator + " by feed " + denominator;
     }
+
+    //@Override
+    public String[] getConstructorArguments() {
+        return new String[]{
+                "Numerator feed",
+                "Denominator feed"
+        };
+    }
 }
 

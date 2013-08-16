@@ -28,4 +28,12 @@ public class StitchableFXRate extends StitchableFeed{
         }
         return data;
     }
+
+    //@Override
+    public String[] getConstructorArguments() {
+        return new String[]{
+                "Backup file",
+                "Live feed"
+        };
+    }
 }

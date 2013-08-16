@@ -14,15 +14,15 @@ public class TestLearning {
 
     private LearnerService learner = new LearnerService();
 
-    private int numInputs = 10;
+    private int numInputs = 8;
     private int degreesOfFreedom = 5;
     private int numPoints = 10000;
 
-    private int numPredict = 5000;
+    private int numPredict = 1000;
 
     private double tolerance = 0.01;
     private double actionResolution = 1.0;
-    private int maxPopulation = 5000;
+    private int maxPopulation = 10000;
 
     @Before
     public void setup()
@@ -100,27 +100,40 @@ public class TestLearning {
         int index = 0;
         for(int val : signal)
         {
-            if(index % 2 == 0)
-            {
-                movement += val;
+            if(index % 3 == 0){
+                if(val < 2){
+                    movement = -movement;
+                }
             }
             else {
-                movement -= val;
-            }
+                if(index % 2 == 0)
+                {
+                    movement += val;
+                }
+                else {
+                    movement -= val;
+                }
 
-            if(index == 5 && val < 3){
-                movement = -movement;
-            }
-
-            if(index == 8 && val < 2){
-                movement = -2 * movement;
+                if(index == 0 && val < 3){
+                    movement = -movement;
+                }
+                else if(index == 1 && val < 2){
+                    movement = -2 * movement;
+                }
+                else if(index == 2){
+                    if(val > 2){
+                        movement = Math.sin(val) * movement;
+                    }
+                    else{
+                        movement = -0.5 * movement;
+                    }
+                }
+                else if(index == 3 && val < 3){
+                    movement = -4 * movement;
+                }
             }
 
             index ++;
-            if(index > 10)
-            {
-                break;
-            }
         }
 
         movement = movement * (0.9 + (0.2) * Math.random());

@@ -93,4 +93,13 @@ public class SmartDiscretiserOnSynchronisedFeed implements Feed {
     public String getDescription(int startIndex, String padding) {
         return padding + "[" + startIndex + "] Smart Discritiser with critical mass: " + criticalMass + " and degrees of feedom: " + clusters + " for feed: " + feed.getDescription(startIndex, padding + " ");
     }
+
+    //@Override
+    public String[] getConstructorArguments() {
+        return new String[]{
+                "Synchronised feed with 1 or more outputs",
+                "Number of points before ready",
+                "Degrees of freedom"
+        };
+    }
 }

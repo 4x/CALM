@@ -31,4 +31,12 @@ public class AdditionTransformer extends CompoundedTransformer{
     public String getDescription(int startIndex, String padding) {
         return padding + "["+startIndex+"] Addition of feed " + addThis + " to feed " + addTo;
     }
+
+    //@Override
+    public String[] getConstructorArguments() {
+        return new String[]{
+                "Feed A",
+                "Feed B"
+        };
+    }
 }

@@ -134,4 +134,13 @@ public class MinMaxAggregatorDiscretiser implements Feed {
     public void lock(){
         lockable = true;
     }
+
+    //@Override
+    public String[] getConstructorArguments() {
+        return new String[]{
+                "Synchronised feed with 1 or more outputs",
+                "Number of points before ready",
+                "Degrees of freedom"
+        };
+    }
 }

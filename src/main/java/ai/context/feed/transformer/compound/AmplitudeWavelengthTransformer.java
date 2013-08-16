@@ -171,4 +171,14 @@ public class AmplitudeWavelengthTransformer extends CompoundedTransformer{
 
         return desciption;
     }
+
+    //@Override
+    public String[] getConstructorArguments() {
+        return new String[]{
+                "Primary Feed",
+                "Feed for STDDEV of Primary Feed",
+                "Number of deviation to describe peak/troughs",
+                "Lamdba - how fast to update values (0 - 1)"
+        };
+    }
 }

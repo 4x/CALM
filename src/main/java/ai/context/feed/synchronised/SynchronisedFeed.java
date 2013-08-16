@@ -49,4 +49,12 @@ public class SynchronisedFeed extends SynchronisableFeed{
         }
         return description;
     }
+
+    //@Override
+    public String[] getConstructorArguments() {
+        return new String[]{
+                "Primary Feed",
+                "A Sibling Feed <Optional>"
+        };
+    }
 }

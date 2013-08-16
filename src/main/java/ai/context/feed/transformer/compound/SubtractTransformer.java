@@ -33,4 +33,12 @@ public class SubtractTransformer extends CompoundedTransformer{
     public String getDescription(int startIndex, String padding) {
         return padding + "["+startIndex+"] Subtractor of feed " + subtractThis.getDescription(startIndex, padding) + " from feed " + subtractFrom.getDescription(startIndex, padding);
     }
+
+    //@Override
+    public String[] getConstructorArguments() {
+        return new String[]{
+                "Feed SubtractFrom",
+                "Feed SubtractThis"
+        };
+    }
 }
