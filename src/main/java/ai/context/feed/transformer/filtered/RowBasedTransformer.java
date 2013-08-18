@@ -79,4 +79,17 @@ public class RowBasedTransformer extends FilteredEventDecayFeed{
                 "TimedContainer"
         };
     }
+
+    @Override
+    public List<Feed> getElementChain(int element) {
+        List list = new ArrayList<>();
+        list.add(this);
+        list.add(rawFeed.getElementChain(0));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return interestedColumns.length + 1;
+    }
 }

@@ -3,6 +3,7 @@ package ai.context.feed.transformer.series.online;
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -97,5 +98,20 @@ public class MinMaxDistanceTransformer  extends OnlineTransformer{
     @Override
     public String getDescription(int startIndex, String padding) {
         return padding + "["+startIndex+"] MINMAXDistance and span: " + bufferSize + " for feed: " + feedMin.getDescription(startIndex, padding) + " and " + feedMax.getDescription(startIndex, padding) + " and " + feedClose.getDescription(startIndex, padding);
+    }
+
+    @Override
+    public List<Feed> getElementChain(int element) {
+        List list = new ArrayList<>();
+        list.add(this);
+        list.add(feedMin.getElementChain(0));
+        list.add(feedMax.getElementChain(0));
+        list.add(feedClose.getElementChain(0));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 4;
     }
 }

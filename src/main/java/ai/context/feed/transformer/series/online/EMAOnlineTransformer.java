@@ -2,6 +2,9 @@ package ai.context.feed.transformer.series.online;
 
 import ai.context.feed.Feed;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class EMAOnlineTransformer extends OnlineTransformer{
 
     private Feed feed;
@@ -37,5 +40,18 @@ public class EMAOnlineTransformer extends OnlineTransformer{
     @Override
     public String getDescription(int startIndex, String padding) {
         return padding + "["+startIndex+"] EMA and lambda: " + bufferSize + " for feed: " + feed.getDescription(startIndex, padding);
+    }
+
+    @Override
+    public List<Feed> getElementChain(int element) {
+        List list = new ArrayList<>();
+        list.add(this);
+        list.add(feed.getElementChain(0));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 1;
     }
 }

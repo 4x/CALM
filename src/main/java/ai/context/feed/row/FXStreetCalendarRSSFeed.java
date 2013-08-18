@@ -195,4 +195,16 @@ public class FXStreetCalendarRSSFeed extends RowFeed{
     public String[] getConstructorArguments() {
         return new String[0];
     }
+
+    @Override
+    public List<Feed> getElementChain(int element) {
+        List list = new ArrayList<>();
+        list.add(this);
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 6;
+    }
 }

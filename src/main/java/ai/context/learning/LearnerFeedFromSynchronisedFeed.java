@@ -4,6 +4,7 @@ import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
 import ai.context.feed.synchronised.SynchronisedFeed;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class LearnerFeedFromSynchronisedFeed implements LearnerFeed, Feed {
@@ -77,5 +78,19 @@ public class LearnerFeedFromSynchronisedFeed implements LearnerFeed, Feed {
     @Override
     public String getDescription(int startIndex, String padding) {
         return "[" + startIndex + "] Learner feed from: \n" + feed.getDescription(startIndex, padding + "   ");
+    }
+
+    @Override
+    public List getElementChain(int element) {
+        List list = new ArrayList<>();
+
+        list.add(this);
+        list.add(feed.getElementChain(element));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return feed.getNumberOfOutputs();
     }
 }

@@ -6,6 +6,7 @@ import ai.context.feed.synchronised.SynchronisableFeed;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 
@@ -94,5 +95,15 @@ class TestFeed extends SynchronisableFeed{
     @Override
     public String getDescription(int startIndex, String padding) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public List getElementChain(int element) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
     }
 }

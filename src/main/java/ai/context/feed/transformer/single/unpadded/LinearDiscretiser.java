@@ -75,4 +75,17 @@ public class LinearDiscretiser implements Feed{
     public String getDescription(int startIndex, String padding) {
         return padding + "[" + startIndex + "] Linear dicretiser with benchmark: "+benchmark+", resolution: "+resolution+", feed component: "+feedComponent+" for: " + feed.getDescription(startIndex, padding);
     }
+
+    @Override
+    public List<Feed> getElementChain(int element) {
+        List list = new ArrayList<>();
+        list.add(this);
+        list.add(feed.getElementChain(0));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 1;
+    }
 }

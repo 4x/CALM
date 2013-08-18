@@ -2,6 +2,7 @@ package ai.context.feed.transformer.compound;
 
 import ai.context.feed.Feed;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MultiplierTransformer extends CompoundedTransformer{
@@ -38,5 +39,20 @@ public class MultiplierTransformer extends CompoundedTransformer{
                 "Feed A",
                 "Feed B"
         };
+    }
+
+    @Override
+    public List<Feed> getElementChain(int element) {
+        List list = new ArrayList<>();
+
+        list.add(this);
+        list.add(fA.getElementChain(0));
+        list.add(fB.getElementChain(0));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 1;
     }
 }

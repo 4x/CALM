@@ -3,6 +3,9 @@ package ai.context.feed.transformer.series.online;
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class StandardDeviationOnlineTransformer extends OnlineTransformer{
 
     private double stdDv = 0;
@@ -55,4 +58,16 @@ public class StandardDeviationOnlineTransformer extends OnlineTransformer{
         return padding + "["+startIndex+"] STDDEV and span: " + span + " for feed: " + feed.getDescription(startIndex, padding);
     }
 
+    @Override
+    public List<Feed> getElementChain(int element) {
+        List list = new ArrayList<>();
+        list.add(this);
+        list.add(feed.getElementChain(0));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 1;
+    }
 }

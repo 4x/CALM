@@ -3,6 +3,7 @@ package ai.context.feed.transformer.series.online;
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -70,5 +71,20 @@ public class CrossingSeriesOnlineTransformer extends OnlineTransformer{
     @Override
     public String getDescription(int startIndex, String padding) {
         return padding + "["+startIndex+"] CROSSING for feed: " + a.getDescription(startIndex, padding) + " and " + b.getDescription(startIndex, padding);
+    }
+
+    @Override
+    public List<Feed> getElementChain(int element) {
+        List list = new ArrayList<>();
+
+        list.add(this);
+        list.add(a.getElementChain(0));
+        list.add(b.getElementChain(0));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 1;
     }
 }

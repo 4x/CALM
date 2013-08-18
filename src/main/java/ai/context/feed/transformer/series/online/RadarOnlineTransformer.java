@@ -149,4 +149,19 @@ public class RadarOnlineTransformer  extends OnlineTransformer{
     public String getDescription(int startIndex, String padding) {
         return padding + "["+startIndex+"] RadarOnlineTransformer and span: " + bufferSize + " for feed: " + feedMin.getDescription(startIndex, padding) + " and " + feedMax.getDescription(startIndex, padding) + " and " + feedClose.getDescription(startIndex, padding);
     }
+
+    @Override
+    public List<Feed> getElementChain(int element) {
+        List list = new ArrayList<>();
+        list.add(this);
+        list.add(feedMin.getElementChain(0));
+        list.add(feedMax.getElementChain(0));
+        list.add(feedClose.getElementChain(0));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 5;
+    }
 }

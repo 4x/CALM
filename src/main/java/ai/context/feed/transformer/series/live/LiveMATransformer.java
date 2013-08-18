@@ -6,6 +6,9 @@ import com.tictactec.ta.lib.CoreAnnotated;
 import com.tictactec.ta.lib.MAType;
 import com.tictactec.ta.lib.MInteger;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class LiveMATransformer extends LiveBufferedTransformer{
 
     private int span;
@@ -51,5 +54,18 @@ public class LiveMATransformer extends LiveBufferedTransformer{
     public String getDescription(int startIndex, String padding) {
 
         return padding + "["+startIndex+"] Live MA with type: " + type + " and span: " + span + " for feed: " + feed.getDescription(startIndex, padding);
+    }
+
+    @Override
+    public List<Feed> getElementChain(int element) {
+        List list = new ArrayList<>();
+        list.add(this);
+        list.add(feed.getElementChain(0));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 1;
     }
 }

@@ -3,6 +3,7 @@ package ai.context.feed.surgical;
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static ai.context.util.mathematics.Discretiser.getLogarithmicDiscretisation;
@@ -39,5 +40,19 @@ public class FXHLDiffFeed extends AbstractSurgicalFeed{
                 "Parent feed giving OHCL values",
                 "Resolution of values"
         };
+    }
+
+    @Override
+    public List getElementChain(int element) {
+        List list = new ArrayList<>();
+
+        list.add(this);
+        list.add(rawFeed.getElementChain(0));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 1;
     }
 }

@@ -8,7 +8,9 @@ import com.dukascopy.api.system.IClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class DukascopyFeed implements IStrategy, Feed {
 
@@ -99,5 +101,17 @@ public class DukascopyFeed implements IStrategy, Feed {
                 "Tick Period",
                 "Instrument"
         };
+    }
+
+    @Override
+    public List<Feed> getElementChain(int element) {
+        List list = new ArrayList<>();
+        list.add(this);
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 1;
     }
 }

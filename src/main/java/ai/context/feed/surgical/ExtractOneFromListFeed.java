@@ -3,6 +3,7 @@ package ai.context.feed.surgical;
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ExtractOneFromListFeed extends AbstractSurgicalFeed {
@@ -41,5 +42,19 @@ public class ExtractOneFromListFeed extends AbstractSurgicalFeed {
                 "Parent Feed",
                 "Element to extract from parent output"
         };
+    }
+
+    @Override
+    public List getElementChain(int element) {
+        List list = new ArrayList<>();
+
+        list.add(this);
+        list.add(rawFeed.getElementChain(interestedIndex));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 1;
     }
 }

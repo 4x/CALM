@@ -3,7 +3,9 @@ package ai.context.feed.transformer.series.online;
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
 public class RSIOnlineTransformer extends OnlineTransformer{
 
@@ -107,5 +109,18 @@ public class RSIOnlineTransformer extends OnlineTransformer{
     @Override
     public String getDescription(int startIndex, String padding) {
         return padding + "["+startIndex+"] RSI with lambda="+ lambda + ", K=" + fastKPeriod + ", D=" + slowDPeriod +" for feed: " + input.getDescription(startIndex, padding);
+    }
+
+    @Override
+    public List<Feed> getElementChain(int element) {
+        List list = new ArrayList<>();
+        list.add(this);
+        list.add(input.getElementChain(0));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 4;
     }
 }

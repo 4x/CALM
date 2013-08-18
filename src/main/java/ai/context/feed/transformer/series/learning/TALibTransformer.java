@@ -5,6 +5,8 @@ import ai.context.feed.FeedObject;
 import com.tictactec.ta.lib.CoreAnnotated;
 import com.tictactec.ta.lib.MInteger;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class TALibTransformer extends BufferedTransformer {
@@ -112,5 +114,16 @@ public class TALibTransformer extends BufferedTransformer {
             data += "\n" +feed.getDescription(startIndex, padding + "   ");
         }
         return padding + "["+startIndex+"] TALib Transformer of type: "+analyticsType+" with span: " + span + ", and parameters: " + parameters + " and feeds: " + data;
+    }
+
+    @Override
+    public List<Feed> getElementChain(int element) {
+        List list = new ArrayList<>();
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return -1;
     }
 }

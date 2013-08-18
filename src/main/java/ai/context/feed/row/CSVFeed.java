@@ -300,4 +300,16 @@ public class CSVFeed extends RowFeed {
     public String getDescription(int startIndex, String padding) {
         return padding + "[" + startIndex + "] CSV File: " + fileName;
     }
+
+    @Override
+    public List<Feed> getElementChain(int element) {
+        List list = new ArrayList<>();
+        list.add(this);
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return types.length;
+    }
 }

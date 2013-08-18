@@ -6,6 +6,9 @@ import com.tictactec.ta.lib.CoreAnnotated;
 import com.tictactec.ta.lib.MAType;
 import com.tictactec.ta.lib.MInteger;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MATransformer extends BufferedTransformer{
 
     private int span;
@@ -69,5 +72,18 @@ public class MATransformer extends BufferedTransformer{
                 "int[] interestedColumns - the columns whose values we are interested in",
                 "TimedContainer"
         };
+    }
+
+    @Override
+    public List<Feed> getElementChain(int element) {
+        List list = new ArrayList<>();
+        list.add(this);
+        list.add(feed.getElementChain(0));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 1;
     }
 }

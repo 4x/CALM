@@ -21,6 +21,7 @@ public class LearnerService {
     private double[] correlations;
 
     private ClusteredCopulae copulae = new ClusteredCopulae();
+    private ClusteredCopulae magnitudeCopulae = new ClusteredCopulae();
 
     private TreeMap<Integer, Long> distribution = new TreeMap<Integer, Long>();
 
@@ -183,6 +184,7 @@ public class LearnerService {
     public synchronized void refreshCorrelations(int[] state, double movement)
     {
         copulae.addObservation(state, movement);
+        magnitudeCopulae.addObservation(state, Math.abs(movement));
 
         correlations = new double[state.length];
 
@@ -199,7 +201,18 @@ public class LearnerService {
 
     public double[] updateAndGetCorrelationWeights(int[] state){
         correlationWeights = copulae.getCorrelationWeights(state);
-        if(correlations != null)
+        double[] magCorrelations = magnitudeCopulae.getCorrelationWeights(state);
+        for (int i = 0; i < correlationWeights.length; i++)
+        {
+            double correlation = magCorrelations[i];
+            if(correlation >= 0 && !Double.isInfinite(correlation))
+            {
+                //correlationWeights[i] = (correlationWeights[i] + correlation)/2;
+                correlationWeights[i] = Math.sqrt(correlationWeights[i] * correlation);
+            }
+        }
+
+        /*if(correlations != null)
         {
             for (int i = 0; i < correlationWeights.length; i++)
             {
@@ -209,7 +222,7 @@ public class LearnerService {
                     correlationWeights[i] += Math.abs((correlations[i])/PropertiesHolder.copulaToUniversal);
                 }
             }
-        }
+        }*/
         return correlationWeights;
     }
 
@@ -250,7 +263,7 @@ public class LearnerService {
     }
 
     private double getDeviation(int[] state, StateActionPair pair){
-        return pair.getDeviation(state, correlationWeights) / Math.pow(Math.log(Math.E + pair.getTotalWeight()), 1 / PropertiesHolder.recencyBias);
+        return pair.getDeviation(state, correlationWeights) /*/ Math.pow(Math.log(Math.E + pair.getTotalWeight()), 1 / PropertiesHolder.recencyBias)*/;
     }
 
     private synchronized double getWeightForDeviation(double deviation){
@@ -265,7 +278,7 @@ public class LearnerService {
         if(max == min){
             return 0;
         }
-        return  Math.pow((max - x)/(max - min), 2);
+        return  Math.pow((max - x)/(max - min), 4);
     }
 
     private synchronized void mergeStates()

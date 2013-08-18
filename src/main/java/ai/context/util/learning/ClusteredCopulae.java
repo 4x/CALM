@@ -56,6 +56,8 @@ public class ClusteredCopulae {
             weights[i] = 0.0;
         }
 
+        double[][] matrix = new double[state.length][state.length];
+
         for (int i = 0; i < state.length; i++)
         {
             if(variableClusteredCorrelations.containsKey(i))
@@ -69,7 +71,7 @@ public class ClusteredCopulae {
                         double increment = 0.0;
                         if(m2.containsKey(index))
                         {
-                            double correlation = Math.abs(m2.get(index).getCurrentCorrelation());
+                            double correlation = Math.pow(m2.get(index).getCurrentCorrelation(), 2);
                             if(correlation >= 0 && correlation <= 2)
                             {
                                 increment = correlation;
@@ -93,21 +95,21 @@ public class ClusteredCopulae {
 
                             if(u != null && l != null)
                             {
-                                double correlation = Math.abs(((index - l) * (upper - lower) / (u - l) + lower));
+                                double correlation = Math.pow(((index - l) * (upper - lower) / (u - l) + lower), 2);
                                 if(correlation >= 0 && correlation <= 2)
                                 {
                                     increment = correlation;
                                 }
                             }
                             else{
-                                double correlation = Math.abs(lower + upper);
+                                double correlation = Math.pow(lower + upper, 2);
                                 if(correlation >= 0 && correlation <= 2)
                                 {
                                     increment = correlation;
                                 }
                             }
                         }
-
+                        matrix[i][index] = increment;
                         weights[index] += increment;
                     }
                 }
@@ -116,7 +118,7 @@ public class ClusteredCopulae {
 
         for (int i = 0; i < state.length; i++)
         {
-            weights[i] = Math.abs(weights[i]/state.length);
+            weights[i] = Math.pow(Math.abs(weights[i]), 0.5)/state.length;
         }
         return weights;
     }

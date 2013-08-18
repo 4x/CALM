@@ -4,16 +4,21 @@ import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
 
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 
-public class TimeVariablesAppenderFeed implements Feed {
+public class FutureOffsetTransformer implements Feed {
 
     private Feed rawFeed;
     private long timeStamp;
-    public TimeVariablesAppenderFeed(Feed rawFeed)
+    private int offset;
+
+    private LinkedList<FeedObject> buffer = new LinkedList<>();
+
+    public FutureOffsetTransformer(Feed rawFeed, int offset)
     {
         this.rawFeed = rawFeed;
+        this.offset = offset;
     }
     @Override
     public boolean hasNext() {
@@ -24,15 +29,15 @@ public class TimeVariablesAppenderFeed implements Feed {
     public synchronized FeedObject readNext(Object caller) {
 
         FeedObject data = rawFeed.readNext(this);
+        buffer.add(data);
         timeStamp = data.getTimeStamp();
-        Date date = new Date(data.getTimeStamp());
-        int day = date.getDay();
-        int dayOfMonth = date.getDate();
-        int month = date.getMonth();
-        int hour = date.getHours();
-        int min = date.getMinutes();
 
-        return new FeedObject(data.getTimeStamp(), new Object[]{day, dayOfMonth, month, hour, min, data.getData()});
+        if(buffer.size() > offset){
+            FeedObject toReturn = buffer.pollFirst();
+            return  new FeedObject(timeStamp, toReturn.getData());
+        }
+
+        return new FeedObject(0, null);
     }
 
     @Override
@@ -52,15 +57,7 @@ public class TimeVariablesAppenderFeed implements Feed {
 
     @Override
     public String getDescription(int startIndex, String padding) {
-        String description = padding + "[" + startIndex + "] Time series appender with  [" + startIndex + "] Day of week" + "\n";
-        startIndex++;
-        description += padding + "  [" + startIndex + "] day of month" + "\n";
-        startIndex++;
-        description += padding + "  [" + startIndex + "] month of year" + "\n";
-        startIndex++;
-        description += padding + "  [" + startIndex + "] hour of day" + "\n";
-        startIndex++;
-        description += padding + "  [" + startIndex + "] minute of hour" + "\n";
+        String description = padding + "[" + startIndex + "] Future Offset Transformer with offset: " + offset + "\n";
         startIndex++;
         description += rawFeed.getDescription(startIndex, padding + " ") + "\n";
 
@@ -70,17 +67,15 @@ public class TimeVariablesAppenderFeed implements Feed {
     @Override
     public List<Feed> getElementChain(int element) {
         List list = new ArrayList<>();
-        if(element < 5){
-            list.add(this);
-        }
-        else {
-            list.add(rawFeed.getElementChain(element - 5));
-        }
+        list.add(this);
+
+        list.add(rawFeed.getElementChain(element));
+
         return list;
     }
 
     @Override
     public int getNumberOfOutputs() {
-        return 5 + rawFeed.getNumberOfOutputs();
+        return rawFeed.getNumberOfOutputs();
     }
 }

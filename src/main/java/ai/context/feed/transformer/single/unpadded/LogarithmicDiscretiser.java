@@ -2,6 +2,9 @@ package ai.context.feed.transformer.single.unpadded;
 
 import ai.context.feed.Feed;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static ai.context.util.mathematics.Discretiser.getLogarithmicDiscretisation;
 
 public class LogarithmicDiscretiser extends UnPaddedTransformer{
@@ -51,5 +54,18 @@ public class LogarithmicDiscretiser extends UnPaddedTransformer{
     @Override
     public String getDescription(int startIndex, String padding) {
         return padding + "[" + startIndex + "] Logarithmic dicretiser with benchmark: "+benchmark+", resolution: "+resolution+", feed component: "+feedComponent+" for: " + feed.getDescription(startIndex, padding);
+    }
+
+    @Override
+    public List<Feed> getElementChain(int element) {
+        List list = new ArrayList<>();
+        list.add(this);
+        list.add(feed.getElementChain(0));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 1;
     }
 }

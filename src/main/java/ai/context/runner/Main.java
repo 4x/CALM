@@ -24,7 +24,6 @@ import ai.context.feed.transformer.single.unpadded.LinearDiscretiser;
 import ai.context.feed.transformer.single.unpadded.LogarithmicDiscretiser;
 import ai.context.learning.DataObject;
 import ai.context.learning.Learner;
-import ai.context.learning.LearnerFeed;
 import ai.context.learning.LearnerFeedFromSynchronisedFeed;
 import ai.context.trading.DukascopyConnection;
 import ai.context.util.configuration.DynamicPropertiesLoader;
@@ -103,7 +102,7 @@ public class Main {
 
     public void setup(String path)
     {
-        Learner correlator = new Learner(path);
+        /*Learner correlator = new Learner(path);
         LearnerFeed learnerFeed = new LearnerFeedFromSynchronisedFeed(initFeed(path, correlator));
 
         correlator.setActionResolution(0.00001);
@@ -137,14 +136,14 @@ public class Main {
             else{
                     feedDescriptions.put(varID, feedDescriptions.get(varID) + ", " + line);
                 }
-        }
+        }*/
 
-        learnerFeed = new LearnerFeedFromSynchronisedFeed(initFeed(path, trader));
+        LearnerFeedFromSynchronisedFeed learnerFeed = new LearnerFeedFromSynchronisedFeed(initFeed(path, trader));
         trader.setActionResolution(0.00001);
         trader.setTrainingLearnerFeed(learnerFeed);
-        trader.setMaxPopulation(20000);
-        trader.setTolerance(0.01);
-        trader.setCorrelationTools(correlator.getCorrelationCalculators(), correlator.getCopulae());
+        trader.setMaxPopulation(5000);
+        trader.setTolerance(0.005);
+        //trader.setCorrelationTools(correlator.getCorrelationCalculators(), correlator.getCopulae());
 
         PositionFactory.setRewardRiskRatio(1.5);
         PositionFactory.setMinTakeProfit(0.0050);
@@ -159,11 +158,11 @@ public class Main {
         PositionFactory.setMinTakeProfitVertical(0.0020);
         LoggerTimer.turn(false);
 
-        //DynamicPropertiesLoader.start("C:/Dev/Source/CALM/src/main/resources");
-        DynamicPropertiesLoader.start("");
+        DynamicPropertiesLoader.start("C:/Dev/Source/CALM/src/main/resources");
+        //DynamicPropertiesLoader.start("");
         //goLive();
 
-        i = 0;
+        int i = 0;
         while (true)
         {
             DataObject data = learnerFeed.readNext();

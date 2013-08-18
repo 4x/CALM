@@ -95,8 +95,8 @@ public class Learner implements Runnable, TimedContainer{
 
             for(DataObject cursor : recentData.values()){
 
-                recentAggregators.get(cursor.getTimeStamp()).addValue(data.getValue()[1] - cursor.getValue()[3]);
-                recentAggregators.get(cursor.getTimeStamp()).addValue(data.getValue()[2] - cursor.getValue()[3]);
+                recentAggregators.get(cursor.getTimeStamp()).addValue(data.getValue()[1] - cursor.getValue()[0]);
+                recentAggregators.get(cursor.getTimeStamp()).addValue(data.getValue()[2] - cursor.getValue()[0]);
             }
 
             while (!recentData.isEmpty() && recentData.firstEntry().getValue().getTimeStamp() < (tNow - PositionFactory.getTimeSpan()))
@@ -139,7 +139,7 @@ public class Learner implements Runnable, TimedContainer{
                 HashSet<OpenPosition> closed = new HashSet<OpenPosition>();
                 for(OpenPosition position : positions)
                 {
-                    if(position.canCloseOnBar_Pessimistic(tNow, data.getValue()[1], data.getValue()[2], data.getValue()[3]))
+                    if(position.canCloseOnBar_Pessimistic(tNow, data.getValue()[1], data.getValue()[2], data.getValue()[0]))
                     {
                         closed.add(position);
                         int x = (int) (position.getTarget()/learner.getActionResolution());

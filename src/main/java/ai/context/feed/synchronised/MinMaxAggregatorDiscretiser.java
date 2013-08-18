@@ -143,4 +143,18 @@ public class MinMaxAggregatorDiscretiser implements Feed {
                 "Degrees of freedom"
         };
     }
+
+    @Override
+    public List getElementChain(int element) {
+        List list = new ArrayList<>();
+
+        list.add(this);
+        list.add(feed.getElementChain(element));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return feed.getNumberOfOutputs();
+    }
 }

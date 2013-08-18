@@ -12,6 +12,8 @@ import ai.context.feed.transformer.single.unpadded.LogarithmicDiscretiser;
 import com.tictactec.ta.lib.MAType;
 import org.junit.Test;
 
+import java.util.List;
+
 public class TestTransformer {
 
     @Test
@@ -146,5 +148,15 @@ class TestFeed1 implements Feed{
     @Override
     public String getDescription(int startIndex, String padding) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public List getElementChain(int element) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
     }
 }

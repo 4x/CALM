@@ -2,6 +2,7 @@ package ai.context.feed.transformer.compound;
 
 import ai.context.feed.Feed;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class DividerTransformer extends CompoundedTransformer{
@@ -39,6 +40,21 @@ public class DividerTransformer extends CompoundedTransformer{
                 "Numerator feed",
                 "Denominator feed"
         };
+    }
+
+    @Override
+    public List<Feed> getElementChain(int element) {
+        List list = new ArrayList<>();
+
+        list.add(this);
+        list.add(numerator.getElementChain(0));
+        list.add(denominator.getElementChain(0));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 1;
     }
 }
 

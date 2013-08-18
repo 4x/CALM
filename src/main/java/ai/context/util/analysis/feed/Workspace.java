@@ -14,10 +14,14 @@ import java.util.TreeMap;
 
 public class Workspace {
 
-    private static TreeMap<String, FeedTemplate> feedTemplates = new TreeMap<>();
+    private TreeMap<String, FeedTemplate> feedTemplates = new TreeMap<>();
+    private JTextArea console = new JTextArea();
+    private Learner learner;
+    private Workspace thisSpace;
 
-    public static void main(String[] args){
+    public Workspace(){
 
+        thisSpace = this;
         try {
             CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream("C:\\Dev\\Source\\CALM\\src\\main\\resources\\Transformers.csv")), ',', '"', 1);
             String[] line;
@@ -58,13 +62,16 @@ public class Workspace {
         splitPane.setDividerLocation(200);
         frame.add(splitPane);
 
-        final WorkArea workArea = new WorkArea(null);
+        final WorkArea workArea = new WorkArea(this);
         workArea.setLayout(null);
 
         JPanel control = new JPanel();
+        control.setBackground(Color.ORANGE);
         control.setLayout(new GridLayout(0, 1));
 
-        control.add(new JLabel("Control Panel"));
+        JLabel title = new JLabel("Control Panel");
+        title.setFont(new Font("Monospaced", Font.BOLD, 16));
+        control.add(title);
         control.add(new JLabel(""));
         control.add(new JLabel("Select a Feed or Transformer"));
 
@@ -183,7 +190,142 @@ public class Workspace {
             public void mouseExited(MouseEvent e) {}
         });
 
+        control.add(new JLabel(""));
+        final JTextField signal = new JTextField("Signal Index");
+        JButton showDependencies = new JButton("Show Signal Dependency");
+        control.add(signal);
+        control.add(showDependencies);
+        showDependencies.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+
+                int signalIndex = Integer.parseInt(signal.getText());
+                workArea.drawChain(signalIndex);
+                workArea.repaint();
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {}
+
+            @Override
+            public void mouseReleased(MouseEvent e) {}
+
+            @Override
+            public void mouseEntered(MouseEvent e) {}
+
+            @Override
+            public void mouseExited(MouseEvent e) {}
+        });
+
         splitPane.add(control, 0);
-        splitPane.add(workArea, 1);
+
+        control.add(new JLabel(""));
+        final JButton playFeed = new JButton("Play Selected Feed");
+        control.add(playFeed);
+        playFeed.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if(workArea.isPlaying()){
+                    workArea.stop();
+
+                    playFeed.setText("Play Selected Feed");
+                }
+                else {
+                    workArea.playSelected();
+
+                    if(workArea.isPlaying()){
+                        playFeed.setText("Stop Playing");
+                    }
+                }
+
+                workArea.repaint();
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+        });
+
+        control.add(new JLabel(""));
+        final JButton addLearner = new JButton("Add Learner");
+        control.add(addLearner);
+        addLearner.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                workArea.add(new Learner(thisSpace));
+                workArea.repaint();
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+        });
+
+        JSplitPane vertiSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        vertiSplit.setDividerSize(5);
+        vertiSplit.setDividerLocation(400);
+
+        vertiSplit.setTopComponent(workArea);
+
+        console.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        JScrollPane scroll = new JScrollPane(console);
+        scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        vertiSplit.setBottomComponent(scroll);
+
+        JTabbedPane tabbedPane = new JTabbedPane();
+        splitPane.add(tabbedPane,1);
+
+        tabbedPane.addTab("Workspace", vertiSplit);
+        tabbedPane.addTab("Dashboard", new DashBoard(thisSpace));
+    }
+
+    public void append(String line){
+        console.append(line + "\n");
+        console.setCaretPosition(console.getDocument().getLength());
+        console.repaint();
+    }
+
+    public void setLearner(Learner learner){
+        this.learner = learner;
+    }
+
+    public static void main(String[] args){
+        new Workspace();
+    }
+
+    public Learner getLearner() {
+        return learner;
     }
 }

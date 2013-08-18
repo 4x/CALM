@@ -2,6 +2,7 @@ package ai.context.feed.transformer.compound;
 
 import ai.context.feed.Feed;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -180,5 +181,20 @@ public class AmplitudeWavelengthTransformer extends CompoundedTransformer{
                 "Number of deviation to describe peak/troughs",
                 "Lamdba - how fast to update values (0 - 1)"
         };
+    }
+
+    @Override
+    public List<Feed> getElementChain(int element) {
+        List list = new ArrayList<>();
+
+        list.add(this);
+        list.add(rawFeed.getElementChain(0));
+        list.add(stdDevFeed.getElementChain(0));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 4;
     }
 }

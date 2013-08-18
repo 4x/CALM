@@ -107,6 +107,16 @@ class TestFeed3 implements Feed{
     public String getDescription(int startIndex, String padding) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
+
+    @Override
+    public List getElementChain(int element) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
 }
 
 class TestFeed4 implements Feed{
@@ -148,6 +158,16 @@ class TestFeed4 implements Feed{
     @Override
     public String getDescription(int startIndex, String padding) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public List getElementChain(int element) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
     }
 }
 

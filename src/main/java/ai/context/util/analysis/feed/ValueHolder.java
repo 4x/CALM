@@ -14,6 +14,7 @@ public class ValueHolder extends DraggableComponent{
         DOUBLE,
         STRING,
         INTEGER,
+        LONG,
         CUSTOM
     }
     private TYPE type;
@@ -51,6 +52,9 @@ public class ValueHolder extends DraggableComponent{
             else if(type == TYPE.INTEGER){
                 return Integer.parseInt(value.getText());
             }
+            else if(type == TYPE.LONG){
+                return Long.parseLong(value.getText());
+            }
             else if(type == TYPE.CUSTOM){
                 String[] data = value.getText().split("::");
 
@@ -63,10 +67,12 @@ public class ValueHolder extends DraggableComponent{
                     return clazz.newInstance();
                 }
                 else if(collectionType.equals("ARRAY")){
-                    Object[] array = (Object[]) Array.newInstance(Class.forName(dataType), values.length);
+                    Class clazz = Class.forName(dataType);
+                    Object array = Array.newInstance(clazz, values.length);
                     for(int i = 0; i < values.length; i++){
-                        Class clazz = Class.forName(dataType + "." + values[i]);
-                        array[i] = clazz.newInstance();
+                       if(clazz.isEnum()){
+                           Array.set(array, i, Enum.valueOf(clazz, values[i]));
+                       }
                     }
                     return array;
                 }

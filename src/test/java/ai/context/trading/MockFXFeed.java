@@ -4,6 +4,7 @@ import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
 import ai.context.util.io.Channel;
 
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -58,5 +59,15 @@ public class MockFXFeed implements Feed {
     @Override
     public String getDescription(int startIndex, String padding) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public List getElementChain(int element) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
     }
 }

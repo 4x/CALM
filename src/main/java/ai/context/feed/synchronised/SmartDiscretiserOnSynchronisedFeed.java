@@ -2,6 +2,7 @@ package ai.context.feed.synchronised;
 
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
+import ai.context.util.DataSetUtils;
 import ai.context.util.mathematics.SmartDiscretiser;
 
 import java.util.ArrayList;
@@ -40,7 +41,9 @@ public class SmartDiscretiserOnSynchronisedFeed implements Feed {
         }
         FeedObject fO = feed.getNextComposite(this);
         long time = fO.getTimeStamp();
-        List data = (List) fO.getData();
+
+        List data = new ArrayList();
+        DataSetUtils.add(fO.getData(), data);
         for(Object o : data)
         {
             if(o == null || !(o instanceof Double))
@@ -101,5 +104,19 @@ public class SmartDiscretiserOnSynchronisedFeed implements Feed {
                 "Number of points before ready",
                 "Degrees of freedom"
         };
+    }
+
+    @Override
+    public List getElementChain(int element) {
+        List list = new ArrayList<>();
+
+        list.add(this);
+        list.add(feed.getElementChain(element));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return feed.getNumberOfOutputs();
     }
 }

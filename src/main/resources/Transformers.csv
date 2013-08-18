@@ -1,3 +1,9 @@
 Transformer Class,Transformer Name,Constructor Arguments
-ai.context.feed.transformer.series.online.StandardDeviationOnlineTransformer,STDDEV,A;B;C
+ai.context.feed.transformer.series.online.StandardDeviationOnlineTransformer,STDDEV,Span (int);Parent Feed
 ai.context.feed.row.CSVFeed,CSVFeed,File Name;TimeStamp Regex;Column Types (DataType);StartDateTime
+ai.context.feed.synchronised.SynchronisedFeed,Synchroniser,Raw Feed;Sibiling Synchoniser (Optional)
+ai.context.feed.synchronised.SmartDiscretiserOnSynchronisedFeed,Smart Discretiser,Synchonised Feed;Critical Mas;Divisions
+ai.context.feed.transformer.series.online.MinMaxDistanceTransformer,MinMaxDistance,Span (int);Feed Min;Feed Max;Feed Close
+ai.context.feed.surgical.ExtractOneFromListFeed,Extractor,Parent Feed;Field To Extract
+ai.context.feed.transformer.single.FutureOffsetTransformer,Futuriser,Parent Feed;Offset Periods (int)
+ai.context.feed.transformer.compound.DifferencePresentToFutureTransformer,Movement,Present Feed;Future Feed

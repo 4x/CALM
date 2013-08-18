@@ -3,6 +3,7 @@ package ai.context.feed.surgical;
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -40,5 +41,19 @@ public class FXModuloFeed extends AbstractSurgicalFeed{
                 "Resolution of values",
                 "Modulo"
         };
+    }
+
+    @Override
+    public List getElementChain(int element) {
+        List list = new ArrayList<>();
+
+        list.add(this);
+        list.add(rawFeed.getElementChain(0));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 1;
     }
 }

@@ -3,6 +3,9 @@ package ai.context.feed.synchronised;
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SynchronisedFeed extends SynchronisableFeed{
 
     private Feed rawFeed;
@@ -56,5 +59,34 @@ public class SynchronisedFeed extends SynchronisableFeed{
                 "Primary Feed",
                 "A Sibling Feed <Optional>"
         };
+    }
+
+    @Override
+    public List getElementChain(int element) {
+        int remaining = element;
+        Feed feed = null;
+        for(Feed candidate : feeds){
+            feed = ((SynchronisedFeed)candidate).getRawFeed();
+            if(feed.getNumberOfOutputs() > remaining){
+                break;
+            }
+
+            remaining -= feed.getNumberOfOutputs();
+        }
+
+        List list = new ArrayList<>();
+
+        list.add(this);
+        list.add(feed.getElementChain(remaining));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        int number = 0;
+        for(Feed feed : feeds){
+            number += ((SynchronisedFeed)feed).getRawFeed().getNumberOfOutputs();
+        }
+        return number;
     }
 }

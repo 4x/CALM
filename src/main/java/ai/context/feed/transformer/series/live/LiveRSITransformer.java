@@ -6,6 +6,9 @@ import com.tictactec.ta.lib.CoreAnnotated;
 import com.tictactec.ta.lib.MAType;
 import com.tictactec.ta.lib.MInteger;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class LiveRSITransformer extends LiveBufferedTransformer {
     private int span;
     private CoreAnnotated taLib = new CoreAnnotated();
@@ -55,5 +58,18 @@ public class LiveRSITransformer extends LiveBufferedTransformer {
     public String getDescription(int startIndex, String padding) {
 
         return padding + "["+startIndex+"] Live RSI with span: " + span + ", fast D period " + fastDPeriod + " for feed: " + ", fast K period " + fastKPeriod + " and fastD MA type: " +fastDMAType+ " for feed: " + feed.getDescription(startIndex, padding);
+    }
+
+    @Override
+    public List<Feed> getElementChain(int element) {
+        List list = new ArrayList<>();
+        list.add(this);
+        list.add(feed.getElementChain(0));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 2;
     }
 }

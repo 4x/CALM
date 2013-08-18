@@ -5,6 +5,9 @@ import ai.context.feed.FeedObject;
 import com.tictactec.ta.lib.CoreAnnotated;
 import com.tictactec.ta.lib.MInteger;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SlopeTransformer extends BufferedTransformer{
     private int span;
     private CoreAnnotated taLib = new CoreAnnotated();
@@ -53,5 +56,18 @@ public class SlopeTransformer extends BufferedTransformer{
     public String getDescription(int startIndex, String padding) {
 
         return padding + "["+startIndex+"] SLOPE with span: " + span + " for feed: " + feed.getDescription(startIndex, padding);
+    }
+
+    @Override
+    public List<Feed> getElementChain(int element) {
+        List list = new ArrayList<>();
+        list.add(this);
+        list.add(feed.getElementChain(0));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 1;
     }
 }

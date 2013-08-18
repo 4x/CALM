@@ -5,7 +5,9 @@ import ai.context.feed.FeedObject;
 import ai.context.util.communication.Notifiable;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
 public abstract class StitchableFeed implements Feed {
 
@@ -90,5 +92,19 @@ public abstract class StitchableFeed implements Feed {
     @Override
     public String getDescription(int startIndex, String padding) {
         return padding + "[" + startIndex + "] Spliced live feed: " + liveFeed.getDescription(startIndex, padding);
+    }
+
+    @Override
+    public List getElementChain(int element) {
+        List list = new ArrayList<>();
+
+        list.add(this);
+        list.add(liveFeed.getElementChain(0));
+        return list;
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return liveFeed.getNumberOfOutputs();
     }
 }
