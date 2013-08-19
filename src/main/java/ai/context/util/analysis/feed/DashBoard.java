@@ -30,7 +30,7 @@ public class DashBoard extends JSplitPane{
         tableModel = new DefaultTableModel(new Object[]{"Score","Strategy ID"},0);
         table.setModel(tableModel);
 
-        Analytics analytics = new Analytics();
+        final Analytics analytics = new Analytics(workspace);
         add(analytics);
 
         JButton getAlpha = new JButton("Get Best Strategies");
@@ -76,14 +76,9 @@ public class DashBoard extends JSplitPane{
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 if(tableModel.getRowCount() > 0){
-                    System.out.println(table.getValueAt(table.getSelectedRow(), 1));
+                    analytics.update(population.get(table.getValueAt(table.getSelectedRow(), 1)));
                 }
             }
         });
-
-        tableModel.addRow(new Object[]{1, 1});
-        tableModel.addRow(new Object[]{2, 2});
-        tableModel.addRow(new Object[]{3, 3});
-        tableModel.addRow(new Object[]{4, 4});
     }
 }
