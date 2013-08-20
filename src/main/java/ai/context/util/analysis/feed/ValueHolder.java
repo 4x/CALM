@@ -18,6 +18,7 @@ public class ValueHolder extends DraggableComponent{
         CUSTOM
     }
     private TYPE type;
+    private  String name;
     private JTextField value;
     private JCheckBox select;
 
@@ -26,6 +27,7 @@ public class ValueHolder extends DraggableComponent{
         setLayout(new GridLayout(3, 1));
         setSize(100, 60);
         this.type = type;
+        this.name = name;
         add(new JLabel(name));
         select = new JCheckBox();
         add(select);
@@ -94,5 +96,13 @@ public class ValueHolder extends DraggableComponent{
     }
     public void deselect(){
         select.setSelected(false);
+    }
+
+    public String toString(){
+        return "VALUEHOLDER¬>" + System.identityHashCode(this) + "¬>" + type + "¬>" + name + "¬>" + value.getText();
+    }
+
+    public void setValue(String value){
+        this.value.setText(value);
     }
 }

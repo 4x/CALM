@@ -60,11 +60,11 @@ public class RadarOnlineTransformer  extends OnlineTransformer{
             }
 
             double bottom = 0;
-            double bottonSpace = 0;
+            double bottomSpace = 0;
             double top = 0;
             double topSpace = 0;
 
-            double maxBotton = 0;
+            double maxBottom = 0;
             double maxTop = 0;
 
             int divisions = 40;
@@ -72,7 +72,7 @@ public class RadarOnlineTransformer  extends OnlineTransformer{
                 double angle = (Math.PI/divisions) * a;
                 TreeMap<Integer, Double> histogram = new TreeMap<>();
                 for(Double[] point : points){
-                    int pointClass = (int) (point[0] * Math.sin(point[1] + angle));
+                    int pointClass = (int) (point[1] * Math.sin(point[0] + angle))/1;
 
                     if(!histogram.containsKey(pointClass)){
                         histogram.put(pointClass, 0D);
@@ -81,50 +81,58 @@ public class RadarOnlineTransformer  extends OnlineTransformer{
                     histogram.put(pointClass, histogram.get(pointClass) + 1);
                 }
 
-                int lastVal = histogram.firstKey();
-                double currentFreq = histogram.firstEntry().getValue();
+                if(last.getTimeStamp() == 200){
+                    for(Map.Entry<Integer, Double> entry : histogram.entrySet()){
+                        System.out.println(a + "," + entry.getKey() + "," + entry.getValue());
+                    }
+                }
+
+                /*double rise = histogram.firstEntry().getValue();
+                double fall = histogram.lastEntry().getValue();
+                if(rise > maxTop){
+                    maxTop = rise;
+                    top = a;
+                    topSpace = histogram.firstKey();
+                }
+                if(fall > maxBottom){
+                    maxBottom = fall;
+                    bottom = a;
+                    bottonSpace = histogram.lastKey();
+                }*/
+
+                double lastFreq = 0;
                 for(Map.Entry<Integer, Double> entry : histogram.entrySet()){
-                    double lambda = Math.exp(-Math.abs(entry.getKey() - lastVal));
-
-                    double thisFreq = (1 - lambda) * entry.getValue() + (lambda) * currentFreq;
-
-                    double rise = thisFreq - currentFreq;
+                    double currentFreq = entry.getValue();
+                    double rise = currentFreq - lastFreq;
                     if(rise > maxTop){
                         maxTop = rise;
                         top = a;
                         topSpace = entry.getKey();
                     }
 
-                    currentFreq = thisFreq;
-                    lastVal = entry.getKey();
+                    lastFreq = currentFreq;
                 }
 
                 SortedMap<Integer, Double> desc = histogram.descendingMap();
-                lastVal = desc.firstKey();
-                currentFreq = desc.get(lastVal);
+                lastFreq = 0;
                 for(Map.Entry<Integer, Double> entry : desc.entrySet()){
-                    double lambda = Math.exp(-Math.abs(entry.getKey() - lastVal));
-
-                    double thisFreq = (1 - lambda) * entry.getValue() + (lambda) * currentFreq;
-
-                    double fall = thisFreq - currentFreq;
-                    if(fall > maxBotton){
-                        maxBotton = fall;
+                    double currentFreq = entry.getValue();
+                    double fall = currentFreq - lastFreq;
+                    if(fall > maxBottom){
+                        maxBottom = fall;
                         bottom = a;
-                        bottonSpace = entry.getKey();
+                        bottomSpace = entry.getKey();
                     }
 
-                    currentFreq = thisFreq;
-                    lastVal = entry.getKey();
+                    lastFreq = currentFreq;
                 }
             }
             double convergence = 0;
-
-            double lambda = 0.75;
+            double lambda = 1;
             lastTop = (1 - lambda) * lastTop + lambda * top;
             lastBottom = (1 - lambda) * lastBottom + lambda * bottom;
             lastTSpace = (1 - lambda) * lastTSpace + lambda * topSpace;
-            lastBSpace = (1 - lambda) * lastBSpace + lambda * bottonSpace;
+            lastBSpace = (1 - lambda) * lastBSpace + lambda * bottomSpace;
             if(lastTop != lastBottom){
                 convergence = getLogarithmicDiscretisation(Math.abs(lastTSpace + lastBSpace)/Math.abs(lastTop - lastBottom), 0, resolution);
             }

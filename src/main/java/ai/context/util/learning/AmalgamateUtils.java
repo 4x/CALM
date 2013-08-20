@@ -115,6 +115,35 @@ public class AmalgamateUtils {
             return System.identityHashCode(object) + "";
         }
     }
+
+    public static String getCSVString(Object list) {
+        String data = "";
+
+        List dataList = (List) list;
+        for(Object o : dataList){
+            data += o + ",";
+        }
+
+        if(data.length() > 1){
+            data = data.substring(0, data.length() - 1);
+        }
+
+        return data;
+    }
+
+    public static String getSCSVString(Object[] list) {
+        String data = "";
+
+        for(Object o : list){
+            data += o + ";";
+        }
+
+        if(data.length() > 1){
+            data = data.substring(0, data.length() - 1);
+        }
+
+        return data;
+    }
 }
 
 

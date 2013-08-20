@@ -2,6 +2,7 @@ package ai.context.util.analysis.feed;
 
 import ai.context.feed.Feed;
 import ai.context.util.common.DraggableComponent;
+import ai.context.util.learning.AmalgamateUtils;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -27,6 +28,10 @@ public class Transformer extends DraggableComponent{
 
     private Component[] hideables;
 
+    private String className;
+    private String name;
+    private String[] argDescription;
+
     public static Transformer build(FeedTemplate template){
         try {
             return new Transformer(template.getClassName(), template.getName(), template.getArgments());
@@ -37,6 +42,10 @@ public class Transformer extends DraggableComponent{
     }
 
     public Transformer(String className, String name, String[] argsDescription) throws ClassNotFoundException {
+        this.className = className;
+        this.name = name;
+        this.argDescription = argsDescription;
+
         Class<?> c = Class.forName(className);
         Constructor[] allConstructors = c.getDeclaredConstructors();
         constructor = allConstructors[0];
@@ -211,5 +220,29 @@ public class Transformer extends DraggableComponent{
         feed = null;
         setBackground(Color.ORANGE);
         repaint();
+    }
+
+    public String toString(){
+
+        String data = "";
+        for(ConstructorArgument argument : arguments){
+            if(argument != null){
+                data += System.identityHashCode(argument.getValue());
+            }
+            data += ";";
+        }
+
+        return "TRANSFORMER¬>" + System.identityHashCode(this) + "¬>" + className + "¬>" + name + "¬>" + AmalgamateUtils.getSCSVString(argDescription) + "¬>" + data;
+    }
+
+    public void configure(String config){
+        String id = config.split("¬>")[1];
+        String[] parts = config.split("¬>")[5].split(";");
+
+        for(int i = 0; i < parts.length; i++){
+            arguments[i] = new ConstructorArgument(ConstructorArgument.TYPE.REFERENCE, ObjectHolder.get(parts[i]));
+        }
+
+        ObjectHolder.save(id, this);
     }
 }

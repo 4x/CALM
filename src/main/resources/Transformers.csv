@@ -7,3 +7,4 @@ ai.context.feed.transformer.series.online.MinMaxDistanceTransformer,MinMaxDistan
 ai.context.feed.surgical.ExtractOneFromListFeed,Extractor,Parent Feed;Field To Extract
 ai.context.feed.transformer.single.FutureOffsetTransformer,Futuriser,Parent Feed;Offset Periods (int)
 ai.context.feed.transformer.compound.DifferencePresentToFutureTransformer,Movement,Present Feed;Future Feed
+ai.context.feed.transformer.series.online.RadarOnlineTransformer,Radar,Span (int);Feed Min;Feed Max;Feed Close;Resolution

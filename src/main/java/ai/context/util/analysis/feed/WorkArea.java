@@ -8,6 +8,12 @@ import ai.context.util.common.DraggableComponent;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.List;
@@ -29,6 +35,26 @@ public class WorkArea extends JPanel {
 
     public WorkArea(Workspace workspace){
         this.workspace = workspace;
+
+        JButton save = new JButton("Save Work");
+        save.setBounds(200, 10, 100, 30);
+        add(save);
+        save.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                save();
+            }
+        });
+
+        JButton load = new JButton("Load Work");
+        load.setBounds(320, 10, 100, 30);
+        add(load);
+        load.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                load();
+            }
+        });
     }
 
     public void paintComponent(Graphics g){
@@ -69,7 +95,7 @@ public class WorkArea extends JPanel {
             else if(component instanceof Learner){
                 ConstructorArgument[] args = ((Learner)component).getArguments();
                 boolean expanded = ((Learner)component).isExpanded();
-                int dH = component.getHeight() / (5 + 2 * args.length);
+                int dH = component.getHeight() / (5 + 2 * 8);
                 for(int i = 0; i < args.length; i++){
                     if (args[i] != null && args[i].getType() == ConstructorArgument.TYPE.REFERENCE){
                         DraggableComponent hook = (DraggableComponent)args[i].getValue();
@@ -242,6 +268,100 @@ public class WorkArea extends JPanel {
 
         workspace.append("Chain: " + chain);
         repaint();
+    }
+
+    public void save(){
+        try{
+            BufferedWriter out = new BufferedWriter(new FileWriter("WORKAREA"));
+            for(DraggableComponent component : components){
+                out.write(component + "\n");
+                out.flush();
+            }
+            out.close();
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public void load(){
+        clear();
+        BufferedReader br = null;
+
+        try {
+
+            String line;
+
+            br = new BufferedReader(new FileReader("WORKAREA"));
+
+            while ((line = br.readLine()) != null) {
+                String type = line.split("¬>")[0];
+                if(type.equals("VALUEHOLDER")){
+                    ValueHolder.TYPE vType = ValueHolder.TYPE.valueOf(line.split("¬>")[2]);
+                    String name = line.split("¬>")[3];
+                    String val = line.split("¬>")[4];
+
+                    ValueHolder holder = new ValueHolder(vType, name);
+                    holder.setValue(val);
+                    ObjectHolder.save(line.split("¬>")[1], holder);
+                    add(holder);
+                }
+                else if(type.equals("TRANSFORMER")){
+                    String[] info = line.split("¬>");
+                    String id = info[1];
+                    String className = info[2];
+                    String name = info[3];
+                    String description = info[4];
+
+                    Transformer transformer = new Transformer(className, name, description.split(";"));
+                    ObjectHolder.save(id, transformer);
+                    add(transformer);
+                }
+                else if(type.equals("LEARNER")){
+                    String[] info = line.split("¬>");
+                    String id = info[1];
+
+                    Learner learner = new Learner(workspace);
+                    ObjectHolder.save(id, learner);
+                    add(learner);
+                }
+            }
+            br.close();
+
+            br = new BufferedReader(new FileReader("WORKAREA"));
+
+            while ((line = br.readLine()) != null) {
+                String type = line.split("¬>")[0];
+                if(type.equals("TRANSFORMER")){
+                    String[] info = line.split("¬>");
+                    String id = info[1];
+
+                    Transformer transformer = (Transformer) ObjectHolder.get(id);
+                    transformer.configure(line);
+                }
+                else if(type.equals("LEARNER")){
+                    String[] info = line.split("¬>");
+                    String id = info[1];
+
+                    Learner learner = (Learner) ObjectHolder.get(id);
+                    learner.configure(line);
+                }
+            }
+
+            br.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        repaint();
+    }
+
+    public void clear(){
+        List<DraggableComponent> toRemove = new ArrayList();
+        toRemove.addAll(components);
+        for(DraggableComponent component : toRemove){
+            remove(component);
+        }
     }
 
     public boolean isPlaying(){

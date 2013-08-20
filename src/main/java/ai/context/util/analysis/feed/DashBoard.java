@@ -76,7 +76,10 @@ public class DashBoard extends JSplitPane{
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 if(tableModel.getRowCount() > 0){
-                    analytics.update(population.get(table.getValueAt(table.getSelectedRow(), 1)));
+                    try{
+                        analytics.update(population.get(table.getValueAt(table.getSelectedRow(), 1)));
+                    }
+                    catch (Exception ex){}
                 }
             }
         });

@@ -18,6 +18,7 @@ public class LearnerWrapper {
     private int presentCloseField;
     private int signalFields;
     private int horizon;
+    private int[] valueFields;
 
     private boolean paused = false;
     private boolean killed = false;
@@ -25,11 +26,12 @@ public class LearnerWrapper {
     private LearnerService learner = new LearnerService();
     private LinkedList<DataObject> history = new LinkedList<>();
 
-    public LearnerWrapper(Feed signalFeed, Feed presentFeed, int presentCloseField, int horizon, double actionResolution, double tolerance, int maxPop){
+    public LearnerWrapper(Feed signalFeed, Feed presentFeed, int presentCloseField, int[] valueFields, int horizon, double actionResolution, double tolerance, int maxPop){
         feed = new SynchronisedFeed(presentFeed, feed);
         feed = new SynchronisedFeed(signalFeed, feed);
         this.presentCloseField = presentCloseField;
         this.horizon = horizon;
+        this.valueFields = valueFields;
         presentFeedFields = presentFeed.getNumberOfOutputs();
         signalFields = signalFeed.getNumberOfOutputs();
 
@@ -43,7 +45,7 @@ public class LearnerWrapper {
             @Override
             public void run() {
                 while (!killed){
-                    while (!paused){
+                    while (paused){
                         try {
                             Thread.sleep(1000);
                         } catch (InterruptedException e) {
@@ -52,41 +54,48 @@ public class LearnerWrapper {
                     }
 
                     FeedObject data = feed.getNextComposite(this);
-                    double[] values = new double[presentFeedFields];
-                    int[] signal = new int[presentFeedFields];
+                    List dataList = (List)data.getData();
+                    if(dataList.size() == (presentFeedFields + signalFields)){
+                        double[] values = new double[presentFeedFields];
+                        int[] signal = new int[signalFields];
 
-                    for(int i = 0; i < presentFeedFields; i++){
-                        values[i] = (double) ((List)data.getData()).get(i);
-                    }
-
-                    for(int i = 0; i < signalFields; i++){
-                        signal[i] = (int) ((List)data.getData()).get(i + presentFeedFields);
-                    }
-
-                    DataObject snapshot = new DataObject(data.getTimeStamp(), signal, values);
-                    history.add(snapshot);
-
-                    if(history.size() > horizon){
-                        DataObject now = history.pollFirst();
-
-                        double nowClose = now.getValue()[presentCloseField];
-                        double maxPosMovement = 0;
-                        double maxNegMovement = 0;
-                        for(DataObject future : history){
-                            for(double val : future.getValue()){
-                                double movement = val - nowClose;
-                                if(movement > maxPosMovement){
-                                    maxPosMovement = movement;
-                                }
-                                if(movement < maxNegMovement){
-                                    maxNegMovement = movement;
-                                }
-                            }
+                        for(int i = 0; i < presentFeedFields; i++){
+                            values[i] = (Double) dataList.get(i);
                         }
 
-                        int[] nowSignal = now.getSignal();
-                        learner.addStateAction(nowSignal, maxNegMovement);
-                        learner.addStateAction(nowSignal, maxPosMovement);
+                        for(int i = 0; i < signalFields; i++){
+                            signal[i] = (Integer) dataList.get(i + presentFeedFields);
+                        }
+
+                        DataObject snapshot = new DataObject(data.getTimeStamp(), signal, values);
+                        history.add(snapshot);
+
+                        if(history.size() > horizon){
+                            DataObject now = history.pollFirst();
+
+                            double nowClose = now.getValue()[presentCloseField];
+                            double maxPosMovement = 0;
+                            double maxNegMovement = 0;
+                            for(DataObject future : history){
+                                for(int i : valueFields){
+                                    double val = future.getValue()[i];
+                                    double movement = val - nowClose;
+                                    if(movement > maxPosMovement){
+                                        maxPosMovement = movement;
+                                    }
+                                    if(movement < maxNegMovement){
+                                        maxNegMovement = movement;
+                                    }
+                                }
+                            }
+
+                            int[] nowSignal = now.getSignal();
+                            learner.addStateAction(nowSignal, maxNegMovement);
+                            learner.addStateAction(nowSignal, maxPosMovement);
+                        }
+                    }
+                    else {
+                        System.err.println("Skipping");
                     }
                 }
             }

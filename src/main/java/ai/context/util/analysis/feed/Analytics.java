@@ -108,11 +108,11 @@ public class Analytics extends JPanel{
 
             for(Map.Entry<Integer, Double> entry : strategy.getActionDistribution().entrySet()){
                 if(entry.getKey() < 0){
-                    Color color = new Color(1F, 0F, 0F, 0.25F);
+                    Color color = new Color(1F, 0F, 0F, 0.5F);
                     g2d.setColor(color);
                 }
                 else {
-                    Color color = new Color(0F, 0F, 1F, 0.25F);
+                    Color color = new Color(0F, 0F, 1F, 0.5F);
                     g2d.setColor(color);
                 }
 

@@ -26,8 +26,15 @@ public class Learner extends DraggableComponent {
     private Learner thisLearner;
 
     private Component[] hideables;
-    private ConstructorArgument[] arguments = new ConstructorArgument[7];
+    private ConstructorArgument[] arguments = new ConstructorArgument[2];
     private Workspace workspace;
+
+    private JTextField closeField = new JTextField();
+    private JTextField valuesField = new JTextField();
+    private JTextField horizonField = new JTextField();
+    private JTextField resolutionField = new JTextField();
+    private JTextField toleranceField = new JTextField();
+    private JTextField maxPopField = new JTextField();
 
     public Learner(final Workspace workspace) {
 
@@ -56,7 +63,7 @@ public class Learner extends DraggableComponent {
                 expanded = !expanded;
                 if(expanded){
                     expand.setText("Minimise");
-                    setSize(200, 300);
+                    setSize(200, 400);
                     toggle(true);
                 }
                 else {
@@ -151,6 +158,7 @@ public class Learner extends DraggableComponent {
                 "Signal Feed",
                 "Values Feed",
                 "Present Close Field",
+                "Value Fields (Comma Separated)",
                 "Horizon",
                 "Resolution",
                 "Tolerance (0 - 1)",
@@ -160,38 +168,58 @@ public class Learner extends DraggableComponent {
         for(String arg : argsDescription){
             add(new JLabel(arg));
             final int index = i;
-            final JButton hook = new JButton("Hook");
-            add(hook);
-            hook.addMouseListener(new MouseListener() {
+            if(index < 2){
+                final JButton hook = new JButton("Hook");
+                add(hook);
+                hook.addMouseListener(new MouseListener() {
 
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    if(hook.getText().equals("Hook")){
-                        if(area.getSelected() != null){
-                            arguments[index] = new ConstructorArgument(ConstructorArgument.TYPE.REFERENCE, area.getSelected());
-                            hook.setText("Unhook");
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        if(hook.getText().equals("Hook")){
+                            if(area.getSelected() != null){
+                                arguments[index] = new ConstructorArgument(ConstructorArgument.TYPE.REFERENCE, area.getSelected());
+                                hook.setText("Unhook");
+                            }
                         }
+                        else{
+                            hook.setText("Hook");
+                            arguments[index] = null;
+                        }
+                        area.repaint();
                     }
-                    else{
-                        hook.setText("Hook");
-                        arguments[index] = null;
-                    }
-                    area.repaint();
-                }
 
-                @Override
-                public void mousePressed(MouseEvent e) {}
+                    @Override
+                    public void mousePressed(MouseEvent e) {}
 
-                @Override
-                public void mouseReleased(MouseEvent e) { }
+                    @Override
+                    public void mouseReleased(MouseEvent e) { }
 
-                @Override
-                public void mouseEntered(MouseEvent e) { }
+                    @Override
+                    public void mouseEntered(MouseEvent e) { }
 
-                @Override
-                public void mouseExited(MouseEvent e) { }
+                    @Override
+                    public void mouseExited(MouseEvent e) { }
 
-            });
+                });
+            }
+            else if(index == 2){
+                add(closeField);
+            }
+            else if(index == 3){
+                add(valuesField);
+            }
+            else if(index == 4){
+                add(horizonField);
+            }
+            else if(index == 5){
+                add(resolutionField);
+            }
+            else if(index == 6){
+                add(toleranceField);
+            }
+            else if(index == 7){
+                add(maxPopField);
+            }
             i++;
         }
         toggle(false);
@@ -228,7 +256,17 @@ public class Learner extends DraggableComponent {
             }
             i++;
         }
-        wrapper = new LearnerWrapper((Feed)arguments[0], (Feed)arguments[1], (int)arguments[2], (int)arguments[3], (double)arguments[4], (double)arguments[5], (int)arguments[6]);
+        int close = Integer.parseInt(closeField.getText());
+        int horizon = Integer.parseInt(horizonField.getText());
+        double res = Double.parseDouble(resolutionField.getText());
+        double tol = Double.parseDouble(toleranceField.getText());
+        int maxPop = Integer.parseInt(maxPopField.getText());
+        String[] valStr = valuesField.getText().split(",");
+        int[] values = new int[valStr.length];
+        for(int iV = 0; iV < values.length; iV++){
+            values[iV] = Integer.parseInt(valStr[iV]);
+        }
+        wrapper = new LearnerWrapper((Feed)arguments[0], (Feed)arguments[1], close, values, horizon, res, tol, maxPop);
         wrapper.start();
         pause.setText("Pause");
 
@@ -276,6 +314,36 @@ public class Learner extends DraggableComponent {
 
     public Map<Double, Integer> getFactorInfluences(StateActionPair state){
         return wrapper.getFactorInfluences(state);
+    }
+
+    public String toString(){
+
+        String data = "";
+        for(ConstructorArgument argument : arguments){
+            if(argument != null){
+                data += System.identityHashCode(argument.getValue());
+            }
+            data += ";";
+        }
+
+        return "LEARNER¬>" + System.identityHashCode(this) + "¬>" + data + ";" + closeField.getText() + ";" + horizonField.getText() + ";" + resolutionField.getText() + ";" + toleranceField.getText() + ";" + maxPopField.getText() + ";" + valuesField.getText();
+    }
+
+    public void configure(String config){
+        String id = config.split("¬>")[1];
+        String[] parts = config.split("¬>")[2].split(";");
+
+        arguments[0] = new ConstructorArgument(ConstructorArgument.TYPE.REFERENCE, ObjectHolder.get(parts[0]));
+        arguments[1] = new ConstructorArgument(ConstructorArgument.TYPE.REFERENCE, ObjectHolder.get(parts[1]));
+
+        closeField.setText(parts[2]);
+        horizonField.setText(parts[3]);
+        resolutionField.setText(parts[4]);
+        toleranceField.setText(parts[5]);
+        maxPopField.setText(parts[6]);
+        valuesField.setText(parts[7]);
+
+        ObjectHolder.save(id, thisLearner);
     }
 }
 

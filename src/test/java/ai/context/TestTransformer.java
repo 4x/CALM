@@ -2,16 +2,26 @@ package ai.context;
 
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
+import ai.context.feed.surgical.ExtractOneFromListFeed;
+import ai.context.feed.synchronised.SynchronisedFeed;
 import ai.context.feed.transformer.compound.AmplitudeWavelengthTransformer;
 import ai.context.feed.transformer.series.learning.MATransformer;
 import ai.context.feed.transformer.series.learning.RSITransformer;
 import ai.context.feed.transformer.series.learning.StandardDeviationTransformer;
 import ai.context.feed.transformer.series.learning.VarianceTransformer;
+import ai.context.feed.transformer.series.online.RadarOnlineTransformer;
 import ai.context.feed.transformer.single.unpadded.LinearDiscretiser;
 import ai.context.feed.transformer.single.unpadded.LogarithmicDiscretiser;
+import ai.context.util.learning.AmalgamateUtils;
 import com.tictactec.ta.lib.MAType;
 import org.junit.Test;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 
 public class TestTransformer {
@@ -112,6 +122,44 @@ public class TestTransformer {
             }
         }
     }
+
+    @Test
+    public void testRadar()
+    {
+        TestFeed3Outputs series = new TestFeed3Outputs();
+        Feed close = new ExtractOneFromListFeed(series, 0);
+        Feed high = new ExtractOneFromListFeed(series, 1);
+        Feed low = new ExtractOneFromListFeed(series, 2);
+
+        series.addChild(close);
+        series.addChild(high);
+        series.addChild(low);
+
+        RadarOnlineTransformer transformer = new RadarOnlineTransformer(100, low, high, close, 1);
+        SynchronisedFeed feed = new SynchronisedFeed(close, null);
+        feed = new SynchronisedFeed(low, feed);
+        feed = new SynchronisedFeed(high, feed);
+        feed = new SynchronisedFeed(transformer, feed);
+
+        try {
+            BufferedWriter out = new BufferedWriter(new FileWriter("RADAR.csv"));
+            for(int i = 0; i < 300; i++){
+                FeedObject data = feed.getNextComposite(this);
+                appendToFile(AmalgamateUtils.getCSVString(data.getData()), out);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private void appendToFile(String data, BufferedWriter out){
+        try {
+            out.write(data + "\n");
+            out.flush();
+        }
+        catch (Exception e){}
+    }
 }
 
 class TestFeed1 implements Feed{
@@ -138,6 +186,76 @@ class TestFeed1 implements Feed{
     @Override
     public void addChild(Feed feed) {
         //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public long getLatestTime() {
+        return t;
+    }
+
+    @Override
+    public String getDescription(int startIndex, String padding) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public List getElementChain(int element) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public int getNumberOfOutputs() {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+}
+
+class TestFeed3Outputs implements Feed{
+
+    private HashMap<Feed, LinkedList<FeedObject>> buffers = new HashMap<>();
+    long t = 0;
+    double lastValue = 0;
+
+    @Override
+    public boolean hasNext() {
+        return true;
+    }
+
+    @Override
+    public FeedObject readNext(Object caller) {
+        if(buffers.containsKey(caller) && buffers.get(caller).size() > 0)
+        {
+            return buffers.get(caller).pollFirst();
+        }
+        t++;
+
+        double r1 = Math.random();
+        double r2 = Math.random();
+        double r3 = Math.random();
+
+        List<Double> output = new ArrayList<>();
+        FeedObject feedObject = new FeedObject(t, output);
+
+        double multiplier = 2;
+        output.add(lastValue + multiplier * (100 - (t % 100)) * (r1 - 0.5));
+        output.add(lastValue + multiplier * (100 - (t % 100)) * (r2 - 0.5));
+        output.add(lastValue + multiplier * (100 - (t % 100)) * (r3 - 0.5));
+
+        for(Feed listener : buffers.keySet()){
+            if(listener != caller){
+                buffers.get(listener).add(feedObject);
+            }
+        }
+        return feedObject;
+    }
+
+    @Override
+    public Feed getCopy() {
+        return new TestFeed1();
+    }
+
+    @Override
+    public void addChild(Feed feed) {
+        buffers.put(feed, new LinkedList<FeedObject>());
     }
 
     @Override
