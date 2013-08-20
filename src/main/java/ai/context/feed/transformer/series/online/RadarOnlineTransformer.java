@@ -72,7 +72,7 @@ public class RadarOnlineTransformer  extends OnlineTransformer{
                 double angle = (Math.PI/divisions) * a;
                 TreeMap<Integer, Double> histogram = new TreeMap<>();
                 for(Double[] point : points){
-                    int pointClass = (int) (point[1] * Math.sin(point[0] + angle))/1;
+                    int pointClass = (int) (point[1] * Math.sin(point[0] + angle))/5;
 
                     if(!histogram.containsKey(pointClass)){
                         histogram.put(pointClass, 0D);
@@ -81,11 +81,11 @@ public class RadarOnlineTransformer  extends OnlineTransformer{
                     histogram.put(pointClass, histogram.get(pointClass) + 1);
                 }
 
-                if(last.getTimeStamp() == 200){
+                /*if(last.getTimeStamp() == 200){
                     for(Map.Entry<Integer, Double> entry : histogram.entrySet()){
                         System.out.println(a + "," + entry.getKey() + "," + entry.getValue());
                     }
-                }
+                }*/
 
                 /*double rise = histogram.firstEntry().getValue();
                 double fall = histogram.lastEntry().getValue();
@@ -100,7 +100,7 @@ public class RadarOnlineTransformer  extends OnlineTransformer{
                     bottonSpace = histogram.lastKey();
                 }*/
 
-                double lastFreq = 0;
+                /*double lastFreq = 0;
                 for(Map.Entry<Integer, Double> entry : histogram.entrySet()){
                     double currentFreq = entry.getValue();
                     double rise = currentFreq - lastFreq;
@@ -125,6 +125,35 @@ public class RadarOnlineTransformer  extends OnlineTransformer{
                     }
 
                     lastFreq = currentFreq;
+                }*/
+
+                int c = 1;
+                double rise = 0;
+                for(Map.Entry<Integer, Double> entry : histogram.entrySet()){
+                    double currentFreq = entry.getValue();
+                    rise = (rise + currentFreq)/c;
+                    if(rise > maxTop){
+                        maxTop = rise;
+                        top = a;
+                        topSpace = entry.getKey();
+                    }
+
+                    c++;
+                }
+
+                SortedMap<Integer, Double> desc = histogram.descendingMap();
+                double fall = 0;
+                c = 1;
+                for(Map.Entry<Integer, Double> entry : desc.entrySet()){
+                    double currentFreq = entry.getValue();
+                    fall =  (fall + currentFreq)/c;
+                    if(fall > maxBottom){
+                        maxBottom = fall;
+                        bottom = a;
+                        bottomSpace = entry.getKey();
+                    }
+
+                    c++;
                 }
             }
             double convergence = 0;
@@ -133,6 +162,7 @@ public class RadarOnlineTransformer  extends OnlineTransformer{
             lastBottom = (1 - lambda) * lastBottom + lambda * bottom;
             lastTSpace = (1 - lambda) * lastTSpace + lambda * topSpace;
             lastBSpace = (1 - lambda) * lastBSpace + lambda * bottomSpace;
+
             if(lastTop != lastBottom){
                 convergence = getLogarithmicDiscretisation(Math.abs(lastTSpace + lastBSpace)/Math.abs(lastTop - lastBottom), 0, resolution);
             }
