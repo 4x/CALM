@@ -7,18 +7,24 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-public class FutureOffsetTransformer implements Feed {
+public class TimeOffsetTransformer implements Feed {
 
     private Feed rawFeed;
     private long timeStamp;
     private int offset;
 
+    private boolean future = true;
+
     private LinkedList<FeedObject> buffer = new LinkedList<>();
 
-    public FutureOffsetTransformer(Feed rawFeed, int offset)
+    public TimeOffsetTransformer(Feed rawFeed, int offset)
     {
         this.rawFeed = rawFeed;
-        this.offset = offset;
+        this.offset = Math.abs(offset);
+
+        if(offset < 0){
+            future = false;
+        }
     }
     @Override
     public boolean hasNext() {
@@ -34,7 +40,12 @@ public class FutureOffsetTransformer implements Feed {
 
         if(buffer.size() > offset){
             FeedObject toReturn = buffer.pollFirst();
-            return  new FeedObject(timeStamp, toReturn.getData());
+            if(!future){
+                return  new FeedObject(timeStamp, toReturn.getData());
+            }
+            else {
+                return new FeedObject(toReturn.getTimeStamp(), data.getData());
+            }
         }
 
         return new FeedObject(0, null);

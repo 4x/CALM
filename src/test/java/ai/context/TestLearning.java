@@ -14,15 +14,15 @@ public class TestLearning {
 
     private LearnerService learner = new LearnerService();
 
-    private int numInputs = 40;
+    private int numInputs = 10;
     private int degreesOfFreedom = 10;
-    private int numPoints = 10000;
+    private int numPoints = 20000;
 
-    private int numPredict = 1000;
+    private int numPredict = 10000;
 
-    private double tolerance = 0.005;
+    private double tolerance = 0.01;
     private double actionResolution = 1.0;
-    private int maxPopulation = 10000;
+    private int maxPopulation = 200;
 
     @Before
     public void setup()
@@ -97,6 +97,8 @@ public class TestLearning {
     {
         double movement = 0.0;
 
+        boolean neg = false;
+
         int index = 0;
 
         for(int val : signal)
@@ -108,67 +110,41 @@ public class TestLearning {
             else {
                 movement -= val;
             }
-            index++;
 
-            if(index == 5){
-                if(val < 5){
-                    movement = 2 * (movement % 5);
-                }
-                else {
-                    movement = -2 * (movement % 5);
-                }
-            }
-
-            if(index == 10){
-                if(val < 5){
-                    movement = 2 * (movement % 3);
-                }
-                else {
-                    movement = -4 * (movement % 3);
-                }
-            }
-
-            if(index == 20){
-                break;
-            }
-        }
-
-        /*index = 0;
-        for(int val : signal)
-        {
-            if(index % 3 == 0){
-                if(val < 2){
-                    movement = -movement;
-                }
-            }
-
-            if(index % 2 == 0)
-            {
-                movement += val;
+            /*if(index == 2 && val > 5){
+                movement =  Math.cos(movement);
             }
             else {
-                movement -= val;
+                movement =  Math.sin(movement);
             }
 
-            if(index == 0 && val < 3){
-                movement = -movement;
-            }
-            else if(index == 1 && val < 2){
-                movement = -2 * movement;
-            }
-            else if(index == 2){
-                if(val > 2){
-                    movement = Math.sin(val) * movement;
-                }
-                else{
-                    movement = -0.5 * movement;
-                }
-            }
-            else if(index == 3 && val < 3){
-                movement = -4 * movement;
+            if(index == 3 && val > 5){
+                movement =  Math.sqrt(Math.abs(movement));
+            }*/
+
+            /*if(index == 4 && val > 5){
+                neg = true;
             }
 
-            index ++;
+            if(index == 5 && movement < 0){
+                movement = Math.pow(Math.sin(movement), 2);
+            }
+            else {
+                movement =  Math.pow(Math.cos(movement), 3);
+            }
+
+            if(index == 7 && val > 2 && neg){
+                neg = false;
+            }*/
+
+            index++;
+        }
+
+        /*if(neg == true){
+            movement = -Math.abs(movement);
+        }
+        else {
+            movement = +Math.abs(movement);
         }*/
 
         movement = movement * (0.9 + (0.2) * Math.random());

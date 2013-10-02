@@ -1,7 +1,7 @@
 package ai.context.feed.transformer.compound;
 
 import ai.context.feed.Feed;
-import ai.context.feed.transformer.single.FutureOffsetTransformer;
+import ai.context.feed.transformer.single.TimeOffsetTransformer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,8 +9,8 @@ import java.util.List;
 public class DifferencePresentToFutureTransformer extends CompoundedTransformer{
 
     private Feed present;
-    private FutureOffsetTransformer future;
-    public DifferencePresentToFutureTransformer(Feed presentFeed, FutureOffsetTransformer future) {
+    private TimeOffsetTransformer future;
+    public DifferencePresentToFutureTransformer(Feed presentFeed, TimeOffsetTransformer future) {
         super(new Feed[]{presentFeed, future});
         this.present = presentFeed;
         this.future = future;

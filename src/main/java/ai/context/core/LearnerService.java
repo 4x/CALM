@@ -25,6 +25,7 @@ public class LearnerService {
 
     private TreeMap<Integer, Long> distribution = new TreeMap<Integer, Long>();
 
+    private boolean doubleCheckMerge = true;
     private double actionResolution = 1.0;
 
     private boolean merging = false;
@@ -160,22 +161,32 @@ public class LearnerService {
                 double weight = getWeightForDeviation(entry.getValue());
                 entry.getKey().newMovement(movement, weight);
 
-                if(currentDev == -1){
+                if(currentDev == -1 && !entry.getKey().getId().equals(id)){
                     currentDev = entry.getValue();
                 }
                 if(entry.getValue() <= currentDev && entry.getValue() < minDevForMerge && !entry.getKey().getId().equals(id)){
                     counterpart = entry.getKey();
+                    currentDev = entry.getValue();
                 }
             }
 
             if(counterpart != null){
-                merge(population.get(id), counterpart);
-                //System.err.println("Merging " + id + ", " + counterpart.getId());
+                if(doubleCheckMerge){
+                    updateAndGetCorrelationWeights(counterpart.getAmalgamate());
+                    currentDev += getDeviation(counterpart.getAmalgamate(), population.get(id));
+                    currentDev /= 2;
+
+                    if(currentDev < minDevForMerge){
+                        merge(population.get(id), counterpart);
+                    }
+                }
+                else{
+                    merge(population.get(id), counterpart);
+                }
             }
 
             if(newState && population.size() > PropertiesHolder.maxPopulation)
             {
-                //mergeExecutor.execute(batchMergeTask);
                 mergeStates();
             }
         }
@@ -235,6 +246,16 @@ public class LearnerService {
         {
             double deviation = getDeviation(state, pair);
             top.put(deviation, pair);
+        }
+
+        if(doubleCheckMerge){
+            TreeMap<Double, StateActionPair> top2 = new TreeMap<Double, StateActionPair>();
+            for(Map.Entry<Double,StateActionPair> pair : top.entrySet()){
+                updateAndGetCorrelationWeights(pair.getValue().getAmalgamate());
+                double deviation = (getDeviation(pair.getValue().getAmalgamate(), state, correlationWeights) + pair.getKey())/2;
+                top2.put(deviation, pair.getValue());
+            }
+            top = top2;
         }
 
         HashMap<StateActionPair, Double> map = new HashMap<StateActionPair, Double>();
@@ -315,6 +336,11 @@ public class LearnerService {
                     if(pair != counterpart && population.values().contains(counterpart)){
                         updateAndGetCorrelationWeights(pair.getAmalgamate());
                         double deviation = getDeviation(pair.getAmalgamate(), counterpart);
+                        if(doubleCheckMerge){
+                            updateAndGetCorrelationWeights(counterpart.getAmalgamate());
+                            deviation += getDeviation(counterpart.getAmalgamate(), pair);
+                            deviation /= 2;
+                        }
                         z++;
                         if(deviation <= minDevForMerge){
                             merge(pair, counterpart);
@@ -463,6 +489,20 @@ public class LearnerService {
 
     public void setCorrelating(boolean correlating) {
         this.correlating = correlating;
+    }
+
+    public double getDeviation(int[] state, int[] counterpart, double[] correlationWeights)
+    {
+        double deviation = 0;
+
+        for(int i = 0; i < state.length || i < counterpart.length; i++)
+        {
+            if(correlationWeights[i] >= 0)
+            {
+                deviation += (Math.abs(state[i] - counterpart[i]) * correlationWeights[i]);
+            }
+        }
+        return deviation;
     }
 
     @Override

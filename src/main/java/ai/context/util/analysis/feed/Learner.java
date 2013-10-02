@@ -326,7 +326,7 @@ public class Learner extends DraggableComponent {
             data += ";";
         }
 
-        return "LEARNER¬>" + System.identityHashCode(this) + "¬>" + data + ";" + closeField.getText() + ";" + horizonField.getText() + ";" + resolutionField.getText() + ";" + toleranceField.getText() + ";" + maxPopField.getText() + ";" + valuesField.getText();
+        return "LEARNER¬>" + System.identityHashCode(this) + "¬>" + data + closeField.getText() + ";" + valuesField.getText() + ";" + horizonField.getText() + ";" + resolutionField.getText() + ";" + toleranceField.getText() + ";" + maxPopField.getText();
     }
 
     public void configure(String config){
@@ -337,11 +337,11 @@ public class Learner extends DraggableComponent {
         arguments[1] = new ConstructorArgument(ConstructorArgument.TYPE.REFERENCE, ObjectHolder.get(parts[1]));
 
         closeField.setText(parts[2]);
-        horizonField.setText(parts[3]);
-        resolutionField.setText(parts[4]);
-        toleranceField.setText(parts[5]);
-        maxPopField.setText(parts[6]);
-        valuesField.setText(parts[7]);
+        valuesField.setText(parts[3]);
+        horizonField.setText(parts[4]);
+        resolutionField.setText(parts[5]);
+        toleranceField.setText(parts[6]);
+        maxPopField.setText(parts[7]);
 
         ObjectHolder.save(id, thisLearner);
     }

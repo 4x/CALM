@@ -35,6 +35,9 @@ public class RadarOnlineTransformer  extends OnlineTransformer{
         if(init){
             FeedObject last = buffer.getLast();
             double origin =  ((Double) ((List)last.getData()).get(2))/resolution;
+            origin +=  ((Double) ((List)last.getData()).get(0))/resolution;
+            origin +=  ((Double) ((List)last.getData()).get(1))/resolution;
+            origin = origin/3;
             int i = 1 + buffer.size();
 
             for(FeedObject point : buffer){
@@ -43,13 +46,13 @@ public class RadarOnlineTransformer  extends OnlineTransformer{
                 Double maxA = (Double) ((List)point.getData()).get(1)/resolution;
                 Double close = (Double) ((List)point.getData()).get(2)/resolution;
 
-                double angle1 = tanInverse(-i, minA - origin);
+                double angle1 = tanInverse(-i, +(minA - origin));
                 double distance1 = Math.sqrt(Math.pow(minA - origin, 2) + Math.pow(i, 2));
 
-                double angle2 = tanInverse(-i, maxA - origin);
+                double angle2 = tanInverse(-i, +(maxA - origin));
                 double distance2 = Math.sqrt(Math.pow(maxA - origin, 2) + Math.pow(i, 2));
 
-                double angle3 = tanInverse(-i, close - origin);
+                double angle3 = tanInverse(-i, +(close - origin));
                 double distance3 = Math.sqrt(Math.pow(close - origin, 2) + Math.pow(i, 2));
 
                 points.add(new Double[]{angle1, distance1});
@@ -67,12 +70,13 @@ public class RadarOnlineTransformer  extends OnlineTransformer{
             double maxBottom = 0;
             double maxTop = 0;
 
-            int divisions = 40;
-            for(int a = -divisions/2; a < divisions/2; a++){
+            int tightness = 2;
+            int divisions = tightness * 10;
+            for(int a = -10; a < 10; a++){
                 double angle = (Math.PI/divisions) * a;
                 TreeMap<Integer, Double> histogram = new TreeMap<>();
                 for(Double[] point : points){
-                    int pointClass = (int) (point[1] * Math.sin(point[0] + angle))/5;
+                    int pointClass = (int) (point[1] * Math.sin(point[0] + angle))/1;
 
                     if(!histogram.containsKey(pointClass)){
                         histogram.put(pointClass, 0D);
@@ -81,80 +85,51 @@ public class RadarOnlineTransformer  extends OnlineTransformer{
                     histogram.put(pointClass, histogram.get(pointClass) + 1);
                 }
 
-                /*if(last.getTimeStamp() == 200){
-                    for(Map.Entry<Integer, Double> entry : histogram.entrySet()){
-                        System.out.println(a + "," + entry.getKey() + "," + entry.getValue());
-                    }
-                }*/
+                List<Double[]> changes = new ArrayList<Double[]>();
 
-                /*double rise = histogram.firstEntry().getValue();
-                double fall = histogram.lastEntry().getValue();
-                if(rise > maxTop){
-                    maxTop = rise;
-                    top = a;
-                    topSpace = histogram.firstKey();
-                }
-                if(fall > maxBottom){
-                    maxBottom = fall;
-                    bottom = a;
-                    bottonSpace = histogram.lastKey();
-                }*/
-
-                /*double lastFreq = 0;
-                for(Map.Entry<Integer, Double> entry : histogram.entrySet()){
-                    double currentFreq = entry.getValue();
-                    double rise = currentFreq - lastFreq;
-                    if(rise > maxTop){
-                        maxTop = rise;
-                        top = a;
-                        topSpace = entry.getKey();
-                    }
-
-                    lastFreq = currentFreq;
-                }
-
-                SortedMap<Integer, Double> desc = histogram.descendingMap();
-                lastFreq = 0;
-                for(Map.Entry<Integer, Double> entry : desc.entrySet()){
-                    double currentFreq = entry.getValue();
-                    double fall = currentFreq - lastFreq;
-                    if(fall > maxBottom){
-                        maxBottom = fall;
-                        bottom = a;
-                        bottomSpace = entry.getKey();
-                    }
-
-                    lastFreq = currentFreq;
-                }*/
-
+                int inspect = 10;
                 int c = 1;
-                double rise = 0;
+                double sum = 0;
                 for(Map.Entry<Integer, Double> entry : histogram.entrySet()){
-                    double currentFreq = entry.getValue();
-                    rise = (rise + currentFreq)/c;
-                    if(rise > maxTop){
+                    sum += entry.getValue();
+                    double rise = sum/c;
+                    if(c > inspect && rise > maxTop){
                         maxTop = rise;
                         top = a;
                         topSpace = entry.getKey();
                     }
 
+                    changes.add(new Double[]{rise, 0.0});
                     c++;
                 }
 
                 SortedMap<Integer, Double> desc = histogram.descendingMap();
-                double fall = 0;
+                sum = 0;
                 c = 1;
                 for(Map.Entry<Integer, Double> entry : desc.entrySet()){
-                    double currentFreq = entry.getValue();
-                    fall =  (fall + currentFreq)/c;
-                    if(fall > maxBottom){
+                    sum += entry.getValue();
+                    double fall =  sum/c;
+                    if(c > inspect && fall > maxBottom){
                         maxBottom = fall;
                         bottom = a;
                         bottomSpace = entry.getKey();
                     }
 
+                    changes.get(c - 1)[1] = fall;
                     c++;
                 }
+
+                /*if(last.getTimeStamp() == 180){
+                    *//*for(Map.Entry<Integer, Double> entry : histogram.entrySet()){
+                        System.out.println(a + "," + entry.getKey() + "," + entry.getValue());
+                    }*//*
+
+                    //System.out.println(">> " + a + " " + maxTop + " " + maxBottom + " " + top + " " + bottom);
+
+                    for(Double[] val : changes){
+                        System.out.println(a + "," +val[0] + "," + val[1]);
+                    }
+                }*/
             }
             double convergence = 0;
             double lambda = 1;

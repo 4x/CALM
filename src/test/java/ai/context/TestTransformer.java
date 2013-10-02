@@ -143,7 +143,7 @@ public class TestTransformer {
 
         try {
             BufferedWriter out = new BufferedWriter(new FileWriter("RADAR.csv"));
-            for(int i = 0; i < 300; i++){
+            for(int i = 0; i < 600; i++){
                 FeedObject data = feed.getNextComposite(this);
                 appendToFile(AmalgamateUtils.getCSVString(data.getData()), out);
             }
@@ -236,9 +236,16 @@ class TestFeed3Outputs implements Feed{
         FeedObject feedObject = new FeedObject(t, output);
 
         double multiplier = 2;
-        output.add(lastValue + multiplier * (100 - (t % 100)) * (r1 - 0.5));
-        output.add(lastValue + multiplier * (100 - (t % 100)) * (r2 - 0.5));
-        output.add(lastValue + multiplier * (100 - (t % 100)) * (r3 - 0.5));
+        if(t < 400){
+            output.add(lastValue + multiplier * (200 - (t % 200)) * (r1 - 0.5));
+            output.add(lastValue + multiplier * (200 - (t % 200)) * (r2 - 0.5));
+            output.add(lastValue + multiplier * (200 - (t % 200)) * (r3 - 0.5));
+        }
+        else{
+            output.add(lastValue + multiplier * (t % 200) * (r1 - 0.5));
+            output.add(lastValue + multiplier * (t % 200) * (r2 - 0.5));
+            output.add(lastValue + multiplier * (t % 200) * (r3 - 0.5));
+        }
 
         for(Feed listener : buffers.keySet()){
             if(listener != caller){

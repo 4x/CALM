@@ -78,8 +78,8 @@ public class ClusteredCopulae {
                             }
                         }
                         else{
-                            double upper = Math.random()/5;
-                            double lower = Math.random()/5;
+                            double upper = 0;
+                            double lower = 0;
 
                             Integer u = m2.floorKey(index);
                             Integer l = m2.ceilingKey(index);

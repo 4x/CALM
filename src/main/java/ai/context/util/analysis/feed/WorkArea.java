@@ -126,9 +126,12 @@ public class WorkArea extends JPanel {
         Transformer tO = transformers.get(origin);
         for(int i = 1; i < chain.size(); i++){
             List subChain = (List)(chain.get(i));
-            Feed destination = (Feed) (subChain).get(0);
-            Transformer tD = transformers.get(destination);
-            g2d.drawLine(tO.getX(), tO.getY() + tO.getHeight()/2, tD.getX() + tO.getWidth(), tD.getY()  + tO.getHeight()/2);
+            try{
+                Feed destination = (Feed) (subChain).get(0);
+                Transformer tD = transformers.get(destination);
+                g2d.drawLine(tO.getX(), tO.getY() + tO.getHeight()/2, tD.getX() + tO.getWidth(), tD.getY()  + tO.getHeight()/2);
+            }
+            catch (Exception e){}
 
             chain(subChain);
         }
@@ -140,6 +143,7 @@ public class WorkArea extends JPanel {
     }
 
     public void add(DraggableComponent component){
+        component.setBounds((int)(w * Math.random()), (int)(h * Math.random()), component.getWidth(), component.getHeight());
         super.add(component);
         components.add(component);
         component.setWorkArea(this);
