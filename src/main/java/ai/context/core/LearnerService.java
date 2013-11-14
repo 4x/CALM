@@ -329,31 +329,33 @@ public class LearnerService {
             int a = 0;
             HashSet<StateActionPair> check = new HashSet<>();
             for(StateActionPair pair : pairs){
-                x++;
-                for(StateActionPair counterpart : pair.getClosestNeighbours()){
-                    check.addAll(pair.getClosestNeighbours());
-                    y++;
-                    if(pair != counterpart && population.values().contains(counterpart)){
-                        updateAndGetCorrelationWeights(pair.getAmalgamate());
-                        double deviation = getDeviation(pair.getAmalgamate(), counterpart);
-                        if(doubleCheckMerge){
-                            updateAndGetCorrelationWeights(counterpart.getAmalgamate());
-                            deviation += getDeviation(counterpart.getAmalgamate(), pair);
-                            deviation /= 2;
-                        }
-                        z++;
-                        if(deviation <= minDevForMerge){
-                            merge(pair, counterpart);
-                            a++;
-                            if(population.size() < getMaxPopulation()/2){
-                                targetReached = true;
+                if(population.values().contains(pair)){
+                    x++;
+                    for(StateActionPair counterpart : pair.getClosestNeighbours()){
+                        check.addAll(pair.getClosestNeighbours());
+                        y++;
+                        if(pair != counterpart && population.values().contains(counterpart)){
+                            updateAndGetCorrelationWeights(pair.getAmalgamate());
+                            double deviation = getDeviation(pair.getAmalgamate(), counterpart);
+                            if(doubleCheckMerge){
+                                updateAndGetCorrelationWeights(counterpart.getAmalgamate());
+                                deviation += getDeviation(counterpart.getAmalgamate(), pair);
+                                deviation /= 2;
                             }
-                            break;
+                            z++;
+                            if(deviation <= minDevForMerge){
+                                merge(pair, counterpart);
+                                a++;
+                                if(population.size() < getMaxPopulation()/2){
+                                    targetReached = true;
+                                }
+                                break;
+                            }
                         }
                     }
-                }
-                if(targetReached){
-                    break;
+                    if(targetReached){
+                        break;
+                    }
                 }
             }
 
