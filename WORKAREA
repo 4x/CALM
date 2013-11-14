@@ -1,31 +1,32 @@
-VALUEHOLDER¬>615613219¬>DOUBLE¬>Res¬>0.0001
-TRANSFORMER¬>165629806¬>ai.context.feed.synchronised.SynchronisedFeed¬>Synchroniser¬>Raw Feed;Sibiling Synchoniser (Optional)¬>1461607829;2080066868;
-TRANSFORMER¬>1461607829¬>ai.context.feed.transformer.series.online.MinMaxDistanceTransformer¬>MinMaxDistance¬>Span (int);Feed Min;Feed Max;Feed Close¬>1004045836;1858175978;2055501578;1127550225;
-TRANSFORMER¬>2080066868¬>ai.context.feed.synchronised.SynchronisedFeed¬>Synchroniser¬>Raw Feed;Sibiling Synchoniser (Optional)¬>35160487;245592157;
-VALUEHOLDER¬>1004045836¬>INTEGER¬>Span¬>50
-VALUEHOLDER¬>1508043470¬>INTEGER¬>Extract¬>2
-TRANSFORMER¬>32181625¬>ai.context.feed.synchronised.SynchronisedFeed¬>Synchroniser¬>Raw Feed;Sibiling Synchoniser (Optional)¬>1691288077;297619603;
-TRANSFORMER¬>35160487¬>ai.context.feed.transformer.series.online.MinMaxDistanceTransformer¬>MinMaxDistance¬>Span (int);Feed Min;Feed Max;Feed Close¬>251447190;1858175978;2055501578;1127550225;
-TRANSFORMER¬>1992286824¬>ai.context.feed.synchronised.SynchronisedFeed¬>Synchroniser¬>Raw Feed;Sibiling Synchoniser (Optional)¬>608963866;165629806;
-VALUEHOLDER¬>991699868¬>INTEGER¬>Extract¬>3
-VALUEHOLDER¬>507511015¬>INTEGER¬>Div¬>10
-TRANSFORMER¬>2055501578¬>ai.context.feed.surgical.ExtractOneFromListFeed¬>Extractor¬>Parent Feed;Field To Extract¬>1921893315;2239232;
-TRANSFORMER¬>1858175978¬>ai.context.feed.surgical.ExtractOneFromListFeed¬>Extractor¬>Parent Feed;Field To Extract¬>1921893315;1508043470;
-TRANSFORMER¬>245592157¬>ai.context.feed.synchronised.SynchronisedFeed¬>Synchroniser¬>Raw Feed;Sibiling Synchoniser (Optional)¬>2143609643;32181625;
-VALUEHOLDER¬>2239232¬>INTEGER¬>Extract¬>1
-LEARNER¬>43183883¬>154275519;1921893315;3;1,2;50;0.0001;0.05;500
-TRANSFORMER¬>1127550225¬>ai.context.feed.surgical.ExtractOneFromListFeed¬>Extractor¬>Parent Feed;Field To Extract¬>1921893315;991699868;
-TRANSFORMER¬>2143609643¬>ai.context.feed.transformer.series.online.RadarOnlineTransformer¬>Radar¬>Span (int);Feed Min;Feed Max;Feed Close;Resolution¬>1283513351;1858175978;2055501578;1127550225;615613219;
-TRANSFORMER¬>154275519¬>ai.context.feed.synchronised.SmartDiscretiserOnSynchronisedFeed¬>Smart Discretiser¬>Synchonised Feed;Critical Mas;Divisions¬>1992286824;1205432943;507511015;
-VALUEHOLDER¬>1146539411¬>STRING¬>Start¬>2008.01.01 00:00:00
-TRANSFORMER¬>535656142¬>ai.context.feed.transformer.series.online.RadarOnlineTransformer¬>Radar¬>Span (int);Feed Min;Feed Max;Feed Close;Resolution¬>251447190;1858175978;2055501578;1127550225;615613219;
-VALUEHOLDER¬>1205432943¬>LONG¬>CMass¬>5000
-TRANSFORMER¬>1691288077¬>ai.context.feed.transformer.series.online.RadarOnlineTransformer¬>Radar¬>Span (int);Feed Min;Feed Max;Feed Close;Resolution¬>1004045836;1858175978;2055501578;1127550225;615613219;
-TRANSFORMER¬>297619603¬>ai.context.feed.synchronised.SynchronisedFeed¬>Synchroniser¬>Raw Feed;Sibiling Synchoniser (Optional)¬>535656142;;
-TRANSFORMER¬>1921893315¬>ai.context.feed.row.CSVFeed¬>CSVFeed¬>File Name;TimeStamp Regex;Column Types (DataType);StartDateTime¬>1481799259;1149695359;712581728;1146539411;
-VALUEHOLDER¬>712581728¬>CUSTOM¬>Types¬>ARRAY::ai.context.feed.DataType::DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE
-VALUEHOLDER¬>1283513351¬>INTEGER¬>Span¬>200
-VALUEHOLDER¬>251447190¬>INTEGER¬>Span¬>20
-TRANSFORMER¬>608963866¬>ai.context.feed.transformer.series.online.MinMaxDistanceTransformer¬>MinMaxDistance¬>Span (int);Feed Min;Feed Max;Feed Close¬>1283513351;1858175978;2055501578;1127550225;
-VALUEHOLDER¬>1481799259¬>STRING¬>File¬>C:/Users/Oblene/Desktop/Sandbox/Data/feeds/EURUSD.csv
-VALUEHOLDER¬>1149695359¬>STRING¬>Time¬>yyyy.MM.dd HH:mm:ss
+TRANSFORMER¬>384302084¬>ai.context.feed.synchronised.SynchronisedFeed¬>Synchroniser¬>Raw Feed;Sibiling Synchoniser (Optional)¬>1415706851;879097109;¬:>693,217
+TRANSFORMER¬>1340930447¬>ai.context.feed.synchronised.SynchronisedFeed¬>Synchroniser¬>Raw Feed;Sibiling Synchoniser (Optional)¬>897210023;384302084;¬:>693,280
+VALUEHOLDER¬>112114128¬>INTEGER¬>Extract¬>3¬:>176,183
+VALUEHOLDER¬>894899004¬>STRING¬>Time¬>yyyy.MM.dd HH:mm:ss¬:>6,296
+VALUEHOLDER¬>1229765968¬>STRING¬>File¬>C:/Users/Oblene/Desktop/Sandbox/Data/feeds/EURUSD.csv¬:>5,225
+TRANSFORMER¬>1765720539¬>ai.context.feed.synchronised.SmartDiscretiserOnSynchronisedFeed¬>Smart Discretiser¬>Synchonised Feed;Critical Mas;Divisions¬>1739580287;603253758;232291754;¬:>820,25
+VALUEHOLDER¬>603253758¬>LONG¬>CMass¬>5000¬:>822,267
+TRANSFORMER¬>1508043470¬>ai.context.feed.row.CSVFeed¬>CSVFeed¬>File Name;TimeStamp Regex;Column Types (DataType);StartDateTime¬>1229765968;894899004;384441033;35160487;¬:>172,293
+VALUEHOLDER¬>35160487¬>STRING¬>Start¬>2008.01.01 00:00:00¬:>6,91
+VALUEHOLDER¬>991699868¬>INTEGER¬>Span¬>50¬:>353,258
+VALUEHOLDER¬>1495622108¬>INTEGER¬>Span¬>200¬:>353,320
+TRANSFORMER¬>416409716¬>ai.context.feed.transformer.series.online.MinMaxDistanceTransformer¬>MinMaxDistance¬>Span (int);Feed Min;Feed Max;Feed Close¬>1495622108;2109588399;1127550225;1283513351;¬:>548,177
+TRANSFORMER¬>2239232¬>ai.context.feed.transformer.series.online.RadarOnlineTransformer¬>Radar¬>Span (int);Feed Min;Feed Max;Feed Close;Resolution¬>266248830;2109588399;1127550225;1283513351;213224901;¬:>549,318
+VALUEHOLDER¬>266248830¬>INTEGER¬>Span¬>20¬:>353,382
+LEARNER¬>1942938811¬>1765720539;1508043470;3;1,2;50;0.0001;0.05;200¬:>949,118
+TRANSFORMER¬>1127550225¬>ai.context.feed.surgical.ExtractOneFromListFeed¬>Extractor¬>Parent Feed;Field To Extract¬>1508043470;1299133979;¬:>354,56
+TRANSFORMER¬>1518467306¬>ai.context.feed.transformer.series.online.RadarOnlineTransformer¬>Radar¬>Span (int);Feed Min;Feed Max;Feed Close;Resolution¬>991699868;2109588399;1127550225;1283513351;213224901;¬:>549,381
+TRANSFORMER¬>1813719644¬>ai.context.feed.transformer.series.online.RadarOnlineTransformer¬>Radar¬>Span (int);Feed Min;Feed Max;Feed Close;Resolution¬>1495622108;2109588399;1127550225;1283513351;213224901;¬:>548,254
+VALUEHOLDER¬>981159220¬>INTEGER¬>Extract¬>2¬:>175,116
+TRANSFORMER¬>535656142¬>ai.context.feed.predictor.PredictionExtractionFeed¬>Prediction Extractor¬>Learner¬>1942938811;¬:>1078,266
+TRANSFORMER¬>879097109¬>ai.context.feed.synchronised.SynchronisedFeed¬>Synchroniser¬>Raw Feed;Sibiling Synchoniser (Optional)¬>1813719644;1635649109;¬:>693,154
+TRANSFORMER¬>2109588399¬>ai.context.feed.surgical.ExtractOneFromListFeed¬>Extractor¬>Parent Feed;Field To Extract¬>1508043470;981159220;¬:>355,118
+TRANSFORMER¬>1283513351¬>ai.context.feed.surgical.ExtractOneFromListFeed¬>Extractor¬>Parent Feed;Field To Extract¬>1508043470;112114128;¬:>354,182
+TRANSFORMER¬>897210023¬>ai.context.feed.transformer.series.online.MinMaxDistanceTransformer¬>MinMaxDistance¬>Span (int);Feed Min;Feed Max;Feed Close¬>991699868;2109588399;1127550225;1283513351;¬:>548,114
+VALUEHOLDER¬>1299133979¬>INTEGER¬>Extract¬>1¬:>175,48
+TRANSFORMER¬>1415706851¬>ai.context.feed.transformer.series.online.MinMaxDistanceTransformer¬>MinMaxDistance¬>Span (int);Feed Min;Feed Max;Feed Close¬>266248830;2109588399;1127550225;1283513351;¬:>548,51
+TRANSFORMER¬>1635649109¬>ai.context.feed.synchronised.SynchronisedFeed¬>Synchroniser¬>Raw Feed;Sibiling Synchoniser (Optional)¬>1518467306;2096117907;¬:>692,90
+TRANSFORMER¬>2096117907¬>ai.context.feed.synchronised.SynchronisedFeed¬>Synchroniser¬>Raw Feed;Sibiling Synchoniser (Optional)¬>2239232;;¬:>692,26
+TRANSFORMER¬>1739580287¬>ai.context.feed.synchronised.SynchronisedFeed¬>Synchroniser¬>Raw Feed;Sibiling Synchoniser (Optional)¬>416409716;1340930447;¬:>693,344
+VALUEHOLDER¬>384441033¬>CUSTOM¬>Types¬>ARRAY::ai.context.feed.DataType::DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE¬:>7,157
+VALUEHOLDER¬>232291754¬>INTEGER¬>Div¬>10¬:>825,338
+VALUEHOLDER¬>213224901¬>DOUBLE¬>Res¬>0.0001¬:>354,457

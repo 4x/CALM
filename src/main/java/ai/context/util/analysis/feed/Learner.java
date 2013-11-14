@@ -2,6 +2,7 @@ package ai.context.util.analysis.feed;
 
 import ai.context.core.StateActionPair;
 import ai.context.feed.Feed;
+import ai.context.feed.predictor.PredictionExtractionFeed;
 import ai.context.learning.LearnerWrapper;
 import ai.context.util.common.DraggableComponent;
 
@@ -22,11 +23,16 @@ public class Learner extends DraggableComponent {
 
     private JCheckBox select;
     private LearnerWrapper wrapper;
+
+    private Feed signalFeed;
+    private Feed dataFeed;
+
     private JButton pause = new JButton("Pause/UnPause");
     private Learner thisLearner;
 
     private Component[] hideables;
     private ConstructorArgument[] arguments = new ConstructorArgument[2];
+    private Set<PredictionExtractionFeed> extractors = new HashSet<>();
     private Workspace workspace;
 
     private JTextField closeField = new JTextField();
@@ -129,10 +135,12 @@ public class Learner extends DraggableComponent {
                     if(wrapper.isPaused()){
                         pause.setText("Pause");
                         wrapper.setPaused(false);
+                        setBackground(Color.MAGENTA);
                     }
                     else {
                         pause.setText("UnPause");
                         wrapper.setPaused(true);
+                        setBackground(Color.GRAY);
                     }
                     workspace.setLearner(thisLearner);
                     repaint();
@@ -223,6 +231,7 @@ public class Learner extends DraggableComponent {
             i++;
         }
         toggle(false);
+        setBackground(Color.GRAY);
     }
 
     public void start() throws IllegalAccessException, InvocationTargetException, InstantiationException {
@@ -267,10 +276,15 @@ public class Learner extends DraggableComponent {
             values[iV] = Integer.parseInt(valStr[iV]);
         }
         wrapper = new LearnerWrapper((Feed)arguments[0], (Feed)arguments[1], close, values, horizon, res, tol, maxPop);
+        signalFeed = (Feed) arguments[0];
+        dataFeed = (Feed) arguments[1];
+        for(PredictionExtractionFeed extractor : extractors){
+            wrapper.addExtractor(extractor);
+        }
         wrapper.start();
         pause.setText("Pause");
 
-        setBackground(Color.GREEN);
+        setBackground(Color.MAGENTA);
         repaint();
     }
 
@@ -344,6 +358,18 @@ public class Learner extends DraggableComponent {
         maxPopField.setText(parts[7]);
 
         ObjectHolder.save(id, thisLearner);
+    }
+
+    public void addExtractor(PredictionExtractionFeed extractor){
+        extractors.add(extractor);
+    }
+
+    public Feed getSignalFeed(){
+        return signalFeed;
+    }
+
+    public Feed getDataFeed(){
+        return dataFeed;
     }
 }
 

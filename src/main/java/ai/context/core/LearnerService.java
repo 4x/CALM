@@ -359,7 +359,7 @@ public class LearnerService {
 
             System.err.println("Run: " + runs  + " x: " + x  + " y: " + y + " z: " + z + " Check: " + check.size() + " a: " + a);
             if(!targetReached && (runs % 4 == 0 || a < (double)population.size()/20)){
-                minDevForMerge = minDevForMerge * ((double)population.size()/(getMaxPopulation()/2));
+                minDevForMerge = minDevForMerge * ((double)population.size()/(getMaxPopulation()/2)) * 1.01;
                 System.err.println("MinDevForMerge pushed to: " + minDevForMerge);
             }
             else if(targetReached){

@@ -4,12 +4,10 @@ import ai.context.core.LearnerService;
 import ai.context.core.StateActionPair;
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
+import ai.context.feed.predictor.PredictionExtractionFeed;
 import ai.context.feed.synchronised.SynchronisedFeed;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class LearnerWrapper {
 
@@ -25,6 +23,8 @@ public class LearnerWrapper {
 
     private LearnerService learner = new LearnerService();
     private LinkedList<DataObject> history = new LinkedList<>();
+
+    private Set<PredictionExtractionFeed> extractors = new HashSet<>();
 
     public LearnerWrapper(Feed signalFeed, Feed presentFeed, int presentCloseField, int[] valueFields, int horizon, double actionResolution, double tolerance, int maxPop){
         feed = new SynchronisedFeed(presentFeed, feed);
@@ -65,6 +65,15 @@ public class LearnerWrapper {
 
                         for(int i = 0; i < signalFields; i++){
                             signal[i] = (Integer) dataList.get(i + presentFeedFields);
+                        }
+
+                        if(!extractors.isEmpty()){
+                            TreeMap<Integer, Double> dist = learner.getActionDistribution(signal);
+                            FeedObject<TreeMap<Integer, Double>> feedObject = new FeedObject<>(data.getTimeStamp(), dist);
+
+                            for(PredictionExtractionFeed extractor : extractors){
+                                extractor.addData(feedObject);
+                            }
                         }
 
                         DataObject snapshot = new DataObject(data.getTimeStamp(), signal, values);
@@ -116,6 +125,10 @@ public class LearnerWrapper {
         }
 
         return scores.descendingMap();
+    }
+
+    public void addExtractor(PredictionExtractionFeed extractor){
+        extractors.add(extractor);
     }
 
     public void kill() {

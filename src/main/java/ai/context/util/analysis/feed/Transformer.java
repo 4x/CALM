@@ -139,6 +139,7 @@ public class Transformer extends DraggableComponent{
             i++;
         }
         toggle(false);
+        setBackground(Color.RED);
     }
 
     public Feed getFeed() throws IllegalAccessException, InvocationTargetException, InstantiationException {

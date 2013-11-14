@@ -34,13 +34,7 @@ public class StateActionPair {
     public void newMovement(double movement, double weight)
     {
         int actionClass = (int) (movement/actionResolution);
-        if(!actionDistribution.containsKey(actionClass))
-        {
-            actionDistribution.put(actionClass, 0.0);
-        }
-        double currentWeight = actionDistribution.get(actionClass);
-        actionDistribution.put(actionClass, weight + currentWeight);
-        totalWeight += weight;
+        populate(actionClass, weight);
     }
 
     public void populate(int actionClass, double weight)

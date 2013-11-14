@@ -296,6 +296,7 @@ public class Workspace {
         JSplitPane vertiSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         vertiSplit.setDividerSize(5);
         vertiSplit.setDividerLocation(400);
+        vertiSplit.setResizeWeight(1.0);
 
         vertiSplit.setTopComponent(workArea);
 

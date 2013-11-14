@@ -143,7 +143,7 @@ public class WorkArea extends JPanel {
     }
 
     public void add(DraggableComponent component){
-        component.setBounds((int)(w * Math.random()), (int)(h * Math.random()), component.getWidth(), component.getHeight());
+        //component.setBounds((int)(w * Math.random()), (int)(h * Math.random()), component.getWidth(), component.getHeight());
         super.add(component);
         components.add(component);
         component.setWorkArea(this);
@@ -278,7 +278,7 @@ public class WorkArea extends JPanel {
         try{
             BufferedWriter out = new BufferedWriter(new FileWriter("WORKAREA"));
             for(DraggableComponent component : components){
-                out.write(component + "\n");
+                out.write(component + "¬:>" + component.getX() + "," + component.getY() +"\n");
                 out.flush();
             }
             out.close();
@@ -299,6 +299,16 @@ public class WorkArea extends JPanel {
             br = new BufferedReader(new FileReader("WORKAREA"));
 
             while ((line = br.readLine()) != null) {
+
+                int x = 0;
+                int y = 0;
+                if(line.split("¬:>").length == 2){
+                    String coords = line.split("¬:>")[1];
+                    x = Integer.parseInt(coords.split(",")[0]);
+                    y = Integer.parseInt(coords.split(",")[1]);
+                }
+
+                line =  line.split("¬:>")[0];
                 String type = line.split("¬>")[0];
                 if(type.equals("VALUEHOLDER")){
                     ValueHolder.TYPE vType = ValueHolder.TYPE.valueOf(line.split("¬>")[2]);
@@ -306,6 +316,7 @@ public class WorkArea extends JPanel {
                     String val = line.split("¬>")[4];
 
                     ValueHolder holder = new ValueHolder(vType, name);
+                    holder.setBounds(x, y, 100, 60);
                     holder.setValue(val);
                     ObjectHolder.save(line.split("¬>")[1], holder);
                     add(holder);
@@ -318,6 +329,7 @@ public class WorkArea extends JPanel {
                     String description = info[4];
 
                     Transformer transformer = new Transformer(className, name, description.split(";"));
+                    transformer.setBounds(x, y, 100, 60);
                     ObjectHolder.save(id, transformer);
                     add(transformer);
                 }
@@ -326,6 +338,7 @@ public class WorkArea extends JPanel {
                     String id = info[1];
 
                     Learner learner = new Learner(workspace);
+                    learner.setBounds(x, y, 100, 100);
                     ObjectHolder.save(id, learner);
                     add(learner);
                 }
@@ -335,6 +348,7 @@ public class WorkArea extends JPanel {
             br = new BufferedReader(new FileReader("WORKAREA"));
 
             while ((line = br.readLine()) != null) {
+                line =  line.split("¬:>")[0];
                 String type = line.split("¬>")[0];
                 if(type.equals("TRANSFORMER")){
                     String[] info = line.split("¬>");

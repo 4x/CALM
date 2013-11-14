@@ -9,3 +9,4 @@ ai.context.feed.transformer.single.TimeOffsetTransformer,Time Offset,Parent Feed
 ai.context.feed.transformer.compound.DifferencePresentToFutureTransformer,Movement,Present Feed;Future Feed
 ai.context.feed.transformer.series.online.RadarOnlineTransformer,Radar,Span (int);Feed Min;Feed Max;Feed Close;Resolution
 ai.context.feed.synchronised.SynchronisedToNormalFeed,Synch to Normal,Synchronised Feed
+ai.context.feed.predictor.PredictionExtractionFeed,Prediction Extractor,Learner
