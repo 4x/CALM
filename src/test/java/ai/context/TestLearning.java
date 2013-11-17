@@ -14,15 +14,15 @@ public class TestLearning {
 
     private LearnerService learner = new LearnerService();
 
-    private int numInputs = 20;
+    private int numInputs = 6;
     private int degreesOfFreedom = 10;
-    private int numPoints = 20000;
+    private int numPoints = 10000;
 
     private int numPredict = 1000;
 
-    private double tolerance = 0.1;
+    private double tolerance = 0.025;
     private double actionResolution = 1.0;
-    private int maxPopulation = 200;
+    private int maxPopulation = 1000;
 
     @Before
     public void setup()
