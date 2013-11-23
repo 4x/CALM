@@ -6,15 +6,18 @@ import ai.context.core.neural.messaging.Query;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 
 public abstract class Neuron  implements Serializable {
 
     private Cluster cluster = Cluster.getInstance();
     private HashMap<String, Impulse> state = new HashMap<>();
 
-    private Set<Axon> axons = new HashSet<>();
+    private HashMap<String, Axon> axons = new HashMap<>();
+    private final String id;
+
+    protected Neuron() {
+        this.id = getNeuronID();
+    }
 
     public void accept(Impulse impulse) {
         state.put(impulse.getType(), impulse);
@@ -31,5 +34,29 @@ public abstract class Neuron  implements Serializable {
 
     protected void onImpulse(){
 
+    }
+
+    public void connect(Neuron neighbour){
+        if(!axons.containsKey(neighbour.getId())){
+            Axon axon = new Axon();
+            axon.setEndPoint(this);
+            axon.setEndPoint(neighbour);
+            axons.put(neighbour.getId(), axon);
+            neighbour.accept(this, axon);
+        }
+    }
+
+    public void accept(Neuron neighbour, Axon axon){
+        if(!axons.containsKey(neighbour.getId())){
+            axons.put(neighbour.getId(), axon);
+        }
+    }
+
+    public synchronized static String getNeuronID(){
+        return "NEURON_" + Math.random() + "-" + Math.random() + "-" + Math.random();
+    }
+
+    public String getId(){
+        return id;
     }
 }

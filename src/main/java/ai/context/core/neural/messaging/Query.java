@@ -38,6 +38,6 @@ public class Query implements Serializable {
     }
 
     public synchronized static String getQID(){
-        return Math.random() + "-" + Math.random() + "-" + Math.random();
+        return "QUERY_" + Math.random() + "-" + Math.random() + "-" + Math.random();
     }
 }
