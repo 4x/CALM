@@ -24,17 +24,11 @@ public abstract class Neuron  implements Serializable {
         onImpulse();
     }
 
-    public void accept(Query query) {
-        //To change body of created methods use File | Settings | File Templates.
-    }
+    public abstract void accept(Query query);
 
-    public void accept(Answer answer) {
-        //To change body of created methods use File | Settings | File Templates.
-    }
+    public abstract void accept(Answer answer);
 
-    protected void onImpulse(){
-
-    }
+    protected abstract void onImpulse();
 
     public void connect(Neuron neighbour){
         if(!axons.containsKey(neighbour.getId())){
