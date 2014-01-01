@@ -1,7 +1,7 @@
 package ai.context.learning;
 
-import ai.context.core.LearnerService;
-import ai.context.core.StateActionPair;
+import ai.context.core.ai.LearnerService;
+import ai.context.core.ai.StateActionPair;
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
 import ai.context.feed.predictor.PredictionExtractionFeed;

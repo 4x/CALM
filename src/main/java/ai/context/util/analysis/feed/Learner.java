@@ -1,6 +1,6 @@
 package ai.context.util.analysis.feed;
 
-import ai.context.core.StateActionPair;
+import ai.context.core.ai.StateActionPair;
 import ai.context.feed.Feed;
 import ai.context.feed.predictor.PredictionExtractionFeed;
 import ai.context.learning.LearnerWrapper;

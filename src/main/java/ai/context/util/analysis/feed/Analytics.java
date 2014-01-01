@@ -1,6 +1,6 @@
 package ai.context.util.analysis.feed;
 
-import ai.context.core.StateActionPair;
+import ai.context.core.ai.StateActionPair;
 
 import javax.swing.*;
 import java.awt.*;

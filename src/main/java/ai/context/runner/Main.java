@@ -1,6 +1,6 @@
 package ai.context.runner;
 
-import ai.context.core.StateActionPair;
+import ai.context.core.ai.StateActionPair;
 import ai.context.feed.DataType;
 import ai.context.feed.FeedObject;
 import ai.context.feed.fx.DukascopyFeed;

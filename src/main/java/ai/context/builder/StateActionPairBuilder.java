@@ -1,6 +1,6 @@
 package ai.context.builder;
 
-import ai.context.core.StateActionPair;
+import ai.context.core.ai.StateActionPair;
 
 import java.io.*;
 import java.util.TreeMap;

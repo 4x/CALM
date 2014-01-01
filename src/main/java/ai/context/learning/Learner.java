@@ -2,8 +2,8 @@ package ai.context.learning;
 
 import ai.context.builder.LearnerServiceBuilder;
 import ai.context.container.TimedContainer;
-import ai.context.core.LearnerService;
-import ai.context.core.StateActionPair;
+import ai.context.core.ai.LearnerService;
+import ai.context.core.ai.StateActionPair;
 import ai.context.util.learning.ClusteredCopulae;
 import ai.context.util.mathematics.CorrelationCalculator;
 import ai.context.util.mathematics.MinMaxAggregator;

@@ -1,7 +1,7 @@
 package ai.context.builder;
 
-import ai.context.core.LearnerService;
-import ai.context.core.StateActionPair;
+import ai.context.core.ai.LearnerService;
+import ai.context.core.ai.StateActionPair;
 import ai.context.util.learning.ClusteredCopulae;
 import ai.context.util.mathematics.CorrelationCalculator;
 

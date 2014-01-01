@@ -1,6 +1,6 @@
 package ai.context;
 
-import ai.context.core.LearnerService;
+import ai.context.core.ai.LearnerService;
 import ai.context.util.analysis.SuccessMap;
 import ai.context.util.measurement.LoggerTimer;
 import org.junit.Before;
