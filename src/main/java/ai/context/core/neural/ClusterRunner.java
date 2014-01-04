@@ -2,9 +2,9 @@ package ai.context.core.neural;
 
 import ai.context.core.neural.neuron.Cluster;
 import ai.context.util.server.ContextBuilder;
-import org.mortbay.jetty.Handler;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.handler.ContextHandlerCollection;
+import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 
 public class ClusterRunner extends Server {
 
@@ -16,7 +16,7 @@ public class ClusterRunner extends Server {
         ContextHandlerCollection contexts = new ContextHandlerCollection();
 
         contexts.setHandlers(new Handler[] {new ContextBuilder().buildWebAppContext()});
-        setHandler(contexts);
+        setHandler(new ContextBuilder().buildWebAppContext());
 
         try {
             start();
@@ -24,7 +24,7 @@ public class ClusterRunner extends Server {
             e.printStackTrace();
         }
 
-        //cluster = new Cluster();
+        cluster = Cluster.getInstance();
     }
 
     public static void main(String[] args) {

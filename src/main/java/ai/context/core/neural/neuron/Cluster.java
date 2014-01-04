@@ -1,8 +1,12 @@
 package ai.context.core.neural.neuron;
 
+import ai.context.core.neural.messaging.information.Answer;
+import ai.context.core.neural.messaging.information.Impulse;
+import ai.context.core.neural.messaging.information.Query;
+
 import java.util.HashMap;
 
-public class Cluster /*extends Neuron*/ {
+public class Cluster extends Neuron {
     private static volatile Cluster instance = null;
     private final String clusterID = getClusterID();
 
@@ -11,6 +15,21 @@ public class Cluster /*extends Neuron*/ {
     private Cluster() {
         super();
         //TODO link with main Brain (assume distributed system)
+    }
+
+    @Override
+    public void accept(Query query) {
+
+    }
+
+    @Override
+    protected void onAnswer(Answer answer) {
+
+    }
+
+    @Override
+    protected void onImpulse(Impulse impulse) {
+
     }
 
     public static Cluster getInstance() {

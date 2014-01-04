@@ -1,7 +1,6 @@
 package ai.context.util.server;
 
-import ai.context.core.neural.messaging.medium.ClusterServlet;
-import org.mortbay.jetty.webapp.WebAppContext;
+import org.eclipse.jetty.webapp.WebAppContext;
 
 public class ContextBuilder {
 
@@ -10,9 +9,6 @@ public class ContextBuilder {
         context.setResourceBase(".");
         context.setDescriptor(context.getResourceBase() + "src/main/WEB-INF/web.xml");
         context.setContextPath("/");
-
-        context.addServlet(ClusterServlet.class, "cluster");
-
         return context;
     }
 }
