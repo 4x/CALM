@@ -11,7 +11,6 @@ import java.util.HashMap;
 
 public abstract class Neuron  implements Serializable {
 
-    private Cluster cluster = Cluster.getInstance();
     private HashMap<String, Impulse> state = new HashMap<>();
     private AnswerCollector answerCollector = new AnswerCollector();
 
@@ -31,7 +30,14 @@ public abstract class Neuron  implements Serializable {
         onImpulse(impulse);
     }
 
-    public abstract void accept(Query query);
+    public void accept(Query query){
+        for(Axon axon : axons.values()){
+            axon.query(query, this);
+        }
+        onQuery(query);
+    }
+
+    protected abstract void onQuery(Query query);
 
     public void accept(Answer answer){
         answerCollector.addAnswer(answer);

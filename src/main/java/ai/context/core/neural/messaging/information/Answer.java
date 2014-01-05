@@ -2,7 +2,7 @@ package ai.context.core.neural.messaging.information;
 
 import java.io.Serializable;
 
-public class Answer implements Serializable, Sourceable{
+public class Answer implements Serializable, Sourceable, WithDestination{
 
     private final String source;
     private final String destination;

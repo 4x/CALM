@@ -1,0 +1,4 @@
+recencyBias:2
+tolerance:0.01
+maxPopulation:20000
+copulaToUniversal:20

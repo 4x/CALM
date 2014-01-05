@@ -1,14 +1,17 @@
 package ai.context.core.neural.neuron;
 
-import ai.context.core.neural.messaging.information.Answer;
-import ai.context.core.neural.messaging.information.Impulse;
-import ai.context.core.neural.messaging.information.Query;
+import ai.context.core.neural.messaging.information.*;
+import ai.context.core.neural.messaging.medium.ClusterProxy;
+import ai.context.core.neural.messaging.medium.ClusterWebSocket;
+import ai.context.core.neural.messaging.util.RecentUniqueStrings;
 
 import java.util.HashMap;
 
 public class Cluster extends Neuron {
     private static volatile Cluster instance = null;
     private final String clusterID = getClusterID();
+    private ClusterWebSocket clusterWebSocket;
+    private RecentUniqueStrings lastQueries = new RecentUniqueStrings(20);
 
     private HashMap<String, Neuron> neurons = new HashMap<>();
 
@@ -18,18 +21,28 @@ public class Cluster extends Neuron {
     }
 
     @Override
-    public void accept(Query query) {
-
+    protected void onQuery(Query query) {
+        if(lastQueries.add(query.getqID())){
+            query.decay();
+            if(query.getIntensity() < 0.5){
+                return;
+            }
+            forwardAll(query);
+        }
     }
 
     @Override
     protected void onAnswer(Answer answer) {
-
+        forward(answer);
     }
 
     @Override
     protected void onImpulse(Impulse impulse) {
+        forward(impulse);
+    }
 
+    public void setClusterWebSocket(ClusterWebSocket clusterWebSocket) {
+        this.clusterWebSocket = clusterWebSocket;
     }
 
     public static Cluster getInstance() {
@@ -59,5 +72,18 @@ public class Cluster extends Neuron {
 
     public String getId(){
         return clusterID;
+    }
+
+    private void forward(WithDestination data){
+        ClusterProxy proxy = clusterWebSocket.getProxy(data.getDestination());
+        if(proxy != null){
+            proxy.receive(data);
+        }
+    }
+
+    private void forwardAll(Query query){
+        for(ClusterProxy proxy : clusterWebSocket.getProxies()){
+            proxy.receive(query);
+        }
     }
 }
