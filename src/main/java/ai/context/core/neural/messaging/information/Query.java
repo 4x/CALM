@@ -2,20 +2,18 @@ package ai.context.core.neural.messaging.information;
 
 import java.io.Serializable;
 
-public class Query implements Serializable {
+public class Query implements Serializable, Sourceable {
     private double intensity = 10;
     private final String qID;
+    private final String source;
 
-    public Query(){
-        this.qID = getQID();
-    }
-
-    public Query(String qID){
+    public Query(String qID, String source){
         this.qID = qID;
+        this.source = source;
     }
 
     public Query replicate() {
-        Query query = new Query(qID);
+        Query query = new Query(qID, source);
         query.setIntensity(intensity);
 
         return query;
@@ -35,6 +33,10 @@ public class Query implements Serializable {
 
     public String getqID() {
         return qID;
+    }
+
+    public String getSource() {
+        return source;
     }
 
     public synchronized static String getQID(){

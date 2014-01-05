@@ -4,7 +4,6 @@ import ai.context.core.neural.messaging.information.Answer;
 import ai.context.core.neural.messaging.information.Impulse;
 import ai.context.core.neural.messaging.information.Query;
 import ai.context.core.neural.neuron.Cluster;
-import com.cedarsoftware.util.io.JsonReader;
 import com.cedarsoftware.util.io.JsonWriter;
 import org.eclipse.jetty.websocket.api.Session;
 
@@ -39,20 +38,15 @@ public class ClusterProxy {
         }
     }
 
-    public void send(String json){
-        try {
-            Object data = JsonReader.jsonToJava(json);
-            if(data instanceof Impulse){
-                cluster.accept((Impulse) data);
-            }
-            else if(data instanceof Answer){
-                cluster.accept((Answer) data);
-            }
-            else if(data instanceof Query){
-                cluster.accept((Query) data);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+    public void send(Object data){
+        if(data instanceof Impulse){
+            cluster.accept((Impulse) data);
+        }
+        else if(data instanceof Answer){
+            cluster.accept((Answer) data);
+        }
+        else if(data instanceof Query){
+            cluster.accept((Query) data);
         }
     }
 
