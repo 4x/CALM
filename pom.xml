@@ -133,8 +133,26 @@
             <version>2.0</version>
         </dependency>-->
 
+        <!--<dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-all</artifactId>
+            <version>9.0.5.v20130815</version>
+        </dependency>-->
+
+        <!--<dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-io</artifactId>
+            <version>7.0.0.M0</version>
+        </dependency>
+
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-util</artifactId>
+            <version>8.0.0.M3</version>
+        </dependency>-->
+
+        <dependency>
+            <groupId>org.eclipse.jetty.aggregate</groupId>
             <artifactId>jetty-all</artifactId>
             <version>9.0.5.v20130815</version>
         </dependency>
@@ -158,9 +176,15 @@
         </dependency>
 
         <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-websocket</artifactId>
-            <version>8.1.0.RC5</version>
+            <groupId>org.eclipse.jetty.websocket</groupId>
+            <artifactId>websocket-core</artifactId>
+            <version>9.0.0.M2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.jetty.websocket</groupId>
+            <artifactId>websocket-client</artifactId>
+            <version>9.0.0.M2</version>
         </dependency>
 
         <dependency>
@@ -193,6 +217,11 @@
             <version>9.1.0.RC2</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.eclipse.jetty.toolchain</groupId>
+            <artifactId>jetty-test-helper</artifactId>
+            <version>2.5</version>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework</groupId>
@@ -235,5 +264,6 @@
             <artifactId>json-io</artifactId>
             <version>2.4.0</version>
         </dependency>
+
     </dependencies>
 </project>
