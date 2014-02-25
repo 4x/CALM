@@ -460,6 +460,10 @@ public class LearnerService {
         return alpha;
     }
 
+    public double[] getCorrelationWeightsForState(StateActionPair sap){
+        return copulae.getCorrelationWeights(sap.getAmalgamate());
+    }
+
     public ConcurrentSkipListMap<Integer, CopyOnWriteArraySet<StateActionPair>> getIndexForVariable(int variable)
     {
         return indices.get(variable);

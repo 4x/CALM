@@ -23,11 +23,13 @@ public class Cluster extends Neuron {
     @Override
     protected void onQuery(Query query) {
         if(lastQueries.add(query.getqID())){
-            query.decay();
-            if(query.getIntensity() < 0.5){
+            Query toSend = query.replicate();
+            toSend.decay();
+
+            if(toSend.getIntensity() < 0.5){
                 return;
             }
-            forwardAll(query);
+            forwardAll(toSend);
         }
     }
 
@@ -78,6 +80,20 @@ public class Cluster extends Neuron {
         ClusterProxy proxy = clusterWebSocket.getProxy(data.getDestination());
         if(proxy != null){
             proxy.receive(data);
+        }
+        else{
+            Neuron receiver = neurons.get(data.getDestination());
+            if(receiver != null){
+                if(data instanceof Impulse){
+                    receiver.accept((Impulse) data);
+                }
+                else if(data instanceof Answer){
+                    receiver.accept((Answer) data);
+                }
+                else if(data instanceof Query){
+                    receiver.accept((Query)data);
+                }
+            }
         }
     }
 

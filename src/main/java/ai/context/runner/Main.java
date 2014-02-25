@@ -68,7 +68,7 @@ public class Main {
     public static void main(String[] args)
     {
         Main test = new Main();
-        String path = "C:/Users/Oblene/Desktop/Sandbox/Data/";
+        String path = "/opt/dev/data/";
         if(!(args == null || args.length == 0))
         {
             path = args[0];
@@ -158,7 +158,7 @@ public class Main {
         PositionFactory.setMinTakeProfitVertical(0.0020);
         LoggerTimer.turn(false);
 
-        DynamicPropertiesLoader.start("C:/Dev/Source/CALM/src/main/resources");
+        DynamicPropertiesLoader.start("/opt/dev/source/GitHub/CALM/src/main/resources");
         //DynamicPropertiesLoader.start("");
         //goLive();
 
@@ -168,7 +168,7 @@ public class Main {
             DataObject data = learnerFeed.readNext();
             trader.setCurrentTime(data.getTimeStamp());
 
-            //System.out.println(new Date(data.getTimeStamp()) + " " + data);
+            System.out.println(new Date(data.getTimeStamp()) + " " + data);
             i++;
 
             if(i  == 10000)
@@ -332,7 +332,7 @@ public class Main {
         sFeed.addChild(tFeed);
 
         feed = new SynchronisedFeed(feedPriceEUR, null);
-        feed = addToSynchFeed(feed, f1, 25, 100);
+        /*feed = addToSynchFeed(feed, f1, 25, 100);
         feed = addToSynchFeed(feed, f2, 0.1, 0);
         feed = addToSynchFeed(feed, f3, 0.1, 0);
         feed = addToSynchFeed(feed, f4, 0.1, 0);
@@ -342,10 +342,26 @@ public class Main {
         feed = addToSynchFeed(feed, f8, 0.1, 0);
         feed = addToSynchFeed(feed, f9, 0.1, 0);
         feed = addToSynchFeed(feed, f10, 0.1, 0);
-        feed = addToSynchFeed(feed, f11, 0.1, 0);
-        feed = new SynchronisedFeed(tFeed, feed);
+        feed = addToSynchFeed(feed, f11, 0.1, 0);*/
+        //feed = new SynchronisedFeed(tFeed, feed);
 
         int i = 0;
+        while (true)
+        {
+            FeedObject data = feed.getNextComposite(this);
+            learner.setCurrentTime(data.getTimeStamp());
+            i++;
+
+            if(i  == 500)
+            {
+                break;
+            }
+
+            System.out.println(learner.getTime() + " " + data);
+        }
+
+        new SynchronisedFeed(tFeed, feed);
+        i = 0;
         while (true)
         {
             FeedObject data = feed.getNextComposite(this);
@@ -357,7 +373,7 @@ public class Main {
                 break;
             }
 
-            //System.out.println(learner.getTime() + " " + data);
+            System.out.println(learner.getTime() + " " + data);
         }
 
         return feed;
@@ -548,7 +564,7 @@ public class Main {
             synch = new SynchronisedFeed(mmdT4, synch);
             synch = new SynchronisedFeed(mmdT5, synch);
 
-            RadarOnlineTransformer r1 = new RadarOnlineTransformer(100, feedL, feedH, feedC, 0.0001);
+            /*RadarOnlineTransformer r1 = new RadarOnlineTransformer(100, feedL, feedH, feedC, 0.0001);
             RadarOnlineTransformer r2 = new RadarOnlineTransformer(200, feedL, feedH, feedC, 0.0001);
             RadarOnlineTransformer r3 = new RadarOnlineTransformer(400, feedL, feedH, feedC, 0.0001);
             RadarOnlineTransformer r4 = new RadarOnlineTransformer(800, feedL, feedH, feedC, 0.0001);
@@ -556,7 +572,7 @@ public class Main {
             synch = new SynchronisedFeed(r1, synch);
             synch = new SynchronisedFeed(r2, synch);
             synch = new SynchronisedFeed(r3, synch);
-            synch = new SynchronisedFeed(r4, synch);
+            synch = new SynchronisedFeed(r4, synch);*/
 
             /*synch = new SynchronisedFeed(dH, synch);
             synch = new SynchronisedFeed(dL, synch);

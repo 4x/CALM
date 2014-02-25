@@ -15,8 +15,12 @@ public class ClusterServlet extends WebSocketServlet {
         System.out.println("Cluster Servlet Started");
     }
 
+    protected void doPost(HttpServletRequest request, HttpServletResponse resp) throws ServletException, IOException{
+        System.out.println(request.getReader().readLine());
+    }
+
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        System.out.println("GET");
+        System.out.println(request.getQueryString());
         response.getWriter().write("Test!");
     }
 

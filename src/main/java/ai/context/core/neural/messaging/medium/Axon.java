@@ -30,12 +30,13 @@ public class Axon {
 
     public void query(Query query, Neuron transmitter){
         if(lastQueries.add(query.getqID())){
-            query.decay();
-            if(query.getIntensity() < 0.5){
+            Query toSend = query.replicate();
+            toSend.decay();
+            if(toSend.getIntensity() < 0.5){
                 return;
             }
             if(neuronA == transmitter){
-                neuronB.accept(query);
+                neuronB.accept(toSend);
             }
             else if(neuronB == transmitter){
                 neuronA.accept(query);

@@ -28,6 +28,6 @@ public class ClusterRunner extends Server {
     }
 
     public static void main(String[] args) {
-        new ClusterRunner(8080);
+        new ClusterRunner(6112);
     }
 }

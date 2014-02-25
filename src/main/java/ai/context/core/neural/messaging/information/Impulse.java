@@ -10,7 +10,7 @@ public class Impulse  implements Serializable, Sourceable, WithDestination {
     private final long timeStamp;
     private final Object data;
 
-    public Impulse(String source, String destination, String type, long timeStamp, Object data) {
+    public Impulse(String source, String destination, String type, long timeStamp, Serializable data) {
         this.source = source;
         this.destination = destination;
         this.type = type;
