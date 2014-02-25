@@ -1,5 +1,7 @@
 package ai.context.learning.neural;
 
+import ai.context.util.configuration.PropertiesHolder;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -10,6 +12,8 @@ public class NeuronCluster {
     private static volatile NeuronCluster instance = null;
     private NeuronCluster(){
         service.submit(environmentCheck);
+        PropertiesHolder.maxPopulation = 200;
+        PropertiesHolder.tolerance = 0.1;
     }
 
     public static NeuronCluster getInstance() {
