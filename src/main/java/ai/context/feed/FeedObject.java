@@ -1,5 +1,9 @@
 package ai.context.feed;
 
+import java.util.Date;
+
+import static ai.context.util.learning.AmalgamateUtils.getStringForObject;
+
 public class FeedObject<T> {
     private final long timeStamp;
     private final T data;
@@ -20,8 +24,8 @@ public class FeedObject<T> {
     @Override
     public String toString() {
         return "FeedObject{" +
-                "timeStamp=" + timeStamp +
-                ", data=" + data +
+                "timeStamp=" + new Date(timeStamp) +
+                ", data=" + getStringForObject(data) +
                 '}';
     }
 }

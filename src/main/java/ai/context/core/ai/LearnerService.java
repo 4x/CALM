@@ -15,7 +15,7 @@ public class LearnerService {
     private ConcurrentHashMap<String, StateActionPair> population = new ConcurrentHashMap<String, StateActionPair>();
     private ConcurrentSkipListMap<Integer, ConcurrentSkipListMap<Integer, CopyOnWriteArraySet<StateActionPair>>> indices = new ConcurrentSkipListMap<>();
 
-    private double [] correlationWeights;
+    private double[] correlationWeights;
 
     private TreeMap<Integer, CorrelationCalculator> correlationCalculators = new TreeMap<Integer, CorrelationCalculator>();
     private double[] correlations;
@@ -42,7 +42,7 @@ public class LearnerService {
     private Runnable batchMergeTask = new Runnable() {
         @Override
         public void run() {
-            if(!merging){
+            if (!merging) {
                 thisService.mergeStates();
             }
         }
@@ -52,7 +52,7 @@ public class LearnerService {
         return merging;
     }
 
-    private class MergeTask implements Runnable{
+    private class MergeTask implements Runnable {
 
         private StateActionPair sap1;
         private StateActionPair sap2;
@@ -66,7 +66,9 @@ public class LearnerService {
         public void run() {
             thisService.merge(sap1, sap2);
         }
-    };
+    }
+
+    ;
 
     public LearnerService() {
     }
@@ -128,11 +130,10 @@ public class LearnerService {
         PropertiesHolder.copulaToUniversal = copulaToUniversal;
     }
 
-    public synchronized void addStateAction(int[] state, double movement){
+    public synchronized void addStateAction(int[] state, double movement) {
 
         int actionClass = (int) (movement / actionResolution);
-        if(!distribution.containsKey(actionClass))
-        {
+        if (!distribution.containsKey(actionClass)) {
             distribution.put(actionClass, 0L);
         }
 
@@ -140,13 +141,12 @@ public class LearnerService {
 
         refreshCorrelations(state, movement);
 
-        if(!correlating){
+        if (!correlating) {
             boolean newState = false;
 
             String id = AmalgamateUtils.getAmalgamateString(state);
 
-            if(!population.containsKey(id))
-            {
+            if (!population.containsKey(id)) {
                 newState = true;
                 StateActionPair stateActionPair = new StateActionPair(id, state, actionResolution);
                 addState(stateActionPair);
@@ -156,53 +156,47 @@ public class LearnerService {
             double currentDev = -1;
 
             Set<Map.Entry<StateActionPair, Double>> entries = getSimilarStates(state).entrySet();
-            for(Map.Entry<StateActionPair, Double> entry : entries)
-            {
+            for (Map.Entry<StateActionPair, Double> entry : entries) {
                 double weight = getWeightForDeviation(entry.getValue());
                 entry.getKey().newMovement(movement, weight);
 
-                if(currentDev == -1 && !entry.getKey().getId().equals(id)){
+                if (currentDev == -1 && !entry.getKey().getId().equals(id)) {
                     currentDev = entry.getValue();
                 }
-                if(entry.getValue() <= currentDev && entry.getValue() < minDevForMerge && !entry.getKey().getId().equals(id)){
+                if (entry.getValue() <= currentDev && entry.getValue() < minDevForMerge && !entry.getKey().getId().equals(id)) {
                     counterpart = entry.getKey();
                     currentDev = entry.getValue();
                 }
             }
 
-            if(counterpart != null){
-                if(doubleCheckMerge){
+            if (counterpart != null) {
+                if (doubleCheckMerge) {
                     updateAndGetCorrelationWeights(counterpart.getAmalgamate());
                     currentDev += getDeviation(counterpart.getAmalgamate(), population.get(id));
                     currentDev /= 2;
 
-                    if(currentDev < minDevForMerge){
+                    if (currentDev < minDevForMerge) {
                         merge(population.get(id), counterpart);
                     }
-                }
-                else{
+                } else {
                     merge(population.get(id), counterpart);
                 }
             }
 
-            if(newState && population.size() > PropertiesHolder.maxPopulation)
-            {
+            if (newState && population.size() > PropertiesHolder.maxPopulation) {
                 mergeStates();
             }
         }
     }
 
-    public synchronized void refreshCorrelations(int[] state, double movement)
-    {
+    public synchronized void refreshCorrelations(int[] state, double movement) {
         copulae.addObservation(state, movement);
         magnitudeCopulae.addObservation(state, Math.abs(movement));
 
         correlations = new double[state.length];
 
-        for (int index = 0; index < state.length; index++)
-        {
-            if(!correlationCalculators.containsKey(index))
-            {
+        for (int index = 0; index < state.length; index++) {
+            if (!correlationCalculators.containsKey(index)) {
                 correlationCalculators.put(index, new CorrelationCalculator());
             }
             CorrelationCalculator calculator = correlationCalculators.get(index);
@@ -210,14 +204,12 @@ public class LearnerService {
         }
     }
 
-    public double[] updateAndGetCorrelationWeights(int[] state){
+    public double[] updateAndGetCorrelationWeights(int[] state) {
         correlationWeights = copulae.getCorrelationWeights(state);
         double[] magCorrelations = magnitudeCopulae.getCorrelationWeights(state);
-        for (int i = 0; i < correlationWeights.length; i++)
-        {
+        for (int i = 0; i < correlationWeights.length; i++) {
             double correlation = magCorrelations[i];
-            if(correlation >= 0 && !Double.isInfinite(correlation))
-            {
+            if (correlation >= 0 && !Double.isInfinite(correlation)) {
                 //correlationWeights[i] = (correlationWeights[i] + correlation)/2;
                 correlationWeights[i] = Math.sqrt(correlationWeights[i] * correlation);
             }
@@ -237,22 +229,20 @@ public class LearnerService {
         return correlationWeights;
     }
 
-    private Map<StateActionPair, Double> getSimilarStates(int[] state)
-    {
+    private Map<StateActionPair, Double> getSimilarStates(int[] state) {
         updateAndGetCorrelationWeights(state);
 
         TreeMap<Double, StateActionPair> top = new TreeMap<Double, StateActionPair>();
-        for(StateActionPair pair : population.values())
-        {
+        for (StateActionPair pair : population.values()) {
             double deviation = getDeviation(state, pair);
             top.put(deviation, pair);
         }
 
-        if(doubleCheckMerge){
+        if (doubleCheckMerge) {
             TreeMap<Double, StateActionPair> top2 = new TreeMap<Double, StateActionPair>();
-            for(Map.Entry<Double,StateActionPair> pair : top.entrySet()){
+            for (Map.Entry<Double, StateActionPair> pair : top.entrySet()) {
                 updateAndGetCorrelationWeights(pair.getValue().getAmalgamate());
-                double deviation = (getDeviation(pair.getValue().getAmalgamate(), state, correlationWeights) + pair.getKey())/2;
+                double deviation = (getDeviation(pair.getValue().getAmalgamate(), state, correlationWeights) + pair.getKey()) / 2;
                 top2.put(deviation, pair.getValue());
             }
             top = top2;
@@ -262,33 +252,33 @@ public class LearnerService {
         HashSet<StateActionPair> closestNeighbours = new HashSet<>();
 
         int i = 0;
-        for(Map.Entry<Double,StateActionPair> pair : top.entrySet()){
+        for (Map.Entry<Double, StateActionPair> pair : top.entrySet()) {
             map.put(pair.getValue(), pair.getKey());
             pair.getValue().setClosestNeighbours(closestNeighbours);
             closestNeighbours.add(pair.getValue());
 
-            if((minDev == -1 || minDev > pair.getKey()) && pair.getKey() > 0){
+            if ((minDev == -1 || minDev > pair.getKey()) && pair.getKey() > 0) {
                 minDev = pair.getKey();
             }
 
-            if((maxDev == -1 || maxDev < pair.getKey()) && pair.getKey() > 0){
+            if ((maxDev == -1 || maxDev < pair.getKey()) && pair.getKey() > 0) {
                 maxDev = pair.getKey();
             }
 
             i++;
-            if(i >= population.size()*PropertiesHolder.tolerance && i >= 2){
+            if (i >= population.size() * PropertiesHolder.tolerance && i >= 2) {
                 break;
             }
         }
         return map;
     }
 
-    private double getDeviation(int[] state, StateActionPair pair){
+    private double getDeviation(int[] state, StateActionPair pair) {
         return pair.getDeviation(state, correlationWeights) /*/ Math.pow(Math.log(Math.E + pair.getTotalWeight()), 1 / PropertiesHolder.recencyBias)*/;
     }
 
-    private synchronized double getWeightForDeviation(double deviation){
-        if(deviation == 0){
+    private synchronized double getWeightForDeviation(double deviation) {
+        if (deviation == 0) {
             return 1;
         }
 
@@ -296,17 +286,16 @@ public class LearnerService {
         double min = Math.log(minDev);
         double max = Math.log(maxDev);
 
-        if(max == min){
+        if (max == min) {
             return 0;
         }
-        return  Math.pow((max - x)/(max - min), 4);
+        return Math.pow((max - x) / (max - min), 4);
     }
 
-    private synchronized void mergeStates()
-    {
+    private synchronized void mergeStates() {
         merging = true;
-        if(minDevForMerge == -1){
-            minDevForMerge =  4*(minDev + maxDev)/getMaxPopulation();
+        if (minDevForMerge == -1) {
+            minDevForMerge = 4 * (minDev + maxDev) / getMaxPopulation();
         }
 
         long t = System.currentTimeMillis();
@@ -315,11 +304,11 @@ public class LearnerService {
         boolean targetReached = false;
 
         int runs = 0;
-        while(true){
+        while (true) {
             runs++;
             HashSet<StateActionPair> pairs = new HashSet<>();
             pairs.addAll(population.values());
-            for(StateActionPair pair : population.values()){
+            for (StateActionPair pair : population.values()) {
                 getSimilarStates(pair.getAmalgamate());
             }
 
@@ -328,43 +317,42 @@ public class LearnerService {
             int z = 0;
             int a = 0;
             HashSet<StateActionPair> check = new HashSet<>();
-            for(StateActionPair pair : pairs){
-                if(population.values().contains(pair)){
+            for (StateActionPair pair : pairs) {
+                if (population.values().contains(pair)) {
                     x++;
-                    for(StateActionPair counterpart : pair.getClosestNeighbours()){
+                    for (StateActionPair counterpart : pair.getClosestNeighbours()) {
                         check.addAll(pair.getClosestNeighbours());
                         y++;
-                        if(pair != counterpart && population.values().contains(counterpart)){
+                        if (pair != counterpart && population.values().contains(counterpart)) {
                             updateAndGetCorrelationWeights(pair.getAmalgamate());
                             double deviation = getDeviation(pair.getAmalgamate(), counterpart);
-                            if(doubleCheckMerge){
+                            if (doubleCheckMerge) {
                                 updateAndGetCorrelationWeights(counterpart.getAmalgamate());
                                 deviation += getDeviation(counterpart.getAmalgamate(), pair);
                                 deviation /= 2;
                             }
                             z++;
-                            if(deviation <= minDevForMerge){
+                            if (deviation <= minDevForMerge) {
                                 merge(pair, counterpart);
                                 a++;
-                                if(population.size() < getMaxPopulation()/2){
+                                if (population.size() < getMaxPopulation() / 2) {
                                     targetReached = true;
                                 }
                                 break;
                             }
                         }
                     }
-                    if(targetReached){
+                    if (targetReached) {
                         break;
                     }
                 }
             }
 
-            System.err.println("Run: " + runs  + " x: " + x  + " y: " + y + " z: " + z + " Check: " + check.size() + " a: " + a);
-            if(!targetReached && (runs % 4 == 0 || a < (double)population.size()/20)){
-                minDevForMerge = minDevForMerge * ((double)population.size()/(getMaxPopulation()/2)) * 1.01;
+            System.err.println("Run: " + runs + " x: " + x + " y: " + y + " z: " + z + " Check: " + check.size() + " a: " + a);
+            if (!targetReached && (runs % 4 == 0 || a < (double) population.size() / 20)) {
+                minDevForMerge = minDevForMerge * ((double) population.size() / (getMaxPopulation() / 2)) * 1.01;
                 System.err.println("MinDevForMerge pushed to: " + minDevForMerge);
-            }
-            else if(targetReached){
+            } else if (targetReached) {
                 break;
             }
         }
@@ -372,9 +360,9 @@ public class LearnerService {
         merging = false;
     }
 
-    private void merge(StateActionPair sap1, StateActionPair sap2){
+    private void merge(StateActionPair sap1, StateActionPair sap2) {
 
-        if(population.containsKey(sap1.getId()) && population.containsKey(sap2.getId())){
+        if (population.containsKey(sap1.getId()) && population.containsKey(sap2.getId())) {
             StateActionPair newState = sap1.merge(sap2);
             removeState(sap1);
             removeState(sap2);
@@ -383,9 +371,8 @@ public class LearnerService {
         }
     }
 
-    private synchronized void removeState(StateActionPair pair)
-    {
-        if(population.containsKey(pair.getId())){
+    private synchronized void removeState(StateActionPair pair) {
+        if (population.containsKey(pair.getId())) {
             population.remove(pair.getId());
 
             /*for(int index = 0; index < pair.getAmalgamate().length; index++)
@@ -396,9 +383,8 @@ public class LearnerService {
         }
     }
 
-    private synchronized void addState(StateActionPair pair)
-    {
-        if(!population.containsKey(pair.getId())){
+    private synchronized void addState(StateActionPair pair) {
+        if (!population.containsKey(pair.getId())) {
             population.put(pair.getId(), pair);
             /*int[] state = pair.getAmalgamate();
             for(int index = 0; index < state.length; index++)
@@ -419,18 +405,15 @@ public class LearnerService {
         }
     }
 
-    public TreeMap<Integer, Double> getActionDistribution(int[] state)
-    {
+    public TreeMap<Integer, Double> getActionDistribution(int[] state) {
         TreeMap<Integer, Double> distribution = new TreeMap<Integer, Double>();
-        for(Map.Entry<StateActionPair, Double> entry : getSimilarStates(state).entrySet())
-        {
+        for (Map.Entry<StateActionPair, Double> entry : getSimilarStates(state).entrySet()) {
             double weight = getWeightForDeviation(entry.getValue());
             StateActionPair pair = entry.getKey();
 
-            for(Map.Entry<Integer, Double> distEntry : pair.getActionDistribution().entrySet())
-            {
+            for (Map.Entry<Integer, Double> distEntry : pair.getActionDistribution().entrySet()) {
                 double value = 0;
-                if(distribution.containsKey(distEntry.getKey())){
+                if (distribution.containsKey(distEntry.getKey())) {
                     value = distribution.get(distEntry.getKey());
                 }
                 distribution.put(distEntry.getKey(), value + (weight * distEntry.getValue()));
@@ -439,11 +422,10 @@ public class LearnerService {
         return distribution;
     }
 
-    public Map<Integer, Double> getCorrelationMap()
-    {
+    public Map<Integer, Double> getCorrelationMap() {
         TreeMap<Integer, Double> correlations = new TreeMap<Integer, Double>();
         int index = 0;
-        for(double weight : correlationWeights){
+        for (double weight : correlationWeights) {
             correlations.put(index, weight);
             index++;
         }
@@ -451,21 +433,20 @@ public class LearnerService {
         return correlations;
     }
 
-    public TreeMap<Double, StateActionPair> getAlphaStates(){
+    public TreeMap<Double, StateActionPair> getAlphaStates() {
         TreeMap<Double, StateActionPair> alpha = new TreeMap<>();
-        for(StateActionPair pair : population.values()){
+        for (StateActionPair pair : population.values()) {
             double score = sum(updateAndGetCorrelationWeights(pair.getAmalgamate()));
             alpha.put(score, pair);
         }
         return alpha;
     }
 
-    public double[] getCorrelationWeightsForState(StateActionPair sap){
+    public double[] getCorrelationWeightsForState(StateActionPair sap) {
         return copulae.getCorrelationWeights(sap.getAmalgamate());
     }
 
-    public ConcurrentSkipListMap<Integer, CopyOnWriteArraySet<StateActionPair>> getIndexForVariable(int variable)
-    {
+    public ConcurrentSkipListMap<Integer, CopyOnWriteArraySet<StateActionPair>> getIndexForVariable(int variable) {
         return indices.get(variable);
     }
 
@@ -489,7 +470,7 @@ public class LearnerService {
         this.copulae = copulae;
     }
 
-    public StateActionPair getStateActionPair(String id){
+    public StateActionPair getStateActionPair(String id) {
         return population.get(id);
     }
 
@@ -497,14 +478,11 @@ public class LearnerService {
         this.correlating = correlating;
     }
 
-    public double getDeviation(int[] state, int[] counterpart, double[] correlationWeights)
-    {
+    public double getDeviation(int[] state, int[] counterpart, double[] correlationWeights) {
         double deviation = 0;
 
-        for(int i = 0; i < state.length || i < counterpart.length; i++)
-        {
-            if(correlationWeights[i] >= 0)
-            {
+        for (int i = 0; i < state.length || i < counterpart.length; i++) {
+            if (correlationWeights[i] >= 0) {
                 deviation += (Math.abs(state[i] - counterpart[i]) * correlationWeights[i]);
             }
         }
@@ -515,7 +493,7 @@ public class LearnerService {
     public String toString() {
         return "population=" + AmalgamateUtils.getMapString(population) +
                 ", indices=" + AmalgamateUtils.getMapString(indices) +
-                ", correlationWeights=" +  AmalgamateUtils.getArrayString(correlationWeights) +
+                ", correlationWeights=" + AmalgamateUtils.getArrayString(correlationWeights) +
                 ", correlationCalculators=" + AmalgamateUtils.getMapString(correlationCalculators) +
                 ", correlations=" + AmalgamateUtils.getArrayString(correlations) +
                 ", copulae=" + System.identityHashCode(copulae) +

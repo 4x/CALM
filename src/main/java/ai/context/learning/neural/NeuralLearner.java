@@ -31,7 +31,7 @@ public class NeuralLearner implements Feed, Runnable{
 
     private final long horizon;
     private long outputFutureOffset = 5 * 60 * 1000L;
-    private boolean alive;
+    private boolean alive = true;
     private boolean outputConnected = false;
 
     private Integer[] actionElements;
@@ -40,6 +40,7 @@ public class NeuralLearner implements Feed, Runnable{
     private double resolution;
 
     private long latency = 0;
+    private long pointsConsumed = 0;
 
     public NeuralLearner(long[] horizonRange, SynchronisedFeed motherFeed, Integer[] actionElements, Integer[] sigElements, long outputFutureOffset, double resolution){
         this.motherFeed = motherFeed;
@@ -51,20 +52,25 @@ public class NeuralLearner implements Feed, Runnable{
         this.sigElements = sigElements;
         this.resolution = resolution;
         core.setActionResolution(resolution);
+
+        System.out.println("New Neuron: " + getDescription(0, ""));
     }
 
     @Override
     public void run() {
-        long pointsConsumed = 0;
+        System.out.println(getDescription(0, "") + " started...");
         while (alive){
             DataObject data = learnerFeed.readNext();
             if(data.getTimeStamp() > time){
-                long tStart = System.nanoTime();
+                long tStart = System.currentTimeMillis();
                 time = data.getTimeStamp();
-                while(trackers.get(0).getTimeStamp() < (time - horizon)){
+                while(!trackers.isEmpty() && trackers.get(0).getTimeStamp() < (time - horizon)){
                     StateActionInformationTracker tracker = trackers.remove(0);
                     core.addStateAction(tracker.getState(), tracker.getMax());
                     core.addStateAction(tracker.getState(), tracker.getMin());
+
+                    //System.out.println("Learned: " + Arrays.toString(tracker.getState()) + " -> {" + tracker.getMin() + ", " + tracker.getMax() + "}");
+                    pointsConsumed++;
                 }
                 for(StateActionInformationTracker tracker : trackers){
                     for(double newLevel : data.getValue()){
@@ -74,18 +80,14 @@ public class NeuralLearner implements Feed, Runnable{
                 trackers.add(new StateActionInformationTracker(time, data.getSignal(), data.getValue()[0]));
 
                 int[] outputSignal = new int[getNumberOfOutputs()];
-                if(pointsConsumed < 100){
+                if(pointsConsumed > 100){
                     outputSignal = getSignalForDistribution(core.getActionDistribution(data.getSignal()));
                 }
                 long eventTime = time + outputFutureOffset;
                 FeedObject output = new FeedObject(eventTime, outputSignal);
+                //System.out.println("Output produced: " + output);
                 queue.add(output);
-                pointsConsumed++;
-
-                if(Math.random() > 0.9999){
-                    lifeEvent();
-                }
-                latency = System.nanoTime() - tStart;
+                latency = System.currentTimeMillis() - tStart;
             }
         }
         queue = null;
@@ -99,10 +101,10 @@ public class NeuralLearner implements Feed, Runnable{
     }
 
     public void lifeEvent(){
-        if(cluster.getDangerLevel() * Math.random() < 0.25){
+        if(cluster.size() < 10 || cluster.getDangerLevel() * Math.random() < 0.1){
             spawn();
         }
-        else if(cluster.getDangerLevel() * Math.random() < 5){
+        else if(cluster.getDangerLevel() * Math.random() < 1.5){
             selectStimuli();
         }
         else {
@@ -114,7 +116,7 @@ public class NeuralLearner implements Feed, Runnable{
                 }
             }
 
-            if(rank/neuronRankings.getRankings().size() > 0.9){
+            if(cluster.size() > 10 && rank/neuronRankings.getRankings().size() < 0.1){
                 die();
             }
         }
@@ -142,39 +144,47 @@ public class NeuralLearner implements Feed, Runnable{
         stimuliRankings.update(this, data);
     }
 
+    long lastSelect = 0;
     public void selectStimuli(){
-        Map<Integer, Double> rankings = MapUtils.reverse(stimuliRankings.getRankings());
-        double worseRanking = Double.MAX_VALUE;
-        int worstSigPos = 0;
-        for(int i = 0; i < sigElements.length; i++){
-            int sig = sigElements[i];
-            if(rankings.get(sig) < worseRanking){
-                worseRanking = rankings.get(sig);
-                worstSigPos = i;
+        if(time - lastSelect > (Math.random() * 5 * 24 * 60 * 60 * 1000)){
+            Map<Integer, Double> rankings = MapUtils.reverse(stimuliRankings.getRankings());
+            double worseRanking = Double.MAX_VALUE;
+            int worstSigPos = 0;
+            for(int i = 0; i < sigElements.length; i++){
+                int sig = sigElements[i];
+                if(rankings.containsKey(sig) && rankings.get(sig) < worseRanking){
+                    worseRanking = rankings.get(sig);
+                    worstSigPos = i;
+                }
             }
-        }
-        rankings.keySet().removeAll(Arrays.asList(sigElements));
-        double level = 0;
-        int chosen = sigElements[worstSigPos];
-        for(Map.Entry<Integer, Double> entry : rankings.entrySet()){
-            if(entry.getValue() > level * Math.random()){
-                level = entry.getValue() * 2;
-                chosen = entry.getKey();
+            rankings.keySet().removeAll(Arrays.asList(sigElements));
+            double level = 0;
+            int chosen = sigElements[worstSigPos];
+            for(Map.Entry<Integer, Double> entry : rankings.entrySet()){
+                if(entry.getValue() * Math.random() > level * Math.random()){
+                    level = entry.getValue() * 2;
+                    chosen = entry.getKey();
+                    lastSelect = time;
+                }
             }
+            if(chosen != sigElements[worstSigPos]){
+                System.out.println(getDescription(0, "") + " replaced signal at position " + worstSigPos + " (" + sigElements[worstSigPos] + " -> " + chosen + ")");
+                sigElements[worstSigPos] = chosen;
+            }
+            learnerFeed.setSignalElements(sigElements);
         }
-        sigElements[worstSigPos] = chosen;
-        learnerFeed.setSignalElements(sigElements);
     }
 
     public void spawn(){
 
-        Integer[] sigElements = this.sigElements;
+        Integer[] sigElements = new Integer[this.sigElements.length];
         Set<Integer> used = new HashSet<>();
         used.addAll(Arrays.asList(actionElements));
         used.addAll(Arrays.asList(sigElements));
         int choice = motherFeed.getNumberOfOutputs();
         for(int i = 0 ; i < sigElements.length; i++){
-            if(Math.random() > 0.5){
+            sigElements[i] = this.sigElements[i];
+            if(Math.random() > 0.25){
                 for(int tries = 0; tries < 10; tries++){
                     int candidate = (int) (Math.random() * choice);
                     if(!used.contains(candidate)){
@@ -191,6 +201,7 @@ public class NeuralLearner implements Feed, Runnable{
     }
 
     public void die(){
+        System.out.println(getDescription(0, "") + " dies...");
         alive = false;
     }
 
@@ -202,6 +213,10 @@ public class NeuralLearner implements Feed, Runnable{
         return latency;
     }
 
+    public long getPointsConsumed() {
+        return pointsConsumed;
+    }
+
     double lambda = 0.01;
     double lastMean = 0;
     public int[] getSignalForDistribution(TreeMap<Integer, Double> distribution){
@@ -210,29 +225,44 @@ public class NeuralLearner implements Feed, Runnable{
         double sum = 0;
         double sumSq = 0;
         double weight = 0;
+        double accruedWeight = 0;
+
+        Integer firstQuartile = null;
+        Integer median = null;
+        Integer thirdQuartile = null;
         for(Map.Entry<Integer, Double> entry : distribution.entrySet()){
+            accruedWeight += entry.getValue();
+            if(accruedWeight >= weight/4 && firstQuartile == null){
+                firstQuartile = entry.getKey();
+            }
+            else if(accruedWeight >= weight/2 && median == null){
+                median = entry.getKey();
+            }
+            else if(accruedWeight >= 3*weight/4 && thirdQuartile == null){
+                thirdQuartile = entry.getKey();
+            }
             sum += entry.getKey() * entry.getValue();
             sumSq += Math.pow(entry.getKey() * entry.getValue(), 2);
             weight += entry.getValue();
         }
-        double mean = sum/weight;
-        double stddev = Math.sqrt(sumSq/weight - Math.pow(sum/weight,2));
 
-        double accruedWeight = 0;
-        Double firstQuartile = null;
-        Double median = null;
-        Double thirdQuartile = null;
-        for(Map.Entry<Integer, Double> entry : distribution.entrySet()){
-            accruedWeight += entry.getValue();
-            if(accruedWeight >= weight/4 && firstQuartile == null){
-                firstQuartile = entry.getValue();
-            }
-            else if(accruedWeight >= weight/2 && median == null){
-                median = entry.getValue();
-            }
-            else if(accruedWeight >= 3*weight/4 && thirdQuartile == null){
-                thirdQuartile = entry.getValue();
-            }
+        double mean = 0;
+        double stddev = 0;
+        if(weight > 0){
+            mean = sum/weight;
+            stddev = Math.sqrt(sumSq/weight - Math.pow(mean,2));
+        }
+
+        if(firstQuartile == null){
+            firstQuartile = 0;
+        }
+
+        if(median == null){
+            median = 0;
+        }
+
+        if(thirdQuartile == null){
+            thirdQuartile = 0;
         }
 
         lastMean = (1 - lambda) * lastMean + lambda * mean;
@@ -243,6 +273,13 @@ public class NeuralLearner implements Feed, Runnable{
         signal[3] = getLogarithmicDiscretisation(median, 0, 1, 2);
         signal[4] = getLogarithmicDiscretisation(thirdQuartile, 0, 1, 2);
         signal[5] = getLogarithmicDiscretisation(mean - lastMean, 0, 1, 2);
+
+        /*System.out.println(mean + ", " +
+                stddev + ", " +
+                firstQuartile + ", " +
+                median + ", " +
+                thirdQuartile + ", " +
+                (mean - lastMean));*/
         return signal;
     }
 
@@ -304,7 +341,7 @@ public class NeuralLearner implements Feed, Runnable{
 
     @Override
     public String getDescription(int startIndex, String padding) {
-        return padding + "[" + startIndex + "] Neural Learner for "+  learnerFeed.getDescription();
+        return padding + "[" + startIndex + "] Neural Learner with Actions: " +  Arrays.asList(actionElements) + " and Signals: " + Arrays.asList(sigElements);
     }
 
     @Override

@@ -2,6 +2,7 @@ package ai.context.learning.neural;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class NeuronRankings {
@@ -19,7 +20,7 @@ public class NeuronRankings {
         return instance;
     }
 
-    private Map<Double, NeuralLearner> rankings;
+    private Map<Double, NeuralLearner> rankings = new TreeMap<>();
     private ConcurrentHashMap<Object,HashMap<Integer, Double>> scores = new ConcurrentHashMap();
     public void update(NeuralLearner updater, Double score){
         Map.Entry toRemove = null;

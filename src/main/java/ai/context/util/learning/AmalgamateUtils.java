@@ -1,5 +1,6 @@
 package ai.context.util.learning;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -105,6 +106,16 @@ public class AmalgamateUtils {
         }
 
         return data;
+    }
+
+    public static String getStringForObject(Object arr) {
+        if (arr instanceof int[]) {
+            return Arrays.toString((int[]) arr);
+        } else if (arr instanceof Object[]) {
+            return Arrays.toString((Object[]) arr);
+        } else {
+            return arr.toString();
+        }
     }
 
     public static String getStringFor(Object object){

@@ -17,28 +17,21 @@ public class ClusteredCopulae {
         this.variableClusteredCorrelations = variableClusteredCorrelations;
     }
 
-    public synchronized void addObservation(int state[], double value)
-    {
-        for(int i = 0; i < state.length; i++)
-        {
-            if((!variableClusteredCorrelations.containsKey(i)))
-            {
+    public synchronized void addObservation(int state[], double value) {
+        for (int i = 0; i < state.length; i++) {
+            if ((!variableClusteredCorrelations.containsKey(i))) {
                 variableClusteredCorrelations.put(i, new HashMap<Integer, TreeMap<Integer, CorrelationCalculator>>());
             }
 
             HashMap<Integer, TreeMap<Integer, CorrelationCalculator>> m1 = variableClusteredCorrelations.get(i);
-            if(!m1.containsKey(state[i]))
-            {
+            if (!m1.containsKey(state[i])) {
                 m1.put(state[i], new TreeMap<Integer, CorrelationCalculator>());
             }
 
             TreeMap<Integer, CorrelationCalculator> m2 = m1.get(state[i]);
-            for(int index = 0; index < state.length; index++)
-            {
-                if(index != i)
-                {
-                    if(!m2.containsKey(index))
-                    {
+            for (int index = 0; index < state.length; index++) {
+                if (index != i) {
+                    if (!m2.containsKey(index)) {
                         m2.put(index, new CorrelationCalculator());
                     }
 
@@ -48,63 +41,48 @@ public class ClusteredCopulae {
         }
     }
 
-    public synchronized double[] getCorrelationWeights(int[] state)
-    {
+    public synchronized double[] getCorrelationWeights(int[] state) {
         double[] weights = new double[state.length];
-        for (int i = 0; i < state.length; i++)
-        {
+        for (int i = 0; i < state.length; i++) {
             weights[i] = 0.0;
         }
 
         double[][] matrix = new double[state.length][state.length];
 
-        for (int i = 0; i < state.length; i++)
-        {
-            if(variableClusteredCorrelations.containsKey(i))
-            {
+        for (int i = 0; i < state.length; i++) {
+            if (variableClusteredCorrelations.containsKey(i)) {
                 HashMap<Integer, TreeMap<Integer, CorrelationCalculator>> m1 = variableClusteredCorrelations.get(i);
-                if(m1.containsKey(state[i]))
-                {
+                if (m1.containsKey(state[i])) {
                     TreeMap<Integer, CorrelationCalculator> m2 = m1.get(state[i]);
-                    for(int index = 0; index < state.length; index++)
-                    {
+                    for (int index = 0; index < state.length; index++) {
                         double increment = 0.0;
-                        if(m2.containsKey(index))
-                        {
+                        if (m2.containsKey(index)) {
                             double correlation = Math.pow(m2.get(index).getCurrentCorrelation(), 2);
-                            if(correlation >= 0 && correlation <= 2)
-                            {
+                            if (correlation >= 0 && correlation <= 2) {
                                 increment = correlation;
                             }
-                        }
-                        else{
+                        } else {
                             double upper = 0;
                             double lower = 0;
 
                             Integer u = m2.floorKey(index);
                             Integer l = m2.ceilingKey(index);
 
-                            if(u != null)
-                            {
+                            if (u != null) {
                                 upper = m2.get(u).getCurrentCorrelation();
                             }
-                            if(l != null)
-                            {
+                            if (l != null) {
                                 lower = m2.get(l).getCurrentCorrelation();
                             }
 
-                            if(u != null && l != null)
-                            {
+                            if (u != null && l != null) {
                                 double correlation = Math.pow(((index - l) * (upper - lower) / (u - l) + lower), 2);
-                                if(correlation >= 0 && correlation <= 2)
-                                {
+                                if (correlation >= 0 && correlation <= 2) {
                                     increment = correlation;
                                 }
-                            }
-                            else{
+                            } else {
                                 double correlation = Math.pow(lower + upper, 2);
-                                if(correlation >= 0 && correlation <= 2)
-                                {
+                                if (correlation >= 0 && correlation <= 2) {
                                     increment = correlation;
                                 }
                             }
@@ -116,9 +94,8 @@ public class ClusteredCopulae {
             }
         }
 
-        for (int i = 0; i < state.length; i++)
-        {
-            weights[i] = Math.pow(Math.abs(weights[i]), 0.5)/state.length;
+        for (int i = 0; i < state.length; i++) {
+            weights[i] = Math.pow(Math.abs(weights[i]), 0.5) / state.length;
         }
         return weights;
     }
@@ -128,9 +105,9 @@ public class ClusteredCopulae {
 
         String data = "";
 
-        for(Map.Entry<Integer, HashMap<Integer, TreeMap<Integer, CorrelationCalculator>>> e1 : variableClusteredCorrelations.entrySet()){
-            for(Map.Entry<Integer, TreeMap<Integer, CorrelationCalculator>> e2 : e1.getValue().entrySet()){
-                for(Map.Entry<Integer, CorrelationCalculator> e3 : e2.getValue().entrySet()){
+        for (Map.Entry<Integer, HashMap<Integer, TreeMap<Integer, CorrelationCalculator>>> e1 : variableClusteredCorrelations.entrySet()) {
+            for (Map.Entry<Integer, TreeMap<Integer, CorrelationCalculator>> e2 : e1.getValue().entrySet()) {
+                for (Map.Entry<Integer, CorrelationCalculator> e3 : e2.getValue().entrySet()) {
                     data += e1.getKey() + ":" + e2.getKey() + ":" + e3.getKey() + ":" + System.identityHashCode(e3.getValue()) + ";";
                 }
             }

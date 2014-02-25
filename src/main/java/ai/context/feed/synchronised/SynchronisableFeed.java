@@ -12,18 +12,16 @@ import java.util.List;
 
 public abstract class SynchronisableFeed implements Feed {
 
+    protected List<SynchronisableFeed> feeds = new ArrayList<SynchronisableFeed>();
     private SharedMutableObject<Long> timeStamp = new SharedMutableObject<Long>(-1L);
     private HashMap<Feed, LinkedList<FeedObject>> buffers = new HashMap<>();
-
-    protected List<SynchronisableFeed> feeds = new ArrayList<SynchronisableFeed>();
     private SharedMutableObject<SynchronisableFeed> leader = new SharedMutableObject<SynchronisableFeed>(this);
 
     private FeedObject current;
     private Object currentData;
 
     protected SynchronisableFeed(SynchronisableFeed sibling) {
-        if(sibling != null)
-        {
+        if (sibling != null) {
             this.timeStamp = sibling.getTimeStamp();
             this.feeds = sibling.getFeeds();
             this.leader = sibling.getLeader();
@@ -31,30 +29,23 @@ public abstract class SynchronisableFeed implements Feed {
         feeds.add(this);
     }
 
-    public synchronized FeedObject getNextComposite(Object caller)
-    {
-        if(buffers.containsKey(caller) && buffers.get(caller).size() > 0)
-        {
+    public synchronized FeedObject getNextComposite(Object caller) {
+        if (buffers.containsKey(caller) && buffers.get(caller).size() > 0) {
             return buffers.get(caller).pollFirst();
         }
-        for(SynchronisableFeed feed : feeds)
-        {
+        for (SynchronisableFeed feed : feeds) {
             feed.checkLeader();
         }
         List<Object> data = new ArrayList<Object>();
 
         long currentTimeStamp = timeStamp.getValue();
-        for(SynchronisableFeed feed : feeds)
-        {
-            if(leader.getValue() == feed)
-            {
+        for (SynchronisableFeed feed : feeds) {
+            if (leader.getValue() == feed) {
                 feed.currentData = feed.current.getData();
                 DataSetUtils.add(feed.currentData, data);
                 feed.current = null;
-            }
-            else {
-                if(feed.current.getTimeStamp() == currentTimeStamp)
-                {
+            } else {
+                if (feed.current.getTimeStamp() == currentTimeStamp) {
                     feed.currentData = feed.current.getData();
                     feed.current = null;
                 }
@@ -67,33 +58,29 @@ public abstract class SynchronisableFeed implements Feed {
         timeStamp.setValue(-1L);
 
         FeedObject feedObject = new FeedObject(timeToReturn, data);
-        if(feeds.size() == 1){
+        if (feeds.size() == 1) {
             feedObject = new FeedObject(timeToReturn, currentData);
         }
-        for(Feed listener : buffers.keySet()){
-            if(listener != caller){
+        for (Feed listener : buffers.keySet()) {
+            if (listener != caller) {
                 buffers.get(listener).add(feedObject);
             }
         }
         return feedObject;
     }
 
-    public synchronized FeedObject getNext()
-    {
+    public synchronized FeedObject getNext() {
         FeedObject toReturn = null;
 
-        if(leader.getValue() == this)
-        {
+        if (leader.getValue() == this) {
             toReturn = current;
             currentData = current.getData();
             current = null;
             timeStamp.setValue(-1L);
-            for(SynchronisableFeed feed : feeds)
-            {
+            for (SynchronisableFeed feed : feeds) {
                 feed.checkLeader();
             }
-        }
-        else {
+        } else {
             toReturn = new FeedObject(timeStamp.getValue(), currentData);
         }
 
@@ -112,19 +99,14 @@ public abstract class SynchronisableFeed implements Feed {
         return leader;
     }
 
-    public void checkLeader()
-    {
-        if(current == null)
-        {
+    public void checkLeader() {
+        if (current == null) {
             current = readNext(this);
         }
-        if(timeStamp.getValue() < 0)
-        {
+        if (timeStamp.getValue() < 0) {
             timeStamp.setValue(current.getTimeStamp());
             leader.setValue(this);
-        }
-        else if(current.getTimeStamp() <= timeStamp.getValue())
-        {
+        } else if (current.getTimeStamp() <= timeStamp.getValue()) {
             timeStamp.setValue(current.getTimeStamp());
             leader.setValue(this);
         }

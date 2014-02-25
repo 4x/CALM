@@ -78,7 +78,7 @@ public class SelectLearnerFeed implements LearnerFeed, Feed {
             value[i] = (Double) content.get(actionElements[i]);
         }
 
-        int[] signal = new int[content.size() - 5];
+        int[] signal = new int[signalElements.length];
         if(signal == null){
             return new DataObject(data.getTimeStamp(), null, value);
         }

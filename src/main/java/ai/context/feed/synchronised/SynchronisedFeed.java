@@ -6,9 +6,10 @@ import ai.context.feed.FeedObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SynchronisedFeed extends SynchronisableFeed{
+public class SynchronisedFeed extends SynchronisableFeed {
 
     private Feed rawFeed;
+
     public SynchronisedFeed(Feed rawFeed, SynchronisableFeed sibling) {
         super(sibling);
         this.rawFeed = rawFeed;
@@ -29,8 +30,7 @@ public class SynchronisedFeed extends SynchronisableFeed{
     public Feed getCopy() {
         SynchronisedFeed copy = null;
 
-        for(Feed feed : feeds)
-        {
+        for (Feed feed : feeds) {
             copy = new SynchronisedFeed(feed.getCopy(), copy);
         }
         return copy;
@@ -44,8 +44,8 @@ public class SynchronisedFeed extends SynchronisableFeed{
     public String getDescription(int startIndex, String padding) {
 
         String description = "";
-        for(SynchronisableFeed feed : feeds){
-            description += ((SynchronisedFeed)feed).getRawFeed().getDescription(startIndex, padding + " ") + "\n";
+        for (SynchronisableFeed feed : feeds) {
+            description += ((SynchronisedFeed) feed).getRawFeed().getDescription(startIndex, padding + " ") + "\n";
             String[] lines = description.split("\n");
             startIndex = Integer.parseInt(lines[lines.length - 1].trim().split("]")[0].substring(1));
             startIndex++;
@@ -65,9 +65,9 @@ public class SynchronisedFeed extends SynchronisableFeed{
     public List getElementChain(int element) {
         int remaining = element;
         Feed feed = null;
-        for(Feed candidate : feeds){
-            feed = ((SynchronisedFeed)candidate).getRawFeed();
-            if(feed.getNumberOfOutputs() > remaining){
+        for (Feed candidate : feeds) {
+            feed = ((SynchronisedFeed) candidate).getRawFeed();
+            if (feed.getNumberOfOutputs() > remaining) {
                 break;
             }
 
@@ -84,8 +84,8 @@ public class SynchronisedFeed extends SynchronisableFeed{
     @Override
     public int getNumberOfOutputs() {
         int number = 0;
-        for(Feed feed : feeds){
-            number += ((SynchronisedFeed)feed).getRawFeed().getNumberOfOutputs();
+        for (Feed feed : feeds) {
+            number += ((SynchronisedFeed) feed).getRawFeed().getNumberOfOutputs();
         }
         return number;
     }
