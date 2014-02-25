@@ -6,7 +6,6 @@ import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
 import ai.context.feed.synchronised.SynchronisedFeed;
 import ai.context.learning.DataObject;
-import ai.context.learning.LearnerFeed;
 import ai.context.learning.SelectLearnerFeed;
 import ai.context.util.common.MapUtils;
 import ai.context.util.common.StateActionInformationTracker;
