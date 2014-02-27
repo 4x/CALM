@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-public abstract class SynchronisableFeed implements Feed {
+public abstract class SynchronisableFeed implements ISynchFeed {
 
     protected List<SynchronisableFeed> feeds = new ArrayList<SynchronisableFeed>();
     private SharedMutableObject<Long> timeStamp = new SharedMutableObject<Long>(-1L);
