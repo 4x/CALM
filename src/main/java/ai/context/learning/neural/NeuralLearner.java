@@ -225,7 +225,7 @@ public class NeuralLearner implements Feed, Runnable{
                 for(int tries = 0; tries < 10; tries++){
                     int candidate = (int) (Math.random() * choice);
                     if(Math.random() > 0.25){
-                        candidate = Math.min(choice - 1, choice - (int) (Math.random() * 10));
+                        candidate = Math.max(0, Math.min(choice - 1, choice - (int) (Math.random() * 30)));
                     }
                     if(!used.contains(candidate)){
                         sigElements[i] = candidate;
