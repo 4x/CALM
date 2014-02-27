@@ -2,6 +2,7 @@ package ai.context.learning;
 
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
+import ai.context.feed.synchronised.ISynchFeed;
 import ai.context.feed.synchronised.SynchronisedFeed;
 import scala.actors.threadpool.Arrays;
 
@@ -11,12 +12,13 @@ import java.util.List;
 
 public class SelectLearnerFeed implements LearnerFeed, Feed {
 
-    SynchronisedFeed feed;
+    ISynchFeed feed;
+    private String name;
     private long timeStamp;
     private Integer[] actionElements;
     private Integer[] signalElements;
 
-    public SelectLearnerFeed(SynchronisedFeed feed, Integer[] actionElements, Integer[] signalElements){
+    public SelectLearnerFeed(ISynchFeed feed, Integer[] actionElements, Integer[] signalElements){
         this.feed = feed;
         feed.addChild(this);
 
@@ -59,6 +61,14 @@ public class SelectLearnerFeed implements LearnerFeed, Feed {
         }
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public void setSignalElements(Integer[] signalElements){
         this.signalElements = signalElements;
     }
@@ -72,6 +82,7 @@ public class SelectLearnerFeed implements LearnerFeed, Feed {
     public DataObject readNext() {
 
         FeedObject data = feed.getNextComposite(this);
+        System.out.println("[" +name + "]" + " reads " + data);
         List<Object> content = ((List)data.getData());
         double[] value = new double[actionElements.length];
         for(int i = 0; i < actionElements.length; i++){

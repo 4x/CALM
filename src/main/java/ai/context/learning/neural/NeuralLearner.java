@@ -4,6 +4,8 @@ import ai.context.core.ai.LearnerService;
 import ai.context.core.ai.StateActionPair;
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
+import ai.context.feed.synchronised.ISynchFeed;
+import ai.context.feed.synchronised.SynchFeed;
 import ai.context.feed.synchronised.SynchronisedFeed;
 import ai.context.learning.DataObject;
 import ai.context.learning.SelectLearnerFeed;
@@ -12,16 +14,18 @@ import ai.context.util.common.StateActionInformationTracker;
 
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.regex.Matcher;
 
 import static ai.context.util.mathematics.Discretiser.getLogarithmicDiscretisation;
 
 public class NeuralLearner implements Feed, Runnable{
 
     private NeuronCluster cluster = NeuronCluster.getInstance();
+    private final int id = cluster.getNewID();
     private NeuronRankings neuronRankings = NeuronRankings.getInstance();
     private StimuliRankings stimuliRankings = StimuliRankings.getInstance();
     private long time = 0;
-    private SynchronisedFeed motherFeed;
+    private SynchFeed motherFeed;
     private SelectLearnerFeed learnerFeed;
     private LearnerService core = new LearnerService();
 
@@ -33,6 +37,7 @@ public class NeuralLearner implements Feed, Runnable{
     private long outputFutureOffset = 5 * 60 * 1000L;
     private boolean alive = true;
     private boolean outputConnected = false;
+    private boolean paused = false;
 
     private Integer[] actionElements;
     private Integer[] sigElements;
@@ -42,9 +47,12 @@ public class NeuralLearner implements Feed, Runnable{
     private long latency = 0;
     private long pointsConsumed = 0;
 
-    public NeuralLearner(long[] horizonRange, SynchronisedFeed motherFeed, Integer[] actionElements, Integer[] sigElements, long outputFutureOffset, double resolution){
+    private Integer[] outputElements;
+
+    public NeuralLearner(long[] horizonRange, SynchFeed motherFeed, Integer[] actionElements, Integer[] sigElements, long outputFutureOffset, double resolution){
         this.motherFeed = motherFeed;
         this.learnerFeed = new SelectLearnerFeed(motherFeed, actionElements, sigElements);
+        learnerFeed.setName(id + "");
         this.horizonRange = horizonRange;
         horizon = (long) (Math.random() * (horizonRange[1] - horizonRange[0]) + horizonRange[0]);
         this.outputFutureOffset = outputFutureOffset;
@@ -60,6 +68,13 @@ public class NeuralLearner implements Feed, Runnable{
     public void run() {
         System.out.println(getDescription(0, "") + " started...");
         while (alive){
+            while (paused){
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
             DataObject data = learnerFeed.readNext();
             if(data.getTimeStamp() > time){
                 long tStart = System.currentTimeMillis();
@@ -85,11 +100,22 @@ public class NeuralLearner implements Feed, Runnable{
                 }
                 long eventTime = time + outputFutureOffset;
                 FeedObject output = new FeedObject(eventTime, outputSignal);
-                //System.out.println("Output produced: " + output);
+                System.out.println("["+id+"] Output produced: " + output);
                 queue.add(output);
+
+                if(!outputConnected){
+                    outputConnected = true;
+                    int index = motherFeed.getNumberOfOutputs();
+                    outputElements = new Integer[getNumberOfOutputs()];
+                    for(int i = 0; i < outputElements.length; i++){
+                        outputElements[i] = index + i;
+                    }
+                    motherFeed.addRawFeed(this);
+                }
                 latency = System.currentTimeMillis() - tStart;
             }
         }
+        alive = false;
         queue = null;
         buffers = null;
         learnerFeed = null;
@@ -101,6 +127,9 @@ public class NeuralLearner implements Feed, Runnable{
     }
 
     public void lifeEvent(){
+        if(paused){
+            return;
+        }
         if(cluster.size() < 10 || cluster.getDangerLevel() * Math.random() < 0.1){
             spawn();
         }
@@ -123,6 +152,9 @@ public class NeuralLearner implements Feed, Runnable{
     }
 
     public void updateRankings(){
+        if(paused){
+            return;
+        }
         double score = 0;
         Map<Double, StateActionPair> alphas = core.getAlphaStates();
         double[] stimuliScores = new double[sigElements.length];
@@ -146,6 +178,9 @@ public class NeuralLearner implements Feed, Runnable{
 
     long lastSelect = 0;
     public void selectStimuli(){
+        if(paused){
+            return;
+        }
         if(time - lastSelect > (Math.random() * 5 * 24 * 60 * 60 * 1000)){
             Map<Integer, Double> rankings = MapUtils.reverse(stimuliRankings.getRankings());
             double worseRanking = Double.MAX_VALUE;
@@ -176,7 +211,9 @@ public class NeuralLearner implements Feed, Runnable{
     }
 
     public void spawn(){
-
+        if(paused){
+            return;
+        }
         Integer[] sigElements = new Integer[this.sigElements.length];
         Set<Integer> used = new HashSet<>();
         used.addAll(Arrays.asList(actionElements));
@@ -187,6 +224,9 @@ public class NeuralLearner implements Feed, Runnable{
             if(Math.random() > 0.25){
                 for(int tries = 0; tries < 10; tries++){
                     int candidate = (int) (Math.random() * choice);
+                    if(Math.random() > 0.25){
+                        candidate = Math.min(choice - 1, choice - (int) (Math.random() * 10));
+                    }
                     if(!used.contains(candidate)){
                         sigElements[i] = candidate;
                         used.add(candidate);
@@ -201,8 +241,27 @@ public class NeuralLearner implements Feed, Runnable{
     }
 
     public void die(){
+        if(paused){
+            return;
+        }
         System.out.println(getDescription(0, "") + " dies...");
         alive = false;
+    }
+
+    public int getID(){
+        return id;
+    }
+
+    public void togglePause(){
+        paused = !paused;
+    }
+
+    public boolean isPaused() {
+        return paused;
+    }
+
+    public Integer[][] getFlowData(){
+        return new Integer[][]{actionElements, sigElements, outputElements};
     }
 
     public boolean isAlive() {
@@ -302,10 +361,6 @@ public class NeuralLearner implements Feed, Runnable{
             return new FeedObject(Long.MAX_VALUE, null);
         }
 
-        if(!outputConnected){
-            new SynchronisedFeed(this, motherFeed);
-        }
-
         if(buffers.containsKey(caller) && buffers.get(caller).size() > 0) {
             return buffers.get(caller).pollFirst();
         }
@@ -321,6 +376,7 @@ public class NeuralLearner implements Feed, Runnable{
                 buffers.get(listener).add(feedObject);
             }
         }
+        System.out.println("["+id+"] RETURNING: " + feedObject);
         return feedObject;
     }
 
@@ -341,7 +397,7 @@ public class NeuralLearner implements Feed, Runnable{
 
     @Override
     public String getDescription(int startIndex, String padding) {
-        return padding + "[" + startIndex + "] Neural Learner with Actions: " +  Arrays.asList(actionElements) + " and Signals: " + Arrays.asList(sigElements);
+        return padding + "[" + id + "] Neural Learner with Actions: " +  Arrays.asList(actionElements) + " and Signals: " + Arrays.asList(sigElements);
     }
 
     @Override

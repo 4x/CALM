@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+    <style>
+
+        .link {
+            stroke: rgba(15, 39, 82, 0.5);
+            stroke-width: 2px;
+        }
+
+        .nodeCircle {
+            cursor: move;
+            fill: rgba(82, 14, 14, 0.5);
+            stroke: rgba(240, 91, 91, 0.5);
+            stroke-width: 1.5px;
+        }
+
+        .nodeCircleMotherFeed {
+            cursor: move;
+            fill: rgba(82, 14, 14, 0.95);
+            stroke: rgba(240, 91, 91, 0.5);
+            stroke-width: 1.5px;
+        }
+
+        .node{
+            fill: rgba(0, 0, 0, 0.5);
+        }
+        .node.fixed {
+            fill: white;
+        }
+
+        .nodeText{
+            font-family: monospace;
+            font-size: 10px;
+        }
+
+        body{
+            overflow: hidden;
+        }
+
+        #bar{
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            margin-top: -8px;
+            margin-left: -8px;
+            margin-right: -8px;
+            height: 10px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 10px;
+        }
+
+        .onoffswitch {
+            position: relative; width: 55px;
+            -webkit-user-select:none; -moz-user-select:none; -ms-user-select: none;
+            margin-top: -16px;
+            margin-right: 10px;
+            margin-left: auto;
+        }
+        .onoffswitch-checkbox {
+            display: none;
+        }
+        .onoffswitch-label {
+            display: block; overflow: hidden; cursor: pointer;
+            border: 2px solid #FFFFFF; border-radius: 21px;
+        }
+        .onoffswitch-inner {
+            width: 200%; margin-left: -100%;
+            -moz-transition: margin 0.3s ease-in 0s; -webkit-transition: margin 0.3s ease-in 0s;
+            -o-transition: margin 0.3s ease-in 0s; transition: margin 0.3s ease-in 0s;
+        }
+        .onoffswitch-inner:before, .onoffswitch-inner:after {
+            float: left; width: 50%; height: 16px; padding: 0; line-height: 16px;
+            font-size: 10px; color: white; font-family: Trebuchet, Arial, sans-serif; font-weight: bold;
+            -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box;
+        }
+        .onoffswitch-inner:before {
+            content: "ON";
+            padding-left: 10px;
+            background-color: #1C6623; color: #FFFFFF;
+        }
+        .onoffswitch-inner:after {
+            content: "OFF";
+            padding-right: 10px;
+            background-color: #010724; color: #999999;
+            text-align: right;
+        }
+        .onoffswitch-switch {
+            width: 16px; margin: 0px;
+            background: #000000;
+            border: 2px solid #FFFFFF; border-radius: 21px;
+            position: absolute; top: 0; bottom: 0; right: 35px;
+            -moz-transition: all 0.3s ease-in 0s; -webkit-transition: all 0.3s ease-in 0s;
+            -o-transition: all 0.3s ease-in 0s; transition: all 0.3s ease-in 0s;
+        }
+        .onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-inner {
+            margin-left: 0;
+        }
+        .onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch {
+            right: 0px;
+        }
+
+        .lblPanZoom{
+            font-family: monospace;
+            font-size: 10px;
+            color: white;
+            margin-top: -20px;
+            margin-right: 75px;
+            margin-left: auto;
+            width: 60px;
+        }
+
+    </style>
+    <body onload="load()" style="background-color: darkslategray;">
+        <div id="bar">Dandelion Workspace</div>
+        <div class="lblPanZoom">Pan & Zoom</div>
+        <div class="onoffswitch">
+            <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="panZoomSwitch" checked onchange="togglePanZoom()">
+            <label class="onoffswitch-label" for="panZoomSwitch">
+                <div class="onoffswitch-inner"></div>
+                <div class="onoffswitch-switch"></div>
+            </label>
+        </div>
+    </body>
+
+    <script src="SVGPan.js"></script>
+    <script src="jquery-1.11.0.min.js"></script>
+    <script src="d3.v3.min.js"></script>
+    <script>
+
+    var width = 960,
+        height = 500;
+
+    var force, drag, svg, link, node, graph;
+
+    function load() {
+        if( typeof( window.innerWidth ) == 'number' ) {
+            //Non-IE
+            width = window.innerWidth;
+            height = window.innerHeight;
+        } else if( document.documentElement && ( document.documentElement.clientWidth || document.documentElement.clientHeight ) ) {
+            //IE 6+ in 'standards compliant mode'
+            width = document.documentElement.clientWidth;
+            height = document.documentElement.clientHeight;
+        } else if( document.body && ( document.body.clientWidth || document.body.clientHeight ) ) {
+            //IE 4 compatible
+            width = document.body.clientWidth;
+            height = document.body.clientHeight;
+        }
+
+        force = d3.layout.force()
+            .size([width, height])
+            .charge(-100)
+            .linkDistance(100)
+            .linkStrength(0.1)
+            .on("tick", tick);
+
+        drag = force.drag()
+            .on("dragstart", dragstart);
+
+        svg = d3.select("body").append("svg");
+
+        link = svg.selectAll(".link"),
+        node = svg.selectAll(".node");
+
+        console.log('loading');
+        var xmlhttp;
+        if (window.XMLHttpRequest) { // code for IE7+, Firefox, Chrome, Opera, Safari
+            xmlhttp = new XMLHttpRequest();
+        }
+        else { // code for IE6, IE5
+            xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+        xmlhttp.onreadystatechange = function() {
+            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                draw(xmlhttp.responseText);
+            }
+        }
+        xmlhttp.open("GET", "/info?REQ_TYPE=ALL", true);
+        xmlhttp.send();
+
+        //draw(null)
+    }
+
+    function draw(data){
+        console.log(data);
+        graph = jQuery.parseJSON(data);
+        //graph = {"nodes": [{"x": 0, "y": 0, "name" : "Neuron 44", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 89", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 55", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 50", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 153", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 53", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 83", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 81", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 128", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 49", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 8", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 136", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 28", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 127", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 11", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 52", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 155", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 20", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 82", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 18", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 139", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 86", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 7", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 99", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 151", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 129", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 145", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 25", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 96", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 134", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 113", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 150", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 97", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 107", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 23", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 36", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 90", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 94", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 13", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 106", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 10", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 29", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 17", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 118", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 72", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 35", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 6", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 4", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 132", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 41", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 66", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 84", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 144", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 75", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 71", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 77", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 24", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 100", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 108", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 116", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 148", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 140", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 32", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 19", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 15", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 39", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 157", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 152", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 60", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 130", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 22", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 109", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 9", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 149", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 76", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 37", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 54", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 112", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 48", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 115", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 43", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 87", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 119", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 104", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 95", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 3", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 56", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 47", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 85", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 102", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 67", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 142", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 61", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 110", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 88", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 98", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 69", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 156", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 120", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 122", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 117", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 2", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 93", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 40", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 38", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 133", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 131", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 31", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 91", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 27", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 5", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 78", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 125", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 143", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 141", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 1", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 124", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 114", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 154", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 137", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 45", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 70", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 80", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 111", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 146", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 123", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 135", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 121", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 42", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 51", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 16", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 58", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 21", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 57", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 74", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 62", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 147", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 138", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 65", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 68", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 26", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 46", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 79", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 14", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 63", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 103", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 73", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 59", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 12", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 105", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 101", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 30", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 92", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 64", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 158", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 33", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 126", "score" : 0.0},{"x": 0, "y": 0, "name" : "Neuron 34", "score" : 0.0},{"x": 0, "y": 0, "name" : "MOTHER FEED", "score" : 0.0},{"x": 0, "y": 0, "name" : "DEAD NEURONS", "score" : 0.0}],"links": [{"source": 158, "target": 0},{"source": 101, "target": 0},{"source": 115, "target": 0},{"source": 85, "target": 0},{"source": 158, "target": 1},{"source": 85, "target": 1},{"source": 101, "target": 1},{"source": 158, "target": 2},{"source": 101, "target": 2},{"source": 85, "target": 2},{"source": 158, "target": 3},{"source": 85, "target": 3},{"source": 101, "target": 3},{"source": 158, "target": 4},{"source": 101, "target": 4},{"source": 85, "target": 4},{"source": 158, "target": 5},{"source": 85, "target": 5},{"source": 101, "target": 5},{"source": 158, "target": 6},{"source": 101, "target": 6},{"source": 85, "target": 6},{"source": 158, "target": 7},{"source": 85, "target": 7},{"source": 158, "target": 8},{"source": 85, "target": 8},{"source": 101, "target": 8},{"source": 158, "target": 9},{"source": 101, "target": 9},{"source": 158, "target": 10},{"source": 158, "target": 11},{"source": 85, "target": 11},{"source": 101, "target": 11},{"source": 158, "target": 12},{"source": 101, "target": 12},{"source": 158, "target": 13},{"source": 85, "target": 13},{"source": 101, "target": 13},{"source": 158, "target": 14},{"source": 85, "target": 14},{"source": 158, "target": 15},{"source": 85, "target": 15},{"source": 101, "target": 15},{"source": 158, "target": 16},{"source": 101, "target": 16},{"source": 85, "target": 16},{"source": 158, "target": 17},{"source": 101, "target": 17},{"source": 158, "target": 18},{"source": 85, "target": 18},{"source": 158, "target": 19},{"source": 85, "target": 19},{"source": 101, "target": 19},{"source": 158, "target": 20},{"source": 85, "target": 20},{"source": 101, "target": 20},{"source": 158, "target": 21},{"source": 85, "target": 21},{"source": 47, "target": 21},{"source": 158, "target": 22},{"source": 85, "target": 22},{"source": 101, "target": 22},{"source": 158, "target": 23},{"source": 85, "target": 23},{"source": 101, "target": 23},{"source": 158, "target": 24},{"source": 85, "target": 24},{"source": 101, "target": 24},{"source": 158, "target": 25},{"source": 85, "target": 25},{"source": 101, "target": 25},{"source": 158, "target": 26},{"source": 85, "target": 26},{"source": 101, "target": 26},{"source": 115, "target": 26},{"source": 158, "target": 27},{"source": 85, "target": 27},{"source": 101, "target": 27},{"source": 158, "target": 28},{"source": 85, "target": 28},{"source": 101, "target": 28},{"source": 158, "target": 29},{"source": 101, "target": 29},{"source": 85, "target": 29},{"source": 158, "target": 30},{"source": 85, "target": 30},{"source": 101, "target": 30},{"source": 158, "target": 31},{"source": 85, "target": 31},{"source": 101, "target": 31},{"source": 158, "target": 32},{"source": 101, "target": 32},{"source": 85, "target": 32},{"source": 158, "target": 33},{"source": 85, "target": 33},{"source": 101, "target": 33},{"source": 158, "target": 34},{"source": 101, "target": 34},{"source": 85, "target": 34},{"source": 158, "target": 35},{"source": 85, "target": 35},{"source": 101, "target": 35},{"source": 158, "target": 36},{"source": 101, "target": 36},{"source": 85, "target": 36},{"source": 158, "target": 37},{"source": 85, "target": 37},{"source": 101, "target": 37},{"source": 158, "target": 38},{"source": 85, "target": 38},{"source": 158, "target": 39},{"source": 85, "target": 39},{"source": 158, "target": 40},{"source": 85, "target": 40},{"source": 101, "target": 40},{"source": 47, "target": 40},{"source": 158, "target": 41},{"source": 85, "target": 41},{"source": 101, "target": 41},{"source": 158, "target": 42},{"source": 85, "target": 42},{"source": 101, "target": 42},{"source": 47, "target": 42},{"source": 158, "target": 43},{"source": 85, "target": 43},{"source": 101, "target": 43},{"source": 115, "target": 43},{"source": 158, "target": 44},{"source": 85, "target": 44},{"source": 101, "target": 44},{"source": 158, "target": 45},{"source": 85, "target": 45},{"source": 47, "target": 45},{"source": 158, "target": 46},{"source": 101, "target": 46},{"source": 158, "target": 47},{"source": 158, "target": 48},{"source": 85, "target": 48},{"source": 101, "target": 48},{"source": 158, "target": 49},{"source": 85, "target": 49},{"source": 101, "target": 49},{"source": 158, "target": 50},{"source": 85, "target": 50},{"source": 101, "target": 50},{"source": 158, "target": 51},{"source": 85, "target": 51},{"source": 101, "target": 51},{"source": 158, "target": 52},{"source": 85, "target": 52},{"source": 101, "target": 52},{"source": 158, "target": 53},{"source": 101, "target": 53},{"source": 85, "target": 53},{"source": 158, "target": 54},{"source": 101, "target": 54},{"source": 158, "target": 55},{"source": 85, "target": 55},{"source": 101, "target": 55},{"source": 158, "target": 56},{"source": 85, "target": 56},{"source": 101, "target": 56},{"source": 158, "target": 57},{"source": 85, "target": 57},{"source": 101, "target": 57},{"source": 158, "target": 58},{"source": 85, "target": 58},{"source": 101, "target": 58},{"source": 158, "target": 59},{"source": 85, "target": 59},{"source": 101, "target": 59},{"source": 158, "target": 60},{"source": 85, "target": 60},{"source": 158, "target": 61},{"source": 85, "target": 61},{"source": 101, "target": 61},{"source": 158, "target": 62},{"source": 85, "target": 62},{"source": 101, "target": 62},{"source": 158, "target": 63},{"source": 101, "target": 63},{"source": 85, "target": 63},{"source": 158, "target": 64},{"source": 85, "target": 64},{"source": 47, "target": 64},{"source": 101, "target": 64},{"source": 158, "target": 65},{"source": 85, "target": 65},{"source": 101, "target": 65},{"source": 158, "target": 66},{"source": 85, "target": 66},{"source": 101, "target": 66},{"source": 158, "target": 67},{"source": 85, "target": 67},{"source": 101, "target": 67},{"source": 158, "target": 68},{"source": 85, "target": 68},{"source": 158, "target": 69},{"source": 85, "target": 69},{"source": 158, "target": 70},{"source": 101, "target": 70},{"source": 85, "target": 70},{"source": 158, "target": 71},{"source": 85, "target": 71},{"source": 101, "target": 71},{"source": 158, "target": 72},{"source": 85, "target": 72},{"source": 101, "target": 72},{"source": 158, "target": 73},{"source": 85, "target": 73},{"source": 101, "target": 73},{"source": 158, "target": 74},{"source": 85, "target": 74},{"source": 101, "target": 74},{"source": 158, "target": 75},{"source": 85, "target": 75},{"source": 101, "target": 75},{"source": 158, "target": 76},{"source": 85, "target": 76},{"source": 101, "target": 76},{"source": 158, "target": 77},{"source": 101, "target": 77},{"source": 85, "target": 77},{"source": 158, "target": 78},{"source": 85, "target": 78},{"source": 101, "target": 78},{"source": 158, "target": 79},{"source": 101, "target": 79},{"source": 85, "target": 79},{"source": 158, "target": 80},{"source": 85, "target": 80},{"source": 101, "target": 80},{"source": 158, "target": 81},{"source": 85, "target": 81},{"source": 101, "target": 81},{"source": 158, "target": 82},{"source": 101, "target": 82},{"source": 85, "target": 82},{"source": 158, "target": 83},{"source": 85, "target": 83},{"source": 158, "target": 84},{"source": 101, "target": 84},{"source": 85, "target": 84},{"source": 158, "target": 85},{"source": 158, "target": 86},{"source": 101, "target": 86},{"source": 85, "target": 86},{"source": 158, "target": 87},{"source": 85, "target": 87},{"source": 101, "target": 87},{"source": 158, "target": 88},{"source": 101, "target": 88},{"source": 85, "target": 88},{"source": 158, "target": 89},{"source": 85, "target": 89},{"source": 158, "target": 90},{"source": 85, "target": 90},{"source": 101, "target": 90},{"source": 158, "target": 91},{"source": 85, "target": 91},{"source": 101, "target": 91},{"source": 158, "target": 92},{"source": 85, "target": 92},{"source": 101, "target": 92},{"source": 158, "target": 93},{"source": 101, "target": 93},{"source": 85, "target": 93},{"source": 158, "target": 94},{"source": 85, "target": 94},{"source": 101, "target": 94},{"source": 158, "target": 95},{"source": 85, "target": 95},{"source": 158, "target": 96},{"source": 85, "target": 96},{"source": 101, "target": 96},{"source": 158, "target": 97},{"source": 85, "target": 97},{"source": 101, "target": 97},{"source": 158, "target": 98},{"source": 85, "target": 98},{"source": 158, "target": 99},{"source": 101, "target": 99},{"source": 115, "target": 99},{"source": 85, "target": 99},{"source": 158, "target": 100},{"source": 85, "target": 100},{"source": 101, "target": 100},{"source": 158, "target": 101},{"source": 158, "target": 102},{"source": 85, "target": 102},{"source": 158, "target": 103},{"source": 85, "target": 103},{"source": 101, "target": 103},{"source": 158, "target": 104},{"source": 101, "target": 104},{"source": 85, "target": 104},{"source": 158, "target": 105},{"source": 85, "target": 105},{"source": 101, "target": 105},{"source": 158, "target": 106},{"source": 85, "target": 106},{"source": 101, "target": 106},{"source": 158, "target": 107},{"source": 85, "target": 107},{"source": 158, "target": 108},{"source": 85, "target": 108},{"source": 101, "target": 108},{"source": 158, "target": 109},{"source": 101, "target": 109},{"source": 85, "target": 109},{"source": 158, "target": 110},{"source": 158, "target": 111},{"source": 101, "target": 111},{"source": 115, "target": 111},{"source": 85, "target": 111},{"source": 158, "target": 112},{"source": 85, "target": 112},{"source": 101, "target": 112},{"source": 158, "target": 113},{"source": 85, "target": 113},{"source": 101, "target": 113},{"source": 158, "target": 114},{"source": 85, "target": 114},{"source": 158, "target": 115},{"source": 158, "target": 116},{"source": 85, "target": 116},{"source": 158, "target": 117},{"source": 85, "target": 117},{"source": 101, "target": 117},{"source": 47, "target": 117},{"source": 158, "target": 118},{"source": 85, "target": 118},{"source": 158, "target": 119},{"source": 101, "target": 119},{"source": 85, "target": 119},{"source": 158, "target": 120},{"source": 85, "target": 120},{"source": 158, "target": 121},{"source": 85, "target": 121},{"source": 158, "target": 122},{"source": 85, "target": 122},{"source": 101, "target": 122},{"source": 158, "target": 123},{"source": 101, "target": 123},{"source": 85, "target": 123},{"source": 158, "target": 124},{"source": 101, "target": 124},{"source": 85, "target": 124},{"source": 158, "target": 125},{"source": 85, "target": 125},{"source": 101, "target": 125},{"source": 158, "target": 126},{"source": 85, "target": 126},{"source": 101, "target": 126},{"source": 158, "target": 127},{"source": 101, "target": 127},{"source": 85, "target": 127},{"source": 158, "target": 128},{"source": 85, "target": 128},{"source": 101, "target": 128},{"source": 158, "target": 129},{"source": 85, "target": 129},{"source": 101, "target": 129},{"source": 158, "target": 130},{"source": 101, "target": 130},{"source": 85, "target": 130},{"source": 158, "target": 131},{"source": 85, "target": 131},{"source": 101, "target": 131},{"source": 158, "target": 132},{"source": 85, "target": 132},{"source": 101, "target": 132},{"source": 158, "target": 133},{"source": 101, "target": 133},{"source": 85, "target": 133},{"source": 158, "target": 134},{"source": 101, "target": 134},{"source": 85, "target": 134},{"source": 158, "target": 135},{"source": 101, "target": 135},{"source": 85, "target": 135},{"source": 158, "target": 136},{"source": 101, "target": 136},{"source": 85, "target": 136},{"source": 158, "target": 137},{"source": 101, "target": 137},{"source": 85, "target": 137},{"source": 158, "target": 138},{"source": 85, "target": 138},{"source": 47, "target": 138},{"source": 101, "target": 138},{"source": 158, "target": 139},{"source": 85, "target": 139},{"source": 101, "target": 139},{"source": 158, "target": 140},{"source": 101, "target": 140},{"source": 85, "target": 140},{"source": 158, "target": 141},{"source": 85, "target": 141},{"source": 101, "target": 141},{"source": 158, "target": 142},{"source": 85, "target": 142},{"source": 101, "target": 142},{"source": 47, "target": 142},{"source": 158, "target": 143},{"source": 85, "target": 143},{"source": 101, "target": 143},{"source": 158, "target": 144},{"source": 85, "target": 144},{"source": 101, "target": 144},{"source": 158, "target": 145},{"source": 101, "target": 145},{"source": 85, "target": 145},{"source": 158, "target": 146},{"source": 85, "target": 146},{"source": 101, "target": 146},{"source": 158, "target": 147},{"source": 85, "target": 147},{"source": 101, "target": 147},{"source": 158, "target": 148},{"source": 85, "target": 148},{"source": 101, "target": 148},{"source": 158, "target": 149},{"source": 101, "target": 149},{"source": 85, "target": 149},{"source": 158, "target": 150},{"source": 85, "target": 150},{"source": 47, "target": 150},{"source": 158, "target": 151},{"source": 85, "target": 151},{"source": 101, "target": 151},{"source": 158, "target": 152},{"source": 85, "target": 152},{"source": 158, "target": 153},{"source": 85, "target": 153},{"source": 101, "target": 153},{"source": 158, "target": 154},{"source": 85, "target": 154},{"source": 101, "target": 154},{"source": 158, "target": 155},{"source": 85, "target": 155},{"source": 101, "target": 155},{"source": 158, "target": 156},{"source": 85, "target": 156},{"source": 101, "target": 156},{"source": 158, "target": 157},{"source": 85, "target": 157},{"source": 101, "target": 157}]};
+        force
+            .nodes(graph.nodes)
+            .links(graph.links)
+            .start();
+
+        link = link.data(graph.links)
+            .enter().append("line")
+            .attr("class", "link");
+
+        node = node.data(graph.nodes)
+            .enter().append("g")
+            .attr("class", "node")
+            .on("dblclick", dblclick)
+            .on("mouseover", hover)
+            .call(drag);
+
+        node.append("text")
+            .attr("dx", 13)
+            .attr("dy", ".31em")
+            .attr("class", "nodeText")
+            .text(function(d) { return d.name });
+
+        node.append("circle")
+            .attr("r", 12)
+            .attr("class",
+                function(d) {
+                    if(d.name == 'MOTHER FEED'){
+                        return 'nodeCircleMotherFeed';
+                    }
+                    else{
+                        return 'nodeCircle';
+                    }
+                }
+            )
+            .attr("style",
+                function(d) {
+                    var red = parseInt(Math.min((1.0 - d.score) * 255, 255));
+                    var green = 255 - red;
+
+                    var toReturn = "fill : rgba(" + red + "," + green + ",0, 0.5)";
+                    if(d.name == 'MOTHER FEED'){
+                        toReturn = "fill: rgba(82, 14, 14, 0.95)";
+                    }
+                    return toReturn;
+                }
+            );
+
+        groupAndSVGPan();
+    }
+
+    function groupAndSVGPan(){
+        root = document.getElementsByTagName('svg')[0];
+        var children = [];
+        var iChild = 0;
+        while (root.firstChild) {
+            children[iChild] = root.firstChild;
+            root.removeChild(root.firstChild);
+            iChild++;
+        }
+
+        svg.append("g").attr("id", "viewport");
+        var newGroup = document.getElementById("viewport");
+        for(var i = 0; i < children.length; i++){
+            newGroup.appendChild(children[i]);
+        }
+
+        root.appendChild(newGroup);
+        setupHandlers(root);
+    }
+
+    function tick() {
+        node.attr("transform", function(d) {
+            var fX = (width - 100) * d.score + 50;
+            return "translate(" + (d.x + fX) + "," + d.y + ")";
+        });
+
+        link.attr("x1", function(d) { var fX = (width - 100) * d.source.score + 50; return (d.source.x + fX); })
+            .attr("y1", function(d) { return d.source.y; })
+            .attr("x2", function(d) { var fX = (width - 100) * d.target.score + 50; return (d.target.x + fX); })
+            .attr("y2", function(d) { return d.target.y; });
+    }
+
+    function dblclick(d) {
+        d3.select(this).classed("fixed", d.fixed = false);
+    }
+
+    function dragstart(d) {
+        d3.select(this).classed("fixed", d.fixed = true);
+    }
+
+    function hover(d){
+        console.log("Hover: " + d.name);
+    }
+
+    var panZoomOn = true;
+    function togglePanZoom(){
+        panZoomOn = !panZoomOn;
+        console.log(panZoomOn);
+        if(panZoomOn){
+            root.setAttribute("onmouseup","handleMouseUp(evt)");
+            root.setAttribute("onmousedown","handleMouseDown(evt)");
+            root.setAttribute("onmousemove","handleMouseMove(evt)");
+        }
+        else{
+            root.removeAttribute("onmouseup");
+            root.removeAttribute("onmousedown");
+            root.removeAttribute("onmousemove");
+        }
+    }
+
+    </script>
+</html>

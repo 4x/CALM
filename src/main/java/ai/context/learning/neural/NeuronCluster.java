@@ -1,5 +1,8 @@
 package ai.context.learning.neural;
 
+import ai.context.feed.synchronised.SynchFeed;
+import ai.context.feed.synchronised.SynchronisedFeed;
+import ai.context.util.common.MapUtils;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.server.JettyServer;
 import ai.context.util.server.servlets.NeuralClusterInformationServlet;
@@ -8,11 +11,16 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class NeuronCluster {
 
+    private NeuronRankings rankings = NeuronRankings.getInstance();
+    private SynchFeed motherFeed;
     private JettyServer server = new JettyServer(8000);
     private static volatile NeuronCluster instance = null;
+    private AtomicInteger newID = new AtomicInteger(0);
+
     private NeuronCluster(){
         service.submit(environmentCheck);
         PropertiesHolder.maxPopulation = 200;
@@ -49,6 +57,10 @@ public class NeuronCluster {
     public void start(NeuralLearner neuron){
         neurons.add(neuron);
         service.execute(neuron);
+    }
+
+    public void setMotherFeed(SynchFeed motherFeed){
+        this.motherFeed = motherFeed;
     }
 
     public double getDangerLevel() {
@@ -94,5 +106,86 @@ public class NeuronCluster {
 
     public int size() {
         return neurons.size();
+    }
+
+    public String getClusterStateJSON(){
+        Map<NeuralLearner, Double> scores = MapUtils.reverse(rankings.getRankings());
+        Map<Integer, String> feedSources = new HashMap<>();
+        for(int i = 0; i < motherFeed.getNumberOfOutputs(); i++){
+            feedSources.put(i, "MOTHER FEED");
+        }
+
+        Map<String, Integer> neuronMapping = new HashMap<>();
+        String nodes = "\"nodes\": [";
+        int iNeuron = 0;
+        for(NeuralLearner neuron : neurons){
+            String id = "Neuron " + neuron.getID();
+            neuronMapping.put(id, iNeuron);
+            iNeuron++;
+            if(neuron.getFlowData()[2] != null){
+                for(int i : neuron.getFlowData()[2]){
+                    feedSources.put(i, id);
+                }
+            }
+            double score = 0;
+            if(scores.containsKey(neuron)){
+                score = scores.get(neuron);
+            }
+            score = Math.min(score, 1.0);
+            score = Math.max(score, 0.0);
+            if((score + "").equals("NaN")){
+                score = 0.0;
+            }
+            nodes += "{\"x\": 0, \"y\": 0, " +
+                    "\"name\" : \"" + id + "\", " +
+                    "\"score\" : " + score +
+                    "},";
+        }
+        nodes += "{\"x\": 0, \"y\": 0, \"name\" : \"MOTHER FEED\", \"score\" : 0.0},";
+        nodes += "{\"x\": 0, \"y\": 0, \"name\" : \"DEAD NEURONS\", \"score\" : 0.0}";
+        nodes += "]";
+        neuronMapping.put("MOTHER FEED", iNeuron);
+        neuronMapping.put("DEAD NEURONS", iNeuron++);
+
+        HashSet<String> existingLinks = new HashSet<>();
+
+        String links = "\"links\": [";
+        for(NeuralLearner neuron : neurons){
+            String id = "Neuron " + neuron.getID();
+            for(int i : neuron.getFlowData()[0]){
+                Integer source = neuronMapping.get(feedSources.get(i));
+                if(source == null){
+                    source = iNeuron;
+                }
+                String newLink = "{\"source\": "+source
+                        +", \"target\": "+neuronMapping.get(id)
+                        +"},";
+                if(!existingLinks.contains(newLink)){
+                    existingLinks.add(newLink);
+                    links += newLink;
+                }
+            }
+
+            for(int i : neuron.getFlowData()[1]){
+                Integer source = neuronMapping.get(feedSources.get(i));
+                if(source == null){
+                    source = iNeuron;
+                }
+                String newLink = "{\"source\": "+source
+                        +", \"target\": "+neuronMapping.get(id)
+                        +"},";
+                if(!existingLinks.contains(newLink)){
+                    existingLinks.add(newLink);
+                    links += newLink;
+                }
+            }
+        }
+        links = links.substring(0, links.length() - 1);
+        links += "]";
+        return "{" + nodes + "," + links + "}";
+    }
+
+    public int getNewID() {
+        return newID.incrementAndGet();
     }
 }

@@ -12,7 +12,8 @@ public class JettyServer extends Server{
         super(port);
 
         webapp.setContextPath("/");
-        webapp.setWar("/");
+        webapp.setWar(JettyServer.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+
         webapp.setServer(this);
         this.setHandler(webapp);
     }

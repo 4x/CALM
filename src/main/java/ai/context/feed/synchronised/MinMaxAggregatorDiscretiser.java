@@ -15,8 +15,7 @@ import java.util.List;
 
 public class MinMaxAggregatorDiscretiser implements Feed {
 
-
-    private SynchronisedFeed feed;
+    private ISynchFeed feed;
     private long criticalMass = 10000;
     private int clusters = 5;
 
@@ -28,7 +27,7 @@ public class MinMaxAggregatorDiscretiser implements Feed {
 
     private boolean lockable = false;
 
-    public MinMaxAggregatorDiscretiser(SynchronisedFeed feed, long criticalMass, int clusters) {
+    public MinMaxAggregatorDiscretiser(ISynchFeed feed, long criticalMass, int clusters) {
         this.feed = feed;
         this.criticalMass = criticalMass;
         this.clusters = clusters;

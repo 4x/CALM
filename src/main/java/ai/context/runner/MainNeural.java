@@ -7,6 +7,7 @@ import ai.context.feed.surgical.ExtractOneFromListFeed;
 import ai.context.feed.surgical.FXHLDiffFeed;
 import ai.context.feed.surgical.FXModuloFeed;
 import ai.context.feed.synchronised.MinMaxAggregatorDiscretiser;
+import ai.context.feed.synchronised.SynchFeed;
 import ai.context.feed.synchronised.SynchronisedFeed;
 import ai.context.feed.transformer.compound.AmplitudeWavelengthTransformer;
 import ai.context.feed.transformer.compound.SubtractTransformer;
@@ -38,7 +39,8 @@ public class MainNeural {
 
     public void setup(String path){
 
-        SynchronisedFeed motherFeed = initFeed(path, null);
+        SynchFeed motherFeed = initFeed(path, null);
+        NeuronCluster.getInstance().setMotherFeed(motherFeed);
 
         long[] horizonRange = new long[]{60 * 60 * 1000L, 24 * 60 * 60 * 1000L};
         Integer[] actionElements = new Integer[]{3, 1, 2, 0};
@@ -50,7 +52,8 @@ public class MainNeural {
         }
         availableStimuli.removeAll(Arrays.asList(actionElements));
 
-        for(int i = 0 ; i < 20; i++){
+        Set<NeuralLearner> seeds = new HashSet<>();
+        for(int i = 0 ; i < 5; i++){
             Integer[] sigElements = new Integer[6];
             for(int sig = 0; sig < sigElements.length; sig++){
                 List<Integer> available = new ArrayList<>(availableStimuli);
@@ -58,13 +61,15 @@ public class MainNeural {
                 availableStimuli.remove(chosenSig);
                 sigElements[sig] = chosenSig;
             }
-            NeuralLearner seed = new NeuralLearner(horizonRange, motherFeed, actionElements, sigElements, outputFutureOffset, resolution);
+            seeds.add(new NeuralLearner(horizonRange, motherFeed, actionElements, sigElements, outputFutureOffset, resolution));
+        }
+        for(NeuralLearner seed : seeds){
             NeuronCluster.getInstance().start(seed);
         }
         NeuronCluster.getInstance().startServer();
     }
 
-    private SynchronisedFeed initFeed(String path, Learner learner){
+    private SynchFeed initFeed(String path, Learner learner){
         DataType[] typesCalendar = new DataType[]{
                 DataType.OTHER,
                 DataType.OTHER,
@@ -120,7 +125,7 @@ public class MainNeural {
         CSVFeed feedPriceCHF = new CSVFeed(path + "feeds/USDCHF.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  dateFP);
 
 
-        SynchronisedFeed feed = buildSynchFeed(null, feedPriceEUR);
+        SynchFeed feed = buildSynchFeed(null, feedPriceEUR);
         feed = buildSynchFeed(feed, feedPriceGBP);
         feed = buildSynchFeed(feed, feedPriceCHF);
 
@@ -132,7 +137,6 @@ public class MainNeural {
         TimeVariablesAppenderFeed tFeed = new TimeVariablesAppenderFeed(sFeed);
         sFeed.addChild(tFeed);
 
-        feed = new SynchronisedFeed(feedPriceEUR, null);
         /*feed = addToSynchFeed(feed, f1, 25, 100);
         feed = addToSynchFeed(feed, f2, 0.1, 0);
         feed = addToSynchFeed(feed, f3, 0.1, 0);
@@ -144,23 +148,28 @@ public class MainNeural {
         feed = addToSynchFeed(feed, f9, 0.1, 0);
         feed = addToSynchFeed(feed, f10, 0.1, 0);
         feed = addToSynchFeed(feed, f11, 0.1, 0);*/
-        feed = new SynchronisedFeed(tFeed, feed);
+        SynchFeed synchFeed = new SynchFeed();
+        synchFeed.addRawFeed(feedPriceEUR);
+        synchFeed.addRawFeed(tFeed);
 
         int i = 0;
         while (true){
-            FeedObject data = feed.getNextComposite(this);
+            FeedObject data = synchFeed.getNextComposite(this);
             i++;
 
-            if(i  == 10000) {
+            if(i  == 5000) {
                 break;
             }
 
             System.out.println(new Date(data.getTimeStamp()) + " " + data);
         }
-        return feed;
+        return synchFeed;
     }
 
-    private SynchronisedFeed buildSynchFeed( SynchronisedFeed synch, CSVFeed ... feeds) {
+    private SynchFeed buildSynchFeed(SynchFeed synch, CSVFeed ... feeds) {
+        if(synch == null){
+            synch = new SynchFeed();
+        }
         for(CSVFeed feed : feeds){
             ExtractOneFromListFeed feedH = new ExtractOneFromListFeed(feed, 1);
             feed.addChild(feedH);
@@ -336,112 +345,112 @@ public class MainNeural {
             /*synch = new SynchronisedFeed(feedH, synch);
             synch = new SynchronisedFeed(feedL, synch);
             synch = new SynchronisedFeed(feedC, synch);*/
-            synch = new SynchronisedFeed(feedV, synch);
+            synch.addRawFeed(feedV);
 
-            synch = new SynchronisedFeed(mmdT1, synch);
-            synch = new SynchronisedFeed(mmdT2, synch);
-            synch = new SynchronisedFeed(mmdT3, synch);
-            synch = new SynchronisedFeed(mmdT4, synch);
-            synch = new SynchronisedFeed(mmdT5, synch);
+            synch.addRawFeed(mmdT1);
+            synch.addRawFeed(mmdT2);
+            synch.addRawFeed(mmdT3);
+            synch.addRawFeed(mmdT4);
+            synch.addRawFeed(mmdT5);
 
             /*RadarOnlineTransformer r1 = new RadarOnlineTransformer(100, feedL, feedH, feedC, 0.0001);
             RadarOnlineTransformer r2 = new RadarOnlineTransformer(200, feedL, feedH, feedC, 0.0001);
             RadarOnlineTransformer r3 = new RadarOnlineTransformer(400, feedL, feedH, feedC, 0.0001);
             RadarOnlineTransformer r4 = new RadarOnlineTransformer(800, feedL, feedH, feedC, 0.0001);
 
-            synch = new SynchronisedFeed(r1, synch);
-            synch = new SynchronisedFeed(r2, synch);
-            synch = new SynchronisedFeed(r3, synch);
-            synch = new SynchronisedFeed(r4, synch);*/
+            synch.addRawFeed(r1);
+            synch.addRawFeed(r2);
+            synch.addRawFeed(r3);
+            synch.addRawFeed(r4);*/
 
-            /*synch = new SynchronisedFeed(dH, synch);
-            synch = new SynchronisedFeed(dL, synch);
-            synch = new SynchronisedFeed(dC, synch);
-            synch = new SynchronisedFeed(dV, synch);
+            /*synch.addRawFeed(dH);
+            synch.addRawFeed(dL);
+            synch.addRawFeed(dC);
+            synch.addRawFeed(dV);
 
-            synch = new SynchronisedFeed(dH1, synch);
-            synch = new SynchronisedFeed(dL1, synch);
-            synch = new SynchronisedFeed(dC1, synch);
-            synch = new SynchronisedFeed(dV1, synch);
+            synch.addRawFeed(dH1);
+            synch.addRawFeed(dL1);
+            synch.addRawFeed(dC1);
+            synch.addRawFeed(dV1);
 
-            synch = new SynchronisedFeed(dH2, synch);
-            synch = new SynchronisedFeed(dL2, synch);
-            synch = new SynchronisedFeed(dC2, synch);
-            synch = new SynchronisedFeed(dV2, synch);*/
+            synch.addRawFeed(dH2);
+            synch.addRawFeed(dL2);
+            synch.addRawFeed(dC2);
+            synch.addRawFeed(dV2);*/
 
-            //synch = new SynchronisedFeed(dH3, synch);
-            //synch = new SynchronisedFeed(dL3, synch);
-            //synch = new SynchronisedFeed(dC3, synch);
-            //synch = new SynchronisedFeed(dV3, synch);
+            //synch.addRawFeed(dH3);
+            //synch.addRawFeed(dL3);
+            //synch.addRawFeed(dC3);
+            //synch.addRawFeed(dV3);
 
-            //synch = new SynchronisedFeed(dH4, synch);
-            //synch = new SynchronisedFeed(dL4, synch);
-            //synch = new SynchronisedFeed(dC4, synch);
-            //synch = new SynchronisedFeed(dV4, synch);
+            //synch.addRawFeed(dH4);
+            //synch.addRawFeed(dL4);
+            //synch.addRawFeed(dC4);
+            //synch.addRawFeed(dV4);
 
-            //synch = new SynchronisedFeed(dH5, synch);
-            //synch = new SynchronisedFeed(dL5, synch);
-            //synch = new SynchronisedFeed(dC5, synch);
-            //synch = new SynchronisedFeed(dV5, synch);
+            //synch.addRawFeed(dH5);
+            //synch.addRawFeed(dL5);
+            //synch.addRawFeed(dC5);
+            //synch.addRawFeed(dV5);
 
-            //synch = new SynchronisedFeed(dH6, synch);
-            //synch = new SynchronisedFeed(dL6, synch);
-            //synch = new SynchronisedFeed(dC6, synch);
-            //synch = new SynchronisedFeed(dV6, synch);
+            //synch.addRawFeed(dH6);
+            //synch.addRawFeed(dL6);
+            //synch.addRawFeed(dC6);
+            //synch.addRawFeed(dV6);
 
-            synch = new SynchronisedFeed(feedDiff, synch);
-            synch = new SynchronisedFeed(feedModulo, synch);
+            synch.addRawFeed(feedDiff);
+            synch.addRawFeed(feedModulo);
 
-            synch = new SynchronisedFeed(stdLH1, synch);
-            synch = new SynchronisedFeed(stdLL1, synch);
-            synch = new SynchronisedFeed(stdLV1, synch);
+            synch.addRawFeed(stdLH1);
+            synch.addRawFeed(stdLL1);
+            synch.addRawFeed(stdLV1);
 
-            /*synch = new SynchronisedFeed(stdFeedH2, synch);
-            synch = new SynchronisedFeed(stdFeedL2, synch);
-            synch = new SynchronisedFeed(stdFeedV2, synch);*/
+            /*synch.addRawFeed(stdFeedH2);
+            synch.addRawFeed(stdFeedL2);
+            synch.addRawFeed(stdFeedV2);*/
 
-            synch = new SynchronisedFeed(stdLH3, synch);
-            synch = new SynchronisedFeed(stdLL3, synch);
-            //synch = new SynchronisedFeed(stdFeedV3, synch);
+            synch.addRawFeed(stdLH3);
+            synch.addRawFeed(stdLL3);
+            //synch.addRawFeed(stdFeedV3);
 
-            synch = new SynchronisedFeed(awFeedH, synch);
-            synch = new SynchronisedFeed(awFeedL, synch);
-            synch = new SynchronisedFeed(awFeedV, synch);
-            //synch = new SynchronisedFeed(awFeedH2, synch);
-            //synch = new SynchronisedFeed(awFeedL2, synch);
+            synch.addRawFeed(awFeedH);
+            synch.addRawFeed(awFeedL);
+            synch.addRawFeed(awFeedV);
+            //synch.addRawFeed(awFeedH2);
+            //synch.addRawFeed(awFeedL2);
 
-            synch = new SynchronisedFeed(awFeedH50, synch);
-            synch = new SynchronisedFeed(awFeedL50, synch);
-            //synch = new SynchronisedFeed(awFeedV50, synch);
-            synch = new SynchronisedFeed(awFeedH2_50, synch);
-            synch = new SynchronisedFeed(awFeedL2_50, synch);
+            synch.addRawFeed(awFeedH50);
+            synch.addRawFeed(awFeedL50);
+            //synch.addRawFeed(awFeedV50);
+            synch.addRawFeed(awFeedH2_50);
+            synch.addRawFeed(awFeedL2_50);
 
-            synch = new SynchronisedFeed(awFeedH100, synch);
-            synch = new SynchronisedFeed(awFeedL100, synch);
-            //synch = new SynchronisedFeed(awFeedV100, synch);
-            //synch = new SynchronisedFeed(awFeedH2_100, synch);
-            //synch = new SynchronisedFeed(awFeedL2_100, synch);
+            synch.addRawFeed(awFeedH100);
+            synch.addRawFeed(awFeedL100);
+            //synch.addRawFeed(awFeedV100);
+            //synch.addRawFeed(awFeedH2_100);
+            //synch.addRawFeed(awFeedL2_100);
 
-            /*synch = new SynchronisedFeed(rsiH, synch);
-            synch = new SynchronisedFeed(rsiL, synch);
-            synch = new SynchronisedFeed(crossH1, synch);
-            synch = new SynchronisedFeed(crossL1, synch);*/
-            /*synch = new SynchronisedFeed(rsiH2, synch);
-            synch = new SynchronisedFeed(rsiL2, synch);
-            synch = new SynchronisedFeed(crossH2, synch);
-            synch = new SynchronisedFeed(crossL2, synch);*/
-            synch = new SynchronisedFeed(rsiH3, synch);
-            synch = new SynchronisedFeed(rsiL3, synch);
-            synch = new SynchronisedFeed(crossH3, synch);
-            synch = new SynchronisedFeed(crossL3, synch);
-            /*synch = new SynchronisedFeed(rsiH4, synch);
-            synch = new SynchronisedFeed(rsiL4, synch);
-            synch = new SynchronisedFeed(crossH4, synch);
-            synch = new SynchronisedFeed(crossL4, synch);*/
-            synch = new SynchronisedFeed(rsiH5, synch);
-            synch = new SynchronisedFeed(rsiL5, synch);
-            synch = new SynchronisedFeed(crossH5, synch);
-            synch = new SynchronisedFeed(crossL5, synch);
+            /*synch.addRawFeed(rsiH);
+            synch.addRawFeed(rsiL);
+            synch.addRawFeed(crossH1);
+            synch.addRawFeed(crossL1);*/
+            /*synch.addRawFeed(rsiH2);
+            synch.addRawFeed(rsiL2);
+            synch.addRawFeed(crossH2);
+            synch.addRawFeed(crossL2);*/
+            synch.addRawFeed(rsiH3);
+            synch.addRawFeed(rsiL3);
+            synch.addRawFeed(crossH3);
+            synch.addRawFeed(crossL3);
+            /*synch.addRawFeed(rsiH4);
+            synch.addRawFeed(rsiL4);
+            synch.addRawFeed(crossH4);
+            synch.addRawFeed(crossL4);*/
+            synch.addRawFeed(rsiH5);
+            synch.addRawFeed(rsiL5);
+            synch.addRawFeed(crossH5);
+            synch.addRawFeed(crossL5);
         }
         return synch;
     }

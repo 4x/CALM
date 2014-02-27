@@ -8,15 +8,28 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Map;
 
 public class NeuralClusterInformationServlet extends HttpServlet{
 
     private NeuronCluster cluster = NeuronCluster.getInstance();
 
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        super.doGet(req, resp);
-
-        resp.setContentType("text/plain");
+        resp.setContentType("application/json");
         PrintWriter out = resp.getWriter();
+        processRequestAndWriteResponse(req, out);
+    }
+
+    public static String REQ_TYPE = "REQ_TYPE";
+    public static String GET_ALL_INFO = "ALL";
+    private void processRequestAndWriteResponse(HttpServletRequest req, PrintWriter out) {
+        Map<String, String[]> pMap = req.getParameterMap();
+        if(pMap.containsKey(REQ_TYPE)){
+            String reqType = pMap.get(REQ_TYPE)[0];
+
+            if(reqType.equals(GET_ALL_INFO)){
+                out.print(cluster.getClusterStateJSON());
+            }
+        }
     }
 }
