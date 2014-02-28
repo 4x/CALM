@@ -59,4 +59,8 @@ public class NeuronRankings {
             rankings.remove(neurons.remove(neuron));
         }
     }
+
+    public double getScoreForNeuron(NeuralLearner neuron){
+        return neurons.get(neuron);
+    }
 }

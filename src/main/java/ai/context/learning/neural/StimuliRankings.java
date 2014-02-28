@@ -20,8 +20,8 @@ public class StimuliRankings {
 
     private Set<Integer> stimuli = new TreeSet<>();
     private Map<Double, Integer> rankings;
-    private ConcurrentHashMap<Object,HashMap<Integer, Double>> scores = new ConcurrentHashMap();
-    public void update(Object updater, HashMap<Integer, Double> stimuliScores){
+    private ConcurrentHashMap<NeuralLearner,HashMap<Integer, Double>> scores = new ConcurrentHashMap();
+    public void update(NeuralLearner updater, HashMap<Integer, Double> stimuliScores){
         rankings = null;
         scores.put(updater, stimuliScores);
     }
@@ -31,12 +31,14 @@ public class StimuliRankings {
             return rankings;
         }
         Map<Integer, Double> tmpScores = new HashMap<>();
-        for(HashMap<Integer, Double> subScores : scores.values()){
+        for(Map.Entry<NeuralLearner,HashMap<Integer, Double>> entryS : scores.entrySet()){
+            HashMap<Integer, Double> subScores = entryS.getValue();
+            double nScore = NeuronRankings.getInstance().getScoreForNeuron(entryS.getKey());
             for(Map.Entry<Integer, Double> entry : subScores.entrySet()){
                 if(!tmpScores.containsKey(entry.getKey())){
                     tmpScores.put(entry.getKey(), 0.0);
                 }
-                tmpScores.put(entry.getKey(), tmpScores.get(entry.getKey()) + entry.getValue());
+                tmpScores.put(entry.getKey(), tmpScores.get(entry.getKey()) + nScore * entry.getValue());
             }
         }
 
