@@ -1,8 +1,6 @@
 package ai.context.learning.neural;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class StimuliRankings {
@@ -20,6 +18,7 @@ public class StimuliRankings {
         return instance;
     }
 
+    private Set<Integer> stimuli = new TreeSet<>();
     private Map<Double, Integer> rankings;
     private ConcurrentHashMap<Object,HashMap<Integer, Double>> scores = new ConcurrentHashMap();
     public void update(Object updater, HashMap<Integer, Double> stimuliScores){
@@ -47,5 +46,23 @@ public class StimuliRankings {
         }
 
         return rankings = sorted.descendingMap();
+    }
+
+    public void newStimuli(Integer[] stimuli){
+        this.stimuli.addAll(Arrays.asList(stimuli));
+    }
+
+    public void removeAllStimuli(NeuralLearner deadNeuron, Integer[] stimuli){
+        scores.remove(deadNeuron);
+        rankings = null;
+        this.stimuli.removeAll(Arrays.asList(stimuli));
+    }
+
+    public Set<Integer> getStimuli(){
+        return stimuli;
+    }
+
+    public void newStimuli(Collection<Integer> stimuli) {
+        this.stimuli.addAll(stimuli);
     }
 }

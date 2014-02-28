@@ -82,7 +82,7 @@ public class SelectLearnerFeed implements LearnerFeed, Feed {
     public DataObject readNext() {
 
         FeedObject data = feed.getNextComposite(this);
-        System.out.println("[" +name + "]" + " reads " + data);
+        //System.out.println("[" +name + "]" + " reads " + data);
         List<Object> content = ((List)data.getData());
         double[] value = new double[actionElements.length];
         for(int i = 0; i < actionElements.length; i++){

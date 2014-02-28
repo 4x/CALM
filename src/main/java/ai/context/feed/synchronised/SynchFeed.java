@@ -14,7 +14,7 @@ public class SynchFeed implements ISynchFeed{
     private List<RawFeedWrapper> rawFeeds = new CopyOnWriteArrayList<>();
 
     @Override
-    public FeedObject getNextComposite(Object caller) {
+    public synchronized FeedObject getNextComposite(Object caller) {
         if (buffers.containsKey(caller) && buffers.get(caller).size() > 0) {
             return buffers.get(caller).pollFirst();
         }

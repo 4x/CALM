@@ -2,6 +2,7 @@ package ai.context.feed.synchronised;
 
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
+import ai.context.learning.neural.NeuralLearner;
 
 import java.util.List;
 
@@ -17,16 +18,20 @@ public class RawFeedWrapper implements Feed{
         this.latestData = rawFeed.readNext(this);
     }
 
-    public FeedObject getLatestDataAtTime(long time){
+    public synchronized FeedObject getLatestDataAtTime(long time){
         FeedObject toReturn = new FeedObject(time, null);
         if(latestData.getTimeStamp() <= time){
-            comingData = rawFeed.readNext(this);
-            while(comingData.getTimeStamp() <= time){
-                latestData = comingData;
+            if(comingData == null && (!(rawFeed instanceof NeuralLearner) || rawFeed.hasNext())){
                 comingData = rawFeed.readNext(this);
             }
-            toReturn = latestData;
-            latestData = comingData;
+
+            if(comingData != null){
+                while ((!(rawFeed instanceof NeuralLearner) || rawFeed.hasNext()) && comingData.getTimeStamp() <= time){
+                    latestData = comingData;
+                    comingData = rawFeed.readNext(this);
+                }
+            }
+            toReturn = new FeedObject(time, latestData.getData());
         }
         return toReturn;
     }

@@ -22,6 +22,7 @@ import ai.context.feed.transformer.single.unpadded.LogarithmicDiscretiser;
 import ai.context.learning.Learner;
 import ai.context.learning.neural.NeuralLearner;
 import ai.context.learning.neural.NeuronCluster;
+import ai.context.learning.neural.StimuliRankings;
 import scala.actors.threadpool.Arrays;
 
 import java.util.*;
@@ -51,6 +52,7 @@ public class MainNeural {
             availableStimuli.add(i);
         }
         availableStimuli.removeAll(Arrays.asList(actionElements));
+        StimuliRankings.getInstance().newStimuli(availableStimuli);
 
         Set<NeuralLearner> seeds = new HashSet<>();
         for(int i = 0 ; i < 5; i++){

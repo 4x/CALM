@@ -21,6 +21,8 @@ public class NeuronCluster {
     private static volatile NeuronCluster instance = null;
     private AtomicInteger newID = new AtomicInteger(0);
 
+    private Map<Integer, NeuralLearner> outputToNeuron = new HashMap<>();
+
     private NeuronCluster(){
         service.submit(environmentCheck);
         PropertiesHolder.maxPopulation = 200;
@@ -73,6 +75,14 @@ public class NeuronCluster {
             while (true){
                 try {
                     Thread.sleep((long) (Math.random() * 10000));
+                    outputToNeuron.clear();
+                    for(NeuralLearner neuron : neurons){
+                        if(neuron.getFlowData()[2] != null){
+                            for(int i : neuron.getFlowData()[2]){
+                                outputToNeuron.put(i, neuron);
+                            }
+                        }
+                    }
                     totalPointsConsumed = 0;
                     double latency = 0;
                     Set<NeuralLearner> toRemove = new HashSet<>();
@@ -183,6 +193,10 @@ public class NeuronCluster {
         links = links.substring(0, links.length() - 1);
         links += "]";
         return "{" + nodes + "," + links + "}";
+    }
+
+    public NeuralLearner getNeuronForOutput(int sig){
+        return outputToNeuron.get(sig);
     }
 
     public int getNewID() {

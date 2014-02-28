@@ -22,14 +22,14 @@
         }
 
         .node{
-            fill: rgba(0, 0, 0, 0.5);
+            fill: rgba(255, 255, 255, 0.5);
         }
         .node.fixed {
-            fill: white;
+            fill: orange;
         }
 
         .nodeText{
-            font-family: monospace;
+            font-family: "Lucida Console", Monaco, monospace;
             font-size: 10px;
         }
 
@@ -45,7 +45,7 @@
             margin-right: -8px;
             height: 10px;
             padding: 10px;
-            font-family: monospace;
+            font-family: "Lucida Console", Monaco, monospace;
             font-size: 10px;
         }
 
@@ -100,7 +100,7 @@
         }
 
         .lblPanZoom{
-            font-family: monospace;
+            font-family: "Lucida Console", Monaco, monospace;
             font-size: 10px;
             color: white;
             margin-top: -20px;
@@ -111,7 +111,7 @@
 
     </style>
     <body onload="load()" style="background-color: darkslategray;">
-        <div id="bar">Dandelion Workspace</div>
+        <div id="bar"><strong>DANDELION WORKSPACE</strong></div>
         <div class="lblPanZoom">Pan & Zoom</div>
         <div class="onoffswitch">
             <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="panZoomSwitch" checked onchange="togglePanZoom()">
@@ -257,13 +257,13 @@
 
     function tick() {
         node.attr("transform", function(d) {
-            var fX = (width - 100) * d.score + 50;
+            var fX = -width/2 + (width - 200) * d.score + 100;
             return "translate(" + (d.x + fX) + "," + d.y + ")";
         });
 
-        link.attr("x1", function(d) { var fX = (width - 100) * d.source.score + 50; return (d.source.x + fX); })
+        link.attr("x1", function(d) { var fX = -width/2 + (width - 200) * d.source.score + 100; return (d.source.x + fX); })
             .attr("y1", function(d) { return d.source.y; })
-            .attr("x2", function(d) { var fX = (width - 100) * d.target.score + 50; return (d.target.x + fX); })
+            .attr("x2", function(d) { var fX = -width/2 + (width - 200) * d.target.score + 100; return (d.target.x + fX); })
             .attr("y2", function(d) { return d.target.y; });
     }
 
