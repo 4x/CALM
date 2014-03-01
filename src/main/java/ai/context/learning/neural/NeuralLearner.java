@@ -131,7 +131,7 @@ public class NeuralLearner implements Feed, Runnable{
         if(paused){
             return;
         }
-        if(cluster.size() < 10 || cluster.getDangerLevel() < 2 && cluster.getDangerLevel() * Math.random() < 0.1){
+        if(cluster.size() < 20 || cluster.getDangerLevel() < 2 && cluster.getDangerLevel() * Math.random() < 0.25){
             spawn();
         }
         else if(pointsConsumed > 5000){
@@ -200,7 +200,7 @@ public class NeuralLearner implements Feed, Runnable{
             double level = 0;
             int chosen = sigElements[worstSigPos];
             for(Map.Entry<Integer, Double> entry : rankings.entrySet()){
-                if(entry.getValue() * Math.random() > level * Math.random()){
+                if(entry.getValue() > 4 * worseRanking && entry.getValue() > level * Math.random()){
                     level = entry.getValue() * 2;
                     chosen = entry.getKey();
                 }

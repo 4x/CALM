@@ -25,7 +25,7 @@ public class NeuronCluster {
 
     private NeuronCluster(){
         service.submit(environmentCheck);
-        PropertiesHolder.maxPopulation = 200;
+        PropertiesHolder.maxPopulation = 100;
         PropertiesHolder.tolerance = 0.1;
 
         server.addServlet(NeuralClusterInformationServlet.class, "info");
@@ -51,7 +51,7 @@ public class NeuronCluster {
     }
 
     private long totalPointsConsumed = 0;
-    private long minLatency = 100L;
+    private long minLatency = 75L;
     private double dangerLevel = 1;
     private ExecutorService service = Executors.newCachedThreadPool();
     private Set<NeuralLearner> neurons = Collections.newSetFromMap(new ConcurrentHashMap<NeuralLearner, Boolean>());
