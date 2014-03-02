@@ -64,6 +64,7 @@ public class NeuralLearner implements Feed, Runnable{
         System.out.println("New Neuron: " + getDescription(0, ""));
     }
 
+    private long tStart = System.currentTimeMillis();;
     @Override
     public void run() {
         System.out.println(getDescription(0, "") + " started...");
@@ -77,7 +78,7 @@ public class NeuralLearner implements Feed, Runnable{
             }
             DataObject data = learnerFeed.readNext();
             if(data.getTimeStamp() > time){
-                long tStart = System.currentTimeMillis();
+                tStart = System.currentTimeMillis();
                 time = data.getTimeStamp();
                 while(!trackers.isEmpty() && trackers.get(0).getTimeStamp() < (time - horizon)){
                     StateActionInformationTracker tracker = trackers.remove(0);
@@ -113,7 +114,7 @@ public class NeuralLearner implements Feed, Runnable{
                     stimuliRankings.newStimuli(outputElements);
                     motherFeed.addRawFeed(this);
                 }
-                latency = System.currentTimeMillis() - tStart;
+                latency = (long) ((0.75 * latency) + (0.25 * (System.currentTimeMillis() - tStart)));
             }
         }
         alive = false;
@@ -131,7 +132,7 @@ public class NeuralLearner implements Feed, Runnable{
         if(paused){
             return;
         }
-        if(cluster.size() < 20 || cluster.getDangerLevel() < 2 && cluster.getDangerLevel() * Math.random() < 0.25){
+        if(cluster.size() < 20 || cluster.getDangerLevel() < 2 && cluster.getDangerLevel() * Math.random() < 0.1){
             spawn();
         }
         else if(pointsConsumed > 5000){
@@ -162,7 +163,7 @@ public class NeuralLearner implements Feed, Runnable{
         Map<Double, StateActionPair> alphas = core.getAlphaStates();
         double[] stimuliScores = new double[sigElements.length];
         for(Map.Entry<Double, StateActionPair> entry: alphas.entrySet()){
-            score += entry.getKey();
+            score += Math.pow(entry.getKey(), 2);
             int i = 0;
             for(double weight : core.getCorrelationWeightsForState(entry.getValue())){
                 stimuliScores[i] += entry.getKey() * weight;

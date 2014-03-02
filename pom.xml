@@ -30,7 +30,7 @@
                         </descriptorRefs>
                         <archive>
                             <manifest>
-                                <mainClass>ai.context.runner.Main</mainClass>
+                                <mainClass>ai.context.runner.MainNeural</mainClass>
                             </manifest>
                         </archive>
                     </configuration>

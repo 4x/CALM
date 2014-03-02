@@ -298,7 +298,7 @@ public class LearnerService {
             minDevForMerge = 4 * (minDev + maxDev) / getMaxPopulation();
         }
         else if(minDevForMerge < 0){
-            minDevForMerge = maxDev / getMaxPopulation();
+            minDevForMerge = Math.max(1, maxDev);
         }
 
         long t = System.currentTimeMillis();

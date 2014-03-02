@@ -163,7 +163,7 @@ public class MainNeural {
                 break;
             }
 
-            System.out.println(new Date(data.getTimeStamp()) + " " + data);
+            //System.out.println(new Date(data.getTimeStamp()) + " " + data);
         }
         return synchFeed;
     }

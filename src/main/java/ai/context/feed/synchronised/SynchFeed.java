@@ -63,6 +63,10 @@ public class SynchFeed implements ISynchFeed{
         rawFeeds.add(new RawFeedWrapper(rawFeed));
     }
 
+    public void removeRawFeed(Feed rawFeed){
+        //TODO
+    }
+
     public void refreshTimes(){
         TreeSet<Long> times = new TreeSet<>();
         for(RawFeedWrapper wrapper : rawFeeds){

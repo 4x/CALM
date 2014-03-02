@@ -17,7 +17,7 @@ public class NeuronCluster {
 
     private NeuronRankings rankings = NeuronRankings.getInstance();
     private SynchFeed motherFeed;
-    private JettyServer server = new JettyServer(8000);
+    private JettyServer server = new JettyServer(8055);
     private static volatile NeuronCluster instance = null;
     private AtomicInteger newID = new AtomicInteger(0);
 
