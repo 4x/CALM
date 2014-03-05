@@ -54,7 +54,7 @@ public class NeuronCluster {
     }
 
     private long totalPointsConsumed = 0;
-    private long minLatency = 50L;
+    private long minLatency = 25L;
     private double dangerLevel = 1;
     private ExecutorService service = Executors.newCachedThreadPool();
     private Set<NeuralLearner> neurons = Collections.newSetFromMap(new ConcurrentHashMap<NeuralLearner, Boolean>());
@@ -75,57 +75,57 @@ public class NeuronCluster {
     private Runnable environmentCheck = new Runnable() {
         @Override
         public void run() {
-            while (true){
-                try {
-                    Thread.sleep(1000);
-                    outputToNeuron.clear();
-                    for(NeuralLearner neuron : neurons){
-                        if(neuron.getFlowData()[2] != null){
-                            for(int i : neuron.getFlowData()[2]){
-                                outputToNeuron.put(i, neuron);
-                            }
+        while (true){
+            try {
+                Thread.sleep(1000);
+                outputToNeuron.clear();
+                for(NeuralLearner neuron : neurons){
+                    if(neuron.getFlowData()[2] != null){
+                        for(int i : neuron.getFlowData()[2]){
+                            outputToNeuron.put(i, neuron);
                         }
                     }
-                    totalPointsConsumed = 0;
-                    double latency = 0;
-                    long meanT= 0;
-                    Set<NeuralLearner> toRemove = new HashSet<>();
-                    for(NeuralLearner neuron : neurons){
-                        if(!neuron.isAlive()){
-                            toRemove.add(neuron);
-                        }
-                        else {
-                            latency += neuron.getLatency();
-                            neuron.updateRankings();
-                            totalPointsConsumed += neuron.getPointsConsumed();
-                            //System.err.println(neuron.getDescription(0, "") + ": Latency: " + neuron.getLatency() + " Time: " + new Date(neuron.getLatestTime()));
-                            meanT += neuron.getLatestTime();
-                        }
-                    }
-
-                    for(NeuralLearner removed : toRemove){
-                        for(NeuralLearner neuron : neurons){
-                            neuron.inputsRemoved(removed.getFlowData()[2]);
-                        }
-                        neurons.remove(removed);
-                        motherFeed.removeRawFeed(removed);
-                    }
-                    stimuliRankings.clearAndRepopulateStimuli(motherFeed.getNumberOfOutputs());
-
-                    meanTime = meanT/neurons.size();
-                    latency /= neurons.size();
-                    System.err.println("Mean Latency: " + latency + ", Points Consumed: " + totalPointsConsumed + ", Overall Score: " + rankings.getOverallMarking());
-                    dangerLevel = latency/minLatency;
-
-                    for(NeuralLearner neuron : neurons){
-                        if(Math.random() > 0.95){
-                            neuron.lifeEvent();
-                        }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
                 }
+                totalPointsConsumed = 0;
+                double latency = 0;
+                long meanT= 0;
+                Set<NeuralLearner> toRemove = new HashSet<>();
+                for(NeuralLearner neuron : neurons){
+                    if(!neuron.isAlive()){
+                        toRemove.add(neuron);
+                    }
+                    else {
+                        latency += neuron.getLatency();
+                        neuron.updateRankings();
+                        totalPointsConsumed += neuron.getPointsConsumed();
+                        //System.err.println(neuron.getDescription(0, "") + ": Latency: " + neuron.getLatency() + " Time: " + new Date(neuron.getLatestTime()));
+                        meanT += neuron.getLatestTime();
+                    }
+                }
+
+                for(NeuralLearner removed : toRemove){
+                    for(NeuralLearner neuron : neurons){
+                        neuron.inputsRemoved(removed.getFlowData()[2]);
+                    }
+                    neurons.remove(removed);
+                    motherFeed.removeRawFeed(removed);
+                }
+                stimuliRankings.clearAndRepopulateStimuli(motherFeed.getNumberOfOutputs());
+
+                meanTime = meanT/neurons.size();
+                latency /= neurons.size();
+                System.err.println("Mean Latency: " + latency + ", Points Consumed: " + totalPointsConsumed + ", Overall Score: " + rankings.getOverallMarking());
+                dangerLevel = latency/minLatency;
+
+                for(NeuralLearner neuron : neurons){
+                    if(Math.random() > 0.95){
+                        neuron.lifeEvent();
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
+        }
         }
     };
 
