@@ -63,4 +63,12 @@ public class NeuronRankings {
     public double getScoreForNeuron(NeuralLearner neuron){
         return neurons.get(neuron);
     }
+
+    public double getOverallMarking(){
+        double score = 0;
+        for(double subScore : neurons.values()){
+            score += subScore;
+        }
+        return score/neurons.size();
+    }
 }

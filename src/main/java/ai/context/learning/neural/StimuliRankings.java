@@ -67,4 +67,12 @@ public class StimuliRankings {
     public void newStimuli(Collection<Integer> stimuli) {
         this.stimuli.addAll(stimuli);
     }
+
+    public void clearAndRepopulateStimuli(int nStimuli){
+        stimuli.clear();
+        scores.clear();
+        for(int i = 0; i < nStimuli; i++){
+            stimuli.add(i);
+        }
+    }
 }

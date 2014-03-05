@@ -16,12 +16,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class NeuronCluster {
 
     private NeuronRankings rankings = NeuronRankings.getInstance();
+    private StimuliRankings stimuliRankings = StimuliRankings.getInstance();
     private SynchFeed motherFeed;
     private JettyServer server = new JettyServer(8055);
     private static volatile NeuronCluster instance = null;
     private AtomicInteger newID = new AtomicInteger(0);
 
     private Map<Integer, NeuralLearner> outputToNeuron = new HashMap<>();
+
+    private long meanTime = 0;
 
     private NeuronCluster(){
         service.submit(environmentCheck);
@@ -85,6 +88,7 @@ public class NeuronCluster {
                     }
                     totalPointsConsumed = 0;
                     double latency = 0;
+                    long meanT= 0;
                     Set<NeuralLearner> toRemove = new HashSet<>();
                     for(NeuralLearner neuron : neurons){
                         if(!neuron.isAlive()){
@@ -94,12 +98,23 @@ public class NeuronCluster {
                             latency += neuron.getLatency();
                             neuron.updateRankings();
                             totalPointsConsumed += neuron.getPointsConsumed();
-                            System.err.println(neuron.getDescription(0, "") + ": Latency: " + neuron.getLatency() + " Time: " + new Date(neuron.getLatestTime()));
+                            //System.err.println(neuron.getDescription(0, "") + ": Latency: " + neuron.getLatency() + " Time: " + new Date(neuron.getLatestTime()));
+                            meanT += neuron.getLatestTime();
                         }
                     }
-                    neurons.removeAll(toRemove);
+
+                    for(NeuralLearner removed : toRemove){
+                        for(NeuralLearner neuron : neurons){
+                            neuron.inputsRemoved(removed.getFlowData()[2]);
+                        }
+                        neurons.remove(removed);
+                        motherFeed.removeRawFeed(removed);
+                    }
+                    stimuliRankings.clearAndRepopulateStimuli(motherFeed.getNumberOfOutputs());
+
+                    meanTime = meanT/neurons.size();
                     latency /= neurons.size();
-                    System.err.println("Mean Latency: " + latency + ", Points Consumed: " + totalPointsConsumed);
+                    System.err.println("Mean Latency: " + latency + ", Points Consumed: " + totalPointsConsumed + ", Overall Score: " + rankings.getOverallMarking());
                     dangerLevel = latency/minLatency;
 
                     for(NeuralLearner neuron : neurons){
@@ -201,5 +216,9 @@ public class NeuronCluster {
 
     public int getNewID() {
         return newID.incrementAndGet();
+    }
+
+    public long getMeanTime(){
+        return meanTime;
     }
 }

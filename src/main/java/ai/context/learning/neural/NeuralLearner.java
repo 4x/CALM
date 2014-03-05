@@ -34,6 +34,7 @@ public class NeuralLearner implements Feed, Runnable{
     private List<StateActionInformationTracker> trackers = new LinkedList<>();
 
     private final long horizon;
+    private long oneHour = 60 * 60 * 1000L;
     private long outputFutureOffset = 5 * 60 * 1000L;
     private boolean alive = true;
     private boolean outputConnected = false;
@@ -64,14 +65,14 @@ public class NeuralLearner implements Feed, Runnable{
         System.out.println("New Neuron: " + getDescription(0, ""));
     }
 
-    private long tStart = System.currentTimeMillis();;
+    private long tStart = System.currentTimeMillis();
     @Override
     public void run() {
         System.out.println(getDescription(0, "") + " started...");
         while (alive){
-            while (paused){
+            while (paused || (cluster.getMeanTime() > 0 && (time - cluster.getMeanTime()) > oneHour)){
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(1);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -389,6 +390,27 @@ public class NeuralLearner implements Feed, Runnable{
         }
         //System.out.println("["+id+"] RETURNING: " + feedObject);
         return feedObject;
+    }
+
+    public void inputsRemoved(Integer[] inputs){
+        if(actionElements[0] > inputs[inputs.length - 1]){
+            for(int i = 0; i < actionElements.length; i++){
+                actionElements[i] = actionElements[i] - inputs.length;
+            }
+            learnerFeed.setActionElements(actionElements, sigElements);
+        }
+        if(sigElements[0] > inputs[inputs.length - 1]){
+            for(int i = 0; i < sigElements.length; i++){
+                sigElements[i] = sigElements[i] - inputs.length;
+            }
+        }
+        learnerFeed.setActionElements(actionElements, sigElements);
+
+        if(outputElements[0] > inputs[inputs.length - 1]){
+            for(int i = 0; i < outputElements.length; i++){
+                outputElements[i] = outputElements[i] - inputs.length;
+            }
+        }
     }
 
     @Override
