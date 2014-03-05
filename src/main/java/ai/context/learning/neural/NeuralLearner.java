@@ -397,14 +397,15 @@ public class NeuralLearner implements Feed, Runnable{
             for(int i = 0; i < actionElements.length; i++){
                 actionElements[i] = actionElements[i] - inputs.length;
             }
-            learnerFeed.setActionElements(actionElements, sigElements);
         }
         if(sigElements[0] > inputs[inputs.length - 1]){
             for(int i = 0; i < sigElements.length; i++){
                 sigElements[i] = sigElements[i] - inputs.length;
             }
         }
-        learnerFeed.setActionElements(actionElements, sigElements);
+        if(learnerFeed != null){
+            learnerFeed.setActionElements(actionElements, sigElements);
+        }
 
         if(outputElements[0] > inputs[inputs.length - 1]){
             for(int i = 0; i < outputElements.length; i++){
