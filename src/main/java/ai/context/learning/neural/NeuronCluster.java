@@ -54,7 +54,7 @@ public class NeuronCluster {
     }
 
     private long totalPointsConsumed = 0;
-    private long minLatency = 75L;
+    private long minLatency = 50L;
     private double dangerLevel = 1;
     private ExecutorService service = Executors.newCachedThreadPool();
     private Set<NeuralLearner> neurons = Collections.newSetFromMap(new ConcurrentHashMap<NeuralLearner, Boolean>());
@@ -77,7 +77,7 @@ public class NeuronCluster {
         public void run() {
             while (true){
                 try {
-                    Thread.sleep((long) (Math.random() * 10000));
+                    Thread.sleep(1000);
                     outputToNeuron.clear();
                     for(NeuralLearner neuron : neurons){
                         if(neuron.getFlowData()[2] != null){
