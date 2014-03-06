@@ -54,7 +54,7 @@ public class NeuronCluster {
     }
 
     private long totalPointsConsumed = 0;
-    private long minLatency = 25L;
+    private long minLatency = 10L;
     private double dangerLevel = 1;
     private ExecutorService service = Executors.newCachedThreadPool();
     private Set<NeuralLearner> neurons = Collections.newSetFromMap(new ConcurrentHashMap<NeuralLearner, Boolean>());
@@ -104,10 +104,10 @@ public class NeuronCluster {
                 }
 
                 for(NeuralLearner removed : toRemove){
+                    neurons.remove(removed);
                     for(NeuralLearner neuron : neurons){
                         neuron.inputsRemoved(removed.getFlowData()[2]);
                     }
-                    neurons.remove(removed);
                     motherFeed.removeRawFeed(removed);
                 }
                 stimuliRankings.clearAndRepopulateStimuli(motherFeed.getNumberOfOutputs());

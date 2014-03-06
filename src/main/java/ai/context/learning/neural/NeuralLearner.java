@@ -186,7 +186,7 @@ public class NeuralLearner implements Feed, Runnable{
         if(paused){
             return;
         }
-        if(time - lastSelect > (Math.random() * 30 * 24 * 60 * 60 * 1000)){
+        if(time - lastSelect > (Math.random() * 10 * 86400000L)){
             Map<Integer, Double> rankings = MapUtils.reverse(stimuliRankings.getRankings());
             double worseRanking = Double.MAX_VALUE;
             int worstSigPos = 0;
@@ -248,7 +248,7 @@ public class NeuralLearner implements Feed, Runnable{
     }
 
     public void die(){
-        if(paused && time - lastSelect > (Math.random() * 15 * 86400000L)){
+        if(paused && time - lastSelect > (Math.random() * 20 * 86400000L)){
             return;
         }
         System.out.println(getDescription(0, "") + " dies...");
@@ -393,13 +393,13 @@ public class NeuralLearner implements Feed, Runnable{
     }
 
     public void inputsRemoved(Integer[] inputs){
-        if(actionElements[0] > inputs[inputs.length - 1]){
-            for(int i = 0; i < actionElements.length; i++){
+        for(int i = 0; i < actionElements.length; i++){
+            if(actionElements[i] > inputs[inputs.length - 1]){
                 actionElements[i] = actionElements[i] - inputs.length;
             }
         }
-        if(sigElements[0] > inputs[inputs.length - 1]){
-            for(int i = 0; i < sigElements.length; i++){
+        for(int i = 0; i < sigElements.length; i++){
+            if(sigElements[i] > inputs[inputs.length - 1]){
                 sigElements[i] = sigElements[i] - inputs.length;
             }
         }

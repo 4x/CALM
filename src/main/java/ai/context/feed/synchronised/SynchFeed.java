@@ -12,6 +12,7 @@ public class SynchFeed implements ISynchFeed{
     private long time = 0;
     private Map<Feed, LinkedList<FeedObject>> buffers = new ConcurrentHashMap<>();
     private List<RawFeedWrapper> rawFeeds = new CopyOnWriteArrayList<>();
+    private Map<Feed, RawFeedWrapper> mapping = new ConcurrentHashMap<>();
 
     @Override
     public synchronized FeedObject getNextComposite(Object caller) {
@@ -60,11 +61,13 @@ public class SynchFeed implements ISynchFeed{
     }
 
     public void addRawFeed(Feed rawFeed){
-        rawFeeds.add(new RawFeedWrapper(rawFeed));
+        RawFeedWrapper wrapper = new RawFeedWrapper(rawFeed);
+        mapping.put(rawFeed, wrapper);
+        rawFeeds.add(wrapper);
     }
 
     public void removeRawFeed(Feed rawFeed){
-        //TODO
+        rawFeeds.remove(mapping.remove(rawFeed));
     }
 
     public void refreshTimes(){
