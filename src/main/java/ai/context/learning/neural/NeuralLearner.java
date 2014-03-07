@@ -137,19 +137,26 @@ public class NeuralLearner implements Feed, Runnable{
             spawn();
         }
         else if(pointsConsumed > 5000){
-            if(cluster.getDangerLevel() * Math.random() < 1.5){
+            if(cluster.getDangerLevel() * Math.random() < 2.5){
                 selectStimuli();
             }
             else {
                 double rank = 0;
+                double total = 0;
+                boolean found = false;
                 for(NeuralLearner neuron : neuronRankings.getRankings().values()){
-                    rank++;
-                    if(this == neuron){
-                        break;
+                    if(neuron.getPointsConsumed() > 5000){
+                        total++;
+                        if(!found){
+                            rank++;
+                        }
+                        if(this == neuron){
+                            found = true;
+                        }
                     }
                 }
 
-                if(cluster.size() > 10 && rank/neuronRankings.getRankings().size() < 0.25){
+                if(total > 10 && rank/total < 0.25){
                     die();
                 }
             }
@@ -183,37 +190,35 @@ public class NeuralLearner implements Feed, Runnable{
 
     long lastSelect = 0;
     public void selectStimuli(){
-        if(paused){
+        if(paused || time - lastSelect < (Math.random() * 10 * 86400000L)){
             return;
         }
-        if(time - lastSelect > (Math.random() * 10 * 86400000L)){
-            Map<Integer, Double> rankings = MapUtils.reverse(stimuliRankings.getRankings());
-            double worseRanking = Double.MAX_VALUE;
-            int worstSigPos = 0;
-            for(int i = 0; i < sigElements.length; i++){
-                int sig = sigElements[i];
-                if(rankings.containsKey(sig) && rankings.get(sig) < worseRanking){
-                    worseRanking = rankings.get(sig);
-                    worstSigPos = i;
-                }
+        Map<Integer, Double> rankings = MapUtils.reverse(stimuliRankings.getRankings());
+        double worseRanking = Double.MAX_VALUE;
+        int worstSigPos = 0;
+        for(int i = 0; i < sigElements.length; i++){
+            int sig = sigElements[i];
+            if(rankings.containsKey(sig) && rankings.get(sig) < worseRanking){
+                worseRanking = rankings.get(sig);
+                worstSigPos = i;
             }
-            rankings.keySet().removeAll(Arrays.asList(sigElements));
-            rankings.keySet().retainAll(stimuliRankings.getStimuli());
-            double level = 0;
-            int chosen = sigElements[worstSigPos];
-            for(Map.Entry<Integer, Double> entry : rankings.entrySet()){
-                if(entry.getValue() > 4 * worseRanking && entry.getValue() > level * Math.random()){
-                    level = entry.getValue() * 2;
-                    chosen = entry.getKey();
-                }
-            }
-            if(chosen != sigElements[worstSigPos]){
-                System.out.println(getDescription(0, "") + " replaced signal at position " + worstSigPos + " (" + sigElements[worstSigPos] + " -> " + chosen + ")");
-                sigElements[worstSigPos] = chosen;
-                lastSelect = time;
-            }
-            learnerFeed.setSignalElements(sigElements);
         }
+        rankings.keySet().removeAll(Arrays.asList(sigElements));
+        rankings.keySet().retainAll(stimuliRankings.getStimuli());
+        double level = 0;
+        int chosen = sigElements[worstSigPos];
+        for(Map.Entry<Integer, Double> entry : rankings.entrySet()){
+            if(entry.getValue() > 2 * worseRanking && entry.getValue() > level * Math.random()){
+                level = entry.getValue() * 2;
+                chosen = entry.getKey();
+            }
+        }
+        if(chosen != sigElements[worstSigPos]){
+            System.out.println(getDescription(0, "") + " replaced signal at position " + worstSigPos + " (" + sigElements[worstSigPos] + " -> " + chosen + ")");
+            sigElements[worstSigPos] = chosen;
+            lastSelect = time;
+        }
+        learnerFeed.setSignalElements(sigElements);
     }
 
     public void spawn(){
@@ -248,7 +253,7 @@ public class NeuralLearner implements Feed, Runnable{
     }
 
     public void die(){
-        if(paused && time - lastSelect > (Math.random() * 20 * 86400000L)){
+        if(paused || time - lastSelect < (Math.random() * 10 * 86400000L)){
             return;
         }
         System.out.println(getDescription(0, "") + " dies...");
