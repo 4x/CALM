@@ -43,7 +43,11 @@ public class LearnerService {
         @Override
         public void run() {
             if (!merging) {
-                thisService.mergeStates();
+                try {
+                    thisService.mergeStates();
+                } catch (LearningException e) {
+                    e.printStackTrace();
+                }
             }
         }
     };
@@ -130,7 +134,7 @@ public class LearnerService {
         PropertiesHolder.copulaToUniversal = copulaToUniversal;
     }
 
-    public synchronized void addStateAction(int[] state, double movement) {
+    public synchronized void addStateAction(int[] state, double movement) throws LearningException {
 
         int actionClass = (int) (movement / actionResolution);
         if (!distribution.containsKey(actionClass)) {
@@ -292,13 +296,13 @@ public class LearnerService {
         return Math.pow((max - x) / (max - min), 4);
     }
 
-    private synchronized void mergeStates() {
+    private synchronized void mergeStates() throws LearningException {
         merging = true;
         if (minDevForMerge == -1) {
             minDevForMerge = 4 * (minDev + maxDev) / getMaxPopulation();
         }
         else if(minDevForMerge < 0){
-            minDevForMerge = Math.max(1, maxDev);
+            throw new LearningException("Negative Deviation For Merge");
         }
 
         long t = System.currentTimeMillis();

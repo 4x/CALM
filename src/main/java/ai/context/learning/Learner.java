@@ -3,6 +3,7 @@ package ai.context.learning;
 import ai.context.builder.LearnerServiceBuilder;
 import ai.context.container.TimedContainer;
 import ai.context.core.ai.LearnerService;
+import ai.context.core.ai.LearningException;
 import ai.context.core.ai.StateActionPair;
 import ai.context.util.learning.ClusteredCopulae;
 import ai.context.util.mathematics.CorrelationCalculator;
@@ -106,8 +107,14 @@ public class Learner implements Runnable, TimedContainer{
 
                 if(recentAggregators.get(t).getMax() != null){
 
-                    learner.addStateAction(s, recentAggregators.get(t).getMax());
-                    learner.addStateAction(s, recentAggregators.get(t).getMin());
+                    try {
+                        learner.addStateAction(s, recentAggregators.get(t).getMax());
+                        learner.addStateAction(s, recentAggregators.get(t).getMin());
+                    } catch (LearningException e) {
+                        System.err.println("Learning exception: " + e.getReason());
+                        alive = false;
+                        break;
+                    }
                     //learner.addStateAction(s, data.getValue()[3] - recentData.firstEntry().getValue().getValue()[3]);
 
                     recentAggregators.remove(t);

@@ -1,6 +1,7 @@
 package ai.context;
 
 import ai.context.core.ai.LearnerService;
+import ai.context.core.ai.LearningException;
 import ai.context.util.analysis.SuccessMap;
 import ai.context.util.measurement.LoggerTimer;
 import org.junit.Before;
@@ -38,7 +39,11 @@ public class TestLearning {
             signal = getRandomSignal();
 
             double movement = getBlackBoxMovement(signal);
-            learner.addStateAction(signal, movement);
+            try {
+                learner.addStateAction(signal, movement);
+            } catch (LearningException e) {
+                e.printStackTrace();
+            }
             System.out.println("Learned: point " + i + ": Signal: " + getStringFromSignal(signal) + " Movement: "+ movement);
         }
 

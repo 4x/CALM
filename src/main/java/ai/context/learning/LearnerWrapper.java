@@ -1,6 +1,7 @@
 package ai.context.learning;
 
 import ai.context.core.ai.LearnerService;
+import ai.context.core.ai.LearningException;
 import ai.context.core.ai.StateActionPair;
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
@@ -99,8 +100,14 @@ public class LearnerWrapper {
                             }
 
                             int[] nowSignal = now.getSignal();
-                            learner.addStateAction(nowSignal, maxNegMovement);
-                            learner.addStateAction(nowSignal, maxPosMovement);
+                            try {
+                                learner.addStateAction(nowSignal, maxNegMovement);
+                                learner.addStateAction(nowSignal, maxPosMovement);
+                            } catch (LearningException e) {
+                                System.err.println("Learning exception: " + e.getReason());
+                                killed = true;
+                                break;
+                            }
                         }
                     }
                     else {

@@ -1,6 +1,7 @@
 package ai.context.learning.neural;
 
 import ai.context.core.ai.LearnerService;
+import ai.context.core.ai.LearningException;
 import ai.context.core.ai.StateActionPair;
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
@@ -70,52 +71,58 @@ public class NeuralLearner implements Feed, Runnable{
     public void run() {
         System.out.println(getDescription(0, "") + " started...");
         while (alive){
-            while (paused || (cluster.getMeanTime() > 0 && (time - cluster.getMeanTime()) > oneHour)){
-                try {
-                    Thread.sleep(1);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+            try{
+                while (paused || (cluster.getMeanTime() > 0 && (time - cluster.getMeanTime()) > oneHour)){
+                    try {
+                        Thread.sleep(1);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                DataObject data = learnerFeed.readNext();
+                if(data.getTimeStamp() > time){
+                    tStart = System.currentTimeMillis();
+                    time = data.getTimeStamp();
+                    while(!trackers.isEmpty() && trackers.get(0).getTimeStamp() < (time - horizon)){
+                        StateActionInformationTracker tracker = trackers.remove(0);
+                        core.addStateAction(tracker.getState(), tracker.getMax());
+                        core.addStateAction(tracker.getState(), tracker.getMin());
+
+                        //System.out.println("Learned: " + Arrays.toString(tracker.getState()) + " -> {" + tracker.getMin() + ", " + tracker.getMax() + "}");
+                        pointsConsumed++;
+                    }
+                    for(StateActionInformationTracker tracker : trackers){
+                        for(double newLevel : data.getValue()){
+                            tracker.aggregate(newLevel);
+                        }
+                    }
+                    trackers.add(new StateActionInformationTracker(time, data.getSignal(), data.getValue()[0]));
+
+                    int[] outputSignal = new int[getNumberOfOutputs()];
+                    if(pointsConsumed > 100){
+                        outputSignal = getSignalForDistribution(core.getActionDistribution(data.getSignal()));
+                    }
+                    long eventTime = time + outputFutureOffset;
+                    FeedObject output = new FeedObject(eventTime, outputSignal);
+                    //System.out.println("["+id+"] Output produced: " + output);
+                    queue.add(output);
+
+                    if(!outputConnected){
+                        outputConnected = true;
+                        int index = motherFeed.getNumberOfOutputs();
+                        outputElements = new Integer[getNumberOfOutputs()];
+                        for(int i = 0; i < outputElements.length; i++){
+                            outputElements[i] = index + i;
+                        }
+                        stimuliRankings.newStimuli(outputElements);
+                        motherFeed.addRawFeed(this);
+                    }
+                    latency = (long) ((0.75 * latency) + (0.25 * (System.currentTimeMillis() - tStart)));
                 }
             }
-            DataObject data = learnerFeed.readNext();
-            if(data.getTimeStamp() > time){
-                tStart = System.currentTimeMillis();
-                time = data.getTimeStamp();
-                while(!trackers.isEmpty() && trackers.get(0).getTimeStamp() < (time - horizon)){
-                    StateActionInformationTracker tracker = trackers.remove(0);
-                    core.addStateAction(tracker.getState(), tracker.getMax());
-                    core.addStateAction(tracker.getState(), tracker.getMin());
-
-                    //System.out.println("Learned: " + Arrays.toString(tracker.getState()) + " -> {" + tracker.getMin() + ", " + tracker.getMax() + "}");
-                    pointsConsumed++;
-                }
-                for(StateActionInformationTracker tracker : trackers){
-                    for(double newLevel : data.getValue()){
-                        tracker.aggregate(newLevel);
-                    }
-                }
-                trackers.add(new StateActionInformationTracker(time, data.getSignal(), data.getValue()[0]));
-
-                int[] outputSignal = new int[getNumberOfOutputs()];
-                if(pointsConsumed > 100){
-                    outputSignal = getSignalForDistribution(core.getActionDistribution(data.getSignal()));
-                }
-                long eventTime = time + outputFutureOffset;
-                FeedObject output = new FeedObject(eventTime, outputSignal);
-                //System.out.println("["+id+"] Output produced: " + output);
-                queue.add(output);
-
-                if(!outputConnected){
-                    outputConnected = true;
-                    int index = motherFeed.getNumberOfOutputs();
-                    outputElements = new Integer[getNumberOfOutputs()];
-                    for(int i = 0; i < outputElements.length; i++){
-                        outputElements[i] = index + i;
-                    }
-                    stimuliRankings.newStimuli(outputElements);
-                    motherFeed.addRawFeed(this);
-                }
-                latency = (long) ((0.75 * latency) + (0.25 * (System.currentTimeMillis() - tStart)));
+            catch (LearningException e){
+                System.err.println("Learning exception: " + e.getReason() + " Neuron "+ id +"dying...");
+                break;
             }
         }
         alive = false;
