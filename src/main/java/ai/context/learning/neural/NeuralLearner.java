@@ -137,7 +137,7 @@ public class NeuralLearner implements Feed, Runnable{
             spawn();
         }
         else if(pointsConsumed > 5000){
-            if(cluster.getDangerLevel() * Math.random() < 2.5){
+            if(cluster.getDangerLevel() * Math.random() < 5){
                 selectStimuli();
             }
             else {
@@ -156,7 +156,7 @@ public class NeuralLearner implements Feed, Runnable{
                     }
                 }
 
-                if(total > 10 && rank/total < 0.25){
+                if(total > 10 && rank/total < 0.1){
                     die();
                 }
             }
@@ -171,10 +171,10 @@ public class NeuralLearner implements Feed, Runnable{
         Map<Double, StateActionPair> alphas = core.getAlphaStates();
         double[] stimuliScores = new double[sigElements.length];
         for(Map.Entry<Double, StateActionPair> entry: alphas.entrySet()){
-            score += Math.pow(entry.getKey(), 2);
+            score += Math.pow(entry.getKey(), 2) * Math.log(entry.getValue().getTotalWeight());
             int i = 0;
             for(double weight : core.getCorrelationWeightsForState(entry.getValue())){
-                stimuliScores[i] += entry.getKey() * weight;
+                stimuliScores[i] += entry.getKey() * weight * Math.log(entry.getValue().getTotalWeight());
                 i++;
             }
         }
@@ -183,7 +183,7 @@ public class NeuralLearner implements Feed, Runnable{
 
         HashMap<Integer, Double> data = new HashMap<>();
         for(int i = 0; i < sigElements.length; i++){
-            data.put(sigElements[i], stimuliScores[i]/alphas.size());
+            data.put(sigElements[i], stimuliScores[i]);
         }
         stimuliRankings.update(this, data);
     }
@@ -208,7 +208,7 @@ public class NeuralLearner implements Feed, Runnable{
         double level = 0;
         int chosen = sigElements[worstSigPos];
         for(Map.Entry<Integer, Double> entry : rankings.entrySet()){
-            if(entry.getValue() > 2 * worseRanking && entry.getValue() > level * Math.random()){
+            if(entry.getValue() > worseRanking && entry.getValue() > level * Math.random()){
                 level = entry.getValue() * 2;
                 chosen = entry.getKey();
             }

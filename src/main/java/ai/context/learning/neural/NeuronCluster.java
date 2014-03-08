@@ -96,7 +96,6 @@ public class NeuronCluster {
                     }
                     else {
                         latency += neuron.getLatency();
-                        neuron.updateRankings();
                         totalPointsConsumed += neuron.getPointsConsumed();
                         //System.err.println(neuron.getDescription(0, "") + ": Latency: " + neuron.getLatency() + " Time: " + new Date(neuron.getLatestTime()));
                         meanT += neuron.getLatestTime();
@@ -111,6 +110,9 @@ public class NeuronCluster {
                     motherFeed.removeRawFeed(removed);
                 }
                 stimuliRankings.clearAndRepopulateStimuli(motherFeed.getNumberOfOutputs());
+                for(NeuralLearner neuron : neurons){
+                    neuron.updateRankings();
+                }
 
                 meanTime = meanT/neurons.size();
                 latency /= neurons.size();

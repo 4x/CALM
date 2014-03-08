@@ -33,12 +33,11 @@ public class StimuliRankings {
         Map<Integer, Double> tmpScores = new HashMap<>();
         for(Map.Entry<NeuralLearner,HashMap<Integer, Double>> entryS : scores.entrySet()){
             HashMap<Integer, Double> subScores = entryS.getValue();
-            double nScore = NeuronRankings.getInstance().getScoreForNeuron(entryS.getKey());
             for(Map.Entry<Integer, Double> entry : subScores.entrySet()){
                 if(!tmpScores.containsKey(entry.getKey())){
                     tmpScores.put(entry.getKey(), 0.0);
                 }
-                tmpScores.put(entry.getKey(), tmpScores.get(entry.getKey()) + nScore * entry.getValue());
+                tmpScores.put(entry.getKey(), tmpScores.get(entry.getKey()) + entry.getValue());
             }
         }
 
