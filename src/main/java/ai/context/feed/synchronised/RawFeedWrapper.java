@@ -73,7 +73,10 @@ public class RawFeedWrapper implements Feed{
 
     @Override
     public void addChild(Feed feed) {
+    }
 
+    @Override
+    public void removeChild(Feed feed) {
     }
 
     @Override

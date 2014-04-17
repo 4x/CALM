@@ -31,19 +31,22 @@ public class StimuliRankings {
             return rankings;
         }
         Map<Integer, Double> tmpScores = new HashMap<>();
+        Map<Integer, Double> tmpCount = new HashMap<>();
         for(Map.Entry<NeuralLearner,HashMap<Integer, Double>> entryS : scores.entrySet()){
             HashMap<Integer, Double> subScores = entryS.getValue();
             for(Map.Entry<Integer, Double> entry : subScores.entrySet()){
                 if(!tmpScores.containsKey(entry.getKey())){
                     tmpScores.put(entry.getKey(), 0.0);
+                    tmpCount.put(entry.getKey(), 0.0);
                 }
                 tmpScores.put(entry.getKey(), tmpScores.get(entry.getKey()) + entry.getValue());
+                tmpCount.put(entry.getKey(), tmpCount.get(entry.getKey()) + 1);
             }
         }
 
         TreeMap<Double, Integer> sorted = new TreeMap<>();
         for(Map.Entry<Integer, Double> entry : tmpScores.entrySet()){
-            sorted.put(entry.getValue(), entry.getKey());
+            sorted.put(entry.getValue() / tmpCount.get(entry.getKey()), entry.getKey());
         }
 
         return rankings = sorted.descendingMap();

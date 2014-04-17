@@ -112,6 +112,11 @@ public class MinMaxAggregatorDiscretiser implements Feed {
     }
 
     @Override
+    public void removeChild(Feed feed) {
+        buffers.remove(feed);
+    }
+
+    @Override
     public long getLatestTime() {
         return timeStamp;
     }

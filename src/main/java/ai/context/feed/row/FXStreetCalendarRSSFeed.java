@@ -177,6 +177,11 @@ public class FXStreetCalendarRSSFeed extends RowFeed{
     }
 
     @Override
+    public void removeChild(Feed feed) {
+        buffers.remove(feed);
+    }
+
+    @Override
     public void addChild(Feed feed) {
         buffers.put(feed, new LinkedList<FeedObject>());
     }

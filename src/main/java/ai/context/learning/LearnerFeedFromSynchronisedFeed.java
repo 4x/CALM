@@ -66,6 +66,11 @@ public class LearnerFeedFromSynchronisedFeed implements LearnerFeed, Feed {
     }
 
     @Override
+    public void removeChild(Feed feed) {
+
+    }
+
+    @Override
     public long getLatestTime() {
         return timeStamp;
     }

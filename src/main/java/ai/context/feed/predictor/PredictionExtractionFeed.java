@@ -92,6 +92,11 @@ public class PredictionExtractionFeed implements Feed {
     }
 
     @Override
+    public void removeChild(Feed feed) {
+        buffers.remove(feed);
+    }
+
+    @Override
     public void addChild(Feed feed) {
         buffers.put(feed, new LinkedList<FeedObject>());
     }

@@ -60,6 +60,11 @@ public class SynchFeed implements ISynchFeed{
         buffers.put(feed, new LinkedList<FeedObject>());
     }
 
+    @Override
+    public void removeChild(Feed feed) {
+        buffers.remove(feed);
+    }
+
     public void addRawFeed(Feed rawFeed){
         RawFeedWrapper wrapper = new RawFeedWrapper(rawFeed);
         mapping.put(rawFeed, wrapper);

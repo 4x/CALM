@@ -5,9 +5,7 @@ import ai.context.core.ai.LearningException;
 import ai.context.core.ai.StateActionPair;
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
-import ai.context.feed.synchronised.ISynchFeed;
 import ai.context.feed.synchronised.SynchFeed;
-import ai.context.feed.synchronised.SynchronisedFeed;
 import ai.context.learning.DataObject;
 import ai.context.learning.SelectLearnerFeed;
 import ai.context.util.common.MapUtils;
@@ -15,7 +13,6 @@ import ai.context.util.common.StateActionInformationTracker;
 
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.regex.Matcher;
 
 import static ai.context.util.mathematics.Discretiser.getLogarithmicDiscretisation;
 
@@ -121,7 +118,7 @@ public class NeuralLearner implements Feed, Runnable{
                 }
             }
             catch (LearningException e){
-                System.err.println("Learning exception: " + e.getReason() + " Neuron "+ id +"dying...");
+                System.err.println("Learning exception: " + e.getReason() + " Neuron "+ id +" is dying...");
                 break;
             }
         }
@@ -140,12 +137,12 @@ public class NeuralLearner implements Feed, Runnable{
         if(paused){
             return;
         }
-        if(cluster.size() < 20 || cluster.getDangerLevel() < 2 && cluster.getDangerLevel() * Math.random() < 0.1){
+        if(cluster.size() < 40 || cluster.getDangerLevel() < 2 && cluster.getDangerLevel() * Math.random() < 0.1){
             spawn();
         }
         else if(pointsConsumed > 5000){
-            if(cluster.getDangerLevel() * Math.random() < 5){
-                selectStimuli();
+            if(cluster.getDangerLevel() * Math.random() < 2.5){
+                //selectStimuli();
             }
             else {
                 double rank = 0;
@@ -197,7 +194,7 @@ public class NeuralLearner implements Feed, Runnable{
 
     long lastSelect = 0;
     public void selectStimuli(){
-        if(paused || time - lastSelect < (Math.random() * 10 * 86400000L)){
+        if(paused || time - lastSelect < (Math.random() * 90 * 86400000L)){
             return;
         }
         Map<Integer, Double> rankings = MapUtils.reverse(stimuliRankings.getRankings());
@@ -240,11 +237,11 @@ public class NeuralLearner implements Feed, Runnable{
         int choice = available.size();
         for(int i = 0 ; i < sigElements.length; i++){
             sigElements[i] = this.sigElements[i];
-            if(Math.random() > 0.75){
+            if(Math.random() > 0.5){
                 for(int tries = 0; tries < 10; tries++){
                     int candidate = available.get(Math.min(choice - 1,(int) (Math.random() * choice)));
                     if(Math.random() > 0.2){
-                        candidate = available.get(Math.max(0, Math.min(choice - 1, choice - (int) (Math.random() * 30))));
+                        candidate = available.get(Math.max(0, Math.min(choice - 1, choice - (int) (Math.random() * 50))));
                     }
                     if(!used.contains(candidate)){
                         sigElements[i] = candidate;
@@ -260,7 +257,7 @@ public class NeuralLearner implements Feed, Runnable{
     }
 
     public void die(){
-        if(paused || time - lastSelect < (Math.random() * 10 * 86400000L)){
+        if(paused || time - lastSelect < (Math.random() * 90 * 86400000L)){
             return;
         }
         System.out.println(getDescription(0, "") + " dies...");
@@ -439,6 +436,11 @@ public class NeuralLearner implements Feed, Runnable{
     @Override
     public void addChild(Feed feed) {
         buffers.put(feed, new LinkedList<FeedObject>());
+    }
+
+    @Override
+    public void removeChild(Feed feed) {
+        buffers.remove(feed);
     }
 
     @Override

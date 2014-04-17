@@ -172,6 +172,11 @@ class TestFeed1 implements Feed{
     }
 
     @Override
+    public void removeChild(Feed feed) {
+
+    }
+
+    @Override
     public FeedObject readNext(Object caller) {
         t++;
         System.out.println("From primary source: " + t);
@@ -218,6 +223,11 @@ class TestFeed3Outputs implements Feed{
     @Override
     public boolean hasNext() {
         return true;
+    }
+
+    @Override
+    public void removeChild(Feed feed) {
+
     }
 
     @Override

@@ -62,6 +62,11 @@ public class LinearDiscretiser implements Feed{
     }
 
     @Override
+    public void removeChild(Feed feed) {
+
+    }
+
+    @Override
     public boolean hasNext() {
         return feed.hasNext();
     }

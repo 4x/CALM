@@ -213,6 +213,11 @@ public class CSVFeed extends RowFeed {
         buffers.put(feed, new LinkedList<FeedObject>());
     }
 
+    @Override
+    public void removeChild(Feed feed) {
+        buffers.remove(feed);
+    }
+
     public void setStitchableFeed(StitchableFeed stitchableFeed) {
         this.stitchableFeed = stitchableFeed;
     }

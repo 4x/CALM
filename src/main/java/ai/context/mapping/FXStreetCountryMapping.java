@@ -14,10 +14,8 @@ public class FXStreetCountryMapping {
         map.put("DE", "Germany");
     }
 
-    public static String getMapping(String country)
-    {
-        if(map.containsKey(country))
-        {
+    public static String getMapping(String country){
+        if(map.containsKey(country)){
             return map.get(country);
         }
         return country;

@@ -95,6 +95,11 @@ class TestFeed3 implements Feed{
     }
 
     @Override
+    public void removeChild(Feed feed) {
+
+    }
+
+    @Override
     public void addChild(Feed feed) {
     }
 
@@ -125,6 +130,11 @@ class TestFeed4 implements Feed{
     @Override
     public boolean hasNext() {
         return false;
+    }
+
+    @Override
+    public void removeChild(Feed feed) {
+
     }
 
     @Override

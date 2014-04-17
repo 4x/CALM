@@ -15,8 +15,7 @@ public abstract class AbstractSurgicalFeed implements Feed{
     private Feed feed;
     private HashMap<Feed, LinkedList<FeedObject>> buffers = new HashMap<>();
 
-    public AbstractSurgicalFeed(Feed rawFeed)
-    {
+    public AbstractSurgicalFeed(Feed rawFeed){
         this.feed = rawFeed;
     }
 
@@ -50,6 +49,11 @@ public abstract class AbstractSurgicalFeed implements Feed{
     @Override
     public void addChild(Feed feed) {
         buffers.put(feed, new LinkedList<FeedObject>());
+    }
+
+    @Override
+    public void removeChild(Feed feed) {
+        buffers.remove(feed);
     }
 
     @Override

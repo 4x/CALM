@@ -118,6 +118,11 @@ public abstract class SynchronisableFeed implements ISynchFeed {
     }
 
     @Override
+    public void removeChild(Feed feed) {
+        buffers.remove(feed);
+    }
+
+    @Override
     public long getLatestTime() {
         return timeStamp.getValue();
     }

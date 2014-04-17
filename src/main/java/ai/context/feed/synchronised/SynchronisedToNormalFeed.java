@@ -24,8 +24,7 @@ public class SynchronisedToNormalFeed implements Feed {
 
     @Override
     public FeedObject readNext(Object caller) {
-        if(buffers.containsKey(caller) && buffers.get(caller).size() > 0)
-        {
+        if(buffers.containsKey(caller) && buffers.get(caller).size() > 0){
             return buffers.get(caller).pollFirst();
         }
         FeedObject data = feed.getNextComposite(this);
@@ -50,6 +49,11 @@ public class SynchronisedToNormalFeed implements Feed {
     @Override
     public void addChild(Feed feed) {
         buffers.put(feed, new LinkedList<FeedObject>());
+    }
+
+    @Override
+    public void removeChild(Feed feed) {
+        buffers.remove(feed);
     }
 
     @Override

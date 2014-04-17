@@ -97,6 +97,11 @@ public abstract class LiveBufferedTransformer implements Feed {
     }
 
     @Override
+    public void removeChild(Feed feed) {
+        buffers.remove(feed);
+    }
+
+    @Override
     public long getLatestTime() {
         return timeStamp;
     }

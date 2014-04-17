@@ -55,8 +55,8 @@ public class MainNeural {
         StimuliRankings.getInstance().newStimuli(availableStimuli);
 
         Set<NeuralLearner> seeds = new HashSet<>();
-        for(int i = 0 ; i < 5; i++){
-            Integer[] sigElements = new Integer[4];
+        for(int i = 0 ; i < 10; i++){
+            Integer[] sigElements = new Integer[7];
             for(int sig = 0; sig < sigElements.length; sig++){
                 List<Integer> available = new ArrayList<>(availableStimuli);
                 int chosenSig = available.get((int) (Math.random() * available.size()));

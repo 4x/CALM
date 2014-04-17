@@ -60,6 +60,10 @@ public abstract class StitchableFeed implements Feed {
     }
 
     @Override
+    public void removeChild(Feed feed) {
+    }
+
+    @Override
     public Feed getCopy() {
         return null;
     }

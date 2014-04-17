@@ -3,7 +3,6 @@ package ai.context.learning;
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
 import ai.context.feed.synchronised.ISynchFeed;
-import ai.context.feed.synchronised.SynchronisedFeed;
 import scala.actors.threadpool.Arrays;
 
 import java.util.ArrayList;
@@ -120,6 +119,11 @@ public class SelectLearnerFeed implements LearnerFeed, Feed {
     @Override
     public void addChild(Feed feed) {
         //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void removeChild(Feed feed) {
+
     }
 
     @Override

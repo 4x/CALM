@@ -188,6 +188,11 @@ public abstract class BufferedTransformer implements Feed{
         buffers.put(feed, new LinkedList<FeedObject>());
     }
 
+    @Override
+    public void removeChild(Feed feed) {
+        buffers.remove(feed);
+    }
+
     public abstract void goLive();
 
     protected void goLive(long span){

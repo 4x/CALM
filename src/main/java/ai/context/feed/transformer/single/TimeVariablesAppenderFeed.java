@@ -46,6 +46,11 @@ public class TimeVariablesAppenderFeed implements Feed {
     }
 
     @Override
+    public void removeChild(Feed feed) {
+
+    }
+
+    @Override
     public long getLatestTime() {
         return timeStamp;
     }

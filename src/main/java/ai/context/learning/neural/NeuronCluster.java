@@ -1,7 +1,6 @@
 package ai.context.learning.neural;
 
 import ai.context.feed.synchronised.SynchFeed;
-import ai.context.feed.synchronised.SynchronisedFeed;
 import ai.context.util.common.MapUtils;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.server.JettyServer;
@@ -28,7 +27,7 @@ public class NeuronCluster {
 
     private NeuronCluster(){
         service.submit(environmentCheck);
-        PropertiesHolder.maxPopulation = 100;
+        PropertiesHolder.maxPopulation = 400;
         PropertiesHolder.tolerance = 0.1;
 
         server.addServlet(NeuralClusterInformationServlet.class, "info");
@@ -56,6 +55,7 @@ public class NeuronCluster {
     private long totalPointsConsumed = 0;
     private long minLatency = 10L;
     private double dangerLevel = 1;
+    private double check = 0;
     private ExecutorService service = Executors.newCachedThreadPool();
     private Set<NeuralLearner> neurons = Collections.newSetFromMap(new ConcurrentHashMap<NeuralLearner, Boolean>());
 
@@ -69,7 +69,7 @@ public class NeuronCluster {
     }
 
     public double getDangerLevel() {
-        return dangerLevel;
+        return dangerLevel/* * (0.5 + 0.5 * Math.sin(check))*/;
     }
 
     private Runnable environmentCheck = new Runnable() {
@@ -78,6 +78,7 @@ public class NeuronCluster {
         while (true){
             try {
                 Thread.sleep(1000);
+                check += 0.01;
                 outputToNeuron.clear();
                 for(NeuralLearner neuron : neurons){
                     if(neuron.getFlowData()[2] != null){
