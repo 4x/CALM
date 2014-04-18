@@ -4,6 +4,7 @@ import ai.context.core.ai.LearningException;
 import ai.context.feed.synchronised.SynchFeed;
 import ai.context.util.common.MapUtils;
 import ai.context.util.configuration.PropertiesHolder;
+import ai.context.util.mathematics.Operations;
 import ai.context.util.server.JettyServer;
 import ai.context.util.server.servlets.NeuralClusterInformationServlet;
 
@@ -25,20 +26,16 @@ public class NeuronCluster {
     private Map<Integer, NeuralLearner> outputToNeuron = new HashMap<>();
 
     private long meanTime = 0;
-
-    private long expectedAdvance = 60 * 60 * 1000L;
-    private long expectedTime = 0;
     private long totalPointsConsumed = 0;
     private long minLatency = 50L;
     private double dangerLevel = 1;
     private double check = 0;
     private ExecutorService service = Executors.newCachedThreadPool();
-    //private Set<NeuralLearner> neurons = Collections.newSetFromMap(new ConcurrentHashMap<NeuralLearner, Boolean>());
     private List<NeuralLearner> neurons = new CopyOnWriteArrayList<>();
 
     private NeuronCluster(){
-        PropertiesHolder.maxPopulation = 1000;
-        PropertiesHolder.tolerance = 0.05;
+        PropertiesHolder.maxPopulation = 400;
+        PropertiesHolder.tolerance = 0.025;
 
         server.addServlet(NeuralClusterInformationServlet.class, "info");
     }
@@ -170,10 +167,8 @@ public class NeuronCluster {
                     }
 
                     meanTime = meanT/neurons.size();
-                    expectedTime += expectedAdvance;
-                    expectedTime = Math.max(expectedAdvance, meanTime);
                     latency /= neurons.size();
-                    System.err.println("Mean Latency: " + latency + ", Points Consumed: " + totalPointsConsumed + ", Overall Score: " + rankings.getOverallMarking() + " at time " + new Date(meanTime));
+                    System.err.println("Mean Latency: " + Operations.round(latency, 3) + ", Points Consumed: " + totalPointsConsumed + ", Overall Score: " + Operations.round(rankings.getOverallMarking(), 4) + " as of " + new Date(meanTime));
                     dangerLevel = latency/minLatency;
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -286,7 +281,7 @@ public class NeuronCluster {
     }
 
     public long getMeanTime(){
-        return expectedTime;
+        return meanTime;
     }
 
 

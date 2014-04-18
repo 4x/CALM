@@ -1,6 +1,5 @@
 package ai.context.util.trading;
 
-import ai.context.util.analysis.DecisionHistogram;
 import ai.context.util.measurement.OpenPosition;
 
 import java.util.*;
@@ -8,9 +7,10 @@ import java.util.*;
 public class PositionFactory {
 
     private static double tradeToCapRatio = 0.025;
-    private static double leverage = 100;
-    private static double amount = 1.0;
-    public static double cost = 0.0;
+    private static double leverage = 1;
+    private static double amount = 10000.0;
+    private static double accruedPnL = 0;
+    public static double cost = 0.0002;
     public static double rewardRiskRatio = 2.0;
     private static double minTakeProfit = 0.001;
     private static double minTakeProfitVertical = 0.001;
@@ -25,7 +25,7 @@ public class PositionFactory {
 
     private static PositionEngine engine;
 
-    private static DecisionHistogram decisionHistogram = new DecisionHistogram();
+    //private static DecisionHistogram decisionHistogram = new DecisionHistogram();
 
     public static OpenPosition getPosition(long time, double pivot, TreeMap<Double, Double> histogram)
     {
@@ -87,7 +87,7 @@ public class PositionFactory {
 
         double decision = DecisionUtil.getDecision(sFreq, lFreq);
         boolean dirL = true;
-        decisionHistogram.update(sFreq, lFreq, minTakeProfit, rewardRiskRatio, Math.abs(decision));
+        //decisionHistogram.update(sFreq, lFreq, minTakeProfit, rewardRiskRatio, Math.abs(decision));
         if(decision < 0){
             dirL = false;
         }
@@ -314,6 +314,7 @@ public class PositionFactory {
     public static void positionClosed(OpenPosition position){
         amount += position.getAmount()/leverage;
         amount += position.getPnL();
+        accruedPnL += position.getPnL();
     }
 
     public static void incrementAmount(double increment){
@@ -359,6 +360,10 @@ public class PositionFactory {
 
     public static void setTimeSpan(long timeSpan) {
         PositionFactory.timeSpan = timeSpan;
+    }
+
+    public static double getAccruedPnL() {
+        return accruedPnL;
     }
 
     public static long getTimeSpan() {

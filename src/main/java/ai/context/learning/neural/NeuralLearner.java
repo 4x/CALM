@@ -9,6 +9,10 @@ import ai.context.feed.synchronised.SynchFeed;
 import ai.context.learning.DataObject;
 import ai.context.learning.SelectLearnerFeed;
 import ai.context.util.common.StateActionInformationTracker;
+import ai.context.util.measurement.OpenPosition;
+import ai.context.util.trading.BlackBox;
+import ai.context.util.trading.PositionFactory;
+import com.dukascopy.api.JFException;
 
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -47,6 +51,16 @@ public class NeuralLearner implements Feed, Runnable{
     private long pointsConsumed = 0;
 
     private Integer[] outputElements;
+
+
+    //Performance
+    private HashSet<OpenPosition> positions = new HashSet<OpenPosition>();
+    private double accruedPnL = 0;
+
+    private boolean inLiveTrading = false;
+    private BlackBox blackBox;
+
+    private boolean adapting = true;
 
     public NeuralLearner(long[] horizonRange, SynchFeed motherFeed, Integer[] actionElements, Integer[] sigElements, long outputFutureOffset, double resolution){
         this.motherFeed = motherFeed;
@@ -140,14 +154,19 @@ public class NeuralLearner implements Feed, Runnable{
                 trackers.add(new StateActionInformationTracker(time, signal, data.getValue()[0]));
 
                 int[] outputSignal = new int[getNumberOfOutputs()];
-                if(pointsConsumed > 200){
+                if(pointsConsumed > 100){
                     outputSignal = getSignalForDistribution(core.getActionDistribution(signal));
+                }
+
+                if(pointsConsumed > 1000){
+                    adapting = false;
                 }
                 long eventTime = time/* + outputFutureOffset*/;
                 FeedObject output = new FeedObject(eventTime, outputSignal);
                 //System.out.println("["+id+"] Output produced: " + output/* + " from dates: " + inputDates*/);
                 queue.add(output);
                 latency = (long) ((0.75 * latency) + (0.25 * (System.currentTimeMillis() - tStart)));
+                checkPerformance(signal, data);
             }
         }
         catch (LearningException e){
@@ -158,6 +177,49 @@ public class NeuralLearner implements Feed, Runnable{
                 /*System.err.println("Exception: " + e.getMessage() + " Neuron "+ id +" is dying...");
                 e.printStackTrace();
                 break;*/
+        }
+    }
+
+    public void checkPerformance(int[] signal, DataObject data){
+        if(!adapting){
+
+            TreeMap<Integer, Double> distribution = core.getActionDistribution(signal);
+            TreeMap<Double, Double> prediction = new TreeMap<Double, Double>();
+            for(Map.Entry<Integer, Double> entry : distribution.entrySet()){
+                prediction.put(data.getValue()[0] + entry.getKey() * core.getActionResolution(), entry.getValue());
+            }
+
+
+            HashSet<OpenPosition> closed = new HashSet<OpenPosition>();
+            for(OpenPosition position : positions){
+                if(position.canCloseOnBar_Pessimistic(data.getTimeStamp(), data.getValue()[1], data.getValue()[2], data.getValue()[0])){
+                    closed.add(position);
+                    PositionFactory.positionClosed(position);
+
+                    System.out.println(position.getClosingMessage() + " CHANGE: " + position.getPnL() + " CAPITAL: " + PositionFactory.getAmount() + " ACCRUED PNL: " + PositionFactory.getAccruedPnL());
+                }
+            }
+            positions.removeAll(closed);
+
+            OpenPosition position = PositionFactory.getPosition(data.getTimeStamp(), data.getValue()[0], prediction);
+            if(position != null){
+                if(inLiveTrading){
+                    try {
+                        blackBox.onDecision(position);
+                    } catch (JFException e) {
+                        e.printStackTrace();
+                    }
+                }
+                else {
+                    positions.add(position);
+                }
+
+                int dir = -1;
+                if(position.isLong()){
+                    dir = 1;
+                }
+                //recentPos.put(data.getTimeStamp(), dir);
+            }
         }
     }
 

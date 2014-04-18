@@ -30,10 +30,7 @@ import com.dukascopy.api.Period;
 import com.dukascopy.api.system.IClient;
 import scala.actors.threadpool.Arrays;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class MainNeural {
 
@@ -64,7 +61,7 @@ public class MainNeural {
         SynchFeed motherFeed = initFeed(path, null);
         NeuronCluster.getInstance().setMotherFeed(motherFeed);
 
-        long[] horizonRange = new long[]{60 * 60 * 1000L, 24 * 60 * 60 * 1000L};
+        long[] horizonRange = new long[]{5 * 60 * 60 * 1000L, 3 * 24 * 60 * 60 * 1000L};
         Integer[] actionElements = new Integer[]{3, 1, 2, 0};
         long outputFutureOffset = 5 * 60 * 1000L;
         double resolution = 0.0005;
@@ -201,11 +198,11 @@ public class MainNeural {
         synchFeed.addRawFeed(feedPriceEUR);
         synchFeed.addRawFeed(tFeed);
 
-        addToSynchFeed(feed, f1, 25, 100);
+        /*addToSynchFeed(feed, f1, 25, 100);
         addToSynchFeed(feed, f2, 0.1, 0);
         addToSynchFeed(feed, f3, 0.1, 0);
         addToSynchFeed(feed, f4, 0.1, 0);
-        /*addToSynchFeed(feed, f5, 0.1, 0);
+        addToSynchFeed(feed, f5, 0.1, 0);
         addToSynchFeed(feed, f6, 0.1, 0);
         addToSynchFeed(feed, f7, 0.1, 0);
         addToSynchFeed(feed, f8, 0.1, 0);
@@ -218,10 +215,9 @@ public class MainNeural {
             FeedObject data = synchFeed.getNextComposite(this);
             i++;
 
-            if(i  == 5000) {
+            if(i  == 5010) {
                 break;
             }
-
             //System.out.println(new Date(data.getTimeStamp()) + " " + data);
         }
         return synchFeed;

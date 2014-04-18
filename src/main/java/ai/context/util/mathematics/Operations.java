@@ -11,6 +11,15 @@ public class Operations {
         return number;
     }
 
+    public static double round(double number, int dps){
+        double multiplier = Math.pow(10, dps);
+        number = number * multiplier;
+        number = Math.floor(number + 0.5);
+        number = number/multiplier;
+
+        return number;
+    }
+
     public static double sum(double[] values){
         double sum = 0;
         for(double value : values){
