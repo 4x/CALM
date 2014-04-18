@@ -15,13 +15,13 @@ public class RawFeedWrapper implements Feed{
     public RawFeedWrapper(Feed rawFeed) {
         this.rawFeed = rawFeed;
         rawFeed.addChild(this);
-        this.latestData = rawFeed.readNext(this);
     }
 
     public synchronized FeedObject getLatestDataAtTime(long time){
         FeedObject toReturn = new FeedObject(time, null);
+
         if(latestData.getTimeStamp() <= time){
-            if(comingData == null && (!(rawFeed instanceof NeuralLearner) || rawFeed.hasNext())){
+            if(comingData == null  && (!(rawFeed instanceof NeuralLearner) || rawFeed.hasNext())){
                 comingData = rawFeed.readNext(this);
             }
 
@@ -37,6 +37,9 @@ public class RawFeedWrapper implements Feed{
     }
 
     public long getHeadTimeStamp(){
+        if(latestData == null){
+            latestData = rawFeed.readNext(this);
+        }
         return latestData.getTimeStamp();
     }
 
@@ -92,5 +95,9 @@ public class RawFeedWrapper implements Feed{
     @Override
     public int getNumberOfOutputs() {
         return 0;
+    }
+
+    public void cleanup() {
+        rawFeed.removeChild(this);
     }
 }

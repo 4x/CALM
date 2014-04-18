@@ -42,7 +42,7 @@ public class SynchFeed implements ISynchFeed{
 
     @Override
     public FeedObject readNext(Object caller) {
-        return null;
+        return getNextComposite(caller);
     }
 
     @Override
@@ -58,6 +58,13 @@ public class SynchFeed implements ISynchFeed{
     @Override
     public void addChild(Feed feed) {
         buffers.put(feed, new LinkedList<FeedObject>());
+        int longest = 0;
+        for(LinkedList<FeedObject> list : buffers.values()){
+            if(list.size() > longest){
+                longest = list.size();
+                buffers.put(feed, list);
+            }
+        }
     }
 
     @Override
@@ -89,6 +96,12 @@ public class SynchFeed implements ISynchFeed{
             }
         }
         time = t;
+    }
+
+    public void cleanup(){
+        for(RawFeedWrapper rawFeedWrapper : rawFeeds){
+            rawFeedWrapper.cleanup();
+        }
     }
 
     @Override

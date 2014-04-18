@@ -8,7 +8,6 @@ import ai.context.feed.FeedObject;
 import ai.context.feed.synchronised.SynchFeed;
 import ai.context.learning.DataObject;
 import ai.context.learning.SelectLearnerFeed;
-import ai.context.util.common.MapUtils;
 import ai.context.util.common.StateActionInformationTracker;
 
 import java.util.*;
@@ -25,6 +24,7 @@ public class NeuralLearner implements Feed, Runnable{
     private long time = 0;
     private SynchFeed motherFeed;
     private SelectLearnerFeed learnerFeed;
+    private Map<NeuralLearner, Integer> parentFeeds = new HashMap<>();
     private LearnerService core = new LearnerService();
 
     private HashMap<Feed, LinkedList<FeedObject>> buffers = new HashMap<>();
@@ -50,8 +50,7 @@ public class NeuralLearner implements Feed, Runnable{
 
     public NeuralLearner(long[] horizonRange, SynchFeed motherFeed, Integer[] actionElements, Integer[] sigElements, long outputFutureOffset, double resolution){
         this.motherFeed = motherFeed;
-        this.learnerFeed = new SelectLearnerFeed(motherFeed, actionElements, sigElements);
-        learnerFeed.setName(id + "");
+        //learnerFeed.setName(id + "");
         this.horizonRange = horizonRange;
         horizon = (long) (Math.random() * (horizonRange[1] - horizonRange[0]) + horizonRange[0]);
         this.outputFutureOffset = outputFutureOffset;
@@ -60,6 +59,15 @@ public class NeuralLearner implements Feed, Runnable{
         this.resolution = resolution;
         core.setActionResolution(resolution);
 
+        NeuralLearner[] candidates = cluster.getNeurons();
+        double chance = 3.0 / candidates.length;
+        for(NeuralLearner parentCandidate : candidates){
+            if(Math.random() < chance){
+                parentFeeds.put(parentCandidate, (int)(Math.random() * parentCandidate.getNumberOfOutputs()));
+                parentCandidate.addChild(this);
+            }
+        }
+        this.learnerFeed = new SelectLearnerFeed(motherFeed, actionElements, sigElements);
         System.out.println("New Neuron: " + getDescription(0, ""));
     }
 
@@ -68,57 +76,10 @@ public class NeuralLearner implements Feed, Runnable{
     public void run() {
         System.out.println(getDescription(0, "") + " started...");
         while (alive){
-            try{
-                while (paused || (cluster.getMeanTime() > 0 && (time - cluster.getMeanTime()) > oneHour)){
-                    try {
-                        Thread.sleep(1);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-                DataObject data = learnerFeed.readNext();
-                if(data.getTimeStamp() > time){
-                    tStart = System.currentTimeMillis();
-                    time = data.getTimeStamp();
-                    while(!trackers.isEmpty() && trackers.get(0).getTimeStamp() < (time - horizon)){
-                        StateActionInformationTracker tracker = trackers.remove(0);
-                        core.addStateAction(tracker.getState(), tracker.getMax());
-                        core.addStateAction(tracker.getState(), tracker.getMin());
-
-                        //System.out.println("Learned: " + Arrays.toString(tracker.getState()) + " -> {" + tracker.getMin() + ", " + tracker.getMax() + "}");
-                        pointsConsumed++;
-                    }
-                    for(StateActionInformationTracker tracker : trackers){
-                        for(double newLevel : data.getValue()){
-                            tracker.aggregate(newLevel);
-                        }
-                    }
-                    trackers.add(new StateActionInformationTracker(time, data.getSignal(), data.getValue()[0]));
-
-                    int[] outputSignal = new int[getNumberOfOutputs()];
-                    if(pointsConsumed > 100){
-                        outputSignal = getSignalForDistribution(core.getActionDistribution(data.getSignal()));
-                    }
-                    long eventTime = time + outputFutureOffset;
-                    FeedObject output = new FeedObject(eventTime, outputSignal);
-                    //System.out.println("["+id+"] Output produced: " + output);
-                    queue.add(output);
-
-                    if(!outputConnected){
-                        outputConnected = true;
-                        int index = motherFeed.getNumberOfOutputs();
-                        outputElements = new Integer[getNumberOfOutputs()];
-                        for(int i = 0; i < outputElements.length; i++){
-                            outputElements[i] = index + i;
-                        }
-                        stimuliRankings.newStimuli(outputElements);
-                        motherFeed.addRawFeed(this);
-                    }
-                    latency = (long) ((0.75 * latency) + (0.25 * (System.currentTimeMillis() - tStart)));
-                }
-            }
-            catch (LearningException e){
-                System.err.println("Learning exception: " + e.getReason() + " Neuron "+ id +" is dying...");
+            try {
+                step();
+            } catch (LearningException e) {
+                e.printStackTrace();
                 break;
             }
         }
@@ -133,6 +94,86 @@ public class NeuralLearner implements Feed, Runnable{
         time = Long.MAX_VALUE;
     }
 
+
+    public void step() throws LearningException {
+        try{
+            while (paused){
+                try {
+                    Thread.sleep(1);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            DataObject data = learnerFeed.readNext();
+            String inputDates = new Date(data.getTimeStamp()) + " ";
+            int[] signal = new int[data.getSignal().length + getParents().size()];
+            int index = 0;
+            for(int sig : data.getSignal()){
+                signal[index] = sig;
+                index++;
+            }
+            for(NeuralLearner parent : getParents()){
+                FeedObject feedObject = parent.readNext(this);
+                inputDates += new Date(feedObject.getTimeStamp()) + " ";
+
+                int sig = ((int[])(feedObject.getData()))[parentFeeds.get(parent)];
+                signal[index] = sig;
+                index++;
+            }
+
+            if(data.getTimeStamp() > time){
+                tStart = System.currentTimeMillis();
+                time = data.getTimeStamp();
+                while(!trackers.isEmpty() && trackers.get(0).getTimeStamp() < (time - horizon)){
+                    StateActionInformationTracker tracker = trackers.remove(0);
+                    core.addStateAction(tracker.getState(), tracker.getMax());
+                    core.addStateAction(tracker.getState(), tracker.getMin());
+
+                    //System.out.println("Learned: " + Arrays.toString(tracker.getState()) + " -> {" + tracker.getMin() + ", " + tracker.getMax() + "}");
+                    pointsConsumed++;
+                }
+                for(StateActionInformationTracker tracker : trackers){
+                    for(double newLevel : data.getValue()){
+                        tracker.aggregate(newLevel);
+                    }
+                }
+                trackers.add(new StateActionInformationTracker(time, signal, data.getValue()[0]));
+
+                int[] outputSignal = new int[getNumberOfOutputs()];
+                if(pointsConsumed > 200){
+                    outputSignal = getSignalForDistribution(core.getActionDistribution(signal));
+                }
+                long eventTime = time/* + outputFutureOffset*/;
+                FeedObject output = new FeedObject(eventTime, outputSignal);
+                //System.out.println("["+id+"] Output produced: " + output/* + " from dates: " + inputDates*/);
+                queue.add(output);
+                latency = (long) ((0.75 * latency) + (0.25 * (System.currentTimeMillis() - tStart)));
+            }
+        }
+        catch (LearningException e){
+            System.err.println("Learning exception: " + e.getReason() + " Neuron "+ id +" is dying...");
+            throw e;
+        }
+        catch (Exception e){
+                /*System.err.println("Exception: " + e.getMessage() + " Neuron "+ id +" is dying...");
+                e.printStackTrace();
+                break;*/
+        }
+    }
+
+    private void connectOutputToMother(){
+        if(!outputConnected){
+            outputConnected = true;
+            int index = motherFeed.getNumberOfOutputs();
+            outputElements = new Integer[getNumberOfOutputs()];
+            for(int i = 0; i < outputElements.length; i++){
+                outputElements[i] = index + i;
+            }
+            stimuliRankings.newStimuli(outputElements);
+            motherFeed.addRawFeed(this);
+        }
+    }
+
     public void lifeEvent(){
         if(paused){
             return;
@@ -140,7 +181,7 @@ public class NeuralLearner implements Feed, Runnable{
         if(cluster.size() < 40 || cluster.getDangerLevel() < 2 && cluster.getDangerLevel() * Math.random() < 0.1){
             spawn();
         }
-        else if(pointsConsumed > 5000){
+        /*else if(pointsConsumed > 5000){
             if(cluster.getDangerLevel() * Math.random() < 2.5){
                 //selectStimuli();
             }
@@ -164,7 +205,7 @@ public class NeuralLearner implements Feed, Runnable{
                     die();
                 }
             }
-        }
+        }*/
     }
 
     public void updateRankings(){
@@ -173,26 +214,26 @@ public class NeuralLearner implements Feed, Runnable{
         }
         double score = 0;
         Map<Double, StateActionPair> alphas = core.getAlphaStates();
-        double[] stimuliScores = new double[sigElements.length];
+        //double[] stimuliScores = new double[sigElements.length];
         for(Map.Entry<Double, StateActionPair> entry: alphas.entrySet()){
             score += Math.pow(entry.getKey(), 2) * Math.log(entry.getValue().getTotalWeight());
-            int i = 0;
+            /*int i = 0;
             for(double weight : core.getCorrelationWeightsForState(entry.getValue())){
                 stimuliScores[i] += entry.getKey() * weight * Math.log(entry.getValue().getTotalWeight());
                 i++;
-            }
+            }*/
         }
         score /= alphas.size();
         neuronRankings.update(this, score);
 
-        HashMap<Integer, Double> data = new HashMap<>();
+        /*HashMap<Integer, Double> data = new HashMap<>();
         for(int i = 0; i < sigElements.length; i++){
             data.put(sigElements[i], stimuliScores[i]);
         }
-        stimuliRankings.update(this, data);
+        stimuliRankings.update(this, data);*/
     }
 
-    long lastSelect = 0;
+    /*long lastSelect = 0;
     public void selectStimuli(){
         if(paused || time - lastSelect < (Math.random() * 90 * 86400000L)){
             return;
@@ -223,7 +264,7 @@ public class NeuralLearner implements Feed, Runnable{
             lastSelect = time;
         }
         learnerFeed.setSignalElements(sigElements);
-    }
+    }*/
 
     public void spawn(){
         if(paused){
@@ -256,7 +297,7 @@ public class NeuralLearner implements Feed, Runnable{
         cluster.start(child);
     }
 
-    public void die(){
+    /*public void die(){
         if(paused || time - lastSelect < (Math.random() * 90 * 86400000L)){
             return;
         }
@@ -264,10 +305,14 @@ public class NeuralLearner implements Feed, Runnable{
         alive = false;
 
         stimuliRankings.removeAllStimuli(this, this.getFlowData()[2]);
-    }
+    }*/
 
     public int getID(){
         return id;
+    }
+
+    public Collection<NeuralLearner> getParents(){
+        return parentFeeds.keySet();
     }
 
     public void togglePause(){
@@ -345,11 +390,11 @@ public class NeuralLearner implements Feed, Runnable{
         lastMean = (1 - lambda) * lastMean + lambda * mean;
 
         signal[0] = getLogarithmicDiscretisation(mean, 0, 1, 2);
-        signal[1] = getLogarithmicDiscretisation(stddev, 0, 1, 2);
-        signal[2] = getLogarithmicDiscretisation(firstQuartile, 0, 1, 2);
-        signal[3] = getLogarithmicDiscretisation(median, 0, 1, 2);
-        signal[4] = getLogarithmicDiscretisation(thirdQuartile, 0, 1, 2);
-        signal[5] = getLogarithmicDiscretisation(mean - lastMean, 0, 1, 2);
+        //signal[1] = getLogarithmicDiscretisation(stddev, 0, 1, 2);
+        //signal[2] = getLogarithmicDiscretisation(firstQuartile, 0, 1, 2);
+        //signal[3] = getLogarithmicDiscretisation(median, 0, 1, 2);
+        //signal[4] = getLogarithmicDiscretisation(thirdQuartile, 0, 1, 2);
+        signal[1] = getLogarithmicDiscretisation(mean - lastMean, 0, 1, 2);
 
         /*System.out.println(mean + ", " +
                 stddev + ", " +
@@ -401,7 +446,19 @@ public class NeuralLearner implements Feed, Runnable{
         return feedObject;
     }
 
-    public void inputsRemoved(Integer[] inputs){
+    public boolean hasNext(Object caller){
+        if(!buffers.containsKey(caller)){
+            return false;
+        }
+
+        if(buffers.get(caller).size() > 0){
+            return  true;
+        }
+
+        return hasNext();
+    }
+
+    /*public void inputsRemoved(Integer[] inputs){
         for(int i = 0; i < actionElements.length; i++){
             if(actionElements[i] > inputs[inputs.length - 1]){
                 actionElements[i] = actionElements[i] - inputs.length;
@@ -421,11 +478,24 @@ public class NeuralLearner implements Feed, Runnable{
                 outputElements[i] = outputElements[i] - inputs.length;
             }
         }
-    }
+    }*/
 
     @Override
     public Feed getCopy() {
         return null;
+    }
+
+    public void cleanup(){
+        alive = false;
+        queue = null;
+        buffers = null;
+        learnerFeed = null;
+        motherFeed = null;
+        core = null;
+        neuronRankings = null;
+        stimuliRankings = null;
+        time = Long.MAX_VALUE;
+        learnerFeed.cleanup();
     }
 
     @Override
@@ -436,6 +506,13 @@ public class NeuralLearner implements Feed, Runnable{
     @Override
     public void addChild(Feed feed) {
         buffers.put(feed, new LinkedList<FeedObject>());
+        int longest = 0;
+        for(LinkedList<FeedObject> list : buffers.values()){
+            if(list.size() > longest){
+                longest = list.size();
+                buffers.put(feed, list);
+            }
+        }
     }
 
     @Override
@@ -458,6 +535,6 @@ public class NeuralLearner implements Feed, Runnable{
 
     @Override
     public int getNumberOfOutputs() {
-        return 6;
+        return 2;
     }
 }

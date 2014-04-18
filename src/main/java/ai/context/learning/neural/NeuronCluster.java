@@ -1,5 +1,6 @@
 package ai.context.learning.neural;
 
+import ai.context.core.ai.LearningException;
 import ai.context.feed.synchronised.SynchFeed;
 import ai.context.util.common.MapUtils;
 import ai.context.util.configuration.PropertiesHolder;
@@ -7,7 +8,7 @@ import ai.context.util.server.JettyServer;
 import ai.context.util.server.servlets.NeuralClusterInformationServlet;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,12 +26,38 @@ public class NeuronCluster {
 
     private long meanTime = 0;
 
+    private long expectedAdvance = 60 * 60 * 1000L;
+    private long expectedTime = 0;
+    private long totalPointsConsumed = 0;
+    private long minLatency = 50L;
+    private double dangerLevel = 1;
+    private double check = 0;
+    private ExecutorService service = Executors.newCachedThreadPool();
+    //private Set<NeuralLearner> neurons = Collections.newSetFromMap(new ConcurrentHashMap<NeuralLearner, Boolean>());
+    private List<NeuralLearner> neurons = new CopyOnWriteArrayList<>();
+
     private NeuronCluster(){
-        service.submit(environmentCheck);
-        PropertiesHolder.maxPopulation = 400;
-        PropertiesHolder.tolerance = 0.1;
+        PropertiesHolder.maxPopulation = 1000;
+        PropertiesHolder.tolerance = 0.05;
 
         server.addServlet(NeuralClusterInformationServlet.class, "info");
+    }
+
+    public void start(){
+        service.submit(stepper);
+        service.submit(environmentCheck);
+    }
+
+    private boolean parentsHaveNext(NeuralLearner neuron){
+        boolean hasNext = false;
+        Collection<NeuralLearner> parents = neuron.getParents();
+        for(NeuralLearner parent : parents){
+            hasNext = parent.hasNext(neuron);
+            if(!hasNext){
+                return false;
+            }
+        }
+        return hasNext;
     }
 
     public static NeuronCluster getInstance() {
@@ -52,16 +79,9 @@ public class NeuronCluster {
         }
     }
 
-    private long totalPointsConsumed = 0;
-    private long minLatency = 10L;
-    private double dangerLevel = 1;
-    private double check = 0;
-    private ExecutorService service = Executors.newCachedThreadPool();
-    private Set<NeuralLearner> neurons = Collections.newSetFromMap(new ConcurrentHashMap<NeuralLearner, Boolean>());
-
     public void start(NeuralLearner neuron){
         neurons.add(neuron);
-        service.execute(neuron);
+        //service.execute(neuron);
     }
 
     public void setMotherFeed(SynchFeed motherFeed){
@@ -72,63 +92,93 @@ public class NeuronCluster {
         return dangerLevel/* * (0.5 + 0.5 * Math.sin(check))*/;
     }
 
+    private Runnable stepper = new Runnable() {
+        @Override
+        public void run() {
+            while (true){
+                for(NeuralLearner neuron : neurons){
+                    try {
+                        neuron.step();
+                        while(parentsHaveNext(neuron)){
+                            neuron.step();
+                        }
+                    } catch (LearningException e) {
+                        e.printStackTrace();
+                        neuron.cleanup();
+                    }
+                }
+
+                /*for(NeuralLearner neuron : neurons){
+                    if(Math.random() > 0.99){
+                        neuron.lifeEvent();
+                    }
+                }*/
+
+                if(neurons.isEmpty()){
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    };
+
     private Runnable environmentCheck = new Runnable() {
         @Override
         public void run() {
-        while (true){
-            try {
-                Thread.sleep(1000);
-                check += 0.01;
-                outputToNeuron.clear();
-                for(NeuralLearner neuron : neurons){
-                    if(neuron.getFlowData()[2] != null){
-                        for(int i : neuron.getFlowData()[2]){
-                            outputToNeuron.put(i, neuron);
+            while (true){
+                try {
+                    Thread.sleep(1000);
+                    check += 0.01;
+                    /*outputToNeuron.clear();
+                    for(NeuralLearner neuron : neurons){
+                        if(neuron.getFlowData()[2] != null){
+                            for(int i : neuron.getFlowData()[2]){
+                                outputToNeuron.put(i, neuron);
+                            }
+                        }
+                    }*/
+                    totalPointsConsumed = 0;
+                    double latency = 0;
+                    long meanT= 0;
+                    Set<NeuralLearner> toRemove = new HashSet<>();
+                    for(NeuralLearner neuron : neurons){
+                        if(!neuron.isAlive()){
+                            toRemove.add(neuron);
+                        }
+                        else {
+                            latency += neuron.getLatency();
+                            totalPointsConsumed += neuron.getPointsConsumed();
+                            //System.err.println(neuron.getDescription(0, "") + ": Latency: " + neuron.getLatency() + " Time: " + new Date(neuron.getLatestTime()));
+                            meanT += neuron.getLatestTime();
                         }
                     }
-                }
-                totalPointsConsumed = 0;
-                double latency = 0;
-                long meanT= 0;
-                Set<NeuralLearner> toRemove = new HashSet<>();
-                for(NeuralLearner neuron : neurons){
-                    if(!neuron.isAlive()){
-                        toRemove.add(neuron);
-                    }
-                    else {
-                        latency += neuron.getLatency();
-                        totalPointsConsumed += neuron.getPointsConsumed();
-                        //System.err.println(neuron.getDescription(0, "") + ": Latency: " + neuron.getLatency() + " Time: " + new Date(neuron.getLatestTime()));
-                        meanT += neuron.getLatestTime();
-                    }
-                }
 
-                for(NeuralLearner removed : toRemove){
-                    neurons.remove(removed);
+                    for(NeuralLearner removed : toRemove){
+                        neurons.remove(removed);
+                        /*for(NeuralLearner neuron : neurons){
+                            neuron.inputsRemoved(removed.getFlowData()[2]);
+                        }
+                        motherFeed.removeRawFeed(removed);*/
+                        removed.cleanup();
+                    }
+                    //stimuliRankings.clearAndRepopulateStimuli(motherFeed.getNumberOfOutputs());
                     for(NeuralLearner neuron : neurons){
-                        neuron.inputsRemoved(removed.getFlowData()[2]);
+                        neuron.updateRankings();
                     }
-                    motherFeed.removeRawFeed(removed);
-                }
-                stimuliRankings.clearAndRepopulateStimuli(motherFeed.getNumberOfOutputs());
-                for(NeuralLearner neuron : neurons){
-                    neuron.updateRankings();
-                }
 
-                meanTime = meanT/neurons.size();
-                latency /= neurons.size();
-                System.err.println("Mean Latency: " + latency + ", Points Consumed: " + totalPointsConsumed + ", Overall Score: " + rankings.getOverallMarking());
-                dangerLevel = latency/minLatency;
-
-                for(NeuralLearner neuron : neurons){
-                    if(Math.random() > 0.95){
-                        neuron.lifeEvent();
-                    }
+                    meanTime = meanT/neurons.size();
+                    expectedTime += expectedAdvance;
+                    expectedTime = Math.max(expectedAdvance, meanTime);
+                    latency /= neurons.size();
+                    System.err.println("Mean Latency: " + latency + ", Points Consumed: " + totalPointsConsumed + ", Overall Score: " + rankings.getOverallMarking() + " at time " + new Date(meanTime));
+                    dangerLevel = latency/minLatency;
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
             }
-        }
         }
     };
 
@@ -207,6 +257,16 @@ public class NeuronCluster {
                     links += newLink;
                 }
             }
+
+            for(NeuralLearner parent : neuron.getParents()){
+                String newLink = "{\"source\": "+neuronMapping.get("Neuron " + parent.getID())
+                        +", \"target\": "+neuronMapping.get(id)
+                        +"},";
+                if(!existingLinks.contains(newLink)){
+                    existingLinks.add(newLink);
+                    links += newLink;
+                }
+            }
         }
         links = links.substring(0, links.length() - 1);
         links += "]";
@@ -217,11 +277,17 @@ public class NeuronCluster {
         return outputToNeuron.get(sig);
     }
 
+    public NeuralLearner[] getNeurons(){
+        return neurons.toArray(new NeuralLearner[neurons.size()]);
+    }
+
     public int getNewID() {
         return newID.incrementAndGet();
     }
 
     public long getMeanTime(){
-        return meanTime;
+        return expectedTime;
     }
+
+
 }

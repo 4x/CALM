@@ -108,7 +108,8 @@ public class SelectLearnerFeed implements LearnerFeed, Feed {
 
     @Override
     public FeedObject readNext(Object caller) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        DataObject dataObject = readNext();
+        return new FeedObject(dataObject.getTimeStamp(), dataObject);  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
@@ -148,6 +149,10 @@ public class SelectLearnerFeed implements LearnerFeed, Feed {
         list.add(this);
         list.add(feed.getElementChain(element));
         return list;
+    }
+
+    public void cleanup(){
+        feed.removeChild(this);
     }
 
     @Override
