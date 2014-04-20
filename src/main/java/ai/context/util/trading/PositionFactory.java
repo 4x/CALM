@@ -7,11 +7,11 @@ import java.util.*;
 public class PositionFactory {
 
     private static double tradeToCapRatio = 0.025;
-    private static double leverage = 1;
-    private static double amount = 10000.0;
+    private static double leverage = 2;
+    private static double amount = 1000000.0;
     private static double accruedPnL = 0;
     public static double cost = 0.0002;
-    public static double rewardRiskRatio = 2.0;
+    public static double rewardRiskRatio = 3.0;
     private static double minTakeProfit = 0.001;
     private static double minTakeProfitVertical = 0.001;
 
@@ -19,7 +19,7 @@ public class PositionFactory {
 
     private static boolean verticalRisk = false;
 
-    public static double minProbFraction = 0.25;
+    public static double minProbFraction = 0.5;
 
     private static long timeSpan = 6 * 3600 * 1000L;
 
@@ -29,6 +29,10 @@ public class PositionFactory {
 
     public static OpenPosition getPosition(long time, double pivot, TreeMap<Double, Double> histogram)
     {
+        if((amount * tradeToCapRatio * leverage) < 1000){
+            return null;
+        }
+
         Date executionInstant = new Date(time);
         if(executionInstant.getDay() == 0 || executionInstant.getDay() == 6){
             return null;
@@ -92,7 +96,7 @@ public class PositionFactory {
             dirL = false;
         }
         if(decision != 0){
-        OpenPosition position = new OpenPosition(time, pivot, decision, decision, dirL, time + timeSpan);
+            OpenPosition position = new OpenPosition(time, pivot, decision, decision, dirL, time + timeSpan);
             if(!live){
                 position.setAmount(amount * tradeToCapRatio * leverage);
                 position.setCost(cost);

@@ -158,7 +158,7 @@ public class NeuralLearner implements Feed, Runnable{
                     outputSignal = getSignalForDistribution(core.getActionDistribution(signal));
                 }
 
-                if(pointsConsumed > 1000){
+                if(pointsConsumed > 5000){
                     adapting = false;
                 }
                 long eventTime = time/* + outputFutureOffset*/;
@@ -201,24 +201,26 @@ public class NeuralLearner implements Feed, Runnable{
             }
             positions.removeAll(closed);
 
-            OpenPosition position = PositionFactory.getPosition(data.getTimeStamp(), data.getValue()[0], prediction);
-            if(position != null){
-                if(inLiveTrading){
-                    try {
-                        blackBox.onDecision(position);
-                    } catch (JFException e) {
-                        e.printStackTrace();
+            if(positions.size() < 5){
+                OpenPosition position = PositionFactory.getPosition(data.getTimeStamp(), data.getValue()[0], prediction);
+                if(position != null){
+                    if(inLiveTrading){
+                        try {
+                            blackBox.onDecision(position);
+                        } catch (JFException e) {
+                            e.printStackTrace();
+                        }
                     }
-                }
-                else {
-                    positions.add(position);
-                }
+                    else {
+                        positions.add(position);
+                    }
 
-                int dir = -1;
-                if(position.isLong()){
-                    dir = 1;
+                    int dir = -1;
+                    if(position.isLong()){
+                        dir = 1;
+                    }
+                    //recentPos.put(data.getTimeStamp(), dir);
                 }
-                //recentPos.put(data.getTimeStamp(), dir);
             }
         }
     }

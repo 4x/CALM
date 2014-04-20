@@ -72,8 +72,23 @@ public class MainNeural {
         availableStimuli.removeAll(Arrays.asList(actionElements));
         //StimuliRankings.getInstance().newStimuli(availableStimuli);
 
-        for(int i = 0 ; i < 150; i++){
+        for(int i = 0 ; i < 120; i++){
             Integer[] sigElements = new Integer[4];
+            for(int sig = 0; sig < sigElements.length; sig++){
+                if(availableStimuli.isEmpty()){
+                    for(int index = 0 ; index < motherFeed.getNumberOfOutputs(); index++){
+                        availableStimuli.add(index);
+                    }
+                }
+                List<Integer> available = new ArrayList<>(availableStimuli);
+                int chosenSig = available.get((int) (Math.random() * available.size()));
+                availableStimuli.remove(chosenSig);
+                sigElements[sig] = chosenSig;
+            }
+            NeuronCluster.getInstance().start(new NeuralLearner(horizonRange, motherFeed, actionElements, sigElements, outputFutureOffset, resolution));
+        }
+        for(int i = 0 ; i < 50; i++){
+            Integer[] sigElements = new Integer[0];
             for(int sig = 0; sig < sigElements.length; sig++){
                 if(availableStimuli.isEmpty()){
                     for(int index = 0 ; index < motherFeed.getNumberOfOutputs(); index++){
@@ -237,12 +252,17 @@ public class MainNeural {
             ExtractOneFromListFeed feedV = new ExtractOneFromListFeed(feed, 4);
             feed.addChild(feedV);
 
+            synch.addRawFeed(feedH);
+            synch.addRawFeed(feedL);
+            synch.addRawFeed(feedC);
+            synch.addRawFeed(feedV);
+
             DeltaOnlineTransformer dH = new DeltaOnlineTransformer(1, feedH);
             DeltaOnlineTransformer dL = new DeltaOnlineTransformer(1, feedH);
-            DeltaOnlineTransformer dC = new DeltaOnlineTransformer(1, feedH);
+            //DeltaOnlineTransformer dC = new DeltaOnlineTransformer(1, feedH);
             DeltaOnlineTransformer dV = new DeltaOnlineTransformer(1, feedH);
 
-            DeltaOnlineTransformer dH1 = new DeltaOnlineTransformer(2, feedH);
+           /* DeltaOnlineTransformer dH1 = new DeltaOnlineTransformer(2, feedH);
             DeltaOnlineTransformer dL1 = new DeltaOnlineTransformer(2, feedH);
             DeltaOnlineTransformer dC1 = new DeltaOnlineTransformer(2, feedH);
             DeltaOnlineTransformer dV1 = new DeltaOnlineTransformer(2, feedH);
@@ -250,14 +270,14 @@ public class MainNeural {
             DeltaOnlineTransformer dH2 = new DeltaOnlineTransformer(4, feedH);
             DeltaOnlineTransformer dL2 = new DeltaOnlineTransformer(4, feedH);
             DeltaOnlineTransformer dC2 = new DeltaOnlineTransformer(4, feedH);
-            DeltaOnlineTransformer dV2 = new DeltaOnlineTransformer(4, feedH);
+            DeltaOnlineTransformer dV2 = new DeltaOnlineTransformer(4, feedH);*/
 
             DeltaOnlineTransformer dH3 = new DeltaOnlineTransformer(8, feedH);
             DeltaOnlineTransformer dL3 = new DeltaOnlineTransformer(8, feedH);
-            DeltaOnlineTransformer dC3 = new DeltaOnlineTransformer(8, feedH);
+            //DeltaOnlineTransformer dC3 = new DeltaOnlineTransformer(8, feedH);
             DeltaOnlineTransformer dV3 = new DeltaOnlineTransformer(8, feedH);
 
-            DeltaOnlineTransformer dH4 = new DeltaOnlineTransformer(16, feedH);
+            /*DeltaOnlineTransformer dH4 = new DeltaOnlineTransformer(16, feedH);
             DeltaOnlineTransformer dL4 = new DeltaOnlineTransformer(16, feedH);
             DeltaOnlineTransformer dC4 = new DeltaOnlineTransformer(16, feedH);
             DeltaOnlineTransformer dV4 = new DeltaOnlineTransformer(16, feedH);
@@ -265,18 +285,58 @@ public class MainNeural {
             DeltaOnlineTransformer dH5 = new DeltaOnlineTransformer(32, feedH);
             DeltaOnlineTransformer dL5 = new DeltaOnlineTransformer(32, feedH);
             DeltaOnlineTransformer dC5 = new DeltaOnlineTransformer(32, feedH);
-            DeltaOnlineTransformer dV5 = new DeltaOnlineTransformer(32, feedH);
+            DeltaOnlineTransformer dV5 = new DeltaOnlineTransformer(32, feedH);*/
 
             DeltaOnlineTransformer dH6 = new DeltaOnlineTransformer(64, feedH);
             DeltaOnlineTransformer dL6 = new DeltaOnlineTransformer(64, feedH);
-            DeltaOnlineTransformer dC6 = new DeltaOnlineTransformer(64, feedH);
+            //DeltaOnlineTransformer dC6 = new DeltaOnlineTransformer(64, feedH);
             DeltaOnlineTransformer dV6 = new DeltaOnlineTransformer(64, feedH);
 
-            DeltaOnlineTransformer dH7 = new DeltaOnlineTransformer(128, feedH);
-            DeltaOnlineTransformer dL7 = new DeltaOnlineTransformer(128, feedH);
+            /*DeltaOnlineTransformer dH7 = new DeltaOnlineTransformer(128, feedH);
+            DeltaOnlineTransformer dL7 = new DeltaOnlineTransformer(128, feedH);*/
 
             DeltaOnlineTransformer dH8 = new DeltaOnlineTransformer(256, feedH);
             DeltaOnlineTransformer dL8 = new DeltaOnlineTransformer(256, feedH);
+
+
+            MAOnlineTransformer maH10 = new MAOnlineTransformer(10, feedH);
+            MAOnlineTransformer maL10 = new MAOnlineTransformer(10, feedL);
+            MAOnlineTransformer maC10 = new MAOnlineTransformer(10, feedC);
+
+            MAOnlineTransformer maH50 = new MAOnlineTransformer(50, feedH);
+            MAOnlineTransformer maL50 = new MAOnlineTransformer(50, feedL);
+            MAOnlineTransformer maC50 = new MAOnlineTransformer(50, feedC);
+
+            MAOnlineTransformer maH100 = new MAOnlineTransformer(100, feedH);
+            MAOnlineTransformer maL100 = new MAOnlineTransformer(100, feedL);
+
+            MAOnlineTransformer maH200 = new MAOnlineTransformer(200, feedH);
+            MAOnlineTransformer maL200 = new MAOnlineTransformer(200, feedL);
+
+            CrossingSeriesOnlineTransformer crossMAH10_50 = new CrossingSeriesOnlineTransformer(maH10, maH50, 10);
+            CrossingSeriesOnlineTransformer crossMAL10_50 = new CrossingSeriesOnlineTransformer(maL10, maL50, 10);
+            CrossingSeriesOnlineTransformer crossMAH10_100 = new CrossingSeriesOnlineTransformer(maH10, maH100, 10);
+            CrossingSeriesOnlineTransformer crossMAL10_100 = new CrossingSeriesOnlineTransformer(maL10, maL100, 10);
+            CrossingSeriesOnlineTransformer crossMAH10_200 = new CrossingSeriesOnlineTransformer(maH10, maH200, 10);
+            CrossingSeriesOnlineTransformer crossMAL10_200 = new CrossingSeriesOnlineTransformer(maL10, maL200, 10);
+            CrossingSeriesOnlineTransformer crossMAH50_100 = new CrossingSeriesOnlineTransformer(maH50, maH100, 10);
+            CrossingSeriesOnlineTransformer crossMAL50_100 = new CrossingSeriesOnlineTransformer(maL50, maL100, 10);
+            CrossingSeriesOnlineTransformer crossMAC10_50 = new CrossingSeriesOnlineTransformer(maC10, maC50, 10);
+            CrossingSeriesOnlineTransformer crossMAH50_200 = new CrossingSeriesOnlineTransformer(maH50, maH200, 10);
+            CrossingSeriesOnlineTransformer crossMAL50_200 = new CrossingSeriesOnlineTransformer(maL50, maL200, 10);
+
+            synch.addRawFeed(crossMAH10_50);
+            synch.addRawFeed(crossMAL10_50);
+            synch.addRawFeed(crossMAH10_100);
+            synch.addRawFeed(crossMAL10_100);
+            synch.addRawFeed(crossMAH10_200);
+            synch.addRawFeed(crossMAL10_200);
+            synch.addRawFeed(crossMAH50_100);
+            synch.addRawFeed(crossMAL50_100);
+            synch.addRawFeed(crossMAC10_50);
+            synch.addRawFeed(crossMAH50_200);
+            synch.addRawFeed(crossMAL50_200);
+
 
             FXHLDiffFeed feedDiff = new FXHLDiffFeed(feed, 0.0001);
             feed.addChild(feedDiff);
@@ -399,10 +459,7 @@ public class MainNeural {
             //MinMaxDistanceTransformer mmdT4 = new MinMaxDistanceTransformer(400, feedL, feedH, feedC);
             //MinMaxDistanceTransformer mmdT5 = new MinMaxDistanceTransformer(800, feedL, feedH, feedC);
 
-            synch.addRawFeed(feedH);
-            synch.addRawFeed(feedL);
-            synch.addRawFeed(feedC);
-            synch.addRawFeed(feedV);
+
 
             synch.addRawFeed(mmdT1);
             synch.addRawFeed(mmdT2);
@@ -422,10 +479,10 @@ public class MainNeural {
 
             synch.addRawFeed(dH);
             synch.addRawFeed(dL);
-            synch.addRawFeed(dC);
+            //synch.addRawFeed(dC);
             synch.addRawFeed(dV);
 
-            synch.addRawFeed(dH1);
+            /*synch.addRawFeed(dH1);
             synch.addRawFeed(dL1);
             synch.addRawFeed(dC1);
             synch.addRawFeed(dV1);
@@ -433,14 +490,14 @@ public class MainNeural {
             synch.addRawFeed(dH2);
             synch.addRawFeed(dL2);
             synch.addRawFeed(dC2);
-            synch.addRawFeed(dV2);
+            synch.addRawFeed(dV2);*/
 
             synch.addRawFeed(dH3);
             synch.addRawFeed(dL3);
-            synch.addRawFeed(dC3);
+            //synch.addRawFeed(dC3);
             synch.addRawFeed(dV3);
 
-            synch.addRawFeed(dH4);
+            /*synch.addRawFeed(dH4);
             synch.addRawFeed(dL4);
             synch.addRawFeed(dC4);
             synch.addRawFeed(dV4);
@@ -448,11 +505,11 @@ public class MainNeural {
             synch.addRawFeed(dH5);
             synch.addRawFeed(dL5);
             synch.addRawFeed(dC5);
-            synch.addRawFeed(dV5);
+            synch.addRawFeed(dV5);*/
 
             synch.addRawFeed(dH6);
             synch.addRawFeed(dL6);
-            synch.addRawFeed(dC6);
+            //synch.addRawFeed(dC6);
             synch.addRawFeed(dV6);
 
             synch.addRawFeed(feedDiff);
