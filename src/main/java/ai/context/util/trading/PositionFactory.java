@@ -9,7 +9,6 @@ public class PositionFactory {
     private static double tradeToCapRatio = 0.025;
     private static double leverage = 2;
     private static double amount = 1000000.0;
-    private static double accruedPnL = 0;
     public static double cost = 0.0002;
     public static double rewardRiskRatio = 3.0;
     private static double minTakeProfit = 0.001;
@@ -26,6 +25,14 @@ public class PositionFactory {
     private static PositionEngine engine;
 
     //private static DecisionHistogram decisionHistogram = new DecisionHistogram();
+
+
+    private static double accruedPnL = 0;
+    private static long totalTrades = 0;
+    private static long totalLoss = 0;
+    private static long totalProfit = 0;
+    private static double sumLoss = 0;
+    private static double sumProfit = 0;
 
     public static OpenPosition getPosition(long time, double pivot, TreeMap<Double, Double> histogram)
     {
@@ -319,6 +326,16 @@ public class PositionFactory {
         amount += position.getAmount()/leverage;
         amount += position.getPnL();
         accruedPnL += position.getPnL();
+
+        if(position.getPnL() > 0){
+            totalProfit++;
+            sumProfit += position.getPnL();
+        }
+        else {
+            totalLoss++;
+            sumLoss -= position.getPnL();
+        }
+        totalTrades++;
     }
 
     public static void incrementAmount(double increment){
@@ -372,5 +389,25 @@ public class PositionFactory {
 
     public static long getTimeSpan() {
         return timeSpan;
+    }
+
+    public static long getTotalTrades() {
+        return totalTrades;
+    }
+
+    public static long getTotalLoss() {
+        return totalLoss;
+    }
+
+    public static long getTotalProfit() {
+        return totalProfit;
+    }
+
+    public static double getSumLoss() {
+        return sumLoss;
+    }
+
+    public static double getSumProfit() {
+        return sumProfit;
     }
 }

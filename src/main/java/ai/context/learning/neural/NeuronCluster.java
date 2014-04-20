@@ -7,6 +7,7 @@ import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.Operations;
 import ai.context.util.server.JettyServer;
 import ai.context.util.server.servlets.NeuralClusterInformationServlet;
+import ai.context.util.trading.PositionFactory;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -285,4 +286,13 @@ public class NeuronCluster {
     }
 
 
+    public String getStats() {
+        String stats = "TIME: " + meanTime + ", STATS: ";
+        stats += "TOTAL TRADES: " + PositionFactory.getTotalTrades() + ", ";
+        stats += "TRADES PROFIT: " + PositionFactory.getTotalProfit() + ", ";
+        stats += "TRADES LOST: " + PositionFactory.getTotalLoss() + ", ";
+        stats += "AVERAGE PROFIT: " + PositionFactory.getSumProfit()/PositionFactory.getTotalProfit() + ", ";
+        stats += "AVERAGE LOST: " + PositionFactory.getSumLoss()/PositionFactory.getTotalLoss();
+        return stats;
+    }
 }

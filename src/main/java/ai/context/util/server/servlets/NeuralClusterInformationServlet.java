@@ -22,6 +22,7 @@ public class NeuralClusterInformationServlet extends HttpServlet{
 
     public static String REQ_TYPE = "REQ_TYPE";
     public static String GET_ALL_INFO = "ALL";
+    public static String GET_STATS_INFO = "STATS";
     private void processRequestAndWriteResponse(HttpServletRequest req, PrintWriter out) {
         Map<String, String[]> pMap = req.getParameterMap();
         if(pMap.containsKey(REQ_TYPE)){
@@ -29,6 +30,9 @@ public class NeuralClusterInformationServlet extends HttpServlet{
 
             if(reqType.equals(GET_ALL_INFO)){
                 out.print(cluster.getClusterStateJSON());
+            }
+            else if(reqType.equals(GET_STATS_INFO)){
+                out.print(cluster.getStats());
             }
         }
     }

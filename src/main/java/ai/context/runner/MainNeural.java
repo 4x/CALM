@@ -191,14 +191,14 @@ public class MainNeural {
 
         CSVFeed feedPriceEUR = new CSVFeed(path + "feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  dateFP);
         feedPriceEUR.setStitchableFeed(liveFXRateEUR);
-        CSVFeed feedPriceGBP = new CSVFeed(path + "feeds/GBPUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  dateFP);
-        feedPriceGBP.setStitchableFeed(liveFXRateGBP);
+        /*CSVFeed feedPriceGBP = new CSVFeed(path + "feeds/GBPUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  dateFP);
+        feedPriceGBP.setStitchableFeed(liveFXRateGBP);*/
         /*CSVFeed feedPriceCHF = new CSVFeed(path + "feeds/USDCHF.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  dateFP);
         feedPriceCHF.setStitchableFeed(liveFXRateCHF);*/
 
 
         SynchFeed feed = buildSynchFeed(null, feedPriceEUR);
-        feed = buildSynchFeed(feed, feedPriceGBP);
+        //feed = buildSynchFeed(feed, feedPriceGBP);
         /*feed = buildSynchFeed(feed, feedPriceCHF);*/
 
         //SmartDiscretiserOnSynchronisedFeed sFeed = new SmartDiscretiserOnSynchronisedFeed(feed, 5000, 5);
@@ -397,7 +397,7 @@ public class MainNeural {
             CrossingSeriesOnlineTransformer crossH1 = new CrossingSeriesOnlineTransformer(kRSIH1, dRSIH1, 10);
             CrossingSeriesOnlineTransformer crossL1 = new CrossingSeriesOnlineTransformer(kRSIL1, dRSIL1, 10);
 
-            RSIOnlineTransformer rsiH3 = new RSIOnlineTransformer(feedH, 5, 20, 0.1);
+            /*RSIOnlineTransformer rsiH3 = new RSIOnlineTransformer(feedH, 5, 20, 0.1);
             RSIOnlineTransformer rsiL3 = new RSIOnlineTransformer(feedL, 5, 20, 0.1);
 
             ExtractOneFromListFeed kRSIH3 = new ExtractOneFromListFeed(rsiH3, 1);
@@ -409,7 +409,7 @@ public class MainNeural {
             ExtractOneFromListFeed dRSIL3 = new ExtractOneFromListFeed(rsiL3, 2);
             rsiL3.addChild(dRSIL3);
             CrossingSeriesOnlineTransformer crossH3 = new CrossingSeriesOnlineTransformer(kRSIH3, dRSIH3, 10);
-            CrossingSeriesOnlineTransformer crossL3 = new CrossingSeriesOnlineTransformer(kRSIL3, dRSIL3, 10);
+            CrossingSeriesOnlineTransformer crossL3 = new CrossingSeriesOnlineTransformer(kRSIL3, dRSIL3, 10);*/
 
             RSIOnlineTransformer rsiH2 = new RSIOnlineTransformer(feedH, 5, 40, 0.05);
             RSIOnlineTransformer rsiL2 = new RSIOnlineTransformer(feedL, 5, 40, 0.05);
@@ -425,7 +425,7 @@ public class MainNeural {
             CrossingSeriesOnlineTransformer crossH2 = new CrossingSeriesOnlineTransformer(kRSIH2, dRSIH2, 10);
             CrossingSeriesOnlineTransformer crossL2 = new CrossingSeriesOnlineTransformer(kRSIL2, dRSIL2, 10);
 
-            RSIOnlineTransformer rsiH5 = new RSIOnlineTransformer(feedH, 5, 10, 0.01);
+            /*RSIOnlineTransformer rsiH5 = new RSIOnlineTransformer(feedH, 5, 10, 0.01);
             RSIOnlineTransformer rsiL5 = new RSIOnlineTransformer(feedL, 5, 10, 0.01);
 
             ExtractOneFromListFeed kRSIH5 = new ExtractOneFromListFeed(rsiH5, 1);
@@ -451,7 +451,7 @@ public class MainNeural {
             ExtractOneFromListFeed dRSIL4 = new ExtractOneFromListFeed(rsiL4, 2);
             rsiL4.addChild(dRSIL4);
             CrossingSeriesOnlineTransformer crossH4 = new CrossingSeriesOnlineTransformer(kRSIH4, dRSIH4, 10);
-            CrossingSeriesOnlineTransformer crossL4 = new CrossingSeriesOnlineTransformer(kRSIL4, dRSIL4, 10);
+            CrossingSeriesOnlineTransformer crossL4 = new CrossingSeriesOnlineTransformer(kRSIL4, dRSIL4, 10);*/
 
             MinMaxDistanceTransformer mmdT1 = new MinMaxDistanceTransformer(50, feedL, feedH, feedC);
             MinMaxDistanceTransformer mmdT2 = new MinMaxDistanceTransformer(100, feedL, feedH, feedC);
@@ -553,7 +553,7 @@ public class MainNeural {
             synch.addRawFeed(rsiL2);
             synch.addRawFeed(crossH2);
             synch.addRawFeed(crossL2);
-            synch.addRawFeed(rsiH3);
+            /*synch.addRawFeed(rsiH3);
             synch.addRawFeed(rsiL3);
             synch.addRawFeed(crossH3);
             synch.addRawFeed(crossL3);
@@ -564,7 +564,7 @@ public class MainNeural {
             synch.addRawFeed(rsiH5);
             synch.addRawFeed(rsiL5);
             synch.addRawFeed(crossH5);
-            synch.addRawFeed(crossL5);
+            synch.addRawFeed(crossL5);*/
         }
         return synch;
     }
