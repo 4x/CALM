@@ -18,7 +18,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class TestTwitter {
-    public static void main(String[] args){
+    public static void main(String[] args) {
         /** Set up your blocking queues: Be sure to size these properly based on expected TPS of your stream */
         BlockingQueue<String> msgQueue = new LinkedBlockingQueue<>(100000);
         BlockingQueue<Event> eventQueue = new LinkedBlockingQueue<>(1000);
@@ -36,9 +36,9 @@ public class TestTwitter {
         // These secrets should be read from a config file
         Authentication hosebirdAuth =
                 new OAuth1("UfyBnS7xUOn732zmq75uHw",
-                "hUBqdhLffFbf8DJ6C6TmSt2HPXVzGdKD1qkOrxQBeA",
-                "2358514777-w5kd0d8ilDPgfe3AiQ9RC1wDqaKZr2uRCGdAbHk",
-                "9vTQbeLdY671WfAW1JMtUSF0JTLPwlra7NWRptvGvD3dh");
+                        "hUBqdhLffFbf8DJ6C6TmSt2HPXVzGdKD1qkOrxQBeA",
+                        "2358514777-w5kd0d8ilDPgfe3AiQ9RC1wDqaKZr2uRCGdAbHk",
+                        "9vTQbeLdY671WfAW1JMtUSF0JTLPwlra7NWRptvGvD3dh");
 
         ClientBuilder builder = new ClientBuilder()
                 .name("Dandelion Machine Learning")                              // optional: mainly for the logs

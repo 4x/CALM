@@ -35,8 +35,7 @@ public class MinMaxAggregatorDiscretiser implements Feed {
     @Override
     public FeedObject readNext(Object caller) {
 
-        if(buffers.containsKey(caller) && buffers.get(caller).size() > 0)
-        {
+        if (buffers.containsKey(caller) && buffers.get(caller).size() > 0) {
             return buffers.get(caller).pollFirst();
         }
         FeedObject fO = feed.getNextComposite(this);
@@ -44,11 +43,9 @@ public class MinMaxAggregatorDiscretiser implements Feed {
         List data = (List) fO.getData();
 
         String toPrintOut = "";
-        for(Object o : data)
-        {
+        for (Object o : data) {
             toPrintOut += o + ",";
-            if(o == null || !(o instanceof Number))
-            {
+            if (o == null || !(o instanceof Number)) {
                 System.out.println(toPrintOut);
                 timeStamp = time;
                 return new FeedObject(time, null);
@@ -58,12 +55,10 @@ public class MinMaxAggregatorDiscretiser implements Feed {
         int index = 0;
         List<Integer> output = new ArrayList<Integer>();
         String toPrint = "";
-        for(Object o : data)
-        {
+        for (Object o : data) {
             double d = ((Number) o).doubleValue();
 
-            if(discretisers.size() <= index)
-            {
+            if (discretisers.size() <= index) {
                 MinMaxDiscretiser discretiser = new MinMaxDiscretiser(criticalMass, clusters);
                 discretiser.setLockable(lockable);
                 discretisers.add(discretiser);
@@ -78,8 +73,8 @@ public class MinMaxAggregatorDiscretiser implements Feed {
         //appendToFile(toPrint);
 
         FeedObject feedObject = new FeedObject(time, output);
-        for(Feed listener : buffers.keySet()){
-            if(listener != caller){
+        for (Feed listener : buffers.keySet()) {
+            if (listener != caller) {
                 buffers.get(listener).add(feedObject);
             }
         }
@@ -112,7 +107,7 @@ public class MinMaxAggregatorDiscretiser implements Feed {
         return padding + "[" + startIndex + "] Smart Discritiser with critical mass: " + criticalMass + " and degrees of feedom: " + clusters + " for feed: " + feed.getDescription(startIndex, padding + " ");
     }
 
-    public void lock(){
+    public void lock() {
         lockable = true;
     }
 

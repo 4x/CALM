@@ -6,7 +6,7 @@ import ai.context.feed.FeedObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MAOnlineTransformer extends OnlineTransformer{
+public class MAOnlineTransformer extends OnlineTransformer {
 
     private Feed feed;
     private double sum = 0;
@@ -18,18 +18,17 @@ public class MAOnlineTransformer extends OnlineTransformer{
 
     @Override
     protected Object getOutput() {
-        if(init){
-            sum -= (Double)leaving.getData();
-            sum += (Double)arriving.getData();
-        }
-        else {
+        if (init) {
+            sum -= (Double) leaving.getData();
+            sum += (Double) arriving.getData();
+        } else {
             buffer.clear();
-            while(buffer.size() < bufferSize){
+            while (buffer.size() < bufferSize) {
                 buffer.add(new FeedObject(0, arriving.getData()));
             }
-            sum = (Double)arriving.getData() * bufferSize;
+            sum = (Double) arriving.getData() * bufferSize;
         }
-        return sum/bufferSize;
+        return sum / bufferSize;
     }
 
     @Override
@@ -39,7 +38,7 @@ public class MAOnlineTransformer extends OnlineTransformer{
 
     @Override
     public String getDescription(int startIndex, String padding) {
-        return padding + "["+startIndex+"] MA and span: " + bufferSize + " for feed: " + feed.getDescription(startIndex, padding);
+        return padding + "[" + startIndex + "] MA and span: " + bufferSize + " for feed: " + feed.getDescription(startIndex, padding);
     }
 
     @Override

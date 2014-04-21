@@ -35,8 +35,7 @@ public class SmartDiscretiserOnSynchronisedFeed implements Feed {
     @Override
     public FeedObject readNext(Object caller) {
 
-        if(buffers.containsKey(caller) && buffers.get(caller).size() > 0)
-        {
+        if (buffers.containsKey(caller) && buffers.get(caller).size() > 0) {
             return buffers.get(caller).pollFirst();
         }
         FeedObject fO = feed.getNextComposite(this);
@@ -44,10 +43,8 @@ public class SmartDiscretiserOnSynchronisedFeed implements Feed {
 
         List data = new ArrayList();
         DataSetUtils.add(fO.getData(), data);
-        for(Object o : data)
-        {
-            if(o == null || !(o instanceof Double))
-            {
+        for (Object o : data) {
+            if (o == null || !(o instanceof Double)) {
                 timeStamp = time;
                 return new FeedObject(time, null);
             }
@@ -55,12 +52,10 @@ public class SmartDiscretiserOnSynchronisedFeed implements Feed {
 
         int index = 0;
         List<Integer> output = new ArrayList<Integer>();
-        for(Object o : data)
-        {
+        for (Object o : data) {
             Double d = (Double) o;
 
-            if(discretisers.size() <= index)
-            {
+            if (discretisers.size() <= index) {
                 discretisers.add(new SmartDiscretiser(criticalMass, clusters));
             }
             output.add(discretisers.get(index).discretise(d));
@@ -68,8 +63,8 @@ public class SmartDiscretiserOnSynchronisedFeed implements Feed {
             index++;
         }
         FeedObject feedObject = new FeedObject(time, output);
-        for(Feed listener : buffers.keySet()){
-            if(listener != caller){
+        for (Feed listener : buffers.keySet()) {
+            if (listener != caller) {
                 buffers.get(listener).add(feedObject);
             }
         }

@@ -16,14 +16,14 @@ public class FileUtils {
         byte[] b = createChecksum(filename);
         String result = "";
 
-        for (int i=0; i < b.length; i++) {
-            result += Integer.toString( ( b[i] & 0xff ) + 0x100, 16).substring( 1 );
+        for (int i = 0; i < b.length; i++) {
+            result += Integer.toString((b[i] & 0xff) + 0x100, 16).substring(1);
         }
         return result;
     }
 
     public static byte[] createChecksum(String filename) throws Exception {
-        InputStream fis =  new FileInputStream(filename);
+        InputStream fis = new FileInputStream(filename);
 
         byte[] buffer = new byte[1024];
         MessageDigest complete = MessageDigest.getInstance("MD5");
@@ -48,17 +48,27 @@ public class FileUtils {
             public void handleText(final char[] data, final int pos) {
                 list.add(new String(data));
             }
-            public void handleStartTag(HTML.Tag tag, MutableAttributeSet attribute, int pos) { }
-            public void handleEndTag(HTML.Tag t, final int pos) {  }
-            public void handleSimpleTag(HTML.Tag t, MutableAttributeSet a, final int pos) { }
-            public void handleComment(final char[] data, final int pos) { }
-            public void handleError(final java.lang.String errMsg, final int pos) { }
+
+            public void handleStartTag(HTML.Tag tag, MutableAttributeSet attribute, int pos) {
+            }
+
+            public void handleEndTag(HTML.Tag t, final int pos) {
+            }
+
+            public void handleSimpleTag(HTML.Tag t, MutableAttributeSet a, final int pos) {
+            }
+
+            public void handleComment(final char[] data, final int pos) {
+            }
+
+            public void handleError(final java.lang.String errMsg, final int pos) {
+            }
         };
         parserDelegator.parse(new StringReader(html), parserCallback, true);
 
         String text = "";
 
-        for(String s : list) {
+        for (String s : list) {
             text += " " + s;
         }
 

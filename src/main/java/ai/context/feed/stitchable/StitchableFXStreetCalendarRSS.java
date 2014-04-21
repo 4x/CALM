@@ -8,7 +8,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-public class StitchableFXStreetCalendarRSS extends StitchableFeed{
+public class StitchableFXStreetCalendarRSS extends StitchableFeed {
 
     private SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
 

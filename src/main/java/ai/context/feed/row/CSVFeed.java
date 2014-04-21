@@ -45,14 +45,13 @@ public class CSVFeed extends RowFeed {
 
     private HashMap<Feed, LinkedList<FeedObject>> buffers = new HashMap<>();
 
-    public CSVFeed(String fileName, String timeStampRegex, DataType[] types, String startDateTime)
-    {
+    public CSVFeed(String fileName, String timeStampRegex, DataType[] types, String startDateTime) {
         this.format = new SimpleDateFormat(timeStampRegex);
         this.fileName = fileName;
         this.timeStampRegex = timeStampRegex;
         this.startDateTime = startDateTime;
         format.setTimeZone(TimeZone.getTimeZone("GMT"));
-        if(startDateTime != null){
+        if (startDateTime != null) {
             try {
                 this.timeStamp = format.parse(startDateTime).getTime();
             } catch (ParseException e) {
@@ -63,8 +62,8 @@ public class CSVFeed extends RowFeed {
         this.types = types;
         paddingData = new Object[types.length];
         int i = 0;
-        for (DataType type : types){
-            switch (type){
+        for (DataType type : types) {
+            switch (type) {
                 case DOUBLE:
                     paddingData[i] = 0.0;
                     break;
@@ -107,43 +106,40 @@ public class CSVFeed extends RowFeed {
     }
 
     @Override
-    public synchronized FeedObject readNext(Object caller){
+    public synchronized FeedObject readNext(Object caller) {
 
-        if(buffers.containsKey(caller) && buffers.get(caller).size() > 0)
-        {
+        if (buffers.containsKey(caller) && buffers.get(caller).size() > 0) {
             return buffers.get(caller).pollFirst();
         }
         long timeStamp = 0;
-        while (true){
+        while (true) {
             try {
-                if(!stitching){
+                if (!stitching) {
                     nextLine = reader.readNext();
-                    if(nextLine == null){
-                        if(stitchableFeed == null){
+                    if (nextLine == null) {
+                        if (stitchableFeed == null) {
                             return null;
-                        }
-                        else {
+                        } else {
                             stitching = true;
                             System.out.println("Switched to stitching " + fileName);
                             startCollectingLive();
                             FeedObject toReturn = getNextLive();
                             append(toReturn);
                             this.timeStamp = toReturn.getTimeStamp();
-                            for(Feed listener : buffers.keySet()){
-                                if(listener != caller){
+                            for (Feed listener : buffers.keySet()) {
+                                if (listener != caller) {
                                     buffers.get(listener).add(toReturn);
                                 }
                             }
                             return toReturn;
                         }
                     }
-                }
-                else {
+                } else {
                     FeedObject toReturn = getNextLive();
                     append(toReturn);
                     this.timeStamp = toReturn.getTimeStamp();
-                    for(Feed listener : buffers.keySet()){
-                        if(listener != caller){
+                    for (Feed listener : buffers.keySet()) {
+                        if (listener != caller) {
                             buffers.get(listener).add(toReturn);
                         }
                     }
@@ -158,18 +154,16 @@ public class CSVFeed extends RowFeed {
             } catch (ParseException e) {
                 e.printStackTrace();
             }
-            if(timeStamp > this.timeStamp || (timeStamp == this.timeStamp && nextLine.hashCode() != lastLineHash)){
+            if (timeStamp > this.timeStamp || (timeStamp == this.timeStamp && nextLine.hashCode() != lastLineHash)) {
                 break;
             }
         }
         lastLineHash = nextLine.hashCode();
 
-        try{
+        try {
             Object[] data = new Object[types.length];
-            for (int i = 0; i < types.length; i++)
-            {
-                switch (types[i])
-                {
+            for (int i = 0; i < types.length; i++) {
+                switch (types[i]) {
                     case DOUBLE:
                         data[i] = Double.parseDouble(nextLine[i + 1]);
                         break;
@@ -187,13 +181,12 @@ public class CSVFeed extends RowFeed {
                 }
             }
             previousData = data;
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         FeedObject feedObject = new FeedObject(timeStamp, previousData);
-        for(Feed listener : buffers.keySet()){
-            if(listener != caller){
+        for (Feed listener : buffers.keySet()) {
+            if (listener != caller) {
                 buffers.get(listener).add(feedObject);
             }
         }
@@ -203,8 +196,7 @@ public class CSVFeed extends RowFeed {
         return feedObject;
     }
 
-    public CSVFeed getCopy()
-    {
+    public CSVFeed getCopy() {
         return new CSVFeed(fileName, timeStampRegex, types, startDateTime);
     }
 
@@ -226,13 +218,13 @@ public class CSVFeed extends RowFeed {
         return stitching;
     }
 
-    private void append(FeedObject feedObject){
-        if(!testing){
+    private void append(FeedObject feedObject) {
+        if (!testing) {
             List list = new ArrayList<>();
             DataSetUtils.add(feedObject.getData(), list);
 
             String toAppend = format.format(new Date(feedObject.getTimeStamp()));
-            for(Object column : list){
+            for (Object column : list) {
                 toAppend += "," + column;
             }
             try {
@@ -244,11 +236,11 @@ public class CSVFeed extends RowFeed {
         }
     }
 
-    private void startCollectingLive(){
+    private void startCollectingLive() {
         Runnable collector = new Runnable() {
             @Override
             public void run() {
-                while(true){
+                while (true) {
                     previousLive = stitchableFeed.readNext(this);
                     liveData.add(previousLive);
                 }
@@ -262,26 +254,24 @@ public class CSVFeed extends RowFeed {
         }
     }
 
-    private FeedObject getNextLive(){
+    private FeedObject getNextLive() {
 
         FeedObject data = null;
-        while(true){
+        while (true) {
             data = liveData.poll();
-            if(data == null){
-                if(paddable){
+            if (data == null) {
+                if (paddable) {
                     long t = System.currentTimeMillis();
                     t = t - (t % interval) + interval;
                     return new FeedObject(t, paddingData);
-                }
-                else{
+                } else {
                     try {
                         Thread.sleep(interval);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
-            }
-            else if(data.getTimeStamp() >= timeStamp){
+            } else if (data.getTimeStamp() >= timeStamp) {
                 break;
             }
         }

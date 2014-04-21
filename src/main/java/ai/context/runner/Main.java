@@ -65,12 +65,10 @@ public class Main {
 
     private Map<Integer, String> feedDescriptions = new TreeMap<>();
 
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) {
         Main test = new Main();
         String path = "/opt/dev/data/";
-        if(!(args == null || args.length == 0))
-        {
+        if (!(args == null || args.length == 0)) {
             path = args[0];
         }
         test.setTraderOutput(path);
@@ -78,14 +76,14 @@ public class Main {
         test.trade();
     }
 
-    public void setTraderOutput(String output){
+    public void setTraderOutput(String output) {
         trader = new Learner(output);
         trader.setBlackBox(blackBox);
         successfullMemoryLoading = trader.loadMemories("./memories", getTimeFromString_YYYYMMddHHmmss("20130201000000"));
     }
 
-    private void goLive(){
-        for(final BufferedTransformer transformer : bufferedTransformers){
+    private void goLive() {
+        for (final BufferedTransformer transformer : bufferedTransformers) {
 
             Runnable makeAlive = new Runnable() {
                 @Override
@@ -100,8 +98,7 @@ public class Main {
         LOGGER.info("Going LIVE!!!");
     }
 
-    public void setup(String path)
-    {
+    public void setup(String path) {
         /*Learner correlator = new Learner(path);
         LearnerFeed learnerFeed = new LearnerFeedFromSynchronisedFeed(initFeed(path, correlator));
 
@@ -163,16 +160,14 @@ public class Main {
         //goLive();
 
         int i = 0;
-        while (true)
-        {
+        while (true) {
             DataObject data = learnerFeed.readNext();
             trader.setCurrentTime(data.getTimeStamp());
 
             System.out.println(new Date(data.getTimeStamp()) + " " + data);
             i++;
 
-            if(i  == 10000)
-            {
+            if (i == 10000) {
                 break;
             }
         }
@@ -181,7 +176,7 @@ public class Main {
         TimerTask checkIfGoTrading = new TimerTask() {
             @Override
             public void run() {
-                if(!trader.isLive() && Math.abs(trader.getTime() - System.currentTimeMillis()) < 15 * 60 * 1000L){
+                if (!trader.isLive() && Math.abs(trader.getTime() - System.currentTimeMillis()) < 15 * 60 * 1000L) {
                     trader.setLive();
                     LOGGER.info("LIVE TRADING");
                     timer.cancel();
@@ -192,40 +187,39 @@ public class Main {
         timer.schedule(checkIfGoTrading, 10000L, 500);
     }
 
-    public void trade()
-    {
+    public void trade() {
         trader.run();
 
         TreeMap<Double, StateActionPair> alphas = trader.getAlphas();
         int top = 10;
-        for(Map.Entry<Double, StateActionPair> alpha : alphas.descendingMap().entrySet()){
+        for (Map.Entry<Double, StateActionPair> alpha : alphas.descendingMap().entrySet()) {
             System.out.println(alpha.getKey() + " -> " + AmalgamateUtils.getArrayString(alpha.getValue().getAmalgamate()));
 
             TreeMap<Double, Integer> topVars = new TreeMap<>();
             int var = 0;
-            for(double correlation : trader.getVarCorrelations(alpha.getValue().getAmalgamate())){
+            for (double correlation : trader.getVarCorrelations(alpha.getValue().getAmalgamate())) {
                 topVars.put(correlation, var);
                 var++;
             }
 
             int showVars = 10;
-            for(Map.Entry<Double, Integer> varEntry : topVars.descendingMap().entrySet()){
+            for (Map.Entry<Double, Integer> varEntry : topVars.descendingMap().entrySet()) {
                 System.out.println(varEntry.getValue() + ": " + feedDescriptions.get(varEntry.getValue()) + " -> " + alpha.getValue().getAmalgamate()[varEntry.getValue()]);
                 showVars--;
-                if(showVars == 0){
+                if (showVars == 0) {
                     break;
                 }
             }
 
             top--;
-            if(top == 0){
+            if (top == 0) {
                 break;
             }
         }
 
     }
 
-    public void initFXAPI(){
+    public void initFXAPI() {
         try {
             client = new DukascopyConnection(dukascopyUsername, dukascopyPassword).getClient();
             blackBox = new BlackBox(client);
@@ -239,14 +233,14 @@ public class Main {
         this.liveFXCalendar = liveFXCalendar;
     }
 
-    public void setLiveFXRates(StitchableFeed liveFXRateEUR,StitchableFeed liveFXRateGBP,StitchableFeed liveFXRateCHF) {
+    public void setLiveFXRates(StitchableFeed liveFXRateEUR, StitchableFeed liveFXRateGBP, StitchableFeed liveFXRateCHF) {
         this.liveFXRateEUR = liveFXRateEUR;
         this.liveFXRateGBP = liveFXRateGBP;
         this.liveFXRateCHF = liveFXRateCHF;
     }
 
-    private SynchronisedFeed initFeed(String path, Learner learner){
-        if(!testing){
+    private SynchronisedFeed initFeed(String path, Learner learner) {
+        if (!testing) {
             initFXAPI();
 
             setLiveFXCalendar(new StitchableFXStreetCalendarRSS(path + "tmp/FXCalendar.csv", new FXStreetCalendarRSSFeed()));
@@ -266,38 +260,38 @@ public class Main {
                 DataType.EXTRACTABLE_DOUBLE};
 
         String dateFC = "20080101 00:00:00";
-        if(successfullMemoryLoading){
+        if (successfullMemoryLoading) {
             dateFC = "20130201 00:00:00";
         }
 
-        long interval = 1*60000L;
+        long interval = 1 * 60000L;
         CSVFeed feedCalendar = new CSVFeed(path + "feeds/Calendar_2008.csv", "yyyyMMdd HH:mm:ss", typesCalendar, dateFC);
         feedCalendar.setStitchableFeed(liveFXCalendar);
         feedCalendar.setPaddable(true);
         feedCalendar.setInterval(interval);
-        RowBasedTransformer f1 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0}, new String[]{"Nonfarm Payrolls"}, new int[]{3, 4, 5}, learner);
+        RowBasedTransformer f1 = new RowBasedTransformer(feedCalendar, 4L * 60L * 60L * 1000L, new int[]{0}, new String[]{"Nonfarm Payrolls"}, new int[]{3, 4, 5}, learner);
         feedCalendar.addChild(f1);
 
-        RowBasedTransformer f2 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Consumer Price Index \\(MoM\\)", "United Kingdom"}, new int[]{3, 4, 5}, learner);
+        RowBasedTransformer f2 = new RowBasedTransformer(feedCalendar, 4L * 60L * 60L * 1000L, new int[]{0, 1}, new String[]{"Consumer Price Index \\(MoM\\)", "United Kingdom"}, new int[]{3, 4, 5}, learner);
         feedCalendar.addChild(f2);
-        RowBasedTransformer f3 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Consumer Price Index \\(MoM\\)", "United States"}, new int[]{3, 4, 5}, learner);
+        RowBasedTransformer f3 = new RowBasedTransformer(feedCalendar, 4L * 60L * 60L * 1000L, new int[]{0, 1}, new String[]{"Consumer Price Index \\(MoM\\)", "United States"}, new int[]{3, 4, 5}, learner);
         feedCalendar.addChild(f3);
-        RowBasedTransformer f4 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Consumer Price Index \\(MoM\\)", "Germany"}, new int[]{3, 4, 5}, learner);
+        RowBasedTransformer f4 = new RowBasedTransformer(feedCalendar, 4L * 60L * 60L * 1000L, new int[]{0, 1}, new String[]{"Consumer Price Index \\(MoM\\)", "Germany"}, new int[]{3, 4, 5}, learner);
         feedCalendar.addChild(f4);
 
-        RowBasedTransformer f5 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Producer Price Index \\(MoM\\)", "European Monetary Union"}, new int[]{3, 4, 5}, learner);
+        RowBasedTransformer f5 = new RowBasedTransformer(feedCalendar, 4L * 60L * 60L * 1000L, new int[]{0, 1}, new String[]{"Producer Price Index \\(MoM\\)", "European Monetary Union"}, new int[]{3, 4, 5}, learner);
         feedCalendar.addChild(f5);
-        RowBasedTransformer f6 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Producer Price Index \\(MoM\\)", "United States"}, new int[]{3, 4, 5}, learner);
+        RowBasedTransformer f6 = new RowBasedTransformer(feedCalendar, 4L * 60L * 60L * 1000L, new int[]{0, 1}, new String[]{"Producer Price Index \\(MoM\\)", "United States"}, new int[]{3, 4, 5}, learner);
         feedCalendar.addChild(f6);
-        RowBasedTransformer f7 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Retail Price Index \\(MoM\\)", "United Kingdom"}, new int[]{3, 4, 5}, learner);
+        RowBasedTransformer f7 = new RowBasedTransformer(feedCalendar, 4L * 60L * 60L * 1000L, new int[]{0, 1}, new String[]{"Retail Price Index \\(MoM\\)", "United Kingdom"}, new int[]{3, 4, 5}, learner);
         feedCalendar.addChild(f7);
-        RowBasedTransformer f8 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Manufacturing Production \\(MoM\\)", "United Kingdom"}, new int[]{3, 4, 5}, learner);
+        RowBasedTransformer f8 = new RowBasedTransformer(feedCalendar, 4L * 60L * 60L * 1000L, new int[]{0, 1}, new String[]{"Manufacturing Production \\(MoM\\)", "United Kingdom"}, new int[]{3, 4, 5}, learner);
         feedCalendar.addChild(f8);
-        RowBasedTransformer f9 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Producer Price Index \\(MoM\\)", "Germany"}, new int[]{3, 4, 5}, learner);
+        RowBasedTransformer f9 = new RowBasedTransformer(feedCalendar, 4L * 60L * 60L * 1000L, new int[]{0, 1}, new String[]{"Producer Price Index \\(MoM\\)", "Germany"}, new int[]{3, 4, 5}, learner);
         feedCalendar.addChild(f9);
-        RowBasedTransformer f10 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"BoE Interest Rate Decision", "United Kingdom"}, new int[]{3, 4, 5}, learner);
+        RowBasedTransformer f10 = new RowBasedTransformer(feedCalendar, 4L * 60L * 60L * 1000L, new int[]{0, 1}, new String[]{"BoE Interest Rate Decision", "United Kingdom"}, new int[]{3, 4, 5}, learner);
         feedCalendar.addChild(f10);
-        RowBasedTransformer f11 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Fed Interest Rate Decision", "United States"}, new int[]{3, 4, 5}, learner);
+        RowBasedTransformer f11 = new RowBasedTransformer(feedCalendar, 4L * 60L * 60L * 1000L, new int[]{0, 1}, new String[]{"Fed Interest Rate Decision", "United States"}, new int[]{3, 4, 5}, learner);
         feedCalendar.addChild(f11);
 
 
@@ -309,12 +303,12 @@ public class Main {
                 DataType.DOUBLE};
 
         String dateFP = "2008.01.01 00:00:00";
-        if(successfullMemoryLoading){
+        if (successfullMemoryLoading) {
             dateFP = "2013.02.01 00:00:00";
         }
-        CSVFeed feedPriceEUR = new CSVFeed(path + "feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  dateFP);
+        CSVFeed feedPriceEUR = new CSVFeed(path + "feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feedPriceEUR.setStitchableFeed(liveFXRateEUR);
-        CSVFeed feedPriceGBP = new CSVFeed(path + "feeds/GBPUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  dateFP);
+        CSVFeed feedPriceGBP = new CSVFeed(path + "feeds/GBPUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feedPriceGBP.setStitchableFeed(liveFXRateGBP);
         //CSVFeed feedPriceCHF = new CSVFeed(path + "feeds/USDCHF.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  dateFP);
         //feedPriceCHF.setStitchableFeed(liveFXRateCHF);
@@ -346,14 +340,12 @@ public class Main {
         //feed = new SynchronisedFeed(tFeed, feed);
 
         int i = 0;
-        while (true)
-        {
+        while (true) {
             FeedObject data = feed.getNextComposite(this);
             learner.setCurrentTime(data.getTimeStamp());
             i++;
 
-            if(i  == 500)
-            {
+            if (i == 500) {
                 break;
             }
 
@@ -362,14 +354,12 @@ public class Main {
 
         new SynchronisedFeed(tFeed, feed);
         i = 0;
-        while (true)
-        {
+        while (true) {
             FeedObject data = feed.getNextComposite(this);
             learner.setCurrentTime(data.getTimeStamp());
             i++;
 
-            if(i  == 5000)
-            {
+            if (i == 5000) {
                 break;
             }
 
@@ -379,9 +369,8 @@ public class Main {
         return feed;
     }
 
-    private SynchronisedFeed buildSynchFeed( SynchronisedFeed synch, CSVFeed ... feeds)
-    {
-        for(CSVFeed feed : feeds){
+    private SynchronisedFeed buildSynchFeed(SynchronisedFeed synch, CSVFeed... feeds) {
+        for (CSVFeed feed : feeds) {
             ExtractOneFromListFeed feedH = new ExtractOneFromListFeed(feed, 1);
             feed.addChild(feedH);
             ExtractOneFromListFeed feedL = new ExtractOneFromListFeed(feed, 2);
@@ -666,7 +655,7 @@ public class Main {
         return synch;
     }
 
-    private SynchronisedFeed addToSynchFeed(SynchronisedFeed feed, RowBasedTransformer raw, double resolution, double benchmark){
+    private SynchronisedFeed addToSynchFeed(SynchronisedFeed feed, RowBasedTransformer raw, double resolution, double benchmark) {
 
         LinearDiscretiser l0 = new LinearDiscretiser(resolution, benchmark, raw, 0);
         raw.addChild(l0);

@@ -8,8 +8,7 @@ import java.util.TreeMap;
 public class TestHeadTailMaps {
 
     @Test
-    public void testMaps()
-    {
+    public void testMaps() {
         TreeMap<Double, Double> histogram = new TreeMap<Double, Double>();
         histogram.put(1.0, 15.0);
         histogram.put(2.0, 10.0);

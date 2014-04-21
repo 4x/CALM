@@ -9,13 +9,13 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-public abstract class AbstractSurgicalFeed implements Feed{
+public abstract class AbstractSurgicalFeed implements Feed {
 
     private long timeStamp;
     private Feed feed;
     private HashMap<Feed, LinkedList<FeedObject>> buffers = new HashMap<>();
 
-    public AbstractSurgicalFeed(Feed rawFeed){
+    public AbstractSurgicalFeed(Feed rawFeed) {
         this.feed = rawFeed;
     }
 
@@ -27,16 +27,15 @@ public abstract class AbstractSurgicalFeed implements Feed{
     @Override
     public synchronized FeedObject readNext(Object caller) {
 
-        if(buffers.containsKey(caller) && buffers.get(caller).size() > 0)
-        {
+        if (buffers.containsKey(caller) && buffers.get(caller).size() > 0) {
             return buffers.get(caller).pollFirst();
         }
         FeedObject rawData = feed.readNext(this);
         List data = new ArrayList();
         DataSetUtils.add(rawData.getData(), data);
         FeedObject feedObject = operate(rawData.getTimeStamp(), data);
-        for(Feed listener : buffers.keySet()){
-            if(listener != caller){
+        for (Feed listener : buffers.keySet()) {
+            if (listener != caller) {
                 buffers.get(listener).add(feedObject);
             }
         }

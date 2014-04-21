@@ -8,7 +8,7 @@ import java.util.*;
 import static ai.context.util.mathematics.Discretiser.getLogarithmicDiscretisation;
 import static ai.context.util.mathematics.Operations.tanInverse;
 
-public class RadarOnlineTransformer  extends OnlineTransformer{
+public class RadarOnlineTransformer extends OnlineTransformer {
 
     private Feed feedMin;
     private Feed feedMax;
@@ -32,19 +32,19 @@ public class RadarOnlineTransformer  extends OnlineTransformer{
     protected Object getOutput() {
         ArrayList<Double[]> points = new ArrayList<>();
 
-        if(init){
+        if (init) {
             FeedObject last = buffer.getLast();
-            double origin =  ((Double) ((List)last.getData()).get(2))/resolution;
-            origin +=  ((Double) ((List)last.getData()).get(0))/resolution;
-            origin +=  ((Double) ((List)last.getData()).get(1))/resolution;
-            origin = origin/3;
+            double origin = ((Double) ((List) last.getData()).get(2)) / resolution;
+            origin += ((Double) ((List) last.getData()).get(0)) / resolution;
+            origin += ((Double) ((List) last.getData()).get(1)) / resolution;
+            origin = origin / 3;
             int i = 1 + buffer.size();
 
-            for(FeedObject point : buffer){
+            for (FeedObject point : buffer) {
 
-                Double minA = (Double) ((List)point.getData()).get(0)/resolution;
-                Double maxA = (Double) ((List)point.getData()).get(1)/resolution;
-                Double close = (Double) ((List)point.getData()).get(2)/resolution;
+                Double minA = (Double) ((List) point.getData()).get(0) / resolution;
+                Double maxA = (Double) ((List) point.getData()).get(1) / resolution;
+                Double close = (Double) ((List) point.getData()).get(2) / resolution;
 
                 double angle1 = tanInverse(-i, +(minA - origin));
                 double distance1 = Math.sqrt(Math.pow(minA - origin, 2) + Math.pow(i, 2));
@@ -72,13 +72,13 @@ public class RadarOnlineTransformer  extends OnlineTransformer{
 
             int tightness = 2;
             int divisions = tightness * 10;
-            for(int a = -10; a < 10; a++){
-                double angle = (Math.PI/divisions) * a;
+            for (int a = -10; a < 10; a++) {
+                double angle = (Math.PI / divisions) * a;
                 TreeMap<Integer, Double> histogram = new TreeMap<>();
-                for(Double[] point : points){
-                    int pointClass = (int) (point[1] * Math.sin(point[0] + angle))/1;
+                for (Double[] point : points) {
+                    int pointClass = (int) (point[1] * Math.sin(point[0] + angle)) / 1;
 
-                    if(!histogram.containsKey(pointClass)){
+                    if (!histogram.containsKey(pointClass)) {
                         histogram.put(pointClass, 0D);
                     }
 
@@ -90,10 +90,10 @@ public class RadarOnlineTransformer  extends OnlineTransformer{
                 int inspect = 10;
                 int c = 1;
                 double sum = 0;
-                for(Map.Entry<Integer, Double> entry : histogram.entrySet()){
+                for (Map.Entry<Integer, Double> entry : histogram.entrySet()) {
                     sum += entry.getValue();
-                    double rise = sum/c;
-                    if(c > inspect && rise > maxTop){
+                    double rise = sum / c;
+                    if (c > inspect && rise > maxTop) {
                         maxTop = rise;
                         top = a;
                         topSpace = entry.getKey();
@@ -106,10 +106,10 @@ public class RadarOnlineTransformer  extends OnlineTransformer{
                 SortedMap<Integer, Double> desc = histogram.descendingMap();
                 sum = 0;
                 c = 1;
-                for(Map.Entry<Integer, Double> entry : desc.entrySet()){
+                for (Map.Entry<Integer, Double> entry : desc.entrySet()) {
                     sum += entry.getValue();
-                    double fall =  sum/c;
-                    if(c > inspect && fall > maxBottom){
+                    double fall = sum / c;
+                    if (c > inspect && fall > maxBottom) {
                         maxBottom = fall;
                         bottom = a;
                         bottomSpace = entry.getKey();
@@ -138,15 +138,14 @@ public class RadarOnlineTransformer  extends OnlineTransformer{
             lastTSpace = (1 - lambda) * lastTSpace + lambda * topSpace;
             lastBSpace = (1 - lambda) * lastBSpace + lambda * bottomSpace;
 
-            if(lastTop != lastBottom){
-                convergence = getLogarithmicDiscretisation(Math.abs(lastTSpace + lastBSpace)/Math.abs(lastTop - lastBottom), 0, resolution);
+            if (lastTop != lastBottom) {
+                convergence = getLogarithmicDiscretisation(Math.abs(lastTSpace + lastBSpace) / Math.abs(lastTop - lastBottom), 0, resolution);
             }
 
-            return  new Double[]{lastTop, lastTSpace, lastBottom, lastBSpace, convergence};
-        }
-        else {
+            return new Double[]{lastTop, lastTSpace, lastBottom, lastBSpace, convergence};
+        } else {
             buffer.clear();
-            while(buffer.size() < bufferSize){
+            while (buffer.size() < bufferSize) {
                 buffer.add(new FeedObject(0, arriving.getData()));
             }
             return new Double[]{0.0, 0.0, 0.0, 0.0, 0.0};
@@ -160,7 +159,7 @@ public class RadarOnlineTransformer  extends OnlineTransformer{
 
     @Override
     public String getDescription(int startIndex, String padding) {
-        return padding + "["+startIndex+"] RadarOnlineTransformer and span: " + bufferSize + " for feed: " + feedMin.getDescription(startIndex, padding) + " and " + feedMax.getDescription(startIndex, padding) + " and " + feedClose.getDescription(startIndex, padding);
+        return padding + "[" + startIndex + "] RadarOnlineTransformer and span: " + bufferSize + " for feed: " + feedMin.getDescription(startIndex, padding) + " and " + feedMax.getDescription(startIndex, padding) + " and " + feedClose.getDescription(startIndex, padding);
     }
 
     @Override

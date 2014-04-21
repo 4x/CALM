@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 
-public class CrossingSeriesOnlineTransformer extends OnlineTransformer{
+public class CrossingSeriesOnlineTransformer extends OnlineTransformer {
 
     private Feed a;
     private Feed b;
@@ -23,9 +23,9 @@ public class CrossingSeriesOnlineTransformer extends OnlineTransformer{
     @Override
     protected Object getOutput() {
 
-        if(!init){
+        if (!init) {
             buffer.clear();
-            while(buffer.size() < bufferSize){
+            while (buffer.size() < bufferSize) {
                 buffer.add(new FeedObject(0, arriving.getData()));
             }
         }
@@ -33,31 +33,29 @@ public class CrossingSeriesOnlineTransformer extends OnlineTransformer{
         TreeMap<Integer, Integer> crossings = new TreeMap<>();
         boolean aOverB = true;
         int i = 0;
-        for(FeedObject element : buffer){
-            Double aVal = (Double) ((List)element.getData()).get(0);
-            Double bVal = (Double) ((List)element.getData()).get(1);
-            if(i > 0){
-                if(aOverB && bVal > aVal){
+        for (FeedObject element : buffer) {
+            Double aVal = (Double) ((List) element.getData()).get(0);
+            Double bVal = (Double) ((List) element.getData()).get(1);
+            if (i > 0) {
+                if (aOverB && bVal > aVal) {
                     crossings.put(i, -1);
-                }
-                else if(!aOverB && bVal < aVal){
+                } else if (!aOverB && bVal < aVal) {
                     crossings.put(i, 1);
                 }
             }
 
-            if(bVal > aVal){
+            if (bVal > aVal) {
                 aOverB = false;
-            }
-            else if(aVal > bVal){
+            } else if (aVal > bVal) {
                 aOverB = true;
             }
 
             i++;
         }
 
-        if(crossings.size() > 0){
-            double val = ((double)(crossings.lastEntry().getValue() * (lookback - crossings.lastKey())))/lookback;
-            return val/crossings.size();
+        if (crossings.size() > 0) {
+            double val = ((double) (crossings.lastEntry().getValue() * (lookback - crossings.lastKey()))) / lookback;
+            return val / crossings.size();
         }
 
         return 0.0;
@@ -70,7 +68,7 @@ public class CrossingSeriesOnlineTransformer extends OnlineTransformer{
 
     @Override
     public String getDescription(int startIndex, String padding) {
-        return padding + "["+startIndex+"] CROSSING for feed: " + a.getDescription(startIndex, padding) + " and " + b.getDescription(startIndex, padding);
+        return padding + "[" + startIndex + "] CROSSING for feed: " + a.getDescription(startIndex, padding) + " and " + b.getDescription(startIndex, padding);
     }
 
     @Override

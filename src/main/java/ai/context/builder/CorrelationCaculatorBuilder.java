@@ -14,7 +14,7 @@ public class CorrelationCaculatorBuilder {
     private static BufferedWriter writer;
 
 
-    public synchronized static void save(CorrelationCalculator calculator){
+    public synchronized static void save(CorrelationCalculator calculator) {
         String id = "" + System.identityHashCode(calculator);
         try {
             writer.write(calculator.toString() + "\n");
@@ -25,17 +25,17 @@ public class CorrelationCaculatorBuilder {
         calculators.put(id, calculator);
     }
 
-    public static void load(long timeOfSaving){
+    public static void load(long timeOfSaving) {
         calculators.clear();
         try {
-            if(writer != null){
+            if (writer != null) {
                 writer.close();
             }
 
             InputStream inputStream = new FileInputStream(folderPath + "/CorrelationCalculators_" + timeOfSaving);
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
             String line;
-            while ((line = reader.readLine()) != null){
+            while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(",");
 
                 String id = parts[0].split("=")[1];
@@ -50,8 +50,7 @@ public class CorrelationCaculatorBuilder {
                 CorrelationCalculator calculator = new CorrelationCalculator(currentCorrelation, nPoints, x_sum, y_sum, x_y_sum, x_2_sum, y_2_sum);
                 calculators.put(id, calculator);
             }
-        }
-        catch (FileNotFoundException e) {
+        } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
@@ -73,7 +72,7 @@ public class CorrelationCaculatorBuilder {
         calculators.clear();
     }
 
-    public static CorrelationCalculator getCalculator(String id){
+    public static CorrelationCalculator getCalculator(String id) {
         return calculators.get(id);
     }
 

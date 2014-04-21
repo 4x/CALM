@@ -23,7 +23,7 @@ public class DukascopyFeed implements IStrategy, Feed {
 
     private Instrument instrument;
 
-    public DukascopyFeed(IClient client, Period interval, Instrument instrument){
+    public DukascopyFeed(IClient client, Period interval, Instrument instrument) {
         this.client = client;
         this.interval = interval;
         this.instrument = instrument;
@@ -41,9 +41,9 @@ public class DukascopyFeed implements IStrategy, Feed {
 
     @Override
     public void onBar(Instrument instrument, Period period, IBar askBar, IBar bidBar) throws JFException {
-        if(period == interval && instrument == this.instrument){
+        if (period == interval && instrument == this.instrument) {
             timeStamp = askBar.getTime();
-            Double[] data = new Double[] {bidBar.getOpen(), bidBar.getHigh(), bidBar.getLow(), bidBar.getClose(), bidBar.getVolume()};
+            Double[] data = new Double[]{bidBar.getOpen(), bidBar.getHigh(), bidBar.getLow(), bidBar.getClose(), bidBar.getVolume()};
 
             LOGGER.info("ADDED candlestick: " + new Date(timeStamp) + " at " + new Date());
             channel.put(new FeedObject(timeStamp, data));

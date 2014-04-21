@@ -52,10 +52,9 @@ public class ClusterClientSocket {
     public void onMessage(String json) {
         try {
             Object data = JsonReader.jsonToJava(json);
-            if(data instanceof SessionAuth){
+            if (data instanceof SessionAuth) {
                 session.getRemote().sendString(JsonWriter.objectToJson(new SessionAuthResponse(((SessionAuth) data).getAuth(), cluster.getId())));
-            }
-            else if(data instanceof Sourceable){
+            } else if (data instanceof Sourceable) {
                 Sourceable sourceable = (Sourceable) data;
                 proxy.send(sourceable);
             }

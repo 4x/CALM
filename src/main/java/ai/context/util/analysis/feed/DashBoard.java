@@ -11,13 +11,14 @@ import java.awt.event.MouseListener;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DashBoard extends JSplitPane{
+public class DashBoard extends JSplitPane {
 
     private HashMap<String, StateActionPair> population = new HashMap<>();
     private Workspace workspace;
     private JTable table = new JTable();
     private DefaultTableModel tableModel;
-    public DashBoard(final Workspace workspace){
+
+    public DashBoard(final Workspace workspace) {
         super(JSplitPane.HORIZONTAL_SPLIT);
 
         this.workspace = workspace;
@@ -27,7 +28,7 @@ public class DashBoard extends JSplitPane{
         JScrollPane scroll = new JScrollPane(table);
         scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         add(scroll);
-        tableModel = new DefaultTableModel(new Object[]{"Score","Strategy ID"},0);
+        tableModel = new DefaultTableModel(new Object[]{"Score", "Strategy ID"}, 0);
         table.setModel(tableModel);
 
         final Analytics analytics = new Analytics(workspace);
@@ -41,9 +42,9 @@ public class DashBoard extends JSplitPane{
             public void mouseClicked(MouseEvent e) {
                 population.clear();
                 tableModel.setRowCount(0);
-                if(workspace.getLearner() != null){
+                if (workspace.getLearner() != null) {
                     Map<Double, StateActionPair> states = workspace.getLearner().getAlphas();
-                    for(Map.Entry<Double, StateActionPair> entry : states.entrySet()){
+                    for (Map.Entry<Double, StateActionPair> entry : states.entrySet()) {
                         population.put(entry.getValue().getId(), entry.getValue());
                         tableModel.addRow(new Object[]{entry.getKey(), entry.getValue().getId()});
                     }
@@ -75,11 +76,11 @@ public class DashBoard extends JSplitPane{
         table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
-                if(tableModel.getRowCount() > 0){
-                    try{
+                if (tableModel.getRowCount() > 0) {
+                    try {
                         analytics.update(population.get(table.getValueAt(table.getSelectedRow(), 1)));
+                    } catch (Exception ex) {
                     }
-                    catch (Exception ex){}
                 }
             }
         });

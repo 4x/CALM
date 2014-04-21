@@ -15,7 +15,7 @@ public class ClusterRunner extends Server {
 
         ContextHandlerCollection contexts = new ContextHandlerCollection();
 
-        contexts.setHandlers(new Handler[] {new ContextBuilder().buildWebAppContext()});
+        contexts.setHandlers(new Handler[]{new ContextBuilder().buildWebAppContext()});
         setHandler(new ContextBuilder().buildWebAppContext());
 
         try {

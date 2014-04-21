@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-public class AmplitudeWavelengthTransformer extends CompoundedTransformer{
+public class AmplitudeWavelengthTransformer extends CompoundedTransformer {
 
     private LinkedList<Double[]> history = new LinkedList<Double[]>();
 
@@ -34,11 +34,10 @@ public class AmplitudeWavelengthTransformer extends CompoundedTransformer{
     @Override
     protected Object getOutput(Object input) {
 
-        List<Object> data = (List<Object>)input;
+        List<Object> data = (List<Object>) input;
         Double raw = (Double) data.get(0);
         Double stdev = (Double) data.get(1);
-        if(stdev == null || raw == null)
-        {
+        if (stdev == null || raw == null) {
             return null;
         }
         history.add(new Double[]{raw, stdev});
@@ -54,50 +53,37 @@ public class AmplitudeWavelengthTransformer extends CompoundedTransformer{
 
         int reached = 0;
         int mark = 0;
-        for(Double[] snapshot : history)
-        {
+        for (Double[] snapshot : history) {
 
-            if(snapshot[0] > highest)
-            {
+            if (snapshot[0] > highest) {
                 highest = snapshot[0];
                 expectingCrest = true;
                 mark = reached;
             }
-            if(snapshot[0] < lowest)
-            {
+            if (snapshot[0] < lowest) {
                 lowest = snapshot[0];
                 expectingCrest = false;
                 mark = reached;
             }
 
-            if(!found)
-            {
-                if(snapshot[0] > last)
-                {
-                    if(expectingCrest && Math.abs(snapshot[0] - start) > (nDeviations * snapshot[1]))
-                    {
+            if (!found) {
+                if (snapshot[0] > last) {
+                    if (expectingCrest && Math.abs(snapshot[0] - start) > (nDeviations * snapshot[1])) {
+                        found = true;
+                    }
+                } else {
+                    if (!expectingCrest && Math.abs(snapshot[0] - start) > (nDeviations * snapshot[1])) {
                         found = true;
                     }
                 }
-                else {
-                    if(!expectingCrest && Math.abs(snapshot[0] - start) > (nDeviations * snapshot[1]))
-                    {
-                        found = true;
-                    }
-                }
-            }
-            else {
-                if(snapshot[0] > last)
-                {
-                    if(Math.abs(highest - snapshot[0]) > (nDeviations * snapshot[1]))
-                    {
+            } else {
+                if (snapshot[0] > last) {
+                    if (Math.abs(highest - snapshot[0]) > (nDeviations * snapshot[1])) {
                         confirmed = true;
                         break;
                     }
-                }
-                else {
-                    if(Math.abs(snapshot[0] - lowest) > (nDeviations * snapshot[1]))
-                    {
+                } else {
+                    if (Math.abs(snapshot[0] - lowest) > (nDeviations * snapshot[1])) {
                         confirmed = true;
                         break;
                     }
@@ -107,44 +93,36 @@ public class AmplitudeWavelengthTransformer extends CompoundedTransformer{
             reached++;
         }
 
-        if(found && confirmed)
-        {
+        if (found && confirmed) {
             index += mark;
-            if(expectingCrest)
-            {
+            if (expectingCrest) {
                 lastCrestCoordinates = new double[]{index, highest};
-            }
-            else {
+            } else {
                 lastTroughCoordinates = new double[]{index, lowest};
             }
 
-            if(lastTroughCoordinates != null && lastCrestCoordinates != null)
-            {
-                if(wavelength != null)
-                {
-                    wavelength = (1.0 - lambda)*(Math.abs(lastTroughCoordinates[0] - lastCrestCoordinates[0])) + (lambda *wavelength);
-                    amplitude = (1.0 - lambda)*(Math.abs(lastCrestCoordinates[1] - lastTroughCoordinates[1])) + (lambda *amplitude);
-                }
-                else {
+            if (lastTroughCoordinates != null && lastCrestCoordinates != null) {
+                if (wavelength != null) {
+                    wavelength = (1.0 - lambda) * (Math.abs(lastTroughCoordinates[0] - lastCrestCoordinates[0])) + (lambda * wavelength);
+                    amplitude = (1.0 - lambda) * (Math.abs(lastCrestCoordinates[1] - lastTroughCoordinates[1])) + (lambda * amplitude);
+                } else {
                     wavelength = (Math.abs(lastTroughCoordinates[0] - lastCrestCoordinates[0]));
                     amplitude = (Math.abs(lastCrestCoordinates[1] - lastTroughCoordinates[1]));
                 }
             }
 
-            for(int i = 0; i < mark; i++)
-            {
+            for (int i = 0; i < mark; i++) {
                 history.poll();
             }
         }
 
         double[] result = new double[4];
-        if(wavelength != null)
-        {
+        if (wavelength != null) {
             result[0] = Math.log(wavelength);
             result[1] = Math.log(amplitude);
 
-            result[2] = Math.log(((history.size() + index) - lastCrestCoordinates[0])/wavelength);
-            result[3] = Math.log(((history.size() + index) - lastTroughCoordinates[0])/wavelength);
+            result[2] = Math.log(((history.size() + index) - lastCrestCoordinates[0]) / wavelength);
+            result[3] = Math.log(((history.size() + index) - lastTroughCoordinates[0]) / wavelength);
         }
 
         return result;

@@ -17,15 +17,15 @@ public class TimeOffsetTransformer implements Feed {
 
     private LinkedList<FeedObject> buffer = new LinkedList<>();
 
-    public TimeOffsetTransformer(Feed rawFeed, int offset)
-    {
+    public TimeOffsetTransformer(Feed rawFeed, int offset) {
         this.rawFeed = rawFeed;
         this.offset = Math.abs(offset);
 
-        if(offset < 0){
+        if (offset < 0) {
             future = false;
         }
     }
+
     @Override
     public boolean hasNext() {
         return rawFeed.hasNext();
@@ -38,12 +38,11 @@ public class TimeOffsetTransformer implements Feed {
         buffer.add(data);
         timeStamp = data.getTimeStamp();
 
-        if(buffer.size() > offset){
+        if (buffer.size() > offset) {
             FeedObject toReturn = buffer.pollFirst();
-            if(!future){
-                return  new FeedObject(timeStamp, toReturn.getData());
-            }
-            else {
+            if (!future) {
+                return new FeedObject(timeStamp, toReturn.getData());
+            } else {
                 return new FeedObject(toReturn.getTimeStamp(), data.getData());
             }
         }

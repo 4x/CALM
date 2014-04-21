@@ -7,7 +7,7 @@ import ai.context.feed.synchronised.SynchronisedFeed;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-public abstract class OnlineTransformer implements Feed{
+public abstract class OnlineTransformer implements Feed {
 
     private HashMap<Feed, LinkedList<FeedObject>> buffers = new HashMap<>();
 
@@ -22,41 +22,39 @@ public abstract class OnlineTransformer implements Feed{
     protected SynchronisedFeed source;
     protected long timeStamp;
 
-    public OnlineTransformer(int bufferSize, Feed ... feeds){
+    public OnlineTransformer(int bufferSize, Feed... feeds) {
         this.bufferSize = bufferSize;
 
-        for(Feed feed : feeds){
+        for (Feed feed : feeds) {
             source = new SynchronisedFeed(feed, source);
         }
         source.addChild(this);
-        while(buffer.size() < bufferSize){
+        while (buffer.size() < bufferSize) {
             buffer.add(new FeedObject(0, null));
         }
     }
 
     @Override
     public FeedObject readNext(Object caller) {
-        if(buffers.containsKey(caller) && buffers.get(caller).size() > 0)
-        {
+        if (buffers.containsKey(caller) && buffers.get(caller).size() > 0) {
             return buffers.get(caller).pollFirst();
         }
 
         arriving = source.getNextComposite(this);
 
-        if(init){
+        if (init) {
             buffer.add(arriving);
             leaving = buffer.pollFirst();
-        }
-        else{
-            while(buffer.size() < bufferSize){
+        } else {
+            while (buffer.size() < bufferSize) {
                 buffer.add(arriving);
             }
         }
 
         timeStamp = arriving.getTimeStamp();
         FeedObject feedObject = new FeedObject(timeStamp, getOutput());
-        for(Feed listener : buffers.keySet()){
-            if(listener != caller){
+        for (Feed listener : buffers.keySet()) {
+            if (listener != caller) {
                 buffers.get(listener).add(feedObject);
             }
         }

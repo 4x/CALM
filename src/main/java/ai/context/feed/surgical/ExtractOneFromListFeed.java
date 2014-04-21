@@ -19,8 +19,7 @@ public class ExtractOneFromListFeed extends AbstractSurgicalFeed {
 
     @Override
     protected synchronized FeedObject operate(long time, List row) {
-        if(row.size() <= interestedIndex)
-        {
+        if (row.size() <= interestedIndex) {
             return new FeedObject(time, null);
         }
         return new FeedObject(time, row.get(interestedIndex));

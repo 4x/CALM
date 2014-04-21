@@ -5,10 +5,11 @@ import ai.context.feed.Feed;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MultiplierTransformer extends CompoundedTransformer{
+public class MultiplierTransformer extends CompoundedTransformer {
 
     private Feed fA;
     private Feed fB;
+
     public MultiplierTransformer(Feed fA, Feed fB) {
         super(new Feed[]{fA, fB});
         this.fA = fA;
@@ -17,7 +18,7 @@ public class MultiplierTransformer extends CompoundedTransformer{
 
     @Override
     protected Object getOutput(Object input) {
-        List<Object> data = (List<Object>)input;
+        List<Object> data = (List<Object>) input;
         Double fA = (Double) data.get(0);
         Double fB = (Double) data.get(1);
         return (fA * fB);
@@ -30,7 +31,7 @@ public class MultiplierTransformer extends CompoundedTransformer{
 
     @Override
     public String getDescription(int startIndex, String padding) {
-        return padding + "["+startIndex+"] Multiplier of feed " + fA + " by feed " + fB;
+        return padding + "[" + startIndex + "] Multiplier of feed " + fA + " by feed " + fB;
     }
 
     //@Override

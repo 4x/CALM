@@ -36,15 +36,13 @@ public class TestSynchCSVFeeds {
     CSVFeed feedPriceGBP = new CSVFeed("C:\\Users\\Oblene\\Desktop\\Sandbox\\Data\\feeds\\GBPUSD_5 Mins_Bid_2008.01.01_2012.12.31.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, null);
 
     @Test
-    public void testCSV()
-    {
+    public void testCSV() {
         SynchronisedFeed sFeed = new SynchronisedFeed(feedCalendar, null);
         sFeed = new SynchronisedFeed(feedPriceEUR, sFeed);
         sFeed = new SynchronisedFeed(feedPriceGBP, sFeed);
         sFeed = new SynchronisedFeed(filtered, sFeed);
 
-        for(int i = 0; i < 4000; i++)
-        {
+        for (int i = 0; i < 4000; i++) {
             FeedObject data = sFeed.getNextComposite(this);
 
             List<Object> list = new ArrayList<Object>();

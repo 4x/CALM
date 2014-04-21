@@ -13,15 +13,15 @@ public class RecentUniqueStrings {
         this.maxMemory = maxMemory;
     }
 
-    public boolean has(String id){
+    public boolean has(String id) {
         return set.contains(id);
     }
 
-    public boolean add(String id){
-        if(has(id)){
+    public boolean add(String id) {
+        if (has(id)) {
             return false;
         }
-        if(list.size() > maxMemory){
+        if (list.size() > maxMemory) {
             set.remove(list.pollFirst());
         }
         list.add(id);

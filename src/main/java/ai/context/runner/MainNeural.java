@@ -47,14 +47,14 @@ public class MainNeural {
     public static void main(String[] args) {
         MainNeural test = new MainNeural();
         String path = "/opt/dev/data/";
-        if(!(args == null || args.length == 0)){
+        if (!(args == null || args.length == 0)) {
             path = args[0];
         }
         test.setup(path);
     }
 
 
-    public void setup(String path){
+    public void setup(String path) {
 
         SynchFeed motherFeed = initFeed(path, null);
         NeuronCluster.getInstance().setMotherFeed(motherFeed);
@@ -64,17 +64,17 @@ public class MainNeural {
         long outputFutureOffset = 5 * 60 * 1000L;
         double resolution = 0.0005;
         Set<Integer> availableStimuli = new HashSet<>();
-        for(int i = 0 ; i < motherFeed.getNumberOfOutputs(); i ++){
+        for (int i = 0; i < motherFeed.getNumberOfOutputs(); i++) {
             availableStimuli.add(i);
         }
         availableStimuli.removeAll(Arrays.asList(actionElements));
         //StimuliRankings.getInstance().newStimuli(availableStimuli);
 
-        for(int i = 0 ; i < 300; i++){
+        for (int i = 0; i < 300; i++) {
             Integer[] sigElements = new Integer[5];
-            for(int sig = 0; sig < sigElements.length; sig++){
-                if(availableStimuli.isEmpty()){
-                    for(int index = 0 ; index < motherFeed.getNumberOfOutputs(); index++){
+            for (int sig = 0; sig < sigElements.length; sig++) {
+                if (availableStimuli.isEmpty()) {
+                    for (int index = 0; index < motherFeed.getNumberOfOutputs(); index++) {
                         availableStimuli.add(index);
                     }
                 }
@@ -104,7 +104,7 @@ public class MainNeural {
         NeuronCluster.getInstance().start();
     }
 
-    public void initFXAPI(){
+    public void initFXAPI() {
         try {
             client = new DukascopyConnection(dukascopyUsername, dukascopyPassword).getClient();
             blackBox = new BlackBox(client);
@@ -118,15 +118,15 @@ public class MainNeural {
         this.liveFXCalendar = liveFXCalendar;
     }
 
-    public void setLiveFXRates(StitchableFeed liveFXRateEUR,StitchableFeed liveFXRateGBP,StitchableFeed liveFXRateCHF) {
+    public void setLiveFXRates(StitchableFeed liveFXRateEUR, StitchableFeed liveFXRateGBP, StitchableFeed liveFXRateCHF) {
         this.liveFXRateEUR = liveFXRateEUR;
         this.liveFXRateGBP = liveFXRateGBP;
         this.liveFXRateCHF = liveFXRateCHF;
     }
 
-    private SynchFeed initFeed(String path, Learner learner){
+    private SynchFeed initFeed(String path, Learner learner) {
 
-        if(!testing){
+        if (!testing) {
             initFXAPI();
 
             setLiveFXCalendar(new StitchableFXStreetCalendarRSS(path + "tmp/FXCalendar.csv", new FXStreetCalendarRSSFeed()));
@@ -187,9 +187,9 @@ public class MainNeural {
 
         String dateFP = "2008.01.01 00:00:00";
 
-        CSVFeed feedPriceEUR = new CSVFeed(path + "feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  dateFP);
+        CSVFeed feedPriceEUR = new CSVFeed(path + "feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feedPriceEUR.setStitchableFeed(liveFXRateEUR);
-        CSVFeed feedPriceGBP = new CSVFeed(path + "feeds/GBPUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  dateFP);
+        CSVFeed feedPriceGBP = new CSVFeed(path + "feeds/GBPUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feedPriceGBP.setStitchableFeed(liveFXRateGBP);
         /*CSVFeed feedPriceCHF = new CSVFeed(path + "feeds/USDCHF.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  dateFP);
         feedPriceCHF.setStitchableFeed(liveFXRateCHF);*/
@@ -224,11 +224,11 @@ public class MainNeural {
         addToSynchFeed(feed, f11, 0.1, 0);*/
 
         int i = 0;
-        while (true){
+        while (true) {
             FeedObject data = synchFeed.getNextComposite(this);
             i++;
 
-            if(i  == 5010) {
+            if (i == 5010) {
                 System.out.println(new Date(data.getTimeStamp()) + " " + data);
                 break;
             }
@@ -237,11 +237,11 @@ public class MainNeural {
         return synchFeed;
     }
 
-    private SynchFeed buildSynchFeed(SynchFeed synch, CSVFeed ... feeds) {
-        if(synch == null){
+    private SynchFeed buildSynchFeed(SynchFeed synch, CSVFeed... feeds) {
+        if (synch == null) {
             synch = new SynchFeed();
         }
-        for(CSVFeed feed : feeds){
+        for (CSVFeed feed : feeds) {
             ExtractOneFromListFeed feedH = new ExtractOneFromListFeed(feed, 1);
             feed.addChild(feedH);
             ExtractOneFromListFeed feedL = new ExtractOneFromListFeed(feed, 2);
@@ -438,7 +438,6 @@ public class MainNeural {
             //MinMaxDistanceTransformer mmdT5 = new MinMaxDistanceTransformer(800, feedL, feedH, feedC);
 
 
-
             synch.addRawFeed(mmdT1);
             synch.addRawFeed(mmdT2);
             synch.addRawFeed(mmdT3);
@@ -548,7 +547,7 @@ public class MainNeural {
         return synch;
     }
 
-    private SynchFeed addToSynchFeed(SynchFeed feed, RowBasedTransformer raw, double resolution, double benchmark){
+    private SynchFeed addToSynchFeed(SynchFeed feed, RowBasedTransformer raw, double resolution, double benchmark) {
 
         LinearDiscretiser l0 = new LinearDiscretiser(resolution, benchmark, raw, 0);
         raw.addChild(l0);

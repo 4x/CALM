@@ -8,7 +8,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-public class StitchableFXRate extends StitchableFeed{
+public class StitchableFXRate extends StitchableFeed {
 
     private SimpleDateFormat format = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss");
 

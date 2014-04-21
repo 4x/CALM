@@ -6,7 +6,7 @@ import ai.context.feed.FeedObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StandardDeviationOnlineTransformer extends OnlineTransformer{
+public class StandardDeviationOnlineTransformer extends OnlineTransformer {
 
     private double stdDv = 0;
     private int span = 0;
@@ -24,27 +24,26 @@ public class StandardDeviationOnlineTransformer extends OnlineTransformer{
 
     @Override
     protected Object getOutput() {
-        if(init){
-            sumX -= (Double)leaving.getData();
-            sumX += (Double)arriving.getData();
+        if (init) {
+            sumX -= (Double) leaving.getData();
+            sumX += (Double) arriving.getData();
 
-            sumX2 -= Math.pow((Double)leaving.getData(), 2);
-            sumX2 += Math.pow((Double)arriving.getData(), 2);
-        }
-        else {
+            sumX2 -= Math.pow((Double) leaving.getData(), 2);
+            sumX2 += Math.pow((Double) arriving.getData(), 2);
+        } else {
             buffer.clear();
-            while(buffer.size() < bufferSize){
+            while (buffer.size() < bufferSize) {
                 buffer.add(new FeedObject(0, arriving.getData()));
             }
 
-            for(FeedObject element : buffer){
-                double val = (Double)element.getData();
+            for (FeedObject element : buffer) {
+                double val = (Double) element.getData();
                 sumX += val;
                 sumX2 += (val * val);
             }
         }
 
-        stdDv = Math.sqrt(sumX2/span - Math.pow(sumX/span,2));
+        stdDv = Math.sqrt(sumX2 / span - Math.pow(sumX / span, 2));
         return stdDv;
     }
 
@@ -55,7 +54,7 @@ public class StandardDeviationOnlineTransformer extends OnlineTransformer{
 
     @Override
     public String getDescription(int startIndex, String padding) {
-        return padding + "["+startIndex+"] STDDEV and span: " + span + " for feed: " + feed.getDescription(startIndex, padding);
+        return padding + "[" + startIndex + "] STDDEV and span: " + span + " for feed: " + feed.getDescription(startIndex, padding);
     }
 
     @Override

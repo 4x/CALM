@@ -25,37 +25,33 @@ public abstract class LiveBufferedTransformer implements Feed {
 
     @Override
     public synchronized FeedObject readNext(Object caller) {
-        if(buffers.containsKey(caller) && buffers.get(caller).size() > 0)
-        {
+        if (buffers.containsKey(caller) && buffers.get(caller).size() > 0) {
             return buffers.get(caller).pollFirst();
         }
 
         nextInput();
         FeedObject feedObject = null;
-        if(inputBuildup.size() < span){
+        if (inputBuildup.size() < span) {
             feedObject = new FeedObject(timeStamp, null);
-        }
-        else {
+        } else {
             FeedObject[] outputArray = getOutput(getArray(inputBuildup));
             feedObject = new FeedObject(timeStamp, outputArray[0].getData());
             inputBuildup.pollFirst();
         }
 
-        for(Feed listener : buffers.keySet()){
-            if(listener != caller){
+        for (Feed listener : buffers.keySet()) {
+            if (listener != caller) {
                 buffers.get(listener).add(feedObject);
             }
         }
         return feedObject;
     }
 
-    private void nextInput()
-    {
+    private void nextInput() {
         FeedObject[] data = new FeedObject[feeds.length];
         int index = 0;
 
-        for(Feed feed : feeds)
-        {
+        for (Feed feed : feeds) {
             data[index] = feed.readNext(this);
             timeStamp = data[index].getTimeStamp();
             index++;
@@ -64,17 +60,15 @@ public abstract class LiveBufferedTransformer implements Feed {
         inputBuildup.add(data);
     }
 
-    private FeedObject[] getArray(Queue<FeedObject[]> inputs)
-    {
+    private FeedObject[] getArray(Queue<FeedObject[]> inputs) {
         FeedObject[] outputs = new FeedObject[inputs.size()];
 
         int outIndex = 0;
-        for(FeedObject[] input : inputs){
+        for (FeedObject[] input : inputs) {
             long timeStamp = input[0].getTimeStamp();
             Object[] data = new Object[input.length];
             int index = 0;
-            for(FeedObject value : input)
-            {
+            for (FeedObject value : input) {
                 data[index] = value.getData();
                 index++;
             }

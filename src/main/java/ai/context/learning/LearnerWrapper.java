@@ -27,7 +27,7 @@ public class LearnerWrapper {
 
     private Set<PredictionExtractionFeed> extractors = new HashSet<>();
 
-    public LearnerWrapper(Feed signalFeed, Feed presentFeed, int presentCloseField, int[] valueFields, int horizon, double actionResolution, double tolerance, int maxPop){
+    public LearnerWrapper(Feed signalFeed, Feed presentFeed, int presentCloseField, int[] valueFields, int horizon, double actionResolution, double tolerance, int maxPop) {
         feed = new SynchronisedFeed(presentFeed, feed);
         feed = new SynchronisedFeed(signalFeed, feed);
         this.presentCloseField = presentCloseField;
@@ -41,12 +41,12 @@ public class LearnerWrapper {
         learner.setTolerance(tolerance);
     }
 
-    public void start(){
+    public void start() {
         Runnable player = new Runnable() {
             @Override
             public void run() {
-                while (!killed){
-                    while (paused){
+                while (!killed) {
+                    while (paused) {
                         try {
                             Thread.sleep(1000);
                         } catch (InterruptedException e) {
@@ -55,24 +55,24 @@ public class LearnerWrapper {
                     }
 
                     FeedObject data = feed.getNextComposite(this);
-                    List dataList = (List)data.getData();
-                    if(dataList.size() == (presentFeedFields + signalFields)){
+                    List dataList = (List) data.getData();
+                    if (dataList.size() == (presentFeedFields + signalFields)) {
                         double[] values = new double[presentFeedFields];
                         int[] signal = new int[signalFields];
 
-                        for(int i = 0; i < presentFeedFields; i++){
+                        for (int i = 0; i < presentFeedFields; i++) {
                             values[i] = (Double) dataList.get(i);
                         }
 
-                        for(int i = 0; i < signalFields; i++){
+                        for (int i = 0; i < signalFields; i++) {
                             signal[i] = (Integer) dataList.get(i + presentFeedFields);
                         }
 
-                        if(!extractors.isEmpty()){
+                        if (!extractors.isEmpty()) {
                             TreeMap<Integer, Double> dist = learner.getActionDistribution(signal);
                             FeedObject<TreeMap<Integer, Double>> feedObject = new FeedObject<>(data.getTimeStamp(), dist);
 
-                            for(PredictionExtractionFeed extractor : extractors){
+                            for (PredictionExtractionFeed extractor : extractors) {
                                 extractor.addData(feedObject);
                             }
                         }
@@ -80,20 +80,20 @@ public class LearnerWrapper {
                         DataObject snapshot = new DataObject(data.getTimeStamp(), signal, values);
                         history.add(snapshot);
 
-                        if(history.size() > horizon){
+                        if (history.size() > horizon) {
                             DataObject now = history.pollFirst();
 
                             double nowClose = now.getValue()[presentCloseField];
                             double maxPosMovement = 0;
                             double maxNegMovement = 0;
-                            for(DataObject future : history){
-                                for(int i : valueFields){
+                            for (DataObject future : history) {
+                                for (int i : valueFields) {
                                     double val = future.getValue()[i];
                                     double movement = val - nowClose;
-                                    if(movement > maxPosMovement){
+                                    if (movement > maxPosMovement) {
                                         maxPosMovement = movement;
                                     }
-                                    if(movement < maxNegMovement){
+                                    if (movement < maxNegMovement) {
                                         maxNegMovement = movement;
                                     }
                                 }
@@ -109,8 +109,7 @@ public class LearnerWrapper {
                                 break;
                             }
                         }
-                    }
-                    else {
+                    } else {
                         System.err.println("Skipping");
                     }
                 }
@@ -120,21 +119,21 @@ public class LearnerWrapper {
         new Thread(player).start();
     }
 
-    public Map<Double, StateActionPair> getAlphas(){
+    public Map<Double, StateActionPair> getAlphas() {
         return learner.getAlphaStates().descendingMap();
     }
 
-    public Map<Double, Integer> getFactorInfluences(StateActionPair state){
+    public Map<Double, Integer> getFactorInfluences(StateActionPair state) {
         double[] influences = learner.updateAndGetCorrelationWeights(state.getAmalgamate());
         TreeMap<Double, Integer> scores = new TreeMap<>();
-        for(int i = 0; i < influences.length; i++){
+        for (int i = 0; i < influences.length; i++) {
             scores.put(influences[i], i);
         }
 
         return scores.descendingMap();
     }
 
-    public void addExtractor(PredictionExtractionFeed extractor){
+    public void addExtractor(PredictionExtractionFeed extractor) {
         extractors.add(extractor);
     }
 

@@ -2,7 +2,7 @@ package ai.context.util.analysis.feed;
 
 public class ConstructorArgument {
 
-    enum TYPE{
+    enum TYPE {
         VALUE,
         REFERENCE
     }

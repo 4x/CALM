@@ -2,7 +2,7 @@ package ai.context.core.neural.messaging.information;
 
 import java.io.Serializable;
 
-public class SessionAuth implements Serializable{
+public class SessionAuth implements Serializable {
     private final String auth;
 
     public SessionAuth(String auth) {

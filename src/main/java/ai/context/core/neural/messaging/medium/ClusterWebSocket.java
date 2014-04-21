@@ -21,7 +21,7 @@ public class ClusterWebSocket implements WebSocketListener {
     private Session session;
     private Cluster cluster = Cluster.getInstance();
 
-    public ClusterWebSocket(){
+    public ClusterWebSocket() {
         cluster.setClusterWebSocket(this);
     }
 
@@ -56,23 +56,21 @@ public class ClusterWebSocket implements WebSocketListener {
     public void onWebSocketText(String json) {
         try {
             Object data = JsonReader.jsonToJava(json);
-            if(data instanceof SessionAuth){
-                session.getRemote().sendString(JsonWriter.objectToJson(new SessionAuthResponse(((SessionAuth)data).getAuth(), cluster.getId())));
-            }
-            else if(data instanceof SessionAuthResponse){
+            if (data instanceof SessionAuth) {
+                session.getRemote().sendString(JsonWriter.objectToJson(new SessionAuthResponse(((SessionAuth) data).getAuth(), cluster.getId())));
+            } else if (data instanceof SessionAuthResponse) {
                 SessionAuthResponse response = (SessionAuthResponse) data;
-                if(response.getAuthID().equals(sessionAuth)){
-                    if(!clusterIdToProxy.containsKey(response.getClusterID())){
+                if (response.getAuthID().equals(sessionAuth)) {
+                    if (!clusterIdToProxy.containsKey(response.getClusterID())) {
                         clusterIdToProxy.put(response.getClusterID(), new ClusterProxy(response.getClusterID()));
                     }
                     clusterIdToProxy.get(response.getClusterID()).setSession(session);
                     clusterIdToProxy.get(response.getClusterID()).setLive(true);
                 }
-            }
-            else if(data instanceof Sourceable){
+            } else if (data instanceof Sourceable) {
                 Sourceable sourceable = (Sourceable) data;
                 ClusterProxy proxy = neuronToCluster.get(sourceable.getSource());
-                if(proxy != null){
+                if (proxy != null) {
                     proxy.send(sourceable);
                 }
             }
@@ -81,15 +79,15 @@ public class ClusterWebSocket implements WebSocketListener {
         }
     }
 
-    public ClusterProxy getProxy(String sourceId){
+    public ClusterProxy getProxy(String sourceId) {
         ClusterProxy proxy = neuronToCluster.get(sourceId);
-        if(sourceId == null){
+        if (sourceId == null) {
             proxy = clusterIdToProxy.get(sourceId);
         }
         return proxy;
     }
 
-    public Collection<ClusterProxy> getProxies(){
+    public Collection<ClusterProxy> getProxies() {
         return clusterIdToProxy.values();
     }
 }

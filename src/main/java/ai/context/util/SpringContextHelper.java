@@ -9,11 +9,11 @@ public class SpringContextHelper {
 
     private ApplicationContext context;
 
-    public SpringContextHelper(Servlet servlet){
+    public SpringContextHelper(Servlet servlet) {
         context = WebApplicationContextUtils.getRequiredWebApplicationContext(servlet.getServletConfig().getServletContext());
     }
 
-    public Object getBean(String beanRef){
+    public Object getBean(String beanRef) {
         return context.getBean(beanRef);
     }
 }

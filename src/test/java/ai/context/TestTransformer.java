@@ -27,15 +27,13 @@ import java.util.List;
 public class TestTransformer {
 
     @Test
-    public void testGoLive()
-    {
+    public void testGoLive() {
         TestFeed1 primary = new TestFeed1();
         MATransformer transformer = new MATransformer(MAType.Sma, 10, primary);
         primary.addChild(transformer);
 
         long t = System.currentTimeMillis();
-        for (int i = 0; i < 145; i++)
-        {
+        for (int i = 0; i < 145; i++) {
             FeedObject data = transformer.readNext(this);
             System.out.println("[" + i + "] " + data.getTimeStamp() + " " + data.getData() + " " + primary.getLatestTime());
         }
@@ -43,8 +41,7 @@ public class TestTransformer {
 
         transformer.goLive();
         t = System.currentTimeMillis();
-        for (int i = 0; i < 100; i++)
-        {
+        for (int i = 0; i < 100; i++) {
             FeedObject data = transformer.readNext(this);
             System.out.println("[" + i + "] " + data.getTimeStamp() + " " + data.getData() + " " + primary.getLatestTime());
         }
@@ -52,28 +49,23 @@ public class TestTransformer {
     }
 
     @Test
-    public void testVariance()
-    {
+    public void testVariance() {
         VarianceTransformer transformer = new VarianceTransformer(10, 1, new TestFeed1());
 
-        for (int i = 0; i < 100; i++)
-        {
+        for (int i = 0; i < 100; i++) {
             FeedObject data = transformer.readNext(this);
             System.out.println("[" + i + "] " + data.getTimeStamp() + " " + data.getData());
         }
     }
 
     @Test
-    public void testRSI()
-    {
+    public void testRSI() {
         RSITransformer transformer = new RSITransformer(20, 5, 20, MAType.Sma, new TestFeed1());
 
-        for (int i = 0; i < 100; i++)
-        {
+        for (int i = 0; i < 100; i++) {
             FeedObject data = transformer.readNext(this);
             Object[] value = (Object[]) data.getData();
-            if(value == null)
-            {
+            if (value == null) {
                 value = new Object[]{null, null};
             }
             System.out.println("[" + i + "] " + data.getTimeStamp() + " " + value[0] + " " + value[1]);
@@ -81,42 +73,35 @@ public class TestTransformer {
     }
 
     @Test
-    public void testLinearDiscretiserOnRSI()
-    {
+    public void testLinearDiscretiserOnRSI() {
         RSITransformer transformer = new RSITransformer(20, 5, 20, MAType.Sma, new TestFeed1());
         LinearDiscretiser discretiser = new LinearDiscretiser(10, 50, transformer, 0);
 
-        for (int i = 0; i < 100; i++)
-        {
+        for (int i = 0; i < 100; i++) {
             FeedObject data = discretiser.readNext(this);
             System.out.println("[" + i + "] " + data.getTimeStamp() + " " + data.getData());
         }
     }
 
     @Test
-    public void testLogarithmicDiscretiserOnRSI()
-    {
+    public void testLogarithmicDiscretiserOnRSI() {
         RSITransformer transformer = new RSITransformer(20, 5, 20, MAType.Sma, new TestFeed1());
         LogarithmicDiscretiser discretiser = new LogarithmicDiscretiser(2, 50, transformer, 0);
 
-        for (int i = 0; i < 100; i++)
-        {
+        for (int i = 0; i < 100; i++) {
             FeedObject data = discretiser.readNext(this);
             System.out.println("[" + i + "] " + data.getTimeStamp() + " " + data.getData());
         }
     }
 
     @Test
-    public void testAmplitudeWavelengthTransformer()
-    {
+    public void testAmplitudeWavelengthTransformer() {
         StandardDeviationTransformer transformer = new StandardDeviationTransformer(10, 1, new TestFeed1());
         AmplitudeWavelengthTransformer awT = new AmplitudeWavelengthTransformer(new TestFeed1(), transformer, 0.1, 0.5);
 
-        for (int i = 0; i < 1000; i++)
-        {
+        for (int i = 0; i < 1000; i++) {
             FeedObject data = awT.readNext(this);
-            if(data.getData() != null)
-            {
+            if (data.getData() != null) {
                 double[] value = (double[]) data.getData();
                 System.out.println("[" + i + "] " + data.getTimeStamp() + " " + value[0] + " " + value[1] + " " + value[2] + " " + value[3]);
             }
@@ -124,8 +109,7 @@ public class TestTransformer {
     }
 
     @Test
-    public void testRadar()
-    {
+    public void testRadar() {
         TestFeed3Outputs series = new TestFeed3Outputs();
         Feed close = new ExtractOneFromListFeed(series, 0);
         Feed high = new ExtractOneFromListFeed(series, 1);
@@ -143,7 +127,7 @@ public class TestTransformer {
 
         try {
             BufferedWriter out = new BufferedWriter(new FileWriter("RADAR.csv"));
-            for(int i = 0; i < 600; i++){
+            for (int i = 0; i < 600; i++) {
                 FeedObject data = feed.getNextComposite(this);
                 appendToFile(AmalgamateUtils.getCSVString(data.getData()), out);
             }
@@ -153,16 +137,16 @@ public class TestTransformer {
 
     }
 
-    private void appendToFile(String data, BufferedWriter out){
+    private void appendToFile(String data, BufferedWriter out) {
         try {
             out.write(data + "\n");
             out.flush();
+        } catch (Exception e) {
         }
-        catch (Exception e){}
     }
 }
 
-class TestFeed1 implements Feed{
+class TestFeed1 implements Feed {
 
     long t = 0;
 
@@ -214,7 +198,7 @@ class TestFeed1 implements Feed{
     }
 }
 
-class TestFeed3Outputs implements Feed{
+class TestFeed3Outputs implements Feed {
 
     private HashMap<Feed, LinkedList<FeedObject>> buffers = new HashMap<>();
     long t = 0;
@@ -232,8 +216,7 @@ class TestFeed3Outputs implements Feed{
 
     @Override
     public FeedObject readNext(Object caller) {
-        if(buffers.containsKey(caller) && buffers.get(caller).size() > 0)
-        {
+        if (buffers.containsKey(caller) && buffers.get(caller).size() > 0) {
             return buffers.get(caller).pollFirst();
         }
         t++;
@@ -246,19 +229,18 @@ class TestFeed3Outputs implements Feed{
         FeedObject feedObject = new FeedObject(t, output);
 
         double multiplier = 2;
-        if(t < 400){
+        if (t < 400) {
             output.add(lastValue + multiplier * (200 - (t % 200)) * (r1 - 0.5));
             output.add(lastValue + multiplier * (200 - (t % 200)) * (r2 - 0.5));
             output.add(lastValue + multiplier * (200 - (t % 200)) * (r3 - 0.5));
-        }
-        else{
+        } else {
             output.add(lastValue + multiplier * (t % 200) * (r1 - 0.5));
             output.add(lastValue + multiplier * (t % 200) * (r2 - 0.5));
             output.add(lastValue + multiplier * (t % 200) * (r3 - 0.5));
         }
 
-        for(Feed listener : buffers.keySet()){
-            if(listener != caller){
+        for (Feed listener : buffers.keySet()) {
+            if (listener != caller) {
                 buffers.get(listener).add(feedObject);
             }
         }

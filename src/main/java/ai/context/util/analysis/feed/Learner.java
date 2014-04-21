@@ -55,7 +55,7 @@ public class Learner extends DraggableComponent {
             @Override
             public void stateChanged(ChangeEvent e) {
                 AbstractButton abstractButton =
-                        (AbstractButton)e.getSource();
+                        (AbstractButton) e.getSource();
                 ButtonModel buttonModel = abstractButton.getModel();
                 boolean selected = buttonModel.isSelected();
                 select(selected);
@@ -67,12 +67,11 @@ public class Learner extends DraggableComponent {
             @Override
             public void mouseClicked(MouseEvent e) {
                 expanded = !expanded;
-                if(expanded){
+                if (expanded) {
                     expand.setText("Minimise");
                     setSize(200, 400);
                     toggle(true);
-                }
-                else {
+                } else {
                     expand.setText("Expand");
                     setSize(100, 100);
                     toggle(false);
@@ -82,16 +81,20 @@ public class Learner extends DraggableComponent {
             }
 
             @Override
-            public void mousePressed(MouseEvent e) {}
+            public void mousePressed(MouseEvent e) {
+            }
 
             @Override
-            public void mouseReleased(MouseEvent e) {}
+            public void mouseReleased(MouseEvent e) {
+            }
 
             @Override
-            public void mouseEntered(MouseEvent e) {}
+            public void mouseEntered(MouseEvent e) {
+            }
 
             @Override
-            public void mouseExited(MouseEvent e) {}
+            public void mouseExited(MouseEvent e) {
+            }
         });
 
         final JButton start = new JButton("Start Learning");
@@ -115,29 +118,32 @@ public class Learner extends DraggableComponent {
             }
 
             @Override
-            public void mousePressed(MouseEvent e) {}
+            public void mousePressed(MouseEvent e) {
+            }
 
             @Override
-            public void mouseReleased(MouseEvent e) {}
+            public void mouseReleased(MouseEvent e) {
+            }
 
             @Override
-            public void mouseEntered(MouseEvent e) {}
+            public void mouseEntered(MouseEvent e) {
+            }
 
             @Override
-            public void mouseExited(MouseEvent e) {}
+            public void mouseExited(MouseEvent e) {
+            }
         });
 
         add(pause);
         pause.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if(wrapper != null){
-                    if(wrapper.isPaused()){
+                if (wrapper != null) {
+                    if (wrapper.isPaused()) {
                         pause.setText("Pause");
                         wrapper.setPaused(false);
                         setBackground(Color.MAGENTA);
-                    }
-                    else {
+                    } else {
                         pause.setText("UnPause");
                         wrapper.setPaused(true);
                         setBackground(Color.GRAY);
@@ -149,16 +155,20 @@ public class Learner extends DraggableComponent {
             }
 
             @Override
-            public void mousePressed(MouseEvent e) {}
+            public void mousePressed(MouseEvent e) {
+            }
 
             @Override
-            public void mouseReleased(MouseEvent e) {}
+            public void mouseReleased(MouseEvent e) {
+            }
 
             @Override
-            public void mouseEntered(MouseEvent e) {}
+            public void mouseEntered(MouseEvent e) {
+            }
 
             @Override
-            public void mouseExited(MouseEvent e) {}
+            public void mouseExited(MouseEvent e) {
+            }
         });
 
 
@@ -173,23 +183,22 @@ public class Learner extends DraggableComponent {
                 "Max Pop of Strategies"
         };
         int i = 0;
-        for(String arg : argsDescription){
+        for (String arg : argsDescription) {
             add(new JLabel(arg));
             final int index = i;
-            if(index < 2){
+            if (index < 2) {
                 final JButton hook = new JButton("Hook");
                 add(hook);
                 hook.addMouseListener(new MouseListener() {
 
                     @Override
                     public void mouseClicked(MouseEvent e) {
-                        if(hook.getText().equals("Hook")){
-                            if(area.getSelected() != null){
+                        if (hook.getText().equals("Hook")) {
+                            if (area.getSelected() != null) {
                                 arguments[index] = new ConstructorArgument(ConstructorArgument.TYPE.REFERENCE, area.getSelected());
                                 hook.setText("Unhook");
                             }
-                        }
-                        else{
+                        } else {
                             hook.setText("Hook");
                             arguments[index] = null;
                         }
@@ -197,35 +206,33 @@ public class Learner extends DraggableComponent {
                     }
 
                     @Override
-                    public void mousePressed(MouseEvent e) {}
+                    public void mousePressed(MouseEvent e) {
+                    }
 
                     @Override
-                    public void mouseReleased(MouseEvent e) { }
+                    public void mouseReleased(MouseEvent e) {
+                    }
 
                     @Override
-                    public void mouseEntered(MouseEvent e) { }
+                    public void mouseEntered(MouseEvent e) {
+                    }
 
                     @Override
-                    public void mouseExited(MouseEvent e) { }
+                    public void mouseExited(MouseEvent e) {
+                    }
 
                 });
-            }
-            else if(index == 2){
+            } else if (index == 2) {
                 add(closeField);
-            }
-            else if(index == 3){
+            } else if (index == 3) {
                 add(valuesField);
-            }
-            else if(index == 4){
+            } else if (index == 4) {
                 add(horizonField);
-            }
-            else if(index == 5){
+            } else if (index == 5) {
                 add(resolutionField);
-            }
-            else if(index == 6){
+            } else if (index == 6) {
                 add(toleranceField);
-            }
-            else if(index == 7){
+            } else if (index == 7) {
                 add(maxPopField);
             }
             i++;
@@ -236,30 +243,26 @@ public class Learner extends DraggableComponent {
 
     public void start() throws IllegalAccessException, InvocationTargetException, InstantiationException {
 
-        if(wrapper != null){
+        if (wrapper != null) {
             wrapper.kill();
         }
 
         Set<Feed> parents = new HashSet<>();
         Object[] arguments = new Object[this.arguments.length];
         int i = 0;
-        for(ConstructorArgument argument : this.arguments){
+        for (ConstructorArgument argument : this.arguments) {
 
-            if(argument == null){
+            if (argument == null) {
                 arguments[i] = null;
-            }
-            else if(argument.getType() == ConstructorArgument.TYPE.VALUE){
+            } else if (argument.getType() == ConstructorArgument.TYPE.VALUE) {
                 arguments[i] = argument.getValue();
-            }
-            else{
-                if(argument.getValue() instanceof Transformer){
-                    arguments[i] = ((Transformer)argument.getValue()).getFeed();
+            } else {
+                if (argument.getValue() instanceof Transformer) {
+                    arguments[i] = ((Transformer) argument.getValue()).getFeed();
                     parents.add((Feed) arguments[i]);
-                }
-                else if(argument.getValue() instanceof ValueHolder){
-                    arguments[i] = ((ValueHolder)argument.getValue()).getValue();
-                }
-                else {
+                } else if (argument.getValue() instanceof ValueHolder) {
+                    arguments[i] = ((ValueHolder) argument.getValue()).getValue();
+                } else {
                     arguments[i] = argument.getValue();
                 }
             }
@@ -272,13 +275,13 @@ public class Learner extends DraggableComponent {
         int maxPop = Integer.parseInt(maxPopField.getText());
         String[] valStr = valuesField.getText().split(",");
         int[] values = new int[valStr.length];
-        for(int iV = 0; iV < values.length; iV++){
+        for (int iV = 0; iV < values.length; iV++) {
             values[iV] = Integer.parseInt(valStr[iV]);
         }
-        wrapper = new LearnerWrapper((Feed)arguments[0], (Feed)arguments[1], close, values, horizon, res, tol, maxPop);
+        wrapper = new LearnerWrapper((Feed) arguments[0], (Feed) arguments[1], close, values, horizon, res, tol, maxPop);
         signalFeed = (Feed) arguments[0];
         dataFeed = (Feed) arguments[1];
-        for(PredictionExtractionFeed extractor : extractors){
+        for (PredictionExtractionFeed extractor : extractors) {
             wrapper.addExtractor(extractor);
         }
         wrapper.start();
@@ -288,32 +291,33 @@ public class Learner extends DraggableComponent {
         repaint();
     }
 
-    public void select(boolean selected){
+    public void select(boolean selected) {
         area.setSelected(this, selected);
     }
-    public void deselect(){
+
+    public void deselect() {
         select.setSelected(false);
     }
 
-    private void toggle(boolean show){
-        if(!show){
+    private void toggle(boolean show) {
+        if (!show) {
             hideables = new Component[getComponents().length - 5];
-            for(int cN = 0; cN < getComponents().length; cN++){
-                if(cN > 4){
+            for (int cN = 0; cN < getComponents().length; cN++) {
+                if (cN > 4) {
                     hideables[cN - 5] = getComponent(cN);
                 }
             }
-            for(Component component : hideables){
+            for (Component component : hideables) {
                 remove(component);
             }
-        }
-        else{
-            for(Component component : hideables){
+        } else {
+            for (Component component : hideables) {
                 add(component);
             }
         }
         revalidate();
     }
+
     public boolean isExpanded() {
         return expanded;
     }
@@ -322,19 +326,19 @@ public class Learner extends DraggableComponent {
         return arguments;
     }
 
-    public Map<Double, StateActionPair> getAlphas(){
+    public Map<Double, StateActionPair> getAlphas() {
         return wrapper.getAlphas();
     }
 
-    public Map<Double, Integer> getFactorInfluences(StateActionPair state){
+    public Map<Double, Integer> getFactorInfluences(StateActionPair state) {
         return wrapper.getFactorInfluences(state);
     }
 
-    public String toString(){
+    public String toString() {
 
         String data = "";
-        for(ConstructorArgument argument : arguments){
-            if(argument != null){
+        for (ConstructorArgument argument : arguments) {
+            if (argument != null) {
                 data += System.identityHashCode(argument.getValue());
             }
             data += ";";
@@ -343,7 +347,7 @@ public class Learner extends DraggableComponent {
         return "LEARNER¬>" + System.identityHashCode(this) + "¬>" + data + closeField.getText() + ";" + valuesField.getText() + ";" + horizonField.getText() + ";" + resolutionField.getText() + ";" + toleranceField.getText() + ";" + maxPopField.getText();
     }
 
-    public void configure(String config){
+    public void configure(String config) {
         String id = config.split("¬>")[1];
         String[] parts = config.split("¬>")[2].split(";");
 
@@ -360,15 +364,15 @@ public class Learner extends DraggableComponent {
         ObjectHolder.save(id, thisLearner);
     }
 
-    public void addExtractor(PredictionExtractionFeed extractor){
+    public void addExtractor(PredictionExtractionFeed extractor) {
         extractors.add(extractor);
     }
 
-    public Feed getSignalFeed(){
+    public Feed getSignalFeed() {
         return signalFeed;
     }
 
-    public Feed getDataFeed(){
+    public Feed getDataFeed() {
         return dataFeed;
     }
 }

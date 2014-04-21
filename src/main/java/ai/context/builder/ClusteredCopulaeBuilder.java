@@ -16,7 +16,7 @@ public class ClusteredCopulaeBuilder {
     private static BufferedWriter writer;
 
 
-    public synchronized static void save(ClusteredCopulae copulae){
+    public synchronized static void save(ClusteredCopulae copulae) {
         String id = "" + System.identityHashCode(copulae);
         try {
             writer.write(copulae.toString() + "\n");
@@ -27,24 +27,24 @@ public class ClusteredCopulaeBuilder {
         copulaes.put(id, copulae);
     }
 
-    public static void load(long timeOfSaving){
+    public static void load(long timeOfSaving) {
         copulaes.clear();
         try {
-            if(writer != null){
+            if (writer != null) {
                 writer.close();
             }
 
             InputStream inputStream = new FileInputStream(folderPath + "/ClusteredCopulae_" + timeOfSaving);
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
             String line;
-            while ((line = reader.readLine()) != null){
+            while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(",");
 
                 String id = parts[0].split("=")[1];
                 String data = parts[1].split("=")[1];
 
                 HashMap<Integer, HashMap<Integer, TreeMap<Integer, CorrelationCalculator>>> variableClusteredCorrelations = new HashMap<Integer, HashMap<Integer, TreeMap<Integer, CorrelationCalculator>>>();
-                for(String element : data.split(";")){
+                for (String element : data.split(";")) {
 
                     String[] elementParts = element.split(":");
                     int e1 = Integer.parseInt(elementParts[0]);
@@ -52,15 +52,15 @@ public class ClusteredCopulaeBuilder {
                     int e3 = Integer.parseInt(elementParts[2]);
 
                     CorrelationCalculator calculator = CorrelationCaculatorBuilder.getCalculator(elementParts[3]);
-                    if(!variableClusteredCorrelations.containsKey(e1)){
+                    if (!variableClusteredCorrelations.containsKey(e1)) {
                         variableClusteredCorrelations.put(e1, new HashMap<Integer, TreeMap<Integer, CorrelationCalculator>>());
                     }
-                    if(!variableClusteredCorrelations.get(e1).containsKey(e2)){
+                    if (!variableClusteredCorrelations.get(e1).containsKey(e2)) {
                         variableClusteredCorrelations.get(e1).put(e2, new TreeMap<Integer, CorrelationCalculator>());
                     }
                     variableClusteredCorrelations.get(e1).get(e2).put(e3, calculator);
 
-                    if(calculator == null){
+                    if (calculator == null) {
                         System.err.println("Calculator not found for copulae " + elementParts[3]);
                     }
                 }
@@ -68,8 +68,7 @@ public class ClusteredCopulaeBuilder {
                 ClusteredCopulae copulae = new ClusteredCopulae(variableClusteredCorrelations);
                 copulaes.put(id, copulae);
             }
-        }
-        catch (FileNotFoundException e) {
+        } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
@@ -91,7 +90,7 @@ public class ClusteredCopulaeBuilder {
         copulaes.clear();
     }
 
-    public static ClusteredCopulae getCopulae(String id){
+    public static ClusteredCopulae getCopulae(String id) {
         return copulaes.get(id);
     }
 

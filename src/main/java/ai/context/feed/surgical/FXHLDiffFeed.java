@@ -9,10 +9,11 @@ import java.util.List;
 import static ai.context.util.mathematics.Discretiser.getLogarithmicDiscretisation;
 
 
-public class FXHLDiffFeed extends AbstractSurgicalFeed{
+public class FXHLDiffFeed extends AbstractSurgicalFeed {
 
     private double resolution;
     private Feed rawFeed;
+
     public FXHLDiffFeed(Feed rawFeed, double resolution) {
         super(rawFeed);
         this.rawFeed = rawFeed;
@@ -21,7 +22,7 @@ public class FXHLDiffFeed extends AbstractSurgicalFeed{
 
     @Override
     protected synchronized FeedObject operate(long time, List row) {
-        return new FeedObject(time, getLogarithmicDiscretisation((Double)row.get(1) - (Double)row.get(2), 0, resolution));
+        return new FeedObject(time, getLogarithmicDiscretisation((Double) row.get(1) - (Double) row.get(2), 0, resolution));
     }
 
     @Override

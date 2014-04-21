@@ -5,7 +5,7 @@ import ai.context.feed.Feed;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EMAOnlineTransformer extends OnlineTransformer{
+public class EMAOnlineTransformer extends OnlineTransformer {
 
     private Feed feed;
     private double ema = 0;
@@ -19,15 +19,14 @@ public class EMAOnlineTransformer extends OnlineTransformer{
 
     @Override
     protected Object getOutput() {
-        if(init){
-            ema = ((Double)arriving.getData() * lambda) + (ema * (1 - lambda));
-        }
-        else {
+        if (init) {
+            ema = ((Double) arriving.getData() * lambda) + (ema * (1 - lambda));
+        } else {
             buffer.clear();
-            while(buffer.size() < bufferSize){
+            while (buffer.size() < bufferSize) {
                 buffer.add(arriving);
             }
-            ema = (Double)arriving.getData();
+            ema = (Double) arriving.getData();
         }
         return ema;
     }
@@ -39,7 +38,7 @@ public class EMAOnlineTransformer extends OnlineTransformer{
 
     @Override
     public String getDescription(int startIndex, String padding) {
-        return padding + "["+startIndex+"] EMA and lambda: " + bufferSize + " for feed: " + feed.getDescription(startIndex, padding);
+        return padding + "[" + startIndex + "] EMA and lambda: " + bufferSize + " for feed: " + feed.getDescription(startIndex, padding);
     }
 
     @Override

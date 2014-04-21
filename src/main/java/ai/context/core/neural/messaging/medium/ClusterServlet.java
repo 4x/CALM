@@ -11,11 +11,11 @@ import java.io.IOException;
 public class ClusterServlet extends WebSocketServlet {
 
 
-    public ClusterServlet(){
+    public ClusterServlet() {
         System.out.println("Cluster Servlet Started");
     }
 
-    protected void doPost(HttpServletRequest request, HttpServletResponse resp) throws ServletException, IOException{
+    protected void doPost(HttpServletRequest request, HttpServletResponse resp) throws ServletException, IOException {
         System.out.println(request.getReader().readLine());
     }
 
@@ -25,7 +25,7 @@ public class ClusterServlet extends WebSocketServlet {
     }
 
     @Override
-    public void configure(WebSocketServletFactory factory){
+    public void configure(WebSocketServletFactory factory) {
         // set a 10 second idle timeout
         factory.getPolicy().setIdleTimeout(10000);
         // register my socket

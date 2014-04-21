@@ -7,7 +7,7 @@ public class DateUtils {
 
     public static SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
 
-    public static long getTimeFromString_YYYYMMddHHmmss(String dateTime){
+    public static long getTimeFromString_YYYYMMddHHmmss(String dateTime) {
         try {
             return format.parse(dateTime).getTime();
         } catch (ParseException e) {

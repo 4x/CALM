@@ -9,7 +9,7 @@ import java.util.List;
 
 import static ai.context.util.mathematics.Discretiser.getLinearDiscretisation;
 
-public class LinearDiscretiser implements Feed{
+public class LinearDiscretiser implements Feed {
 
     private double resolution;
     private double benchmark;
@@ -19,8 +19,7 @@ public class LinearDiscretiser implements Feed{
 
     private long timeStamp;
 
-    public LinearDiscretiser(double resolution, double benchmark, Feed feed, int feedComponent)
-    {
+    public LinearDiscretiser(double resolution, double benchmark, Feed feed, int feedComponent) {
         this.benchmark = benchmark;
         this.resolution = resolution;
         this.feedComponent = feedComponent;
@@ -31,8 +30,7 @@ public class LinearDiscretiser implements Feed{
 
         FeedObject in = feed.readNext(this);
         Object input = in.getData();
-        if(input == null)
-        {
+        if (input == null) {
             return new FeedObject(in.getTimeStamp(), null);
         }
 
@@ -40,11 +38,10 @@ public class LinearDiscretiser implements Feed{
         DataSetUtils.add(input, list);
         double value = 0;
 
-        if(list.size() <= feedComponent || list.get(feedComponent) == null)
-        {
+        if (list.size() <= feedComponent || list.get(feedComponent) == null) {
             return new FeedObject(in.getTimeStamp(), null);
         }
-        value = (Double)list.get(feedComponent);
+        value = (Double) list.get(feedComponent);
 
         Object data = getLinearDiscretisation(value, benchmark, resolution);
         timeStamp = in.getTimeStamp();
@@ -78,7 +75,7 @@ public class LinearDiscretiser implements Feed{
 
     @Override
     public String getDescription(int startIndex, String padding) {
-        return padding + "[" + startIndex + "] Linear dicretiser with benchmark: "+benchmark+", resolution: "+resolution+", feed component: "+feedComponent+" for: " + feed.getDescription(startIndex, padding);
+        return padding + "[" + startIndex + "] Linear dicretiser with benchmark: " + benchmark + ", resolution: " + resolution + ", feed component: " + feedComponent + " for: " + feed.getDescription(startIndex, padding);
     }
 
     @Override

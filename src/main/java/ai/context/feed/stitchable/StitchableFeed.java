@@ -20,7 +20,7 @@ public abstract class StitchableFeed implements Feed {
 
     private LinkedList<FeedObject> queue = new LinkedList<>();
 
-    public StitchableFeed(String liveFileName, Feed liveFeed){
+    public StitchableFeed(String liveFileName, Feed liveFeed) {
         this.liveFeed = liveFeed;
         this.liveFileName = liveFileName;
         try {
@@ -33,8 +33,8 @@ public abstract class StitchableFeed implements Feed {
         }
     }
 
-    public void startPadding(){
-        while (!caughtUp){
+    public void startPadding() {
+        while (!caughtUp) {
             queue.add(readNext(this));
         }
     }
@@ -69,14 +69,14 @@ public abstract class StitchableFeed implements Feed {
     }
 
     public void catchUp() {
-        if(notifiable != null){
+        if (notifiable != null) {
             notifiable.notifyFor("CATCH UP");
         }
         System.out.println("CAUGHT UP");
         this.caughtUp = true;
     }
 
-    public boolean isCaughtUp(){
+    public boolean isCaughtUp() {
         return caughtUp;
     }
 

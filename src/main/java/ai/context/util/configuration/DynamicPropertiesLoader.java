@@ -15,16 +15,16 @@ public class DynamicPropertiesLoader {
     private static String positionFactoryConfigChecksum = "";
     private static String learnerServiceConfigCheckSum = "";
 
-    private static String folder  = "";
+    private static String folder = "";
 
-    public static void start(String folder){
-        if(!folder.equals("")){
+    public static void start(String folder) {
+        if (!folder.equals("")) {
             DynamicPropertiesLoader.folder = folder + "/";
         }
         TimerTask checkForUpdates = new TimerTask() {
             @Override
             public void run() {
-                try{
+                try {
                     loadPositionFactoryConf();
                     loadPositionFactoryEngine();
                     loadLearnerServiceConf();
@@ -39,12 +39,12 @@ public class DynamicPropertiesLoader {
         timer.schedule(checkForUpdates, 1000, 1000);
     }
 
-    private static void loadPositionFactoryEngine(){
-        if(new File(folder + "PositionEngineImplementation.class").exists()){
+    private static void loadPositionFactoryEngine() {
+        if (new File(folder + "PositionEngineImplementation.class").exists()) {
             try {
                 String checksum = getMD5Checksum(folder + "PositionEngineImplementation.class");
 
-                if(!positionEngineChecksum.equals(checksum)){
+                if (!positionEngineChecksum.equals(checksum)) {
                     positionEngineChecksum = checksum;
 
                     PositionFactory.setEngine((PositionEngine) ClassLoader.getSystemClassLoader().loadClass("ai.context.util.trading.PositionEngineImplementation").newInstance());
@@ -58,8 +58,7 @@ public class DynamicPropertiesLoader {
     }
 
     private static void loadLearnerServiceConf() throws Exception {
-        if(!learnerServiceConfigCheckSum.equals(getMD5Checksum(folder + "LearnerService.conf")))
-        {
+        if (!learnerServiceConfigCheckSum.equals(getMD5Checksum(folder + "LearnerService.conf"))) {
             learnerServiceConfigCheckSum = getMD5Checksum(folder + "LearnerService.conf");
             InputStream inputStream = null;
             try {
@@ -70,22 +69,18 @@ public class DynamicPropertiesLoader {
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
             String line;
-            while ((line = reader.readLine()) != null){
+            while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(":");
 
-                if(parts[0].equals("recencyBias")){
+                if (parts[0].equals("recencyBias")) {
                     PropertiesHolder.recencyBias = Double.parseDouble(parts[1]);
-                }
-                else if(parts[0].equals("tolerance")){
+                } else if (parts[0].equals("tolerance")) {
                     PropertiesHolder.tolerance = Double.parseDouble(parts[1]);
-                }
-                else if(parts[0].equals("maxPopulation")){
+                } else if (parts[0].equals("maxPopulation")) {
                     PropertiesHolder.maxPopulation = Integer.parseInt(parts[1]);
-                }
-                else if(parts[0].equals("copulaToUniversal")){
+                } else if (parts[0].equals("copulaToUniversal")) {
                     PropertiesHolder.copulaToUniversal = Double.parseDouble(parts[1]);
-                }
-                else if(parts[0].equals("toleranceSearch")){
+                } else if (parts[0].equals("toleranceSearch")) {
                     PropertiesHolder.toleranceSearch = Integer.parseInt(parts[1]);
                 }
             }
@@ -94,8 +89,7 @@ public class DynamicPropertiesLoader {
     }
 
     private static void loadPositionFactoryConf() throws Exception {
-        if(!positionFactoryConfigChecksum.equals(getMD5Checksum(folder + "PositionFactory.conf")))
-        {
+        if (!positionFactoryConfigChecksum.equals(getMD5Checksum(folder + "PositionFactory.conf"))) {
             positionFactoryConfigChecksum = getMD5Checksum(folder + "PositionFactory.conf");
             InputStream inputStream = null;
             try {
@@ -107,42 +101,32 @@ public class DynamicPropertiesLoader {
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
             String line;
             try {
-                while ((line = reader.readLine()) != null){
+                while ((line = reader.readLine()) != null) {
                     String[] parts = line.split(":");
 
-                    if(parts[0].equals("tradeToCapRatio")){
+                    if (parts[0].equals("tradeToCapRatio")) {
                         PositionFactory.setTradeToCapRatio(Double.parseDouble(parts[1]));
-                    }
-                    else if(parts[0].equals("leverage")){
+                    } else if (parts[0].equals("leverage")) {
                         PositionFactory.setLeverage(Double.parseDouble(parts[1]));
-                    }
-                    else if(parts[0].equals("amount")){
+                    } else if (parts[0].equals("amount")) {
                         PositionFactory.setAmount(Double.parseDouble(parts[1]));
-                    }
-                    else if(parts[0].equals("cost")){
+                    } else if (parts[0].equals("cost")) {
                         PositionFactory.setCost(Double.parseDouble(parts[1]));
-                    }
-                    else if(parts[0].equals("rewardRiskRatio")){
+                    } else if (parts[0].equals("rewardRiskRatio")) {
                         PositionFactory.setRewardRiskRatio(Double.parseDouble(parts[1]));
-                    }
-                    else if(parts[0].equals("minTakeProfit")){
+                    } else if (parts[0].equals("minTakeProfit")) {
                         PositionFactory.setMinTakeProfit(Double.parseDouble(parts[1]));
-                    }
-                    else if(parts[0].equals("minProbFraction")){
+                    } else if (parts[0].equals("minProbFraction")) {
                         PositionFactory.setMinProbFraction(Double.parseDouble(parts[1]));
-                    }
-                    else if(parts[0].equals("verticalRisk")){
-                        if(parts[1].equals("TRUE")){
+                    } else if (parts[0].equals("verticalRisk")) {
+                        if (parts[1].equals("TRUE")) {
                             PositionFactory.setVerticalRisk(true);
-                        }
-                        else{
+                        } else {
                             PositionFactory.setVerticalRisk(false);
                         }
-                    }
-                    else if(parts[0].equals("minTakeProfitVertical")){
+                    } else if (parts[0].equals("minTakeProfitVertical")) {
                         PositionFactory.setMinTakeProfitVertical(Double.parseDouble(parts[1]));
-                    }
-                    else if(parts[0].equals("timeSpan")){
+                    } else if (parts[0].equals("timeSpan")) {
                         PositionFactory.setTimeSpan(Long.parseLong(parts[1]));
                     }
                 }

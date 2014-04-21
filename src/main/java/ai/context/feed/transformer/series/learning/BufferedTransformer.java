@@ -8,7 +8,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 
-public abstract class BufferedTransformer implements Feed{
+public abstract class BufferedTransformer implements Feed {
 
     private int bufferSize;
     private Feed[] feeds;
@@ -39,88 +39,73 @@ public abstract class BufferedTransformer implements Feed{
 
     protected abstract FeedObject[] getOutput(FeedObject[] input);
 
-    public synchronized FeedObject readNext(Object caller){
+    public synchronized FeedObject readNext(Object caller) {
 
-        while (pause){
+        while (pause) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        if(buffers.containsKey(caller) && buffers.get(caller).size() > 0)
-        {
+        if (buffers.containsKey(caller) && buffers.get(caller).size() > 0) {
             return buffers.get(caller).pollFirst();
         }
         FeedObject feedObject = previous;
-        try{
-            if(live)
-            {
+        try {
+            if (live) {
                 feedObject = readNextLive();
-            }
-            else {
-                if(outputQueue.size() < bufferSize/2)
-                {
-                    if(inputBuildup.size() == bufferSize)
-                    {
+            } else {
+                if (outputQueue.size() < bufferSize / 2) {
+                    if (inputBuildup.size() == bufferSize) {
                         inputBuildup.poll();
                         nextInput();
 
                         FeedObject[] outputArray = getOutput(getArray(inputBuildup));
-                        for (FeedObject out : outputArray)
-                        {
+                        for (FeedObject out : outputArray) {
                             outputBuildup.add(out);
                         }
 
-                        while (inputBuildup.size() > bufferSize/2)
-                        {
+                        while (inputBuildup.size() > bufferSize / 2) {
                             inputBuildup.poll();
                         }
                     }
 
-                    if(!outputBuildup.isEmpty())
-                    {
+                    if (!outputBuildup.isEmpty()) {
                         outputQueue = outputBuildup;
                         outputBuildup = new ArrayBlockingQueue<FeedObject>(bufferSize);
-                    }
-                    else {
-                        while (inputBuildup.size() < bufferSize)
-                        {
+                    } else {
+                        while (inputBuildup.size() < bufferSize) {
                             nextInput();
                         }
 
                         FeedObject[] outputArray = getOutput(getArray(inputBuildup));
-                        for (FeedObject out : outputArray)
-                        {
+                        for (FeedObject out : outputArray) {
                             outputQueue.add(out);
                         }
 
-                        while (inputBuildup.size() > bufferSize/2)
-                        {
+                        while (inputBuildup.size() > bufferSize / 2) {
                             inputBuildup.poll();
                         }
                     }
-                }
-                else {
+                } else {
                     nextInput();
                 }
 
                 FeedObject output = outputQueue.poll();
                 long timeStamp = timeStamps.poll();
-                if(!outputBuildup.isEmpty())
-                {
+                if (!outputBuildup.isEmpty()) {
                     outputBuildup.poll();
                 }
                 finalOutputQueue.add(output);
                 feedObject = new FeedObject(timeStamp, finalOutputQueue.poll().getData());
             }
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
-        for(Feed listener : buffers.keySet()){
-            if(listener != caller){
+        for (Feed listener : buffers.keySet()) {
+            if (listener != caller) {
                 buffers.get(listener).add(feedObject);
             }
         }
@@ -128,37 +113,32 @@ public abstract class BufferedTransformer implements Feed{
         return feedObject;
     }
 
-    private void nextInput()
-    {
+    private void nextInput() {
         FeedObject[] data = new FeedObject[feeds.length];
         int index = 0;
 
-        for(Feed feed : feeds)
-        {
+        for (Feed feed : feeds) {
             data[index] = feed.readNext(this);
             index++;
         }
 
         inputBuildup.add(data);
-        if(!live){
+        if (!live) {
             timeStamps.add(data[0].getTimeStamp());
-        }
-        else {
+        } else {
             timeStamp = data[0].getTimeStamp();
         }
     }
 
-    private FeedObject[] getArray(Queue<FeedObject[]> inputs)
-    {
+    private FeedObject[] getArray(Queue<FeedObject[]> inputs) {
         FeedObject[] outputs = new FeedObject[inputs.size()];
 
         int outIndex = 0;
-        for(FeedObject[] input : inputs){
+        for (FeedObject[] input : inputs) {
             long timeStamp = input[0].getTimeStamp();
             Object[] data = new Object[input.length];
             int index = 0;
-            for(FeedObject value : input)
-            {
+            for (FeedObject value : input) {
                 data[index] = value.getData();
                 index++;
             }
@@ -170,10 +150,8 @@ public abstract class BufferedTransformer implements Feed{
         return outputs;
     }
 
-    protected void pushBackOutput(int nEntries)
-    {
-        for(int i = 0; i < nEntries; i++)
-        {
+    protected void pushBackOutput(int nEntries) {
+        for (int i = 0; i < nEntries; i++) {
             finalOutputQueue.add(new FeedObject(0, null));
         }
     }
@@ -195,18 +173,18 @@ public abstract class BufferedTransformer implements Feed{
 
     public abstract void goLive();
 
-    protected void goLive(long span){
+    protected void goLive(long span) {
         live = true;
         pause = true;
         timeStamps.clear();
 
-        while (inputBuildup.size() >= span){
+        while (inputBuildup.size() >= span) {
             inputBuildup.poll();
         }
 
-        while (timeStamp < feeds[0].getLatestTime()){
+        while (timeStamp < feeds[0].getLatestTime()) {
             nextInput();
-            if(inputBuildup.size() >= span){
+            if (inputBuildup.size() >= span) {
                 inputBuildup.poll();
             }
         }
@@ -229,7 +207,7 @@ public abstract class BufferedTransformer implements Feed{
 
     @Override
     public long getLatestTime() {
-        if(live){
+        if (live) {
             return timeStamp;
         }
         return timeStamps.peek();

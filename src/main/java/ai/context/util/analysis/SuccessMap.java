@@ -5,7 +5,7 @@ import java.awt.*;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-public class SuccessMap extends JPanel{
+public class SuccessMap extends JPanel {
 
     private Graphics2D g2d;
     private int w;
@@ -14,8 +14,7 @@ public class SuccessMap extends JPanel{
     private TreeSet<Integer> ySet;
     private TreeMap<Integer, TreeMap<Integer, Double>> successMap;
 
-    public SuccessMap(TreeSet<Integer> ySet, TreeMap<Integer, TreeMap<Integer, Double>> successMap)
-    {
+    public SuccessMap(TreeSet<Integer> ySet, TreeMap<Integer, TreeMap<Integer, Double>> successMap) {
         this.ySet = ySet;
         this.successMap = successMap;
 
@@ -26,7 +25,7 @@ public class SuccessMap extends JPanel{
         frame.setVisible(true);
     }
 
-    public void paintComponent(Graphics g){
+    public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
         g2d = (Graphics2D) g;
@@ -46,12 +45,9 @@ public class SuccessMap extends JPanel{
 
         double maxIntensity = 0;
 
-        for(TreeMap<Integer, Double> subMap : successMap.values())
-        {
-            for(Double intensity : subMap.values())
-            {
-                if(maxIntensity < intensity)
-                {
+        for (TreeMap<Integer, Double> subMap : successMap.values()) {
+            for (Double intensity : subMap.values()) {
+                if (maxIntensity < intensity) {
                     maxIntensity = intensity;
                 }
             }
@@ -60,21 +56,19 @@ public class SuccessMap extends JPanel{
         g2d.setColor(Color.black);
         g2d.fillRect(0, 0, w, h);
 
-        for(int x : successMap.keySet())
-        {
+        for (int x : successMap.keySet()) {
             TreeMap<Integer, Double> subMap = successMap.get(x);
-            for(int y : subMap.keySet())
-            {
+            for (int y : subMap.keySet()) {
                 double intensity = subMap.get(y);
 
-                Color color = new Color(1F, 1F, 1F, (float)Math.sqrt(intensity / maxIntensity));
+                Color color = new Color(1F, 1F, 1F, (float) Math.sqrt(intensity / maxIntensity));
                 g2d.setColor(color);
-                g2d.fillRect(w * (x - xMin) / (xMax - xMin), h - (h * (y - yMin) / (yMax - yMin)), 4 , 4);
+                g2d.fillRect(w * (x - xMin) / (xMax - xMin), h - (h * (y - yMin) / (yMax - yMin)), 4, 4);
             }
         }
         Color color = new Color(1F, 0.5F, 0.5F, 0.5F);
         g2d.setColor(color);
-        g2d.fillRect(w * (0 - xMin) / (xMax - xMin), 0, 1 , h);
-        g2d.fillRect(0,  h - (h * (0 - yMin) / (yMax - yMin)), w , 1);
+        g2d.fillRect(w * (0 - xMin) / (xMax - xMin), 0, 1, h);
+        g2d.fillRect(0, h - (h * (0 - yMin) / (yMax - yMin)), w, 1);
     }
 }

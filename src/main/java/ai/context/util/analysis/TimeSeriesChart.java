@@ -16,7 +16,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class TimeSeriesChart extends JPanel{
+public class TimeSeriesChart extends JPanel {
 
     private Graphics2D g2d;
     private int w;
@@ -33,12 +33,11 @@ public class TimeSeriesChart extends JPanel{
 
     private Color[] colors;
 
-    public TimeSeriesChart(){
+    public TimeSeriesChart() {
         JFrame frame = new JFrame("Time Series Chart");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setSize(800, 620);
         frame.setVisible(true);
-
 
 
         this.addMouseMotionListener(new MouseMotionListener() {
@@ -79,7 +78,7 @@ public class TimeSeriesChart extends JPanel{
                 String[] parts = config.split(";");
                 String[] names = new String[parts.length];
                 int[] indices = new int[parts.length];
-                for(int i = 0; i < parts.length; i++){
+                for (int i = 0; i < parts.length; i++) {
                     String[] x = parts[i].split(":");
                     names[i] = x[0];
                     indices[i] = Integer.parseInt(x[1]);
@@ -90,17 +89,24 @@ public class TimeSeriesChart extends JPanel{
             }
 
             @Override
-            public void mousePressed(MouseEvent e) {}
+            public void mousePressed(MouseEvent e) {
+            }
+
             @Override
-            public void mouseReleased(MouseEvent e) { }
+            public void mouseReleased(MouseEvent e) {
+            }
+
             @Override
-            public void mouseEntered(MouseEvent e) {}
+            public void mouseEntered(MouseEvent e) {
+            }
+
             @Override
-            public void mouseExited(MouseEvent e) {}
+            public void mouseExited(MouseEvent e) {
+            }
         });
     }
 
-    public void paintComponent(Graphics g){
+    public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
         g2d = (Graphics2D) g;
@@ -114,25 +120,25 @@ public class TimeSeriesChart extends JPanel{
 
         g2d.clearRect(0, 0, w, h);
 
-        if(series.isEmpty()){
+        if (series.isEmpty()) {
             return;
         }
 
-        int cHeight = (h - 100)/series.size();
-        double xStep = (w - 100.0)/lastN;
+        int cHeight = (h - 100) / series.size();
+        double xStep = (w - 100.0) / lastN;
         int index = 1;
-        for(Map.Entry<String, LinkedList<Double>> element : series.entrySet()){
+        for (Map.Entry<String, LinkedList<Double>> element : series.entrySet()) {
             String name = element.getKey();
             LinkedList<Double> values = element.getValue();
 
             double min = values.getFirst();
             double max = min;
 
-            for(double value : values){
-                if(min > value){
+            for (double value : values) {
+                if (min > value) {
                     min = value;
                 }
-                if(max < value){
+                if (max < value) {
                     max = value;
                 }
 
@@ -143,17 +149,17 @@ public class TimeSeriesChart extends JPanel{
             double lastX = 50;
 
             g2d.setColor(colors[index - 1]);
-            g2d.fillRect(0, (int)(lastY - cHeight) + 2, w, cHeight - 2);
+            g2d.fillRect(0, (int) (lastY - cHeight) + 2, w, cHeight - 2);
 
             g2d.setColor(Color.BLACK);
-            g2d.drawString(name, 30, (float) (lastY - cHeight/2));
+            g2d.drawString(name, 30, (float) (lastY - cHeight / 2));
             g2d.drawString(max + "", 10, (float) (lastY - (cHeight - 20)));
             g2d.drawString(min + "", 10, (float) (lastY));
 
-            for(double value : values){
+            for (double value : values) {
 
                 double x = n * xStep + 50;
-                double y = 50 + (index* cHeight) - ((value - min)/(max - min)) * (cHeight - 20);
+                double y = 50 + (index * cHeight) - ((value - min) / (max - min)) * (cHeight - 20);
 
                 g2d.draw(new Line2D.Double(lastX, lastY, x, y));
                 lastX = x;
@@ -168,30 +174,30 @@ public class TimeSeriesChart extends JPanel{
 
     }
 
-    public void update(String file, String[] names, int[] seriesIndex, long lastN){
+    public void update(String file, String[] names, int[] seriesIndex, long lastN) {
 
         colors = null;
         this.lastN = lastN;
         series.clear();
         colors = new Color[names.length];
-        for(int i = 0 ; i < colors.length; i++){
-            colors[i] = new Color((int)(100 + Math.random()*150), (int)(100 + Math.random()*150), (int)(100 + Math.random()*150));
+        for (int i = 0; i < colors.length; i++) {
+            colors[i] = new Color((int) (100 + Math.random() * 150), (int) (100 + Math.random() * 150), (int) (100 + Math.random() * 150));
         }
-        for(String name : names){
+        for (String name : names) {
             series.put(name, new LinkedList<Double>());
         }
         try {
             CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(file)), ',', '"', 0);
             String[] line;
-            while((line = reader.readNext()) != null){
-                for(int i = 0; i < names.length; i++){
+            while ((line = reader.readNext()) != null) {
+                for (int i = 0; i < names.length; i++) {
                     String name = names[i];
                     Double value = Double.parseDouble(line[seriesIndex[i]]);
 
                     LinkedList<Double> element = series.get(name);
                     element.add(value);
 
-                    if(element.size() > lastN){
+                    if (element.size() > lastN) {
                         element.removeFirst();
                     }
 
@@ -207,7 +213,7 @@ public class TimeSeriesChart extends JPanel{
         this.repaint();
     }
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
         TimeSeriesChart chart = new TimeSeriesChart();
     }
 }

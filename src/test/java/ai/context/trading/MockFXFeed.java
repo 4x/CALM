@@ -22,7 +22,7 @@ public class MockFXFeed implements Feed {
             @Override
             public void run() {
                 timeStamp = System.currentTimeMillis() - interval;
-                Double[] data = new Double[] {0D, 0D, 0D, 0D, 0D};
+                Double[] data = new Double[]{0D, 0D, 0D, 0D, 0D};
 
                 channel.put(new FeedObject(timeStamp, data));
             }

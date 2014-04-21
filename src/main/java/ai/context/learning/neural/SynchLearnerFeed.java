@@ -20,10 +20,10 @@ public class SynchLearnerFeed implements LearnerFeed {
         this.dataFeed = feed;
         synchFeed.addRawFeed(feed);
         int feedNumber = 1;
-        for(NeuralLearner parent : parentFeeds.keySet()){
+        for (NeuralLearner parent : parentFeeds.keySet()) {
             synchFeed.addRawFeed(parent);
             fromParentFeeds.add(feedNumber + parentFeeds.get(parent));
-            feedNumber  += parent.getNumberOfOutputs();
+            feedNumber += parent.getNumberOfOutputs();
         }
     }
 
@@ -41,12 +41,12 @@ public class SynchLearnerFeed implements LearnerFeed {
         DataObject dataObject = (DataObject) data.get(0);
         int[] signal = new int[dataObject.getSignal().length + fromParentFeeds.size()];
         int sig = 0;
-        for(int i = 0; i < dataObject.getSignal().length; i++){
+        for (int i = 0; i < dataObject.getSignal().length; i++) {
             signal[sig] = dataObject.getSignal()[i];
             sig++;
         }
 
-        for(int extract : fromParentFeeds){
+        for (int extract : fromParentFeeds) {
             signal[sig] = (int) data.get(extract);
             sig++;
         }

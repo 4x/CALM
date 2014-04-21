@@ -14,7 +14,7 @@ public class StateActionInformationTracker {
         this.initialLevel = initialLevel;
     }
 
-    public void aggregate(double newLevel){
+    public void aggregate(double newLevel) {
         aggregator.addValue(newLevel - initialLevel);
     }
 

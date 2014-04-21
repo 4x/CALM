@@ -21,24 +21,18 @@ public class StringUtils {
         numberChars.add('.');
     }
 
-    public static Double extractDouble(String data)
-    {
+    public static Double extractDouble(String data) {
         String number = "";
         boolean extracting = false;
-        for(char c : data.toCharArray())
-        {
-            if(numberChars.contains(c))
-            {
+        for (char c : data.toCharArray()) {
+            if (numberChars.contains(c)) {
                 extracting = true;
                 number += c;
-            }
-            else if(extracting)
-            {
+            } else if (extracting) {
                 break;
             }
         }
-        if(number.length() > 0 && !number.equals(".") && number.matches("[0-9]*[\\.[0-9]*]*"))
-        {
+        if (number.length() > 0 && !number.equals(".") && number.matches("[0-9]*[\\.[0-9]*]*")) {
             return Double.parseDouble(number);
         }
         return 0.0;

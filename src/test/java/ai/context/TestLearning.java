@@ -26,16 +26,14 @@ public class TestLearning {
     private int maxPopulation = 1000;
 
     @Before
-    public void setup()
-    {
+    public void setup() {
         LoggerTimer.turn(false);
         learner.setActionResolution(actionResolution);
         learner.setMaxPopulation(maxPopulation);
         learner.setTolerance(tolerance);
 
         int[] signal = null;
-        for(int i = 0; i < numPoints; i++)
-        {
+        for (int i = 0; i < numPoints; i++) {
             signal = getRandomSignal();
 
             double movement = getBlackBoxMovement(signal);
@@ -44,7 +42,7 @@ public class TestLearning {
             } catch (LearningException e) {
                 e.printStackTrace();
             }
-            System.out.println("Learned: point " + i + ": Signal: " + getStringFromSignal(signal) + " Movement: "+ movement);
+            System.out.println("Learned: point " + i + ": Signal: " + getStringFromSignal(signal) + " Movement: " + movement);
         }
 
         System.out.println(learner.getPopulation().size());
@@ -52,31 +50,26 @@ public class TestLearning {
     }
 
     @Test
-    public void testLearning()
-    {
+    public void testLearning() {
         //learner = LearnerServiceBuilder.load("src/test/resources", 1);
 
         TreeMap<Integer, TreeMap<Integer, Double>> successMap = new TreeMap<Integer, TreeMap<Integer, Double>>();
         TreeSet<Integer> ySet = new TreeSet<Integer>();
 
-        for(int iTest = 0; iTest < numPredict; iTest++)
-        {
+        for (int iTest = 0; iTest < numPredict; iTest++) {
             int[] signal = getRandomSignal();
             TreeMap<Integer, Double> distribution = learner.getActionDistribution(signal);
 
             int observed = (int) getBlackBoxMovement(signal) / 10;
 
-            if(!successMap.containsKey(observed))
-            {
+            if (!successMap.containsKey(observed)) {
                 successMap.put(observed, new TreeMap<Integer, Double>());
             }
 
             Map<Integer, Double> map = successMap.get(observed);
-            for(int i : distribution.keySet())
-            {
-                int expected = i/10;
-                if(!map.containsKey(expected))
-                {
+            for (int i : distribution.keySet()) {
+                int expected = i / 10;
+                if (!map.containsKey(expected)) {
                     map.put(expected, 0.0);
                 }
 
@@ -87,32 +80,26 @@ public class TestLearning {
         new SuccessMap(ySet, successMap);
     }
 
-    private int[] getRandomSignal()
-    {
+    private int[] getRandomSignal() {
         int[] signal = new int[numInputs];
 
-        for(int v = 0; v < numInputs; v++)
-        {
+        for (int v = 0; v < numInputs; v++) {
             signal[v] = (int) (Math.random() * degreesOfFreedom);
         }
-        return  signal;
+        return signal;
     }
 
-    private double getBlackBoxMovement(int[] signal)
-    {
+    private double getBlackBoxMovement(int[] signal) {
         double movement = 0.0;
 
         boolean neg = false;
 
         int index = 0;
 
-        for(int val : signal)
-        {
-            if(index % 2 == 0)
-            {
+        for (int val : signal) {
+            if (index % 2 == 0) {
                 movement += val;
-            }
-            else {
+            } else {
                 movement -= val;
             }
 
@@ -157,21 +144,20 @@ public class TestLearning {
         return movement;
     }
 
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) {
         TestLearning test = new TestLearning();
         test.setup();
         test.testLearning();
     }
 
-    public String getStringFromSignal(int[] signal){
+    public String getStringFromSignal(int[] signal) {
         String sig = "[";
 
-        for(int i : signal){
+        for (int i : signal) {
             sig += i + ",";
         }
 
-        if(sig.length() > 1){
+        if (sig.length() > 1) {
             sig = sig.substring(0, sig.length() - 1);
         }
 

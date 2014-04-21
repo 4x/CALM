@@ -10,35 +10,32 @@ public class Axon {
     private Neuron neuronA;
     private Neuron neuronB;
 
-    public synchronized void setEndPoint(Neuron neuron){
-        if(neuronA == null){
+    public synchronized void setEndPoint(Neuron neuron) {
+        if (neuronA == null) {
             neuronA = neuron;
-        }
-        else if(neuronB == null){
+        } else if (neuronB == null) {
             neuronB = neuron;
         }
     }
 
-    public void transmit(Impulse impulse, Neuron transmitter){
-        if(neuronA == transmitter){
+    public void transmit(Impulse impulse, Neuron transmitter) {
+        if (neuronA == transmitter) {
             neuronB.accept(impulse);
-        }
-        else if(neuronB == transmitter){
+        } else if (neuronB == transmitter) {
             neuronA.accept(impulse);
         }
     }
 
-    public void query(Query query, Neuron transmitter){
-        if(lastQueries.add(query.getqID())){
+    public void query(Query query, Neuron transmitter) {
+        if (lastQueries.add(query.getqID())) {
             Query toSend = query.replicate();
             toSend.decay();
-            if(toSend.getIntensity() < 0.5){
+            if (toSend.getIntensity() < 0.5) {
                 return;
             }
-            if(neuronA == transmitter){
+            if (neuronA == transmitter) {
                 neuronB.accept(toSend);
-            }
-            else if(neuronB == transmitter){
+            } else if (neuronB == transmitter) {
                 neuronA.accept(query);
             }
         }

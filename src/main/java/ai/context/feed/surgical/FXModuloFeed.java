@@ -7,11 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class FXModuloFeed extends AbstractSurgicalFeed{
+public class FXModuloFeed extends AbstractSurgicalFeed {
 
     private Feed rawFeed;
     private double resolution;
     private int modulo;
+
     public FXModuloFeed(Feed rawFeed, double resolution, int modulo) {
         super(rawFeed);
         this.rawFeed = rawFeed;
@@ -21,7 +22,7 @@ public class FXModuloFeed extends AbstractSurgicalFeed{
 
     @Override
     protected synchronized FeedObject operate(long time, List row) {
-        return new FeedObject(time, ((Double)row.get(3)/resolution) % modulo);
+        return new FeedObject(time, ((Double) row.get(3) / resolution) % modulo);
     }
 
     @Override

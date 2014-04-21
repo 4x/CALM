@@ -7,7 +7,7 @@ public class Query implements Serializable, Sourceable {
     private final String qID;
     private final String source;
 
-    public Query(String qID, String source){
+    public Query(String qID, String source) {
         this.qID = qID;
         this.source = source;
     }
@@ -23,7 +23,7 @@ public class Query implements Serializable, Sourceable {
         this.intensity = intensity;
     }
 
-    public void decay(){
+    public void decay() {
         intensity /= 2;
     }
 
@@ -39,7 +39,7 @@ public class Query implements Serializable, Sourceable {
         return source;
     }
 
-    public synchronized static String getQID(){
+    public synchronized static String getQID() {
         return "QUERY_" + Math.random() + "-" + Math.random() + "-" + Math.random();
     }
 }

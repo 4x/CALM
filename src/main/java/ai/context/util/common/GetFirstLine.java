@@ -6,7 +6,7 @@ import java.io.IOException;
 
 public class GetFirstLine {
 
-    public static String fromFile(String filePath){
+    public static String fromFile(String filePath) {
         BufferedReader br = null;
 
         try {
@@ -17,7 +17,7 @@ public class GetFirstLine {
             e.printStackTrace();
         } finally {
             try {
-                if (br != null)br.close();
+                if (br != null) br.close();
             } catch (IOException ex) {
                 ex.printStackTrace();
             }

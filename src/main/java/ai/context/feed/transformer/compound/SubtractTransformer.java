@@ -5,10 +5,11 @@ import ai.context.feed.Feed;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SubtractTransformer extends CompoundedTransformer{
+public class SubtractTransformer extends CompoundedTransformer {
 
     private Feed subtractFrom;
     private Feed subtractThis;
+
     public SubtractTransformer(Feed subtractFrom, Feed subtractThis) {
         super(new Feed[]{subtractFrom, subtractThis});
         this.subtractFrom = subtractFrom;
@@ -17,10 +18,10 @@ public class SubtractTransformer extends CompoundedTransformer{
 
     @Override
     protected Object getOutput(Object input) {
-        List<Object> data = (List<Object>)input;
+        List<Object> data = (List<Object>) input;
         Double subtractFrom = (Double) data.get(0);
         Double subtractThis = (Double) data.get(1);
-        if(subtractFrom == null || subtractThis == null){
+        if (subtractFrom == null || subtractThis == null) {
             return null;
         }
         return (subtractFrom - subtractThis);
@@ -32,7 +33,7 @@ public class SubtractTransformer extends CompoundedTransformer{
     }
 
     public String getDescription(int startIndex, String padding) {
-        return padding + "["+startIndex+"] Subtractor of feed " + subtractThis.getDescription(startIndex, padding) + " from feed " + subtractFrom.getDescription(startIndex, padding);
+        return padding + "[" + startIndex + "] Subtractor of feed " + subtractThis.getDescription(startIndex, padding) + " from feed " + subtractFrom.getDescription(startIndex, padding);
     }
 
     //@Override

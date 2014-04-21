@@ -6,7 +6,7 @@ import ai.context.learning.neural.NeuralLearner;
 
 import java.util.List;
 
-public class RawFeedWrapper implements Feed{
+public class RawFeedWrapper implements Feed {
 
     private final Feed rawFeed;
     private FeedObject comingData;
@@ -17,16 +17,16 @@ public class RawFeedWrapper implements Feed{
         rawFeed.addChild(this);
     }
 
-    public synchronized FeedObject getLatestDataAtTime(long time){
+    public synchronized FeedObject getLatestDataAtTime(long time) {
         FeedObject toReturn = new FeedObject(time, null);
 
-        if(latestData.getTimeStamp() <= time){
-            if(comingData == null  && (!(rawFeed instanceof NeuralLearner) || rawFeed.hasNext())){
+        if (latestData.getTimeStamp() <= time) {
+            if (comingData == null && (!(rawFeed instanceof NeuralLearner) || rawFeed.hasNext())) {
                 comingData = rawFeed.readNext(this);
             }
 
-            if(comingData != null){
-                while ((!(rawFeed instanceof NeuralLearner) || rawFeed.hasNext()) && comingData.getTimeStamp() <= time){
+            if (comingData != null) {
+                while ((!(rawFeed instanceof NeuralLearner) || rawFeed.hasNext()) && comingData.getTimeStamp() <= time) {
                     latestData = comingData;
                     comingData = rawFeed.readNext(this);
                 }
@@ -36,21 +36,21 @@ public class RawFeedWrapper implements Feed{
         return toReturn;
     }
 
-    public long getHeadTimeStamp(){
-        if(latestData == null){
+    public long getHeadTimeStamp() {
+        if (latestData == null) {
             latestData = rawFeed.readNext(this);
         }
         return latestData.getTimeStamp();
     }
 
-    public long getNextTimeStamp(){
-        if(comingData == null){
+    public long getNextTimeStamp() {
+        if (comingData == null) {
             return latestData.getTimeStamp();
         }
         return comingData.getTimeStamp();
     }
 
-    public Feed getRawFeed(){
+    public Feed getRawFeed() {
         return rawFeed;
     }
 

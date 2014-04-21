@@ -9,7 +9,7 @@ import ai.context.core.neural.messaging.util.AnswerCollector;
 import java.io.Serializable;
 import java.util.HashMap;
 
-public abstract class Neuron  implements Serializable {
+public abstract class Neuron implements Serializable {
 
     private HashMap<String, Impulse> state = new HashMap<>();
     private AnswerCollector answerCollector = new AnswerCollector();
@@ -30,8 +30,8 @@ public abstract class Neuron  implements Serializable {
         onImpulse(impulse);
     }
 
-    public void accept(Query query){
-        for(Axon axon : axons.values()){
+    public void accept(Query query) {
+        for (Axon axon : axons.values()) {
             axon.query(query, this);
         }
         onQuery(query);
@@ -39,7 +39,7 @@ public abstract class Neuron  implements Serializable {
 
     protected abstract void onQuery(Query query);
 
-    public void accept(Answer answer){
+    public void accept(Answer answer) {
         answerCollector.addAnswer(answer);
         onAnswer(answer);
     }
@@ -48,8 +48,8 @@ public abstract class Neuron  implements Serializable {
 
     protected abstract void onImpulse(Impulse impulse);
 
-    public void connect(Neuron neighbour){
-        if(!axons.containsKey(neighbour.getId())){
+    public void connect(Neuron neighbour) {
+        if (!axons.containsKey(neighbour.getId())) {
             Axon axon = new Axon();
             axon.setEndPoint(this);
             axon.setEndPoint(neighbour);
@@ -58,17 +58,17 @@ public abstract class Neuron  implements Serializable {
         }
     }
 
-    public void accept(Neuron neighbour, Axon axon){
-        if(!axons.containsKey(neighbour.getId())){
+    public void accept(Neuron neighbour, Axon axon) {
+        if (!axons.containsKey(neighbour.getId())) {
             axons.put(neighbour.getId(), axon);
         }
     }
 
-    public synchronized static String getNeuronID(){
+    public synchronized static String getNeuronID() {
         return "NEURON_" + Math.random() + "-" + Math.random() + "-" + Math.random();
     }
 
-    public String getId(){
+    public String getId() {
         return id;
     }
 }

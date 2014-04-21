@@ -14,7 +14,7 @@ public class StateActionPairBuilder {
     private static String folderPath;
     private static BufferedWriter writer;
 
-    public synchronized static void save(StateActionPair pair){
+    public synchronized static void save(StateActionPair pair) {
         String id = "" + System.identityHashCode(pair);
         try {
             writer.write(pair.toString() + "\n");
@@ -25,30 +25,30 @@ public class StateActionPairBuilder {
         population.put(id, pair);
     }
 
-    public static void load(long timeOfSaving){
+    public static void load(long timeOfSaving) {
         population.clear();
         try {
-            if(writer != null){
+            if (writer != null) {
                 writer.close();
             }
 
             InputStream inputStream = new FileInputStream(folderPath + "/StateActionPair_" + timeOfSaving);
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
             String line;
-            while ((line = reader.readLine()) != null){
+            while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(",");
 
                 String id = parts[0].split("=")[1];
                 String[] idParts = parts[1].split("=")[1].split(":");
                 int[] amalgamate = new int[idParts.length];
-                for(int i = 0; i < amalgamate.length; i++){
+                for (int i = 0; i < amalgamate.length; i++) {
                     amalgamate[i] = Integer.parseInt(idParts[i]);
                 }
                 double resolution = Double.parseDouble(parts[2].split("=")[1]);
                 double totalWeight = Double.parseDouble(parts[4].split("=")[1]);
                 String dist = parts[3].split("=")[1];
                 TreeMap<Integer, Double> actionDistribution = new TreeMap<Integer, Double>();
-                for(String distPart : dist.split(";")){
+                for (String distPart : dist.split(";")) {
                     int value = Integer.parseInt(distPart.split(":")[0]);
                     double intensity = Double.parseDouble(distPart.split(":")[1]);
                     actionDistribution.put(value, intensity);
@@ -59,8 +59,7 @@ public class StateActionPairBuilder {
             }
 
             System.err.println("SAP Population: " + population.size());
-        }
-        catch (FileNotFoundException e) {
+        } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
@@ -82,7 +81,7 @@ public class StateActionPairBuilder {
         population.clear();
     }
 
-    public static StateActionPair getStateActionPair(String id){
+    public static StateActionPair getStateActionPair(String id) {
         return population.get(id);
     }
 

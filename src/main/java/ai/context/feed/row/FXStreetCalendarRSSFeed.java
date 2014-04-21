@@ -13,7 +13,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 
-public class FXStreetCalendarRSSFeed extends RowFeed{
+public class FXStreetCalendarRSSFeed extends RowFeed {
 
     private Thread updater;
     private long pollingFrequency = 10000;
@@ -38,20 +38,16 @@ public class FXStreetCalendarRSSFeed extends RowFeed{
 
         try {
             url = new URL("http://feeds.fxstreet.com/fundamental/economic-calendar?format=xml");
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         updater = new Thread() {
             @Override
             public void run() {
-                while(!closed)
-                {
-                    if(queue.size() < max)
-                    {
-                        try{
-                            if(reader != null){
+                while (!closed) {
+                    if (queue.size() < max) {
+                        try {
+                            if (reader != null) {
                                 reader.close();
                             }
                             reader = new XmlReader(url);
@@ -59,24 +55,22 @@ public class FXStreetCalendarRSSFeed extends RowFeed{
 
 
                             TreeMap<Long, LinkedList<SyndEntry>> list = new TreeMap<>();
-                            for (Iterator i = feed.getEntries().iterator(); i.hasNext();) {
+                            for (Iterator i = feed.getEntries().iterator(); i.hasNext(); ) {
                                 SyndEntry entry = (SyndEntry) i.next();
 
                                 long t = entry.getPublishedDate().getTime();
-                                if(t >= reached && !existing.contains(entry.getTitle().hashCode()))
-                                {
-                                    if(!list.containsKey(t)) {
+                                if (t >= reached && !existing.contains(entry.getTitle().hashCode())) {
+                                    if (!list.containsKey(t)) {
                                         list.put(t, new LinkedList<SyndEntry>());
                                     }
                                     list.get(t).add(entry);
                                 }
                             }
 
-                            while(!list.isEmpty())
-                            {
-                                try{
+                            while (!list.isEmpty()) {
+                                try {
                                     SyndEntry entry = list.firstEntry().getValue().poll();
-                                    if(list.firstEntry().getValue().isEmpty()){
+                                    if (list.firstEntry().getValue().isEmpty()) {
                                         list.remove(list.firstKey());
                                     }
                                     Date date = entry.getPublishedDate();
@@ -86,8 +80,7 @@ public class FXStreetCalendarRSSFeed extends RowFeed{
                                     String country = FXStreetCountryMapping.getMapping(title.split(":")[0]);
                                     String event = title.split(":")[1].substring(1);
 
-                                    if(reached < date.getTime())
-                                    {
+                                    if (reached < date.getTime()) {
                                         reached = date.getTime();
                                         existing.clear();
                                     }
@@ -104,13 +97,11 @@ public class FXStreetCalendarRSSFeed extends RowFeed{
 
                                     Object[] data = new Object[]{event, country, volatility, actual, previous, consensus};
                                     queue.add(new FeedObject(date.getTime(), data));
-                                }
-                                catch (Exception e){
+                                } catch (Exception e) {
                                     e.printStackTrace();
                                 }
                             }
-                        }
-                        catch (Exception e){
+                        } catch (Exception e) {
                             //e.printStackTrace();
                         }
                     }
@@ -126,14 +117,11 @@ public class FXStreetCalendarRSSFeed extends RowFeed{
         updater.start();
     }
 
-    public void close()
-    {
+    public void close() {
         closed = true;
-        try{
+        try {
             reader.close();
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -145,14 +133,11 @@ public class FXStreetCalendarRSSFeed extends RowFeed{
 
     @Override
     public synchronized FeedObject readNext(Object caller) {
-        if(buffers.containsKey(caller) && buffers.get(caller).size() > 0)
-        {
+        if (buffers.containsKey(caller) && buffers.get(caller).size() > 0) {
             return buffers.get(caller).pollFirst();
         }
-        synchronized (queue)
-        {
-            while (queue.isEmpty())
-            {
+        synchronized (queue) {
+            while (queue.isEmpty()) {
                 try {
                     Thread.sleep(pollingFrequency);
                 } catch (InterruptedException e) {
@@ -161,8 +146,8 @@ public class FXStreetCalendarRSSFeed extends RowFeed{
             }
 
             FeedObject feedObject = queue.poll();
-            for(Feed listener : buffers.keySet()){
-                if(listener != caller){
+            for (Feed listener : buffers.keySet()) {
+                if (listener != caller) {
                     buffers.get(listener).add(feedObject);
                 }
             }

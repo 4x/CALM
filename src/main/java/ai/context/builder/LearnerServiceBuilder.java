@@ -11,21 +11,21 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-public class LearnerServiceBuilder{
+public class LearnerServiceBuilder {
 
-    public static void save(LearnerService learner, String folder, long time){
+    public static void save(LearnerService learner, String folder, long time) {
 
         CorrelationCaculatorBuilder.createCheckPoint(time, folder);
         ClusteredCopulaeBuilder.createCheckPoint(time, folder);
         StateActionPairBuilder.createCheckPoint(time, folder);
 
-        for(CorrelationCalculator calculator : learner.getCorrelationCalculators().values()){
+        for (CorrelationCalculator calculator : learner.getCorrelationCalculators().values()) {
             CorrelationCaculatorBuilder.save(calculator);
         }
 
-        for(Map.Entry<Integer, HashMap<Integer, TreeMap<Integer, CorrelationCalculator>>> e1 : learner.getCopulae().getVariableClusteredCorrelations().entrySet()){
-            for(Map.Entry<Integer, TreeMap<Integer, CorrelationCalculator>> e2 : e1.getValue().entrySet()){
-                for(Map.Entry<Integer, CorrelationCalculator> e3 : e2.getValue().entrySet()){
+        for (Map.Entry<Integer, HashMap<Integer, TreeMap<Integer, CorrelationCalculator>>> e1 : learner.getCopulae().getVariableClusteredCorrelations().entrySet()) {
+            for (Map.Entry<Integer, TreeMap<Integer, CorrelationCalculator>> e2 : e1.getValue().entrySet()) {
+                for (Map.Entry<Integer, CorrelationCalculator> e3 : e2.getValue().entrySet()) {
                     CorrelationCaculatorBuilder.save(e3.getValue());
                     //System.err.println("Saving: " + e3.getValue());
                 }
@@ -35,7 +35,7 @@ public class LearnerServiceBuilder{
         ClusteredCopulaeBuilder.save(learner.getCopulae());
         //System.err.println("Saving: " + learner.getCopulae());
 
-        for(StateActionPair pair : learner.getPopulation().values()){
+        for (StateActionPair pair : learner.getPopulation().values()) {
             StateActionPairBuilder.save(pair);
             //System.err.println("Saving: " + pair);
         }
@@ -57,7 +57,7 @@ public class LearnerServiceBuilder{
 
     }
 
-    public static LearnerService load(String folder, long time){
+    public static LearnerService load(String folder, long time) {
 
         CorrelationCaculatorBuilder.setFolderPath(folder);
         ClusteredCopulaeBuilder.setFolderPath(folder);
@@ -99,40 +99,39 @@ public class LearnerServiceBuilder{
             }*/
 
             String[] cwParts = data[2].split("=")[1].split(":");
-            double [] correlationWeights = new double[cwParts.length];
-            for(int i = 0; i < correlationWeights.length; i++){
+            double[] correlationWeights = new double[cwParts.length];
+            for (int i = 0; i < correlationWeights.length; i++) {
                 correlationWeights[i] = Double.parseDouble(cwParts[i]);
             }
 
             TreeMap<Integer, CorrelationCalculator> correlationCalculators = new TreeMap<Integer, CorrelationCalculator>();
-            for(String ccData : data[3].split("=")[1].split(";")){
+            for (String ccData : data[3].split("=")[1].split(";")) {
 
                 String[] parts = ccData.split(":");
                 int e1 = Integer.parseInt(parts[0]);
                 String ccID = parts[1];
 
                 CorrelationCalculator correlationCalculator = CorrelationCaculatorBuilder.getCalculator(ccID);
-                if(ccID != null){
+                if (ccID != null) {
                     correlationCalculators.put(e1, correlationCalculator);
-                }
-                else {
+                } else {
                     System.err.println("CCalc not found: " + ccID);
                 }
             }
 
             String[] cParts = data[4].split("=")[1].split(":");
-            double [] correlations = new double[cParts.length];
-            for(int i = 0; i < correlations.length; i++){
+            double[] correlations = new double[cParts.length];
+            for (int i = 0; i < correlations.length; i++) {
                 correlations[i] = Double.parseDouble(cParts[i]);
             }
 
             ClusteredCopulae copulae = ClusteredCopulaeBuilder.getCopulae(data[5].split("=")[1]);
-            if(copulae == null){
+            if (copulae == null) {
                 System.err.println("Copulae not found: " + data[5].split("=")[1]);
             }
 
             TreeMap<Integer, Long> distribution = new TreeMap<Integer, Long>();
-            for(String dData : data[6].split("=")[1].split(";")){
+            for (String dData : data[6].split("=")[1].split(";")) {
 
                 String[] parts = dData.split(":");
                 int e1 = Integer.parseInt(parts[0]);

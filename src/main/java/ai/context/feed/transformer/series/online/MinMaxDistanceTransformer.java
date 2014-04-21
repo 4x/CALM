@@ -9,7 +9,7 @@ import java.util.List;
 
 import static ai.context.util.mathematics.Discretiser.getLogarithmicDiscretisation;
 
-public class MinMaxDistanceTransformer  extends OnlineTransformer{
+public class MinMaxDistanceTransformer extends OnlineTransformer {
 
     private Feed feedMin;
     private Feed feedMax;
@@ -28,39 +28,38 @@ public class MinMaxDistanceTransformer  extends OnlineTransformer{
 
     @Override
     protected Object getOutput() {
-        Double minA = (Double) ((List)arriving.getData()).get(0);
-        Double maxA = (Double) ((List)arriving.getData()).get(1);
-        Double close = (Double) ((List)arriving.getData()).get(2);
+        Double minA = (Double) ((List) arriving.getData()).get(0);
+        Double maxA = (Double) ((List) arriving.getData()).get(1);
+        Double close = (Double) ((List) arriving.getData()).get(2);
 
-        if(init){
+        if (init) {
 
             mins.add(minA);
             maxs.add(maxA);
             mins.pollFirst();
             maxs.pollFirst();
 
-            if(minA < min){
+            if (minA < min) {
                 min = minA;
             }
 
-            if(maxA > max){
+            if (maxA > max) {
                 max = maxA;
             }
 
-            Double minL = (Double) ((List)leaving.getData()).get(0);
-            Double maxL = (Double) ((List)leaving.getData()).get(1);
+            Double minL = (Double) ((List) leaving.getData()).get(0);
+            Double maxL = (Double) ((List) leaving.getData()).get(1);
 
-            if(minL <= min){
+            if (minL <= min) {
                 refreshMin();
             }
 
-            if(maxL >= min){
+            if (maxL >= min) {
                 refreshMax();
             }
-        }
-        else {
+        } else {
             buffer.clear();
-            while(buffer.size() < bufferSize){
+            while (buffer.size() < bufferSize) {
                 buffer.add(new FeedObject(0, arriving.getData()));
 
                 mins.add(minA);
@@ -72,19 +71,19 @@ public class MinMaxDistanceTransformer  extends OnlineTransformer{
         return new Double[]{this.min, this.max, (double) getLogarithmicDiscretisation(max - close, 0, 0.0001), (double) getLogarithmicDiscretisation(close - min, 0, 0.0001)};
     }
 
-    private void refreshMin(){
+    private void refreshMin() {
         min = mins.getFirst();
-        for(double val : mins){
-            if(val < min){
+        for (double val : mins) {
+            if (val < min) {
                 min = val;
             }
         }
     }
 
-    private void refreshMax(){
+    private void refreshMax() {
         max = maxs.getFirst();
-        for(double val : maxs){
-            if(val > max){
+        for (double val : maxs) {
+            if (val > max) {
                 max = val;
             }
         }
@@ -97,7 +96,7 @@ public class MinMaxDistanceTransformer  extends OnlineTransformer{
 
     @Override
     public String getDescription(int startIndex, String padding) {
-        return padding + "["+startIndex+"] MINMAXDistance and span: " + bufferSize + " for feed: " + feedMin.getDescription(startIndex, padding) + " and " + feedMax.getDescription(startIndex, padding) + " and " + feedClose.getDescription(startIndex, padding);
+        return padding + "[" + startIndex + "] MINMAXDistance and span: " + bufferSize + " for feed: " + feedMin.getDescription(startIndex, padding) + " and " + feedMax.getDescription(startIndex, padding) + " and " + feedClose.getDescription(startIndex, padding);
     }
 
     @Override

@@ -6,10 +6,11 @@ import ai.context.feed.transformer.single.TimeOffsetTransformer;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DifferencePresentToFutureTransformer extends CompoundedTransformer{
+public class DifferencePresentToFutureTransformer extends CompoundedTransformer {
 
     private Feed present;
     private TimeOffsetTransformer future;
+
     public DifferencePresentToFutureTransformer(Feed presentFeed, TimeOffsetTransformer future) {
         super(new Feed[]{presentFeed, future});
         this.present = presentFeed;
@@ -18,12 +19,12 @@ public class DifferencePresentToFutureTransformer extends CompoundedTransformer{
 
     @Override
     protected Object getOutput(Object input) {
-        List<Object> data = (List<Object>)input;
+        List<Object> data = (List<Object>) input;
         Double present = (Double) data.get(0);
         Object[] output = new Object[future.getNumberOfOutputs()];
 
-        for(int i = 1; i < data.size(); i++){
-            output[i - 1] =  (Double) data.get(i) - present;
+        for (int i = 1; i < data.size(); i++) {
+            output[i - 1] = (Double) data.get(i) - present;
         }
         return output;
     }
@@ -35,7 +36,7 @@ public class DifferencePresentToFutureTransformer extends CompoundedTransformer{
 
     @Override
     public String getDescription(int startIndex, String padding) {
-        return padding + "["+startIndex+"] Future Movement of feed " + present + " using feed " + future;
+        return padding + "[" + startIndex + "] Future Movement of feed " + present + " using feed " + future;
     }
 
     //@Override
@@ -52,7 +53,7 @@ public class DifferencePresentToFutureTransformer extends CompoundedTransformer{
 
         list.add(this);
         list.add(present.getElementChain(0));
-        for(int i = 0; i < future.getNumberOfOutputs(); i++){
+        for (int i = 0; i < future.getNumberOfOutputs(); i++) {
             list.add(future.getElementChain(i));
         }
         return list;

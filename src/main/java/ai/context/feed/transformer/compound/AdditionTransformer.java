@@ -5,10 +5,11 @@ import ai.context.feed.Feed;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AdditionTransformer extends CompoundedTransformer{
+public class AdditionTransformer extends CompoundedTransformer {
 
     private Feed addTo;
     private Feed addThis;
+
     public AdditionTransformer(Feed addTo, Feed addThis) {
         super(new Feed[]{addTo, addThis});
         this.addThis = addThis;
@@ -17,7 +18,7 @@ public class AdditionTransformer extends CompoundedTransformer{
 
     @Override
     protected Object getOutput(Object input) {
-        List<Object> data = (List<Object>)input;
+        List<Object> data = (List<Object>) input;
         Double addTo = (Double) data.get(0);
         Double addThis = (Double) data.get(1);
         return (addTo + addThis);
@@ -30,7 +31,7 @@ public class AdditionTransformer extends CompoundedTransformer{
 
     @Override
     public String getDescription(int startIndex, String padding) {
-        return padding + "["+startIndex+"] Addition of feed " + addThis + " to feed " + addTo;
+        return padding + "[" + startIndex + "] Addition of feed " + addThis + " to feed " + addTo;
     }
 
     //@Override

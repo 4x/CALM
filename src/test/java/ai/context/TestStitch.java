@@ -18,7 +18,7 @@ import java.util.List;
 public class TestStitch {
 
     @Test
-    public void testStitch(){
+    public void testStitch() {
 
         CSVFeed feed = new CSVFeed("src/test/resources/Test.csv", "yyyyMMdd HH:mm:ss", new DataType[]{DataType.LONG}, null);
         final TestStitcher stitcher = new TestStitcher("src/test/resources/TestLive.csv", new TestFeed3());
@@ -51,14 +51,14 @@ public class TestStitch {
         sFeed = new SynchronisedFeed(feed2, sFeed);
 
         int waiting = 150;
-        for(int i = 0; i < 400; i++){
+        for (int i = 0; i < 400; i++) {
             try {
                 Thread.sleep(waiting);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
             FeedObject data = sFeed.getNextComposite(this);
-            if(feed.isStitching()){
+            if (feed.isStitching()) {
                 waiting = 25;
             }
             List list = new ArrayList<>();
@@ -69,9 +69,10 @@ public class TestStitch {
     }
 }
 
-class TestFeed3 implements Feed{
+class TestFeed3 implements Feed {
 
     long i = 0;
+
     @Override
     public boolean hasNext() {
         return false;
@@ -86,7 +87,7 @@ class TestFeed3 implements Feed{
         }
 
         i++;
-        return new FeedObject(i* 10000, i);
+        return new FeedObject(i * 10000, i);
     }
 
     @Override
@@ -124,9 +125,10 @@ class TestFeed3 implements Feed{
     }
 }
 
-class TestFeed4 implements Feed{
+class TestFeed4 implements Feed {
 
     long i = 0;
+
     @Override
     public boolean hasNext() {
         return false;
@@ -148,7 +150,7 @@ class TestFeed4 implements Feed{
         }
 
         i++;
-        return new FeedObject((long) ((i* 10000) + (10000 * r)), i);
+        return new FeedObject((long) ((i * 10000) + (10000 * r)), i);
     }
 
     @Override
@@ -181,7 +183,7 @@ class TestFeed4 implements Feed{
     }
 }
 
-class TestStitcher extends StitchableFeed{
+class TestStitcher extends StitchableFeed {
 
     private SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
 

@@ -8,7 +8,7 @@ import ai.context.feed.row.RowFeed;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RowBasedTransformer extends FilteredEventDecayFeed{
+public class RowBasedTransformer extends FilteredEventDecayFeed {
 
     private int[] filterColumn;
     private String[] regexMatch;
@@ -30,9 +30,8 @@ public class RowBasedTransformer extends FilteredEventDecayFeed{
     protected boolean pass(FeedObject raw) {
 
         Object[] data = (Object[]) raw.getData();
-        for(int i = 0; i < filterColumn.length; i++){
-            if(!data[filterColumn[i]].toString().matches(regexMatch[i]))
-            {
+        for (int i = 0; i < filterColumn.length; i++) {
+            if (!data[filterColumn[i]].toString().matches(regexMatch[i])) {
                 return false;
             }
         }
@@ -44,8 +43,7 @@ public class RowBasedTransformer extends FilteredEventDecayFeed{
 
         Object[] data = (Object[]) rawData;
         List<Object> list = new ArrayList<Object>();
-        for(int index : interestedColumns)
-        {
+        for (int index : interestedColumns) {
             list.add(data[index]);
         }
 
@@ -61,11 +59,11 @@ public class RowBasedTransformer extends FilteredEventDecayFeed{
     public String getDescription(int startIndex, String padding) {
 
         String data = "";
-        for(int i = 0; i < filterColumn.length; i++){
+        for (int i = 0; i < filterColumn.length; i++) {
             data += filterColumn[i] + " -> " + regexMatch[i] + "; ";
         }
 
-        return padding + "["+startIndex+"] Row based filter with half-life: "+halfLife+", filtering: "+data+" on feed: " + rawFeed.getDescription(startIndex, padding);
+        return padding + "[" + startIndex + "] Row based filter with half-life: " + halfLife + ", filtering: " + data + " on feed: " + rawFeed.getDescription(startIndex, padding);
     }
 
     //@Override

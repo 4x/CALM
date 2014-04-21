@@ -33,75 +33,63 @@ public class OpenPosition {
         this.goodTillTime = goodTillTime;
         this.goodTillClosed = goodTillClosed;
 
-        if(!isLong){
+        if (!isLong) {
             multiplier = -1;
         }
     }
 
-    public boolean canClose(long time, double price){
+    public boolean canClose(long time, double price) {
         this.price = price;
-        if(isLong && (price >= takeProfit || price <= stopLoss))
-        {
+        if (isLong && (price >= takeProfit || price <= stopLoss)) {
             return true;
-        }
-        else if(price >= stopLoss || price <= takeProfit){
+        } else if (price >= stopLoss || price <= takeProfit) {
             return true;
         }
         return false;
     }
 
-    public boolean canCloseOnBar_Pessimistic(long time, double high, double low, double close)
-    {
-        if(!goodTillClosed && time >= goodTillTime){
+    public boolean canCloseOnBar_Pessimistic(long time, double high, double low, double close) {
+        if (!goodTillClosed && time >= goodTillTime) {
             price = close;
 
-            if(isLong){
-                if(price > start){
-                    closingMessage = new Date(time) + ": PROFIT: Closing [LONG] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high +"} TIMEOUT";
+            if (isLong) {
+                if (price > start) {
+                    closingMessage = new Date(time) + ": PROFIT: Closing [LONG] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high + "} TIMEOUT";
+                } else {
+                    closingMessage = new Date(time) + ": LOSS: Closing [LONG] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high + "} TIMEOUT";
                 }
-                else {
-                    closingMessage = new Date(time) + ": LOSS: Closing [LONG] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high +"} TIMEOUT";
-                }
-            }
-            else{
-                if(price < start){
-                    closingMessage = new Date(time) + ": PROFIT: Closing [SHORT] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high +"} TIMEOUT";
-                }
-                else {
-                    closingMessage = new Date(time) + ": LOSS: Closing [SHORT] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high +"} TIMEOUT";
+            } else {
+                if (price < start) {
+                    closingMessage = new Date(time) + ": PROFIT: Closing [SHORT] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high + "} TIMEOUT";
+                } else {
+                    closingMessage = new Date(time) + ": LOSS: Closing [SHORT] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high + "} TIMEOUT";
                 }
             }
             return true;
         }
 
-        if(isLong)
-        {
-            if(low <= stopLoss)
-            {
+        if (isLong) {
+            if (low <= stopLoss) {
                 price = stopLoss;
-                closingMessage = new Date(time) + ": LOSS: Closing [LONG] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high +"}";
+                closingMessage = new Date(time) + ": LOSS: Closing [LONG] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high + "}";
                 return true;
             }
 
-            if(high >= takeProfit)
-            {
+            if (high >= takeProfit) {
                 price = takeProfit;
-                closingMessage = new Date(time) + ": PROFIT: Closing [LONG] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high +"}";
+                closingMessage = new Date(time) + ": PROFIT: Closing [LONG] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high + "}";
                 return true;
             }
-        }
-        else{
-            if(high >= stopLoss)
-            {
+        } else {
+            if (high >= stopLoss) {
                 price = stopLoss;
-                closingMessage = new Date(time) + ": LOSS: Closing [SHORT] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high +"}";
+                closingMessage = new Date(time) + ": LOSS: Closing [SHORT] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high + "}";
                 return true;
             }
 
-            if(low <= takeProfit)
-            {
+            if (low <= takeProfit) {
                 price = takeProfit;
-                closingMessage = new Date(time) + ": PROFIT: Closing [SHORT] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high +"}";
+                closingMessage = new Date(time) + ": PROFIT: Closing [SHORT] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high + "}";
                 return true;
             }
         }
@@ -120,17 +108,15 @@ public class OpenPosition {
         return closingMessage;
     }
 
-    public double getPnL()
-    {
+    public double getPnL() {
         return amount * ((multiplier * (price - start)) - cost);
     }
 
-    public double getClosingAmount(){
+    public double getClosingAmount() {
         return amount + getPnL();
     }
 
-    public double getTarget()
-    {
+    public double getTarget() {
         return target;
     }
 

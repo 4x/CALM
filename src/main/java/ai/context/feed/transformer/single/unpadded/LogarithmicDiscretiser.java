@@ -7,36 +7,33 @@ import java.util.List;
 
 import static ai.context.util.mathematics.Discretiser.getLogarithmicDiscretisation;
 
-public class LogarithmicDiscretiser extends UnPaddedTransformer{
+public class LogarithmicDiscretiser extends UnPaddedTransformer {
     private double resolution;
     private double benchmark;
     private int feedComponent;
 
     private Feed feed;
 
-    public LogarithmicDiscretiser(double resolution, double benchmark, Feed feed, int feedComponent)
-    {
+    public LogarithmicDiscretiser(double resolution, double benchmark, Feed feed, int feedComponent) {
         super(new Feed[]{feed});
         this.benchmark = benchmark;
         this.resolution = resolution;
         this.feedComponent = feedComponent;
         this.feed = feed;
     }
+
     @Override
     protected Object getOutput(Object[] input) {
 
-        if(input == null || input[0] == null)
-        {
+        if (input == null || input[0] == null) {
             return null;
         }
 
         double value = 0;
-        if(feedComponent >= 0)
-        {
-            value = ((Double[])input[0])[feedComponent].doubleValue();
-        }
-        else {
-            value = ((Double)input[0]).doubleValue();
+        if (feedComponent >= 0) {
+            value = ((Double[]) input[0])[feedComponent].doubleValue();
+        } else {
+            value = ((Double) input[0]).doubleValue();
         }
         return getLogarithmicDiscretisation(value, benchmark, resolution);
     }
@@ -58,7 +55,7 @@ public class LogarithmicDiscretiser extends UnPaddedTransformer{
 
     @Override
     public String getDescription(int startIndex, String padding) {
-        return padding + "[" + startIndex + "] Logarithmic dicretiser with benchmark: "+benchmark+", resolution: "+resolution+", feed component: "+feedComponent+" for: " + feed.getDescription(startIndex, padding);
+        return padding + "[" + startIndex + "] Logarithmic dicretiser with benchmark: " + benchmark + ", resolution: " + resolution + ", feed component: " + feedComponent + " for: " + feed.getDescription(startIndex, padding);
     }
 
     @Override

@@ -18,7 +18,7 @@ import java.util.*;
 
 import static ai.context.util.common.DateUtils.getTimeFromString_YYYYMMddHHmmss;
 
-public class Learner implements Runnable, TimedContainer{
+public class Learner implements Runnable, TimedContainer {
 
     private LearnerService learner = new LearnerService();
 
@@ -51,9 +51,9 @@ public class Learner implements Runnable, TimedContainer{
     private boolean saved = false;
     private long timeToSave = getTimeFromString_YYYYMMddHHmmss("20130201000000");
 
-    public Learner(String outputDir){
+    public Learner(String outputDir) {
         try {
-            fileOutputStream = new BufferedWriter(new FileWriter(outputDir + "PNL_"+ System.currentTimeMillis() + ".csv"));
+            fileOutputStream = new BufferedWriter(new FileWriter(outputDir + "PNL_" + System.currentTimeMillis() + ".csv"));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -68,44 +68,40 @@ public class Learner implements Runnable, TimedContainer{
     @Override
     public void run() {
 
-        while (alive)
-        {
+        while (alive) {
             DataObject data = trainingLearnerFeed.readNext();
             tNow = data.getTimeStamp();
 
-            if(data == null)
-            {
+            if (data == null) {
                 break;
             }
 
-            if(adapting && tNow > timeToSave){
+            if (adapting && tNow > timeToSave) {
                 break;
             }
 
-            if(!learner.isMerging() && !saved && tNow > timeToSave){
+            if (!learner.isMerging() && !saved && tNow > timeToSave) {
                 System.out.println("Saving at " + new Date(tNow) + " " + new Date(timeToSave));
                 LearnerServiceBuilder.save(learner, "./memories", timeToSave);
                 saved = true;
             }
 
-            if(tNow % (6 * 3600 * 1000L) == 0)
-            {
+            if (tNow % (6 * 3600 * 1000L) == 0) {
                 System.out.println("It is now: " + new Date(tNow));
             }
 
 
-            for(DataObject cursor : recentData.values()){
+            for (DataObject cursor : recentData.values()) {
 
                 recentAggregators.get(cursor.getTimeStamp()).addValue(data.getValue()[1] - cursor.getValue()[0]);
                 recentAggregators.get(cursor.getTimeStamp()).addValue(data.getValue()[2] - cursor.getValue()[0]);
             }
 
-            while (!recentData.isEmpty() && recentData.firstEntry().getValue().getTimeStamp() < (tNow - PositionFactory.getTimeSpan()))
-            {
+            while (!recentData.isEmpty() && recentData.firstEntry().getValue().getTimeStamp() < (tNow - PositionFactory.getTimeSpan())) {
                 int[] s = recentData.firstEntry().getValue().getSignal();
-                long t =  recentData.firstEntry().getValue().getTimeStamp();
+                long t = recentData.firstEntry().getValue().getTimeStamp();
 
-                if(recentAggregators.get(t).getMax() != null){
+                if (recentAggregators.get(t).getMax() != null) {
 
                     try {
                         learner.addStateAction(s, recentAggregators.get(t).getMax());
@@ -119,11 +115,10 @@ public class Learner implements Runnable, TimedContainer{
 
                     recentAggregators.remove(t);
                     recentData.remove(t);
-                    if(!recentPredictions.isEmpty()) {
+                    if (!recentPredictions.isEmpty()) {
                         removeFromPrediction(recentPredictions.removeFirst());
                     }
-                }
-                else {
+                } else {
                     break;
                 }
             }
@@ -131,12 +126,11 @@ public class Learner implements Runnable, TimedContainer{
             recentData.put(data.getTimeStamp(), data);
             recentAggregators.put(data.getTimeStamp(), new MinMaxAggregator());
 
-            if(!adapting){
+            if (!adapting) {
                 int[] signal = data.getSignal();
                 TreeMap<Integer, Double> distribution = learner.getActionDistribution(signal);
                 TreeMap<Double, Double> prediction = new TreeMap<Double, Double>();
-                for(Map.Entry<Integer, Double> entry : distribution.entrySet())
-                {
+                for (Map.Entry<Integer, Double> entry : distribution.entrySet()) {
                     prediction.put(data.getValue()[0] + entry.getKey() * learner.getActionResolution(), entry.getValue());
                 }
                 recentPredictions.add(prediction);
@@ -144,13 +138,11 @@ public class Learner implements Runnable, TimedContainer{
                 updateOverallPrediction(prediction);
 
                 HashSet<OpenPosition> closed = new HashSet<OpenPosition>();
-                for(OpenPosition position : positions)
-                {
-                    if(position.canCloseOnBar_Pessimistic(tNow, data.getValue()[1], data.getValue()[2], data.getValue()[0]))
-                    {
+                for (OpenPosition position : positions) {
+                    if (position.canCloseOnBar_Pessimistic(tNow, data.getValue()[1], data.getValue()[2], data.getValue()[0])) {
                         closed.add(position);
-                        int x = (int) (position.getTarget()/learner.getActionResolution());
-                        int y = (int) (position.getPnL()/learner.getActionResolution());
+                        int x = (int) (position.getTarget() / learner.getActionResolution());
+                        int y = (int) (position.getPnL() / learner.getActionResolution());
                         accruedPnL += position.getPnL();
                         PositionFactory.positionClosed(position);
 
@@ -158,15 +150,12 @@ public class Learner implements Runnable, TimedContainer{
                         appendToFile(position.getClosingMessage() + " PNL: " + accruedPnL + " CHANGE: " + position.getPnL() + " CAPITAL: " + PositionFactory.getAmount());
 
                         double count = 0.0;
-                        if(!successMap.containsKey(x))
-                        {
+                        if (!successMap.containsKey(x)) {
                             successMap.put(x, new TreeMap<Integer, Double>());
                         }
-                        if(!successMap.get(x).containsKey(y))
-                        {
+                        if (!successMap.get(x).containsKey(y)) {
                             successMap.get(x).put(y, 0.0);
-                        }
-                        else {
+                        } else {
                             count = successMap.get(x).get(y);
                         }
                         successMap.get(x).put(y, 1.0 + count);
@@ -175,21 +164,19 @@ public class Learner implements Runnable, TimedContainer{
                 positions.removeAll(closed);
 
                 OpenPosition position = PositionFactory.getPosition(tNow, data.getValue()[0], prediction, 6 * 3600 * 1000L, false);
-                if(position != null)
-                {
-                    if(inLiveTrading){
+                if (position != null) {
+                    if (inLiveTrading) {
                         try {
                             blackBox.onDecision(position);
                         } catch (JFException e) {
                             e.printStackTrace();
                         }
-                    }
-                    else {
+                    } else {
                         positions.add(position);
                     }
 
                     int dir = -1;
-                    if(position.isLong()){
+                    if (position.isLong()) {
                         dir = 1;
                     }
                     //recentPos.put(data.getTimeStamp(), dir);
@@ -198,27 +185,22 @@ public class Learner implements Runnable, TimedContainer{
         }
     }
 
-    private void updateOverallPrediction(TreeMap<Double, Double> newPrediction)
-    {
-        for(Map.Entry<Double, Double> entry : newPrediction.entrySet())
-        {
-            if(!prediction.containsKey(entry.getKey()))
-            {
+    private void updateOverallPrediction(TreeMap<Double, Double> newPrediction) {
+        for (Map.Entry<Double, Double> entry : newPrediction.entrySet()) {
+            if (!prediction.containsKey(entry.getKey())) {
                 prediction.put(entry.getKey(), 0.0);
             }
             prediction.put(entry.getKey(), entry.getValue() + prediction.get(entry.getKey()));
         }
     }
 
-    private void removeFromPrediction(TreeMap<Double, Double> oldPrediction)
-    {
-        for(Map.Entry<Double, Double> entry : oldPrediction.entrySet())
-        {
+    private void removeFromPrediction(TreeMap<Double, Double> oldPrediction) {
+        for (Map.Entry<Double, Double> entry : oldPrediction.entrySet()) {
             prediction.put(entry.getKey(), prediction.get(entry.getKey()) - entry.getValue());
         }
     }
 
-    private void appendToFile(String data){
+    private void appendToFile(String data) {
         try {
             fileOutputStream.write(data + "\n");
             fileOutputStream.flush();
@@ -227,8 +209,8 @@ public class Learner implements Runnable, TimedContainer{
         }
     }
 
-    public boolean loadMemories(String folder, long time){
-        if(new File(folder + "/LearnerService_" + time).exists()){
+    public boolean loadMemories(String folder, long time) {
+        if (new File(folder + "/LearnerService_" + time).exists()) {
             learner = LearnerServiceBuilder.load(folder, time);
             saved = true;
             return true;
@@ -252,12 +234,11 @@ public class Learner implements Runnable, TimedContainer{
         learner.setMaxPopulation(maxPopulation);
     }
 
-    public void setCurrentTime(long time){
+    public void setCurrentTime(long time) {
         tNow = time;
     }
 
-    public long getTime()
-    {
+    public long getTime() {
         return tNow;
     }
 
@@ -274,15 +255,15 @@ public class Learner implements Runnable, TimedContainer{
         return inLiveTrading;
     }
 
-    public void kill(){
+    public void kill() {
         alive = false;
     }
 
-    public TreeMap<Double, StateActionPair> getAlphas(){
+    public TreeMap<Double, StateActionPair> getAlphas() {
         return learner.getAlphaStates();
     }
 
-    public double[] getVarCorrelations(int[] state){
+    public double[] getVarCorrelations(int[] state) {
         return learner.updateAndGetCorrelationWeights(state);
     }
 
@@ -291,15 +272,15 @@ public class Learner implements Runnable, TimedContainer{
         learner.setCorrelating(adapting);
     }
 
-    public TreeMap<Integer, CorrelationCalculator> getCorrelationCalculators(){
+    public TreeMap<Integer, CorrelationCalculator> getCorrelationCalculators() {
         return learner.getCorrelationCalculators();
     }
 
-    public ClusteredCopulae getCopulae(){
+    public ClusteredCopulae getCopulae() {
         return learner.getCopulae();
     }
 
-    public void setCorrelationTools(TreeMap<Integer, CorrelationCalculator> calculators, ClusteredCopulae copulae){
+    public void setCorrelationTools(TreeMap<Integer, CorrelationCalculator> calculators, ClusteredCopulae copulae) {
         learner.setCopulae(copulae);
         learner.setCorrelationCalculators(calculators);
     }

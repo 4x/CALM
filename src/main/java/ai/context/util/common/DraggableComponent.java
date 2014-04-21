@@ -27,7 +27,8 @@ public class DraggableComponent extends JPanel {
         addMouseListener(new MouseListener() {
 
             @Override
-            public void mouseClicked(MouseEvent e) { }
+            public void mouseClicked(MouseEvent e) {
+            }
 
             @Override
             public void mousePressed(MouseEvent e) {
@@ -39,13 +40,16 @@ public class DraggableComponent extends JPanel {
             }
 
             @Override
-            public void mouseReleased(MouseEvent e) { }
+            public void mouseReleased(MouseEvent e) {
+            }
 
             @Override
-            public void mouseEntered(MouseEvent e) { }
+            public void mouseEntered(MouseEvent e) {
+            }
 
             @Override
-            public void mouseExited(MouseEvent e) { }
+            public void mouseExited(MouseEvent e) {
+            }
 
         });
         addMouseMotionListener(new MouseMotionListener() {
@@ -60,17 +64,20 @@ public class DraggableComponent extends JPanel {
             }
 
             @Override
-            public void mouseMoved(MouseEvent e) { }
+            public void mouseMoved(MouseEvent e) {
+            }
 
         });
     }
 
-    public void setWorkArea(WorkArea area){
+    public void setWorkArea(WorkArea area) {
         this.area = area;
     }
 
-    public void deselect(){
+    public void deselect() {
 
-    };
+    }
+
+    ;
 
 }

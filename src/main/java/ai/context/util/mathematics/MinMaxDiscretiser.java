@@ -20,23 +20,20 @@ public class MinMaxDiscretiser {
         this.count = criticalMass;
     }
 
-    public int discretise(Double value)
-    {
-        if(!locked){
-            if(value == null)
-            {
+    public int discretise(Double value) {
+        if (!locked) {
+            if (value == null) {
                 return -1;
-            }
-            else if(count == criticalMass){
-                if(aggregator != null){
+            } else if (count == criticalMass) {
+                if (aggregator != null) {
                     min = aggregator.getMin();
                     max = aggregator.getMax();
-                    if(lockable){
+                    if (lockable) {
                         locked = true;
                     }
                 }
 
-                if(!locked){
+                if (!locked) {
                     aggregator = new MinMaxAggregator();
                     count = 0;
                 }
@@ -45,9 +42,9 @@ public class MinMaxDiscretiser {
             count++;
         }
 
-        if(min != null && max != null) {
-            double position = (value - min)/(max - min);
-            return (int) (position*clusters);
+        if (min != null && max != null) {
+            double position = (value - min) / (max - min);
+            return (int) (position * clusters);
         }
         return -1;
     }

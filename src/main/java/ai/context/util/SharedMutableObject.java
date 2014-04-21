@@ -4,8 +4,7 @@ public class SharedMutableObject<T> {
 
     private T value;
 
-    public SharedMutableObject(T initialValue)
-    {
+    public SharedMutableObject(T initialValue) {
         value = initialValue;
     }
 

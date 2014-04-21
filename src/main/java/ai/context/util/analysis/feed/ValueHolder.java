@@ -8,17 +8,18 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.lang.reflect.Array;
 
-public class ValueHolder extends DraggableComponent{
+public class ValueHolder extends DraggableComponent {
 
-    enum TYPE{
+    enum TYPE {
         DOUBLE,
         STRING,
         INTEGER,
         LONG,
         CUSTOM
     }
+
     private TYPE type;
-    private  String name;
+    private String name;
     private JTextField value;
     private JCheckBox select;
 
@@ -46,44 +47,38 @@ public class ValueHolder extends DraggableComponent{
         add(value);
     }
 
-    public Object getValue(){
-        try{
-            if(type == TYPE.DOUBLE){
+    public Object getValue() {
+        try {
+            if (type == TYPE.DOUBLE) {
                 return Double.parseDouble(value.getText());
-            }
-            else if(type == TYPE.INTEGER){
+            } else if (type == TYPE.INTEGER) {
                 return Integer.parseInt(value.getText());
-            }
-            else if(type == TYPE.LONG){
+            } else if (type == TYPE.LONG) {
                 return Long.parseLong(value.getText());
-            }
-            else if(type == TYPE.CUSTOM){
+            } else if (type == TYPE.CUSTOM) {
                 String[] data = value.getText().split("::");
 
                 String collectionType = data[0];
                 String dataType = data[1];
                 String[] values = data[2].split(",");
 
-                if(collectionType.equals("VALUE")){
+                if (collectionType.equals("VALUE")) {
                     Class clazz = Class.forName(dataType + "." + values[0]);
                     return clazz.newInstance();
-                }
-                else if(collectionType.equals("ARRAY")){
+                } else if (collectionType.equals("ARRAY")) {
                     Class clazz = Class.forName(dataType);
                     Object array = Array.newInstance(clazz, values.length);
-                    for(int i = 0; i < values.length; i++){
-                       if(clazz.isEnum()){
-                           Array.set(array, i, Enum.valueOf(clazz, values[i]));
-                       }
+                    for (int i = 0; i < values.length; i++) {
+                        if (clazz.isEnum()) {
+                            Array.set(array, i, Enum.valueOf(clazz, values[i]));
+                        }
                     }
                     return array;
-                }
-                else if(collectionType.equals("LIST")){
+                } else if (collectionType.equals("LIST")) {
 
                 }
             }
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -91,18 +86,19 @@ public class ValueHolder extends DraggableComponent{
     }
 
 
-    public void select(boolean selected){
+    public void select(boolean selected) {
         area.setSelected(this, selected);
     }
-    public void deselect(){
+
+    public void deselect() {
         select.setSelected(false);
     }
 
-    public String toString(){
+    public String toString() {
         return "VALUEHOLDER¬>" + System.identityHashCode(this) + "¬>" + type + "¬>" + name + "¬>" + value.getText();
     }
 
-    public void setValue(String value){
+    public void setValue(String value) {
         this.value.setText(value);
     }
 }

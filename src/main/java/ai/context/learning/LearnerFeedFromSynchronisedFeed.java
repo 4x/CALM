@@ -11,8 +11,8 @@ public class LearnerFeedFromSynchronisedFeed implements LearnerFeed, Feed {
 
     SynchronisedFeed feed;
     private long timeStamp;
-    public LearnerFeedFromSynchronisedFeed(SynchronisedFeed feed)
-    {
+
+    public LearnerFeedFromSynchronisedFeed(SynchronisedFeed feed) {
         this.feed = feed;
         feed.addChild(this);
     }
@@ -26,23 +26,19 @@ public class LearnerFeedFromSynchronisedFeed implements LearnerFeed, Feed {
     public DataObject readNext() {
 
         FeedObject data = feed.getNextComposite(this);
-        List<Object> content = ((List)data.getData());
+        List<Object> content = ((List) data.getData());
         double[] value = new double[]{(Double) content.get(3), (Double) content.get(1), (Double) content.get(2), (Double) content.get(0)};
         int[] signal = new int[content.size() - 5];
-        if(signal == null)
-        {
+        if (signal == null) {
             return new DataObject(data.getTimeStamp(), null, null);
         }
         int index = -5;
-        for(Object signalValue : content)
-        {
-            if(signalValue == null)
-            {
+        for (Object signalValue : content) {
+            if (signalValue == null) {
                 return new DataObject(data.getTimeStamp(), null, null);
             }
-            if(index >= 0)
-            {
-                signal[index] = (Integer)signalValue;
+            if (index >= 0) {
+                signal[index] = (Integer) signalValue;
             }
             index++;
         }

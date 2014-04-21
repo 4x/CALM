@@ -17,7 +17,7 @@ import java.util.List;
 public class TestStitchDukascopy {
 
     @Test
-    public void testStitch(){
+    public void testStitch() {
         StitchableFXRate feed = null;
         try {
             feed = new StitchableFXRate("src/test/resources/TestRate.csv", new DukascopyFeed(new DukascopyConnection("DEMO2xpBDn", "xpBDn").getClient(), Period.TEN_SECS, Instrument.EURUSD));
@@ -34,10 +34,9 @@ public class TestStitchDukascopy {
 
         CSVFeed feedPriceEUR = new CSVFeed("src/test/resources/TestRateHist.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, null);
         feedPriceEUR.setStitchableFeed(feed);
-        for(int i = 0; i < 1000; i++)
-        {
+        for (int i = 0; i < 1000; i++) {
             FeedObject data = feedPriceEUR.readNext(this);
-            if(!feedPriceEUR.isStitching()){
+            if (!feedPriceEUR.isStitching()) {
                 try {
                     Thread.sleep(10000);
                 } catch (InterruptedException e) {
@@ -46,8 +45,7 @@ public class TestStitchDukascopy {
             }
             Object[] array = (Object[]) data.getData();
             List<Object> list = new ArrayList<Object>();
-            for(Object o : array)
-            {
+            for (Object o : array) {
                 list.add(o);
             }
             System.out.println(new Date(data.getTimeStamp()) + " " + list);

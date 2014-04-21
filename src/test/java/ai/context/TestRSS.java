@@ -12,17 +12,15 @@ import java.util.List;
 public class TestRSS {
 
     @Test
-    public void testRSS(){
+    public void testRSS() {
 
         FXStreetCalendarRSSFeed feed = new FXStreetCalendarRSSFeed();
 
-        for(int i = 0; i < 1000; i++)
-        {
+        for (int i = 0; i < 1000; i++) {
             FeedObject data = feed.readNext(this);
             Object[] array = (Object[]) data.getData();
             List<Object> list = new ArrayList<Object>();
-            for(Object o : array)
-            {
+            for (Object o : array) {
                 list.add(o);
             }
             System.out.println(new Date(data.getTimeStamp()) + " " + list);
@@ -31,29 +29,25 @@ public class TestRSS {
     }
 
     @Test
-    public void testSplit()
-    {
+    public void testSplit() {
         String data = "SG: Gross Domestic Product (QoQ): 1.800 % Thu May 23 01:00:00 BST 2013 <table cellpadding=\"5\"><tr><td><strong>Date (GMT)</strong></td><td><strong>Event</strong></td><td><strong>Cons.</strong></td><td><strong>Actual</strong></td><td><strong>Previous</strong></td></tr><tr><td>May 23 00:00</td><td>Gross Domestic Product (QoQ)</td><td></td><td>1.800  %</td><td>3.300  %</td></tr></table><br /><div class=\"feedflare\">\n" +
                 "<a href=\"http://feeds.fxstreet.com/~ff/fundamental/economic-calendar?a=ZgRwkOalyss:9wefCOA6NlY:yIl2AUoC8zA\"><img src=\"http://feeds.feedburner.com/~ff/fundamental/economic-calendar?d=yIl2AUoC8zA\" border=\"0\"></img></a> <a href=\"http://feeds.fxstreet.com/~ff/fundamental/economic-calendar?a=ZgRwkOalyss:9wefCOA6NlY:qj6IDK7rITs\"><img src=\"http://feeds.feedburner.com/~ff/fundamental/economic-calendar?d=qj6IDK7rITs\" border=\"0\"></img></a> <a href=\"http://feeds.fxstreet.com/~ff/fundamental/economic-calendar?a=ZgRwkOalyss:9wefCOA6NlY:F7zBnMyn0Lo\"><img src=\"http://feeds.feedburner.com/~ff/fundamental/economic-calendar?i=ZgRwkOalyss:9wefCOA6NlY:F7zBnMyn0Lo\" border=\"0\"></img></a>\n" +
                 "</div>\n";
 
-        for(String part : data.split("<td>"))
-        {
+        for (String part : data.split("<td>")) {
             System.out.println(part);
         }
 
     }
 
     @Test
-    public void testRSSInStitch(){
+    public void testRSSInStitch() {
         StitchableFXStreetCalendarRSS feed = new StitchableFXStreetCalendarRSS("src/test/resources/TestRSS.csv", new FXStreetCalendarRSSFeed());
-        for(int i = 0; i < 1000; i++)
-        {
+        for (int i = 0; i < 1000; i++) {
             FeedObject data = feed.readNext(this);
             Object[] array = (Object[]) data.getData();
             List<Object> list = new ArrayList<Object>();
-            for(Object o : array)
-            {
+            for (Object o : array) {
                 list.add(o);
             }
             System.out.println(new Date(data.getTimeStamp()) + " " + list);

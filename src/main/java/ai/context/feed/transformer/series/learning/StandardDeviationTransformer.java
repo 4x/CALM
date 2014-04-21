@@ -8,15 +8,14 @@ import com.tictactec.ta.lib.MInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StandardDeviationTransformer extends BufferedTransformer{
+public class StandardDeviationTransformer extends BufferedTransformer {
     private int span;
     private double nDeviations;
     private CoreAnnotated taLib = new CoreAnnotated();
 
     private Feed feed;
 
-    public StandardDeviationTransformer(int span, double nDeviations, Feed feed)
-    {
+    public StandardDeviationTransformer(int span, double nDeviations, Feed feed) {
         super((10 * span), new Feed[]{feed});
 
         this.span = span;
@@ -32,14 +31,14 @@ public class StandardDeviationTransformer extends BufferedTransformer{
         double[] outputArray = new double[input.length];
         FeedObject[] output = new FeedObject[input.length];
 
-        for(int i = 0; i < input.length; i++){
+        for (int i = 0; i < input.length; i++) {
             Object value = ((Object[]) input[i].getData())[0];
-            inputArray[i] = ((Double)value).floatValue();
+            inputArray[i] = ((Double) value).floatValue();
         }
 
         taLib.stdDev(0, input.length - 1, inputArray, span, nDeviations, new MInteger(), new MInteger(), outputArray);
 
-        for(int i = 0; i < input.length; i++){
+        for (int i = 0; i < input.length; i++) {
             output[i] = new FeedObject(input[i].getTimeStamp(), outputArray[i]);
         }
         return output;
@@ -50,14 +49,14 @@ public class StandardDeviationTransformer extends BufferedTransformer{
         return new StandardDeviationTransformer(span, nDeviations, feed.getCopy());
     }
 
-    public void goLive(){
+    public void goLive() {
         goLive(span);
     }
 
     @Override
     public String getDescription(int startIndex, String padding) {
 
-        return padding + "["+startIndex+"] STDDEV with span: " + span + " for feed: " + feed.getDescription(startIndex, padding);
+        return padding + "[" + startIndex + "] STDDEV with span: " + span + " for feed: " + feed.getDescription(startIndex, padding);
     }
 
     @Override

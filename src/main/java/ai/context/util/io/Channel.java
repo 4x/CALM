@@ -6,19 +6,19 @@ public class Channel<T> {
 
     private ArrayBlockingQueue<T> queue;
 
-    public Channel(int size){
+    public Channel(int size) {
         queue = new ArrayBlockingQueue<T>(size);
     }
 
-    public synchronized void put(T in){
+    public synchronized void put(T in) {
         queue.add(in);
-        if(queue.size() == 1){
+        if (queue.size() == 1) {
             notify();
         }
     }
 
-    public synchronized T get(){
-        while(queue.isEmpty()){
+    public synchronized T get() {
+        while (queue.isEmpty()) {
             try {
                 wait();
             } catch (InterruptedException e) {

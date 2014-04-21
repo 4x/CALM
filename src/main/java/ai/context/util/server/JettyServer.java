@@ -5,10 +5,11 @@ import org.eclipse.jetty.webapp.WebAppContext;
 
 import javax.servlet.http.HttpServlet;
 
-public class JettyServer extends Server{
+public class JettyServer extends Server {
 
     private WebAppContext webapp = new WebAppContext();
-    public JettyServer(int port){
+
+    public JettyServer(int port) {
         super(port);
 
         webapp.setContextPath("/");
@@ -18,7 +19,7 @@ public class JettyServer extends Server{
         this.setHandler(webapp);
     }
 
-    public void addServlet(Class<? extends HttpServlet> servletClass, String subPath){
+    public void addServlet(Class<? extends HttpServlet> servletClass, String subPath) {
         webapp.addServlet(servletClass, "/" + subPath);
     }
 }

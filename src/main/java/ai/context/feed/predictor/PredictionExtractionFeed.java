@@ -15,12 +15,12 @@ public class PredictionExtractionFeed implements Feed {
 
     private long timeStamp = 0;
 
-    public PredictionExtractionFeed(Learner learner){
+    public PredictionExtractionFeed(Learner learner) {
         this.learner = learner;
         learner.addExtractor(this);
     }
 
-    public synchronized void addData(FeedObject<TreeMap<Integer, Double>> data){
+    public synchronized void addData(FeedObject<TreeMap<Integer, Double>> data) {
         inputFeed.add(data);
         notify();
     }
@@ -32,11 +32,11 @@ public class PredictionExtractionFeed implements Feed {
 
     @Override
     public synchronized FeedObject readNext(Object caller) {
-        if(buffers.containsKey(caller) && buffers.get(caller).size() > 0){
+        if (buffers.containsKey(caller) && buffers.get(caller).size() > 0) {
             return buffers.get(caller).pollFirst();
         }
 
-        while (inputFeed.isEmpty()){
+        while (inputFeed.isEmpty()) {
             try {
                 wait();
             } catch (InterruptedException e) {
@@ -50,7 +50,7 @@ public class PredictionExtractionFeed implements Feed {
         double sum = 0;
         double sum2 = 0;
 
-        for(Map.Entry<Integer, Double> entry : data.getData().entrySet()){
+        for (Map.Entry<Integer, Double> entry : data.getData().entrySet()) {
             count += entry.getValue();
             sum += entry.getKey() * entry.getValue();
             sum2 += entry.getKey() * entry.getKey() * entry.getValue();
@@ -59,26 +59,26 @@ public class PredictionExtractionFeed implements Feed {
         int sectionIndex = 0;
         double[] sections = new double[5];
         double count2 = 0;
-        for(Map.Entry<Integer, Double> entry : data.getData().entrySet()){
+        for (Map.Entry<Integer, Double> entry : data.getData().entrySet()) {
             count2 += entry.getValue();
-            if(count2 >= sectionIndex * count/(sections.length - 1)){
+            if (count2 >= sectionIndex * count / (sections.length - 1)) {
                 sections[sectionIndex] = entry.getKey();
                 sectionIndex++;
             }
         }
-        double mean = sum/count;
-        double stddev = Math.sqrt(sum2/count - Math.pow(sum/count,2));
+        double mean = sum / count;
+        double stddev = Math.sqrt(sum2 / count - Math.pow(sum / count, 2));
 
         double[] output = new double[sections.length + 2];
         output[0] = mean;
         output[1] = stddev;
-        for(int i = 2; i < output.length; i++){
+        for (int i = 2; i < output.length; i++) {
             output[i] = sections[i - 2];
         }
         FeedObject feedObject = new FeedObject(timeStamp, output);
 
-        for(Feed listener : buffers.keySet()){
-            if(listener != caller){
+        for (Feed listener : buffers.keySet()) {
+            if (listener != caller) {
                 buffers.get(listener).add(feedObject);
             }
         }

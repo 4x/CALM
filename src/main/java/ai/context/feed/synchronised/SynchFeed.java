@@ -8,7 +8,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class SynchFeed implements ISynchFeed{
+public class SynchFeed implements ISynchFeed {
     private long time = 0;
     private Map<Feed, LinkedList<FeedObject>> buffers = new ConcurrentHashMap<>();
     private List<RawFeedWrapper> rawFeeds = new CopyOnWriteArrayList<>();
@@ -22,7 +22,7 @@ public class SynchFeed implements ISynchFeed{
 
         List<Object> data = new ArrayList<Object>();
         refreshTimes();
-        for(RawFeedWrapper wrapper : rawFeeds){
+        for (RawFeedWrapper wrapper : rawFeeds) {
             DataSetUtils.add(wrapper.getLatestDataAtTime(time).getData(), data);
         }
 
@@ -59,8 +59,8 @@ public class SynchFeed implements ISynchFeed{
     public void addChild(Feed feed) {
         buffers.put(feed, new LinkedList<FeedObject>());
         int longest = 0;
-        for(LinkedList<FeedObject> list : buffers.values()){
-            if(list.size() > longest){
+        for (LinkedList<FeedObject> list : buffers.values()) {
+            if (list.size() > longest) {
                 longest = list.size();
                 buffers.put(feed, list);
             }
@@ -72,34 +72,34 @@ public class SynchFeed implements ISynchFeed{
         buffers.remove(feed);
     }
 
-    public void addRawFeed(Feed rawFeed){
+    public void addRawFeed(Feed rawFeed) {
         RawFeedWrapper wrapper = new RawFeedWrapper(rawFeed);
         mapping.put(rawFeed, wrapper);
         rawFeeds.add(wrapper);
     }
 
-    public void removeRawFeed(Feed rawFeed){
+    public void removeRawFeed(Feed rawFeed) {
         rawFeeds.remove(mapping.remove(rawFeed));
     }
 
-    public void refreshTimes(){
+    public void refreshTimes() {
         TreeSet<Long> times = new TreeSet<>();
-        for(RawFeedWrapper wrapper : rawFeeds){
+        for (RawFeedWrapper wrapper : rawFeeds) {
             times.add(wrapper.getHeadTimeStamp());
             times.add(wrapper.getNextTimeStamp());
         }
         Iterator<Long> iterator = times.iterator();
         long t = iterator.next();
-        while(time >= t){
-            if(iterator.hasNext()){
+        while (time >= t) {
+            if (iterator.hasNext()) {
                 t = iterator.next();
             }
         }
         time = t;
     }
 
-    public void cleanup(){
-        for(RawFeedWrapper rawFeedWrapper : rawFeeds){
+    public void cleanup() {
+        for (RawFeedWrapper rawFeedWrapper : rawFeeds) {
             rawFeedWrapper.cleanup();
         }
     }

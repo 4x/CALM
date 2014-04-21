@@ -15,7 +15,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Transformer extends DraggableComponent{
+public class Transformer extends DraggableComponent {
 
     private Constructor constructor;
     private boolean expanded = false;
@@ -32,7 +32,7 @@ public class Transformer extends DraggableComponent{
     private String name;
     private String[] argDescription;
 
-    public static Transformer build(FeedTemplate template){
+    public static Transformer build(FeedTemplate template) {
         try {
             return new Transformer(template.getClassName(), template.getName(), template.getArgments());
         } catch (ClassNotFoundException e) {
@@ -59,7 +59,7 @@ public class Transformer extends DraggableComponent{
             @Override
             public void stateChanged(ChangeEvent e) {
                 AbstractButton abstractButton =
-                        (AbstractButton)e.getSource();
+                        (AbstractButton) e.getSource();
                 ButtonModel buttonModel = abstractButton.getModel();
                 boolean selected = buttonModel.isSelected();
                 select(selected);
@@ -71,12 +71,11 @@ public class Transformer extends DraggableComponent{
             @Override
             public void mouseClicked(MouseEvent e) {
                 expanded = !expanded;
-                if(expanded){
+                if (expanded) {
                     expand.setText("Minimise");
                     setSize(200, 300);
                     toggle(true);
-                }
-                else {
+                } else {
                     expand.setText("Expand");
                     setSize(100, 60);
                     toggle(false);
@@ -86,22 +85,26 @@ public class Transformer extends DraggableComponent{
             }
 
             @Override
-            public void mousePressed(MouseEvent e) {}
+            public void mousePressed(MouseEvent e) {
+            }
 
             @Override
-            public void mouseReleased(MouseEvent e) {}
+            public void mouseReleased(MouseEvent e) {
+            }
 
             @Override
-            public void mouseEntered(MouseEvent e) {}
+            public void mouseEntered(MouseEvent e) {
+            }
 
             @Override
-            public void mouseExited(MouseEvent e) {}
+            public void mouseExited(MouseEvent e) {
+            }
         });
 
         this.arguments = new ConstructorArgument[argsDescription.length];
 
         int i = 0;
-        for(String arg : argsDescription){
+        for (String arg : argsDescription) {
             add(new JLabel(arg));
             final int index = i;
             final JButton hook = new JButton("Hook");
@@ -110,13 +113,12 @@ public class Transformer extends DraggableComponent{
 
                 @Override
                 public void mouseClicked(MouseEvent e) {
-                    if(hook.getText().equals("Hook")){
-                        if(area.getSelected() != null){
+                    if (hook.getText().equals("Hook")) {
+                        if (area.getSelected() != null) {
                             arguments[index] = new ConstructorArgument(ConstructorArgument.TYPE.REFERENCE, area.getSelected());
                             hook.setText("Unhook");
                         }
-                    }
-                    else{
+                    } else {
                         hook.setText("Hook");
                         arguments[index] = null;
                     }
@@ -124,16 +126,20 @@ public class Transformer extends DraggableComponent{
                 }
 
                 @Override
-                public void mousePressed(MouseEvent e) {}
+                public void mousePressed(MouseEvent e) {
+                }
 
                 @Override
-                public void mouseReleased(MouseEvent e) { }
+                public void mouseReleased(MouseEvent e) {
+                }
 
                 @Override
-                public void mouseEntered(MouseEvent e) { }
+                public void mouseEntered(MouseEvent e) {
+                }
 
                 @Override
-                public void mouseExited(MouseEvent e) { }
+                public void mouseExited(MouseEvent e) {
+                }
 
             });
             i++;
@@ -144,29 +150,25 @@ public class Transformer extends DraggableComponent{
 
     public Feed getFeed() throws IllegalAccessException, InvocationTargetException, InstantiationException {
 
-        if(feed != null){
+        if (feed != null) {
             return feed;
         }
         Set<Feed> parents = new HashSet<>();
         Object[] arguments = new Object[this.arguments.length];
         int i = 0;
-        for(ConstructorArgument argument : this.arguments){
+        for (ConstructorArgument argument : this.arguments) {
 
-            if(argument == null){
+            if (argument == null) {
                 arguments[i] = null;
-            }
-            else if(argument.getType() == ConstructorArgument.TYPE.VALUE){
+            } else if (argument.getType() == ConstructorArgument.TYPE.VALUE) {
                 arguments[i] = argument.getValue();
-            }
-            else{
-                if(argument.getValue() instanceof Transformer){
-                    arguments[i] = ((Transformer)argument.getValue()).getFeed();
+            } else {
+                if (argument.getValue() instanceof Transformer) {
+                    arguments[i] = ((Transformer) argument.getValue()).getFeed();
                     parents.add((Feed) arguments[i]);
-                }
-                else if(argument.getValue() instanceof ValueHolder){
-                    arguments[i] = ((ValueHolder)argument.getValue()).getValue();
-                }
-                else {
+                } else if (argument.getValue() instanceof ValueHolder) {
+                    arguments[i] = ((ValueHolder) argument.getValue()).getValue();
+                } else {
                     arguments[i] = argument.getValue();
                 }
             }
@@ -174,7 +176,7 @@ public class Transformer extends DraggableComponent{
         }
         feed = (Feed) constructor.newInstance(arguments);
 
-        for(Feed parent : parents){
+        for (Feed parent : parents) {
             parent.addChild(feed);
         }
         setBackground(Color.GREEN);
@@ -182,27 +184,27 @@ public class Transformer extends DraggableComponent{
         return feed;
     }
 
-    public void select(boolean selected){
+    public void select(boolean selected) {
         area.setSelected(this, selected);
     }
-    public void deselect(){
+
+    public void deselect() {
         select.setSelected(false);
     }
 
-    private void toggle(boolean show){
-        if(!show){
+    private void toggle(boolean show) {
+        if (!show) {
             hideables = new Component[getComponents().length - 3];
-            for(int cN = 0; cN < getComponents().length; cN++){
-                if(cN > 2){
+            for (int cN = 0; cN < getComponents().length; cN++) {
+                if (cN > 2) {
                     hideables[cN - 3] = getComponent(cN);
                 }
             }
-            for(Component component : hideables){
+            for (Component component : hideables) {
                 remove(component);
             }
-        }
-        else{
-            for(Component component : hideables){
+        } else {
+            for (Component component : hideables) {
                 add(component);
             }
         }
@@ -217,17 +219,17 @@ public class Transformer extends DraggableComponent{
         return expanded;
     }
 
-    public void resetFeed(){
+    public void resetFeed() {
         feed = null;
         setBackground(Color.ORANGE);
         repaint();
     }
 
-    public String toString(){
+    public String toString() {
 
         String data = "";
-        for(ConstructorArgument argument : arguments){
-            if(argument != null){
+        for (ConstructorArgument argument : arguments) {
+            if (argument != null) {
                 data += System.identityHashCode(argument.getValue());
             }
             data += ";";
@@ -236,11 +238,11 @@ public class Transformer extends DraggableComponent{
         return "TRANSFORMER¬>" + System.identityHashCode(this) + "¬>" + className + "¬>" + name + "¬>" + AmalgamateUtils.getSCSVString(argDescription) + "¬>" + data;
     }
 
-    public void configure(String config){
+    public void configure(String config) {
         String id = config.split("¬>")[1];
         String[] parts = config.split("¬>")[5].split(";");
 
-        for(int i = 0; i < parts.length; i++){
+        for (int i = 0; i < parts.length; i++) {
             arguments[i] = new ConstructorArgument(ConstructorArgument.TYPE.REFERENCE, ObjectHolder.get(parts[i]));
         }
 

@@ -15,24 +15,23 @@ public class TestSynchFeeds {
     private TestFeed[] f = new TestFeed[3];
 
     @Before
-    public void setup()
-    {
+    public void setup() {
         f[0] = new TestFeed(null);
         f[1] = new TestFeed(f[0]);
         f[2] = new TestFeed(f[1]);
-        
-        
-        f[1].add(new FeedObject<Integer>(0,1));
-        f[1].add(new FeedObject<Integer>(10,2));
-        f[1].add(new FeedObject<Integer>(20,3));
-        f[1].add(new FeedObject<Integer>(30,4));
-        f[1].add(new FeedObject<Integer>(40,5));
 
-        f[0].add(new FeedObject<Integer>(3,1));
-        f[0].add(new FeedObject<Integer>(9,2));
-        f[0].add(new FeedObject<Integer>(20,3));
-        f[0].add(new FeedObject<Integer>(25,4));
-        f[0].add(new FeedObject<Integer>(45,5));
+
+        f[1].add(new FeedObject<Integer>(0, 1));
+        f[1].add(new FeedObject<Integer>(10, 2));
+        f[1].add(new FeedObject<Integer>(20, 3));
+        f[1].add(new FeedObject<Integer>(30, 4));
+        f[1].add(new FeedObject<Integer>(40, 5));
+
+        f[0].add(new FeedObject<Integer>(3, 1));
+        f[0].add(new FeedObject<Integer>(9, 2));
+        f[0].add(new FeedObject<Integer>(20, 3));
+        f[0].add(new FeedObject<Integer>(25, 4));
+        f[0].add(new FeedObject<Integer>(45, 5));
 
         f[2].add(new FeedObject<Integer>(5, 1));
         f[2].add(new FeedObject<Integer>(15, 2));
@@ -42,8 +41,7 @@ public class TestSynchFeeds {
     }
 
     @Test
-    public void testFeeds()
-    {
+    public void testFeeds() {
         /*for(int i = 0; i < 20; i++)
         {
             for(int iF = 0; iF < 3; iF++)
@@ -53,8 +51,7 @@ public class TestSynchFeeds {
             }
         }
         */
-        for(int i = 0; i < 10; i++)
-        {
+        for (int i = 0; i < 10; i++) {
             FeedObject data = f[0].getNextComposite(this);
             System.out.println(i + " " + data.getTimeStamp() + " " + data.getData());
         }
@@ -63,12 +60,11 @@ public class TestSynchFeeds {
     }
 }
 
-class TestFeed extends SynchronisableFeed{
+class TestFeed extends SynchronisableFeed {
 
     private Queue<FeedObject<Integer>> feed = new ArrayBlockingQueue<FeedObject<Integer>>(100);
 
-    public TestFeed(SynchronisableFeed sibling)
-    {
+    public TestFeed(SynchronisableFeed sibling) {
         super(sibling);
     }
 
@@ -82,8 +78,7 @@ class TestFeed extends SynchronisableFeed{
         return feed.poll();
     }
 
-    public void add(FeedObject<Integer> data)
-    {
+    public void add(FeedObject<Integer> data) {
         feed.add(data);
     }
 

@@ -11,10 +11,11 @@ public class TimeVariablesAppenderFeed implements Feed {
 
     private Feed rawFeed;
     private long timeStamp;
-    public TimeVariablesAppenderFeed(Feed rawFeed)
-    {
+
+    public TimeVariablesAppenderFeed(Feed rawFeed) {
         this.rawFeed = rawFeed;
     }
+
     @Override
     public boolean hasNext() {
         return rawFeed.hasNext();
@@ -75,10 +76,9 @@ public class TimeVariablesAppenderFeed implements Feed {
     @Override
     public List<Feed> getElementChain(int element) {
         List list = new ArrayList<>();
-        if(element < 5){
+        if (element < 5) {
             list.add(this);
-        }
-        else {
+        } else {
             list.add(rawFeed.getElementChain(element - 5));
         }
         return list;

@@ -8,13 +8,15 @@ import java.util.concurrent.ConcurrentSkipListMap;
 
 public class NeuronRankings {
     private static volatile NeuronRankings instance = null;
-    private NeuronRankings(){}
+
+    private NeuronRankings() {
+    }
 
     public static NeuronRankings getInstance() {
         if (instance == null) {
-            synchronized (NeuronRankings.class){
+            synchronized (NeuronRankings.class) {
                 if (instance == null) {
-                    instance = new NeuronRankings ();
+                    instance = new NeuronRankings();
                 }
             }
         }
@@ -23,22 +25,23 @@ public class NeuronRankings {
 
     private Map<NeuralLearner, Double> neurons = new HashMap<>();
     private Map<Double, NeuralLearner> rankings = new ConcurrentSkipListMap<>();
-    public void update(NeuralLearner updater, Double score){
+
+    public void update(NeuralLearner updater, Double score) {
         Integer[] inputs = updater.getFlowData()[1];
-        for(int sig : inputs){
+        for (int sig : inputs) {
             NeuralLearner parent = NeuronCluster.getInstance().getNeuronForOutput(sig);
-            if(parent != null && neurons.containsKey(parent)){
+            if (parent != null && neurons.containsKey(parent)) {
                 double pScore = neurons.get(parent);
                 rankings.remove(pScore);
-                double lambda = 1.0/updater.getNumberOfOutputs();
+                double lambda = 1.0 / updater.getNumberOfOutputs();
                 pScore = (1 - lambda) * pScore + lambda * score;
                 rankings.put(pScore, parent);
             }
         }
 
         Map.Entry toRemove = null;
-        for(Map.Entry<Double, NeuralLearner> entry : rankings.entrySet()){
-            if(entry.getValue() == updater){
+        for (Map.Entry<Double, NeuralLearner> entry : rankings.entrySet()) {
+            if (entry.getValue() == updater) {
                 toRemove = entry;
             }
         }
@@ -48,27 +51,27 @@ public class NeuronRankings {
         neurons.put(updater, score);
     }
 
-    public Map<Double, NeuralLearner> getRankings(){
+    public Map<Double, NeuralLearner> getRankings() {
         return rankings;
     }
 
-    public void remove(NeuralLearner neuron){
+    public void remove(NeuralLearner neuron) {
         rankings.remove(neurons.remove(neuron));
     }
 
-    public double getScoreForNeuron(NeuralLearner neuron){
+    public double getScoreForNeuron(NeuralLearner neuron) {
         return neurons.get(neuron);
     }
 
-    public double getOverallMarking(){
+    public double getOverallMarking() {
         double score = 0;
         int nNeurons = 0;
-        for(double subScore : neurons.values()){
-            if(subScore > 0 && subScore < 2){
+        for (double subScore : neurons.values()) {
+            if (subScore > 0 && subScore < 2) {
                 nNeurons++;
                 score += subScore;
             }
         }
-        return score/nNeurons;
+        return score / nNeurons;
     }
 }

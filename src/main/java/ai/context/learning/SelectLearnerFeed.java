@@ -17,22 +17,21 @@ public class SelectLearnerFeed implements LearnerFeed, Feed {
     private Integer[] actionElements;
     private Integer[] signalElements;
 
-    public SelectLearnerFeed(ISynchFeed feed, Integer[] actionElements, Integer[] signalElements){
+    public SelectLearnerFeed(ISynchFeed feed, Integer[] actionElements, Integer[] signalElements) {
         this.feed = feed;
         feed.addChild(this);
 
         this.actionElements = actionElements;
-        if(signalElements != null){
+        if (signalElements != null) {
             this.signalElements = signalElements;
-        }
-        else{
+        } else {
             HashSet<Integer> actionSet = new HashSet<>();
             actionSet.addAll(Arrays.asList(actionElements));
             int outputs = feed.getNumberOfOutputs();
             signalElements = new Integer[outputs - actionElements.length];
             int sig = 0;
-            for(int i = 0; i < feed.getNumberOfOutputs(); i++){
-                if(!actionSet.contains(i)){
+            for (int i = 0; i < feed.getNumberOfOutputs(); i++) {
+                if (!actionSet.contains(i)) {
                     signalElements[sig] = i;
                     sig++;
                 }
@@ -40,19 +39,18 @@ public class SelectLearnerFeed implements LearnerFeed, Feed {
         }
     }
 
-    public void setActionElements(Integer[] actionElements, Integer[] signalElements){
+    public void setActionElements(Integer[] actionElements, Integer[] signalElements) {
         this.actionElements = actionElements;
-        if(signalElements != null){
+        if (signalElements != null) {
             this.signalElements = signalElements;
-        }
-        else{
+        } else {
             HashSet<Integer> actionSet = new HashSet<>();
             actionSet.addAll(Arrays.asList(actionElements));
             int outputs = feed.getNumberOfOutputs();
             signalElements = new Integer[outputs - actionElements.length];
             int sig = 0;
-            for(int i = 0; i < feed.getNumberOfOutputs(); i++){
-                if(!actionSet.contains(i)){
+            for (int i = 0; i < feed.getNumberOfOutputs(); i++) {
+                if (!actionSet.contains(i)) {
                     signalElements[sig] = i;
                     sig++;
                 }
@@ -68,7 +66,7 @@ public class SelectLearnerFeed implements LearnerFeed, Feed {
         this.name = name;
     }
 
-    public void setSignalElements(Integer[] signalElements){
+    public void setSignalElements(Integer[] signalElements) {
         this.signalElements = signalElements;
     }
 
@@ -82,22 +80,21 @@ public class SelectLearnerFeed implements LearnerFeed, Feed {
 
         FeedObject data = feed.getNextComposite(this);
         //System.out.println("[" +name + "]" + " reads " + data);
-        List<Object> content = ((List)data.getData());
+        List<Object> content = ((List) data.getData());
         double[] value = new double[actionElements.length];
-        for(int i = 0; i < actionElements.length; i++){
+        for (int i = 0; i < actionElements.length; i++) {
             value[i] = (Double) content.get(actionElements[i]);
         }
 
         int[] signal = new int[signalElements.length];
-        if(signal == null){
+        if (signal == null) {
             return new DataObject(data.getTimeStamp(), null, value);
         }
-        for(int i = 0; i < signalElements.length; i++){
+        for (int i = 0; i < signalElements.length; i++) {
             Object sig = content.get(signalElements[i]);
-            if(sig == null || !(sig instanceof Integer)){
+            if (sig == null || !(sig instanceof Integer)) {
                 signal[i] = 0;
-            }
-            else{
+            } else {
                 signal[i] = (Integer) content.get(signalElements[i]);
             }
         }
@@ -151,7 +148,7 @@ public class SelectLearnerFeed implements LearnerFeed, Feed {
         return list;
     }
 
-    public void cleanup(){
+    public void cleanup() {
         feed.removeChild(this);
     }
 

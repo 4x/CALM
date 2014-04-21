@@ -31,7 +31,7 @@ public class ClusterProxy {
         this.session = session;
     }
 
-    public void connectClient(String address){
+    public void connectClient(String address) {
         WebSocketClient client = new WebSocketClient();
 
         try {
@@ -46,7 +46,7 @@ public class ClusterProxy {
         }
     }
 
-    public void receive(Object data){
+    public void receive(Object data) {
         try {
             String json = JsonWriter.objectToJson(data);
             session.getRemote().sendString(json);
@@ -55,14 +55,12 @@ public class ClusterProxy {
         }
     }
 
-    public void send(Object data){
-        if(data instanceof Impulse){
+    public void send(Object data) {
+        if (data instanceof Impulse) {
             cluster.accept((Impulse) data);
-        }
-        else if(data instanceof Answer){
+        } else if (data instanceof Answer) {
             cluster.accept((Answer) data);
-        }
-        else if(data instanceof Query){
+        } else if (data instanceof Query) {
             cluster.accept((Query) data);
         }
     }

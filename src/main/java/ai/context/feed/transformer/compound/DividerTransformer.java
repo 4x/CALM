@@ -5,7 +5,7 @@ import ai.context.feed.Feed;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DividerTransformer extends CompoundedTransformer{
+public class DividerTransformer extends CompoundedTransformer {
 
     private Feed numerator;
     private Feed denominator;
@@ -18,7 +18,7 @@ public class DividerTransformer extends CompoundedTransformer{
 
     @Override
     protected Object getOutput(Object input) {
-        List<Object> data = (List<Object>)input;
+        List<Object> data = (List<Object>) input;
         Double numerator = (Double) data.get(0);
         Double denominator = (Double) data.get(1);
         return (numerator / denominator);
@@ -31,7 +31,7 @@ public class DividerTransformer extends CompoundedTransformer{
 
     @Override
     public String getDescription(int startIndex, String padding) {
-        return padding + "["+startIndex+"] Division of feed " + numerator + " by feed " + denominator;
+        return padding + "[" + startIndex + "] Division of feed " + numerator + " by feed " + denominator;
     }
 
     //@Override

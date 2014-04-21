@@ -19,13 +19,13 @@ public class Workspace {
     private Learner learner;
     private Workspace thisSpace;
 
-    public Workspace(){
+    public Workspace() {
 
         thisSpace = this;
         try {
             CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream("C:\\Dev\\Source\\CALM\\src\\main\\resources\\Transformers.csv")), ',', '"', 1);
             String[] line;
-            while((line = reader.readNext()) != null){
+            while ((line = reader.readNext()) != null) {
 
                 String name = line[1];
                 String className = line[0];
@@ -89,23 +89,27 @@ public class Workspace {
             @Override
             public void mouseClicked(MouseEvent e) {
 
-                if(transfomers.getSelectedItem() != null){
+                if (transfomers.getSelectedItem() != null) {
                     workArea.add(Transformer.build(feedTemplates.get(transfomers.getSelectedItem())));
                 }
                 workArea.repaint();
             }
 
             @Override
-            public void mousePressed(MouseEvent e) {}
+            public void mousePressed(MouseEvent e) {
+            }
 
             @Override
-            public void mouseReleased(MouseEvent e) {}
+            public void mouseReleased(MouseEvent e) {
+            }
 
             @Override
-            public void mouseEntered(MouseEvent e) {}
+            public void mouseEntered(MouseEvent e) {
+            }
 
             @Override
-            public void mouseExited(MouseEvent e) {}
+            public void mouseExited(MouseEvent e) {
+            }
         });
 
         control.add(new JLabel(""));
@@ -123,23 +127,27 @@ public class Workspace {
             @Override
             public void mouseClicked(MouseEvent e) {
 
-                if(valVar.getSelectedItem() != null){
+                if (valVar.getSelectedItem() != null) {
                     workArea.add(new ValueHolder(ValueHolder.TYPE.valueOf(valVar.getSelectedItem().toString()), varName.getText()));
                 }
                 workArea.repaint();
             }
 
             @Override
-            public void mousePressed(MouseEvent e) {}
+            public void mousePressed(MouseEvent e) {
+            }
 
             @Override
-            public void mouseReleased(MouseEvent e) {}
+            public void mouseReleased(MouseEvent e) {
+            }
 
             @Override
-            public void mouseEntered(MouseEvent e) {}
+            public void mouseEntered(MouseEvent e) {
+            }
 
             @Override
-            public void mouseExited(MouseEvent e) {}
+            public void mouseExited(MouseEvent e) {
+            }
         });
 
         control.add(new JLabel(""));
@@ -154,16 +162,20 @@ public class Workspace {
             }
 
             @Override
-            public void mousePressed(MouseEvent e) {}
+            public void mousePressed(MouseEvent e) {
+            }
 
             @Override
-            public void mouseReleased(MouseEvent e) {}
+            public void mouseReleased(MouseEvent e) {
+            }
 
             @Override
-            public void mouseEntered(MouseEvent e) {}
+            public void mouseEntered(MouseEvent e) {
+            }
 
             @Override
-            public void mouseExited(MouseEvent e) {}
+            public void mouseExited(MouseEvent e) {
+            }
         });
 
         control.add(new JLabel(""));
@@ -178,16 +190,20 @@ public class Workspace {
             }
 
             @Override
-            public void mousePressed(MouseEvent e) {}
+            public void mousePressed(MouseEvent e) {
+            }
 
             @Override
-            public void mouseReleased(MouseEvent e) {}
+            public void mouseReleased(MouseEvent e) {
+            }
 
             @Override
-            public void mouseEntered(MouseEvent e) {}
+            public void mouseEntered(MouseEvent e) {
+            }
 
             @Override
-            public void mouseExited(MouseEvent e) {}
+            public void mouseExited(MouseEvent e) {
+            }
         });
 
         control.add(new JLabel(""));
@@ -205,16 +221,20 @@ public class Workspace {
             }
 
             @Override
-            public void mousePressed(MouseEvent e) {}
+            public void mousePressed(MouseEvent e) {
+            }
 
             @Override
-            public void mouseReleased(MouseEvent e) {}
+            public void mouseReleased(MouseEvent e) {
+            }
 
             @Override
-            public void mouseEntered(MouseEvent e) {}
+            public void mouseEntered(MouseEvent e) {
+            }
 
             @Override
-            public void mouseExited(MouseEvent e) {}
+            public void mouseExited(MouseEvent e) {
+            }
         });
 
         splitPane.add(control, 0);
@@ -225,15 +245,14 @@ public class Workspace {
         playFeed.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if(workArea.isPlaying()){
+                if (workArea.isPlaying()) {
                     workArea.stop();
 
                     playFeed.setText("Play Selected Feed");
-                }
-                else {
+                } else {
                     workArea.playSelected();
 
-                    if(workArea.isPlaying()){
+                    if (workArea.isPlaying()) {
                         playFeed.setText("Stop Playing");
                     }
                 }
@@ -306,23 +325,23 @@ public class Workspace {
         vertiSplit.setBottomComponent(scroll);
 
         JTabbedPane tabbedPane = new JTabbedPane();
-        splitPane.add(tabbedPane,1);
+        splitPane.add(tabbedPane, 1);
 
         tabbedPane.addTab("Workspace", vertiSplit);
         tabbedPane.addTab("Dashboard", new DashBoard(thisSpace));
     }
 
-    public void append(String line){
+    public void append(String line) {
         console.append(line + "\n");
         console.setCaretPosition(console.getDocument().getLength());
         console.repaint();
     }
 
-    public void setLearner(Learner learner){
+    public void setLearner(Learner learner) {
         this.learner = learner;
     }
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
         new Workspace();
     }
 

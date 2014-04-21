@@ -17,7 +17,7 @@ public class DukascopyConnection {
     private String jnlpUrl = "https://www.dukascopy.com/client/demo/jclient/jforex.jnlp";
     private IClient client = ClientFactory.getDefaultInstance();
 
-    public DukascopyConnection(final String userName, final String password)  throws Exception{
+    public DukascopyConnection(final String userName, final String password) throws Exception {
 
         //get the instance of the IClient interface
         //set the listener that will receive system events
@@ -92,7 +92,7 @@ public class DukascopyConnection {
         Thread.sleep(5000);
     }
 
-    public IClient getClient(){
+    public IClient getClient() {
         return client;
     }
 }

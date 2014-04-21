@@ -6,12 +6,13 @@ public class LoggerTimer {
 
     private static HashMap<Object, Long> callers = new HashMap<>();
     private static boolean on = true;
-    public static void printTimeDelta(String message, Object caller){
-        if(!on){
+
+    public static void printTimeDelta(String message, Object caller) {
+        if (!on) {
             return;
         }
         Long t = System.currentTimeMillis();
-        if(!callers.containsKey(caller)){
+        if (!callers.containsKey(caller)) {
             callers.put(caller, t);
         }
 
@@ -19,7 +20,7 @@ public class LoggerTimer {
         callers.put(caller, t);
     }
 
-    public static void turn(boolean onOff){
+    public static void turn(boolean onOff) {
         on = onOff;
     }
 }

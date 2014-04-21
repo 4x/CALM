@@ -7,7 +7,7 @@ import ai.context.feed.FeedObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DeltaOnlineTransformer  extends OnlineTransformer{
+public class DeltaOnlineTransformer extends OnlineTransformer {
 
     private Feed feed;
 
@@ -18,12 +18,11 @@ public class DeltaOnlineTransformer  extends OnlineTransformer{
 
     @Override
     protected Object getOutput() {
-        if(init){
-            return (Double)arriving.getData() - (Double)leaving.getData();
-        }
-        else {
+        if (init) {
+            return (Double) arriving.getData() - (Double) leaving.getData();
+        } else {
             buffer.clear();
-            while(buffer.size() < bufferSize){
+            while (buffer.size() < bufferSize) {
                 buffer.add(new FeedObject(0, arriving.getData()));
             }
 
@@ -38,7 +37,7 @@ public class DeltaOnlineTransformer  extends OnlineTransformer{
 
     @Override
     public String getDescription(int startIndex, String padding) {
-        return padding + "["+startIndex+"] DELTA and span: " + bufferSize + " for feed: " + feed.getDescription(startIndex, padding);
+        return padding + "[" + startIndex + "] DELTA and span: " + bufferSize + " for feed: " + feed.getDescription(startIndex, padding);
     }
 
     @Override

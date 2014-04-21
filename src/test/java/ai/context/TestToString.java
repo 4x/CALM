@@ -11,8 +11,7 @@ import java.util.HashMap;
 public class TestToString {
 
     @Test
-    public void testToString()
-    {
+    public void testToString() {
         CorrelationCalculator c1 = new CorrelationCalculator();
         CorrelationCalculator c2 = new CorrelationCalculator();
         CorrelationCalculator c3 = new CorrelationCalculator();
@@ -29,7 +28,7 @@ public class TestToString {
         System.out.println(copulae2.toString());
         System.out.println(copulae3.toString());
 
-        int[] sig = new int[]{0,1,2,3,4};
+        int[] sig = new int[]{0, 1, 2, 3, 4};
         StateActionPair pair1 = new StateActionPair(AmalgamateUtils.getAmalgamateString(sig), sig, 1);
         StateActionPair pair2 = new StateActionPair(AmalgamateUtils.getAmalgamateString(sig), sig, 1);
         StateActionPair pair3 = new StateActionPair(AmalgamateUtils.getAmalgamateString(sig), sig, 1);

@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Map;
 
-public class NeuralClusterInformationServlet extends HttpServlet{
+public class NeuralClusterInformationServlet extends HttpServlet {
 
     private NeuronCluster cluster = NeuronCluster.getInstance();
 
@@ -23,15 +23,15 @@ public class NeuralClusterInformationServlet extends HttpServlet{
     public static String REQ_TYPE = "REQ_TYPE";
     public static String GET_ALL_INFO = "ALL";
     public static String GET_STATS_INFO = "STATS";
+
     private void processRequestAndWriteResponse(HttpServletRequest req, PrintWriter out) {
         Map<String, String[]> pMap = req.getParameterMap();
-        if(pMap.containsKey(REQ_TYPE)){
+        if (pMap.containsKey(REQ_TYPE)) {
             String reqType = pMap.get(REQ_TYPE)[0];
 
-            if(reqType.equals(GET_ALL_INFO)){
+            if (reqType.equals(GET_ALL_INFO)) {
                 out.print(cluster.getClusterStateJSON());
-            }
-            else if(reqType.equals(GET_STATS_INFO)){
+            } else if (reqType.equals(GET_STATS_INFO)) {
                 out.print(cluster.getStats());
             }
         }

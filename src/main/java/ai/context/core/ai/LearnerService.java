@@ -300,8 +300,7 @@ public class LearnerService {
         merging = true;
         if (minDevForMerge == -1) {
             minDevForMerge = 4 * (minDev + maxDev) / getMaxPopulation();
-        }
-        else if(minDevForMerge < 0){
+        } else if (minDevForMerge < 0) {
             throw new LearningException("Negative Deviation For Merge");
         }
 

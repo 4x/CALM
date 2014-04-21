@@ -8,14 +8,15 @@ import java.lang.reflect.Constructor;
 public class FeedBuilder extends JPanel {
 
     private Constructor ctor;
+
     public FeedBuilder(String className, String name, String[] argsDescription) throws ClassNotFoundException {
         Class<?> c = Class.forName(className);
         Constructor[] allConstructors = c.getDeclaredConstructors();
         ctor = allConstructors[0];
     }
 
-    public Feed build(){
-        Class<?>[] pType  = ctor.getParameterTypes();
+    public Feed build() {
+        Class<?>[] pType = ctor.getParameterTypes();
         for (int i = 0; i < pType.length; i++) {
             System.out.println(pType[i]);
         }

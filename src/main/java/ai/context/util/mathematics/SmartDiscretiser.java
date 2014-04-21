@@ -19,34 +19,28 @@ public class SmartDiscretiser {
         this.clusters = clusters;
     }
 
-    public int discretise(Double value)
-    {
-        if(value == null)
-        {
+    public int discretise(Double value) {
+        if (value == null) {
             return -1;
         }
         count++;
-        if(count < criticalMass)
-        {
-            if(!distribution.containsKey(value)){
+        if (count < criticalMass) {
+            if (!distribution.containsKey(value)) {
                 distribution.put(value, 0L);
             }
 
             distribution.put(value, distribution.get(value) + 1);
-        }
-        else if(count == criticalMass){
+        } else if (count == criticalMass) {
             pivots.clear();
-            long clusterSize = criticalMass/clusters;
+            long clusterSize = criticalMass / clusters;
             Iterator<Double> iterator = distribution.keySet().iterator();
             double pivot = 0;
-            for(int i = 0; i < clusters; i++)
-            {
+            for (int i = 0; i < clusters; i++) {
                 long clusterCount = 0;
-                while (iterator.hasNext()){
+                while (iterator.hasNext()) {
                     pivot = iterator.next();
                     clusterCount += distribution.get(pivot);
-                    if(clusterCount > clusterSize)
-                    {
+                    if (clusterCount > clusterSize) {
                         pivots.add(pivot);
                         break;
                     }
@@ -56,11 +50,10 @@ public class SmartDiscretiser {
             distribution.clear();
         }
 
-        if(!pivots.isEmpty()) {
+        if (!pivots.isEmpty()) {
             int toReturn = 0;
-            for(double pivot : pivots)
-            {
-                if(value < pivot){
+            for (double pivot : pivots) {
+                if (value < pivot) {
                     break;
                 }
                 toReturn++;

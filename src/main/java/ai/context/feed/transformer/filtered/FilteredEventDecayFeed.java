@@ -29,12 +29,12 @@ public abstract class FilteredEventDecayFeed implements Feed {
 
     public FilteredEventDecayFeed(Feed rawFeed, double halfLife, TimedContainer container) {
         this.rawFeed = rawFeed;
-        if(rawFeed instanceof CSVFeed){
+        if (rawFeed instanceof CSVFeed) {
             csvFeed = (CSVFeed) rawFeed;
         }
         this.halfLife = halfLife;
         this.container = container;
-        this.lastSeen = (long) (10*halfLife);
+        this.lastSeen = (long) (10 * halfLife);
     }
 
     @Override
@@ -45,29 +45,24 @@ public abstract class FilteredEventDecayFeed implements Feed {
     @Override
     public synchronized FeedObject readNext(Object caller) {
 
-        if(buffers.containsKey(caller) && buffers.get(caller).size() > 0)
-        {
+        if (buffers.containsKey(caller) && buffers.get(caller).size() > 0) {
             return buffers.get(caller).pollFirst();
         }
 
         FeedObject raw = null;
-        while (tRaw <= container.getTime()){
+        while (tRaw <= container.getTime()) {
             raw = rawFeed.readNext(this);
 
-            if(raw == previousRaw){
+            if (raw == previousRaw) {
                 break;
-            }
-            else {
+            } else {
                 previousRaw = raw;
             }
             tRaw = raw.getTimeStamp();
-            if(pass(raw))
-            {
-                if(container != null)
-                {
+            if (pass(raw)) {
+                if (container != null) {
                     lastSeen = raw.getTimeStamp();
-                }
-                else {
+                } else {
                     lastSeen = 0;
                 }
                 data = process(raw.getData());
@@ -75,23 +70,20 @@ public abstract class FilteredEventDecayFeed implements Feed {
             }
         }
 
-        if(container != null)
-        {
-            if(container.getTime() - lastSeen > 10 * halfLife){
+        if (container != null) {
+            if (container.getTime() - lastSeen > 10 * halfLife) {
                 intensity = 0;
+            } else {
+                intensity = Math.exp(-((double) (container.getTime() - lastSeen) / halfLife));
             }
-            else {
-                intensity = Math.exp(-((double)(container.getTime() - lastSeen)/halfLife));
-            }
-        }
-        else {
-            intensity = Math.exp(-((double)lastSeen/halfLife));
+        } else {
+            intensity = Math.exp(-((double) lastSeen / halfLife));
             lastSeen++;
         }
 
         FeedObject feedObject = new FeedObject(tRaw, new Object[]{data, intensity});
-        for(Feed listener : buffers.keySet()){
-            if(listener != caller){
+        for (Feed listener : buffers.keySet()) {
+            if (listener != caller) {
                 buffers.get(listener).add(feedObject);
             }
         }

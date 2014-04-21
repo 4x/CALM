@@ -22,11 +22,11 @@ public class Cluster extends Neuron {
 
     @Override
     protected void onQuery(Query query) {
-        if(lastQueries.add(query.getqID())){
+        if (lastQueries.add(query.getqID())) {
             Query toSend = query.replicate();
             toSend.decay();
 
-            if(toSend.getIntensity() < 0.5){
+            if (toSend.getIntensity() < 0.5) {
                 return;
             }
             forwardAll(toSend);
@@ -49,7 +49,7 @@ public class Cluster extends Neuron {
 
     public static Cluster getInstance() {
         if (instance == null) {
-            synchronized (Cluster.class){
+            synchronized (Cluster.class) {
                 if (instance == null) {
                     instance = new Cluster();
                 }
@@ -58,7 +58,7 @@ public class Cluster extends Neuron {
         return instance;
     }
 
-    public synchronized static String getClusterID(){
+    public synchronized static String getClusterID() {
         return "CLUSTER_" + Math.random() + "-" + Math.random() + "-" + Math.random();
     }
 
@@ -72,33 +72,30 @@ public class Cluster extends Neuron {
     //TODO Data feeding logic
     //TODO Neuron lifecycle + wiring based on feed hotness etc...
 
-    public String getId(){
+    public String getId() {
         return clusterID;
     }
 
-    private void forward(WithDestination data){
+    private void forward(WithDestination data) {
         ClusterProxy proxy = clusterWebSocket.getProxy(data.getDestination());
-        if(proxy != null){
+        if (proxy != null) {
             proxy.receive(data);
-        }
-        else{
+        } else {
             Neuron receiver = neurons.get(data.getDestination());
-            if(receiver != null){
-                if(data instanceof Impulse){
+            if (receiver != null) {
+                if (data instanceof Impulse) {
                     receiver.accept((Impulse) data);
-                }
-                else if(data instanceof Answer){
+                } else if (data instanceof Answer) {
                     receiver.accept((Answer) data);
-                }
-                else if(data instanceof Query){
-                    receiver.accept((Query)data);
+                } else if (data instanceof Query) {
+                    receiver.accept((Query) data);
                 }
             }
         }
     }
 
-    private void forwardAll(Query query){
-        for(ClusterProxy proxy : clusterWebSocket.getProxies()){
+    private void forwardAll(Query query) {
+        for (ClusterProxy proxy : clusterWebSocket.getProxies()) {
             proxy.receive(query);
         }
     }
