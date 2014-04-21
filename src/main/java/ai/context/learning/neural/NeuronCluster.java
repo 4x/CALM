@@ -30,13 +30,12 @@ public class NeuronCluster {
     private long totalPointsConsumed = 0;
     private long minLatency = 50L;
     private double dangerLevel = 1;
-    private double check = 0;
     private ExecutorService service = Executors.newCachedThreadPool();
     private List<NeuralLearner> neurons = new CopyOnWriteArrayList<>();
 
     private NeuronCluster(){
-        PropertiesHolder.maxPopulation = 400;
-        PropertiesHolder.tolerance = 0.025;
+        PropertiesHolder.maxPopulation = 1000;
+        PropertiesHolder.tolerance = 0.005;
 
         server.addServlet(NeuralClusterInformationServlet.class, "info");
     }
@@ -128,8 +127,7 @@ public class NeuronCluster {
         public void run() {
             while (true){
                 try {
-                    Thread.sleep(1000);
-                    check += 0.01;
+                    Thread.sleep(10000);
                     /*outputToNeuron.clear();
                     for(NeuralLearner neuron : neurons){
                         if(neuron.getFlowData()[2] != null){
@@ -292,7 +290,8 @@ public class NeuronCluster {
         stats += "TRADES PROFIT: " + PositionFactory.getTotalProfit() + ", ";
         stats += "TRADES LOST: " + PositionFactory.getTotalLoss() + ", ";
         stats += "AVERAGE PROFIT: " + PositionFactory.getSumProfit()/PositionFactory.getTotalProfit() + ", ";
-        stats += "AVERAGE LOST: " + PositionFactory.getSumLoss()/PositionFactory.getTotalLoss();
+        stats += "AVERAGE LOST: " + PositionFactory.getSumLoss()/PositionFactory.getTotalLoss() + ", ";
+        stats += "PNL: " + PositionFactory.getAccruedPnL();
         return stats;
     }
 }

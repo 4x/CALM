@@ -21,6 +21,6 @@ public class TestHeadTailMaps {
         histogram.put(12.0, 15.0);
         histogram.put(13.0, 15.0);
 
-        PositionFactory.getPosition(0, 6.0, histogram);
+        PositionFactory.getPosition(0, 6.0, histogram, 6 * 3600 * 1000L, false);
     }
 }

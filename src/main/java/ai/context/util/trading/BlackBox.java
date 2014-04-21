@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class BlackBox implements IStrategy{
+public class BlackBox implements IStrategy {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BlackBox.class);
     private double leverage = 50;
@@ -24,7 +24,7 @@ public class BlackBox implements IStrategy{
 
     private TreeMap<String, IOrder> positions = new TreeMap<>();
 
-    public BlackBox(IClient client){
+    public BlackBox(IClient client) {
         client.startStrategy(this);
     }
 
@@ -37,24 +37,23 @@ public class BlackBox implements IStrategy{
     @Override
     public void onTick(Instrument instrument, ITick tick) throws JFException {
 
-        if(instrument == Instrument.EURUSD){
-            synchronized (waitingPositions){
-                while(!waitingPositions.isEmpty()){
-                    try{
+        if (instrument == Instrument.EURUSD) {
+            synchronized (waitingPositions) {
+                while (!waitingPositions.isEmpty()) {
+                    try {
                         OpenPosition position = waitingPositions.remove(0);
                         double amount = Operations.roundFloor(((available / 100) * leverage) / 1000000, 4);
-                        if(amount > 0){
+                        if (amount > 0) {
                             long tNow = System.currentTimeMillis();
                             IOrder out = null;
                             String direction = "LONG";
-                            if(position.isLong()){
+                            if (position.isLong()) {
                                 out = engine.submitOrder("EUR_" + tNow, Instrument.EURUSD, IEngine.OrderCommand.BUYLIMIT, amount,
                                         Operations.roundFloor(position.getStart() - 0.0001, 5), 0.8,
                                         Operations.roundFloor(position.getStopLoss(), 5),
                                         Operations.roundFloor(position.getTakeProfit(), 5),
                                         position.getGoodTillTime() + Period.FIVE_MINS.getInterval());
-                            }
-                            else {
+                            } else {
                                 direction = "SHORT";
                                 out = engine.submitOrder("EUR_" + tNow, Instrument.EURUSD, IEngine.OrderCommand.SELLLIMIT, amount,
                                         Operations.roundFloor(position.getStart() + 0.0001, 5), 0.8,
@@ -63,11 +62,10 @@ public class BlackBox implements IStrategy{
                                         position.getGoodTillTime() + Period.FIVE_MINS.getInterval());
                             }
 
-                            LOGGER.info("OPENING: " + out.getLabel() + ", " + (out.getOriginalAmount()*1000000D) + ", " + direction);
+                            LOGGER.info("OPENING: " + out.getLabel() + ", " + (out.getOriginalAmount() * 1000000D) + ", " + direction);
                             positions.put("EUR_" + tNow, out);
                         }
-                    }
-                    catch (Exception e){
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
@@ -77,11 +75,11 @@ public class BlackBox implements IStrategy{
 
     @Override
     public void onBar(Instrument instrument, Period period, IBar askBar, IBar bidBar) throws JFException {
-        if(instrument == Instrument.EURUSD){
+        if (instrument == Instrument.EURUSD) {
             long tNow = System.currentTimeMillis();
-            for(Map.Entry<String, IOrder> out : positions.entrySet()){
+            for (Map.Entry<String, IOrder> out : positions.entrySet()) {
                 IOrder order = out.getValue();
-                if(tNow - order.getCreationTime() > maxWaitForFill && order.getState() == IOrder.State.OPENED){
+                if (tNow - order.getCreationTime() > maxWaitForFill && order.getState() == IOrder.State.OPENED) {
                     order.close();
                     LOGGER.info("Order " + order.getLabel() + " has not been filled yet, closing it...");
                 }
@@ -91,12 +89,11 @@ public class BlackBox implements IStrategy{
 
     @Override
     public void onMessage(IMessage message) throws JFException {
-        if(message.getType() == IMessage.Type.ORDER_CLOSE_OK){
+        if (message.getType() == IMessage.Type.ORDER_CLOSE_OK) {
             IOrder order = message.getOrder();
             positions.remove(order.getLabel());
             LOGGER.info(order.getLabel() + " has closed, PNL: " + order.getProfitLossInUSD() + ", COMMISSION: " + order.getCommissionInUSD() + ", AVAILABLE: " + available);
-        }
-        else if(message.getType() == IMessage.Type.ORDER_FILL_OK){
+        } else if (message.getType() == IMessage.Type.ORDER_FILL_OK) {
             IOrder order = message.getOrder();
             positions.remove(order.getLabel());
             LOGGER.info(order.getLabel() + " has been filled at " + order.getOpenPrice() + " for " + order.getOriginalAmount());
@@ -105,7 +102,7 @@ public class BlackBox implements IStrategy{
 
     @Override
     public void onAccount(IAccount account) throws JFException {
-        available = account.getBalance() - (1000000D*getOpen())/leverage;
+        available = account.getBalance() - (1000000D * getOpen()) / leverage;
         //available = account.getCreditLine();
     }
 
@@ -114,7 +111,7 @@ public class BlackBox implements IStrategy{
         LOGGER.info("BlackBox stopped");
     }
 
-    private double getOpen() throws JFException{
+    private double getOpen() throws JFException {
         double counter = 0;
         for (IOrder order : engine.getOrders()) {
             counter += order.getOriginalAmount();
@@ -124,7 +121,7 @@ public class BlackBox implements IStrategy{
 
     public void onDecision(OpenPosition position) throws JFException {
 
-        synchronized (waitingPositions){
+        synchronized (waitingPositions) {
             waitingPositions.add(position);
         }
     }

@@ -126,6 +126,7 @@ public class NeuralLearner implements Feed, Runnable{
                 signal[index] = sig;
                 index++;
             }
+
             for(NeuralLearner parent : getParents()){
                 FeedObject feedObject = parent.readNext(this);
                 inputDates += new Date(feedObject.getTimeStamp()) + " ";
@@ -142,10 +143,12 @@ public class NeuralLearner implements Feed, Runnable{
                     StateActionInformationTracker tracker = trackers.remove(0);
                     core.addStateAction(tracker.getState(), tracker.getMax());
                     core.addStateAction(tracker.getState(), tracker.getMin());
+                    //core.addStateAction(tracker.getState(), data.getValue()[0]);
 
                     //System.out.println("Learned: " + Arrays.toString(tracker.getState()) + " -> {" + tracker.getMin() + ", " + tracker.getMax() + "}");
                     pointsConsumed++;
                 }
+
                 for(StateActionInformationTracker tracker : trackers){
                     for(double newLevel : data.getValue()){
                         tracker.aggregate(newLevel);
@@ -158,7 +161,7 @@ public class NeuralLearner implements Feed, Runnable{
                     outputSignal = getSignalForDistribution(core.getActionDistribution(signal));
                 }
 
-                if(pointsConsumed > 5000){
+                if(pointsConsumed > 2000){
                     adapting = false;
                 }
                 long eventTime = time/* + outputFutureOffset*/;
@@ -183,13 +186,6 @@ public class NeuralLearner implements Feed, Runnable{
     public void checkPerformance(int[] signal, DataObject data){
         if(!adapting){
 
-            TreeMap<Integer, Double> distribution = core.getActionDistribution(signal);
-            TreeMap<Double, Double> prediction = new TreeMap<Double, Double>();
-            for(Map.Entry<Integer, Double> entry : distribution.entrySet()){
-                prediction.put(data.getValue()[0] + entry.getKey() * core.getActionResolution(), entry.getValue());
-            }
-
-
             HashSet<OpenPosition> closed = new HashSet<OpenPosition>();
             for(OpenPosition position : positions){
                 if(position.canCloseOnBar_Pessimistic(data.getTimeStamp(), data.getValue()[1], data.getValue()[2], data.getValue()[0])){
@@ -201,8 +197,15 @@ public class NeuralLearner implements Feed, Runnable{
             }
             positions.removeAll(closed);
 
-            if(positions.size() < 5){
-                OpenPosition position = PositionFactory.getPosition(data.getTimeStamp(), data.getValue()[0], prediction);
+            Date executionInstant = new Date(time);
+            if(positions.size() < 15 && !(executionInstant.getDay() == 0 || executionInstant.getDay() == 6)){
+                TreeMap<Integer, Double> distribution = core.getActionDistribution(signal);
+                TreeMap<Double, Double> prediction = new TreeMap<Double, Double>();
+                for(Map.Entry<Integer, Double> entry : distribution.entrySet()){
+                    prediction.put(data.getValue()[0] + entry.getKey() * core.getActionResolution(), entry.getValue());
+                }
+
+                OpenPosition position = PositionFactory.getPosition(data.getTimeStamp(), data.getValue()[0], prediction, horizon, false);
                 if(position != null){
                     if(inLiveTrading){
                         try {
@@ -214,12 +217,6 @@ public class NeuralLearner implements Feed, Runnable{
                     else {
                         positions.add(position);
                     }
-
-                    int dir = -1;
-                    if(position.isLong()){
-                        dir = 1;
-                    }
-                    //recentPos.put(data.getTimeStamp(), dir);
                 }
             }
         }

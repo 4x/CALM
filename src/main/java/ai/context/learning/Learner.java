@@ -174,7 +174,7 @@ public class Learner implements Runnable, TimedContainer{
                 }
                 positions.removeAll(closed);
 
-                OpenPosition position = PositionFactory.getPosition(tNow, data.getValue()[0], prediction);
+                OpenPosition position = PositionFactory.getPosition(tNow, data.getValue()[0], prediction, 6 * 3600 * 1000L, false);
                 if(position != null)
                 {
                     if(inLiveTrading){

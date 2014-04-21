@@ -4,6 +4,7 @@ import java.util.Date;
 
 public class OpenPosition {
 
+    private boolean goodTillClosed = false;
     private double amount = 1.0;
     private double cost = 0.0;
     private long timeOpen;
@@ -21,7 +22,7 @@ public class OpenPosition {
 
     private long goodTillTime;
 
-    public OpenPosition(long timeOpen, double start, double targetProfit, double targetLoss, boolean isLong, long goodTillTime) {
+    public OpenPosition(long timeOpen, double start, double targetProfit, double targetLoss, boolean isLong, long goodTillTime, boolean goodTillClosed) {
         this.timeOpen = timeOpen;
         this.start = start;
         this.price = start;
@@ -30,15 +31,14 @@ public class OpenPosition {
         this.isLong = isLong;
         this.target = targetProfit;
         this.goodTillTime = goodTillTime;
+        this.goodTillClosed = goodTillClosed;
 
-        if(!isLong)
-        {
+        if(!isLong){
             multiplier = -1;
         }
     }
 
-    public boolean canClose(long time, double price)
-    {
+    public boolean canClose(long time, double price){
         this.price = price;
         if(isLong && (price >= takeProfit || price <= stopLoss))
         {
@@ -52,7 +52,7 @@ public class OpenPosition {
 
     public boolean canCloseOnBar_Pessimistic(long time, double high, double low, double close)
     {
-        if(time >= goodTillTime){
+        if(!goodTillClosed && time >= goodTillTime){
             price = close;
 
             if(isLong){
