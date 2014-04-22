@@ -93,6 +93,23 @@ public class OpenPosition {
                 return true;
             }
         }
+
+        if((double)(time - timeOpen)/(double)(goodTillTime - timeOpen) > 0.8){
+            if (isLong) {
+                if (close > (start + 2*cost)) {
+                    price = close;
+                    closingMessage = new Date(time) + ": PROFIT: Closing [LONG] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high + "} LOCKING_PROFIT";
+                    return true;
+                }
+            } else {
+                if (close < (start - 2*cost)) {
+                    price = close;
+                    closingMessage = new Date(time) + ": PROFIT: Closing [SHORT] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high + "} LOCKING_PROFIT";
+                    return true;
+                }
+            }
+        }
+
         return false;
     }
 
