@@ -11,8 +11,7 @@ import ai.context.learning.SelectLearnerFeed;
 import ai.context.util.common.StateActionInformationTracker;
 import ai.context.util.measurement.OpenPosition;
 import ai.context.util.trading.BlackBox;
-import ai.context.util.trading.PositionFactory;
-import com.dukascopy.api.JFException;
+import ai.context.util.trading.DecisionAggregator;
 
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -185,7 +184,7 @@ public class NeuralLearner implements Feed, Runnable {
     public void checkPerformance(int[] signal, DataObject data) {
         if (!adapting) {
 
-            HashSet<OpenPosition> closed = new HashSet<OpenPosition>();
+            /*HashSet<OpenPosition> closed = new HashSet<OpenPosition>();
             for (OpenPosition position : positions) {
                 if (position.canCloseOnBar_Pessimistic(data.getTimeStamp(), data.getValue()[1], data.getValue()[2], data.getValue()[0])) {
                     closed.add(position);
@@ -194,17 +193,18 @@ public class NeuralLearner implements Feed, Runnable {
                     System.out.println(position.getClosingMessage() + " CHANGE: " + position.getPnL() + " CAPITAL: " + PositionFactory.getAmount() + " ACCRUED PNL: " + PositionFactory.getAccruedPnL());
                 }
             }
-            positions.removeAll(closed);
+            positions.removeAll(closed);*/
+
 
             Date executionInstant = new Date(time);
-            if (positions.size() < 15 && !(executionInstant.getDay() == 0 || executionInstant.getDay() == 6)) {
+            if (/*positions.size() < 15 && */!(executionInstant.getDay() == 0 || executionInstant.getDay() == 6)) {
                 TreeMap<Integer, Double> distribution = core.getActionDistribution(signal);
                 TreeMap<Double, Double> prediction = new TreeMap<Double, Double>();
                 for (Map.Entry<Integer, Double> entry : distribution.entrySet()) {
                     prediction.put(data.getValue()[0] + entry.getKey() * core.getActionResolution(), entry.getValue());
                 }
-
-                OpenPosition position = PositionFactory.getPosition(data.getTimeStamp(), data.getValue()[0], prediction, horizon, false);
+                DecisionAggregator.aggregateDecision(data, data.getValue()[0], prediction, horizon, false);
+                /*OpenPosition position = PositionFactory.getPosition(data.getTimeStamp(), data.getValue()[0], prediction, horizon, false);
                 if (position != null) {
                     if (inLiveTrading) {
                         try {
@@ -215,8 +215,9 @@ public class NeuralLearner implements Feed, Runnable {
                     } else {
                         positions.add(position);
                     }
-                }
+                }*/
             }
+
         }
     }
 

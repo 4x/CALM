@@ -21,6 +21,7 @@ public class OpenPosition {
     private String closingMessage;
 
     private long goodTillTime;
+    private long timeSpan;
 
     public OpenPosition(long timeOpen, double start, double targetProfit, double targetLoss, boolean isLong, long goodTillTime, boolean goodTillClosed) {
         this.timeOpen = timeOpen;
@@ -113,6 +114,23 @@ public class OpenPosition {
         return false;
     }
 
+    public void close(double price, long time){
+        this.price = price;
+        if (isLong) {
+            if (price > start) {
+                closingMessage = new Date(time) + ": PROFIT: Closing [LONG] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " FORCED";
+            } else {
+                closingMessage = new Date(time) + ": LOSS: Closing [LONG] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " FORCED";
+            }
+        } else {
+            if (price < start) {
+                closingMessage = new Date(time) + ": PROFIT: Closing [SHORT] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " FORCED";
+            } else {
+                closingMessage = new Date(time) + ": LOSS: Closing [SHORT] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " FORCED";
+            }
+        }
+    }
+
     public void setAmount(double amount) {
         this.amount = amount;
     }
@@ -163,5 +181,9 @@ public class OpenPosition {
 
     public long getGoodTillTime() {
         return goodTillTime;
+    }
+
+    public long getTimeSpan() {
+        return timeSpan;
     }
 }

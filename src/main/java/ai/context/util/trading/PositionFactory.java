@@ -40,7 +40,8 @@ public class PositionFactory {
         }
 
         Date executionInstant = new Date(time);
-        if (executionInstant.getDay() == 0 || executionInstant.getDay() == 6) {
+        Date exitTime = new Date(time + timeSpan);
+        if (executionInstant.getDay() == 0 || executionInstant.getDay() == 6 || exitTime.getDay() == 0 || exitTime.getDay() == 6) {
             return null;
         }
 
