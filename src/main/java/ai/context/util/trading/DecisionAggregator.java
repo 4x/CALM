@@ -90,7 +90,7 @@ public class DecisionAggregator {
                 System.out.println(position.getClosingMessage() + " CHANGE: " + position.getPnL() + " CAPITAL: " + PositionFactory.getAmount() + " ACCRUED PNL: " + PositionFactory.getAccruedPnL());
             }
             else{
-                long timeSpan = position.getTimeSpan();
+                long timeSpan = position.getGoodTillTime() - time;
                 if(timeBasedHistograms.containsKey(timeSpan)){
                     TreeMap<Double, Double> prediction = timeBasedHistograms.remove(timeSpan);
                     OpenPosition newPosition = PositionFactory.getPosition(time, latestC, prediction, timeSpan, false);

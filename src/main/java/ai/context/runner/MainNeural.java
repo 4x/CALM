@@ -70,7 +70,7 @@ public class MainNeural {
         availableStimuli.removeAll(Arrays.asList(actionElements));
         //StimuliRankings.getInstance().newStimuli(availableStimuli);
 
-        for (int i = 0; i < 300; i++) {
+        for (int i = 0; i < 10; i++) {
             Integer[] sigElements = new Integer[5];
             for (int sig = 0; sig < sigElements.length; sig++) {
                 if (availableStimuli.isEmpty()) {

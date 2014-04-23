@@ -6,8 +6,8 @@ import java.util.*;
 
 public class PositionFactory {
 
-    private static double tradeToCapRatio = 0.025;
-    private static double leverage = 2;
+    private static double tradeToCapRatio = 0.05;
+    private static double leverage = 1;
     private static double amount = 1000000.0;
     public static double cost = 0.0002;
     public static double rewardRiskRatio = 3.0;
@@ -18,7 +18,7 @@ public class PositionFactory {
 
     private static boolean verticalRisk = false;
 
-    public static double minProbFraction = 0.5;
+    public static double minProbFraction = 0.75;
 
     private static long timeSpan = 6 * 3600 * 1000L;
 
