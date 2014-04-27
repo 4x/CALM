@@ -61,19 +61,17 @@ public class DecisionAggregator {
     }
 
     public static  void decide(){
-        if (positions.size() < 100) {
-            for(Map.Entry<Long, TreeMap<Double, Double>> entry : timeBasedHistograms.entrySet()){
-                OpenPosition position = PositionFactory.getPosition(time, latestC, entry.getValue(), entry.getKey(), false);
-                if (position != null) {
-                    if (inLiveTrading) {
-                        try {
-                            blackBox.onDecision(position);
-                        } catch (JFException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        positions.add(position);
+        for(Map.Entry<Long, TreeMap<Double, Double>> entry : timeBasedHistograms.entrySet()){
+            OpenPosition position = PositionFactory.getPosition(time, latestC, entry.getValue(), entry.getKey(), false);
+            if (position != null) {
+                if (inLiveTrading) {
+                    try {
+                        blackBox.onDecision(position);
+                    } catch (JFException e) {
+                        e.printStackTrace();
                     }
+                } else {
+                    positions.add(position);
                 }
             }
         }
@@ -87,7 +85,7 @@ public class DecisionAggregator {
                 closed.add(position);
                 PositionFactory.positionClosed(position);
 
-                System.out.println(position.getClosingMessage() + " CHANGE: " + position.getPnL() + " CAPITAL: " + PositionFactory.getAmount() + " ACCRUED PNL: " + PositionFactory.getAccruedPnL());
+                System.out.println(position.getClosingMessage() + " CHANGE: " + position.getAbsolutePNL() + " CAPITAL: " + PositionFactory.getAmount() + " ACCRUED PNL: " + PositionFactory.getAccruedPnL());
             }
             else{
                 long timeSpan = position.getGoodTillTime() - time;
@@ -107,7 +105,7 @@ public class DecisionAggregator {
                                 closed.add(position);
                                 PositionFactory.positionClosed(position);
 
-                                System.out.println(position.getClosingMessage() + " CHANGE: " + position.getPnL() + " CAPITAL: " + PositionFactory.getAmount() + " ACCRUED PNL: " + PositionFactory.getAccruedPnL());
+                                System.out.println(position.getClosingMessage() + " CHANGE: " + position.getAbsolutePNL() + " CAPITAL: " + PositionFactory.getAmount() + " ACCRUED PNL: " + PositionFactory.getAccruedPnL());
                             }
                             newOpen.add(position);
                         }

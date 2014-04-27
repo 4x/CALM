@@ -1,5 +1,6 @@
 package ai.context.learning.neural;
 
+import ai.context.container.TimedContainer;
 import ai.context.core.ai.LearningException;
 import ai.context.feed.synchronised.SynchFeed;
 import ai.context.util.common.MapUtils;
@@ -15,7 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class NeuronCluster {
+public class NeuronCluster implements TimedContainer{
 
     private NeuronRankings rankings = NeuronRankings.getInstance();
     private StimuliRankings stimuliRankings = StimuliRankings.getInstance();
@@ -282,6 +283,9 @@ public class NeuronCluster {
         return meanTime;
     }
 
+    public void setMeanTime(long meanTime) {
+        this.meanTime = meanTime;
+    }
 
     public String getStats() {
         String stats = "TIME: " + meanTime + ", STATS: ";
@@ -292,5 +296,10 @@ public class NeuronCluster {
         stats += "AVERAGE LOST: " + PositionFactory.getSumLoss() / PositionFactory.getTotalLoss() + ", ";
         stats += "PNL: " + PositionFactory.getAccruedPnL();
         return stats;
+    }
+
+    @Override
+    public long getTime() {
+        return meanTime;
     }
 }

@@ -157,11 +157,11 @@ public class NeuralLearner implements Feed, Runnable {
                 trackers.add(new StateActionInformationTracker(time, signal, data.getValue()[0]));
 
                 int[] outputSignal = new int[getNumberOfOutputs()];
-                if (pointsConsumed > 100) {
+                if (pointsConsumed > 200) {
                     outputSignal = getSignalForDistribution(core.getActionDistribution(signal));
                 }
 
-                if (pointsConsumed > 2000) {
+                if (pointsConsumed > 50000) {
                     adapting = false;
                 }
                 long eventTime = time/* + outputFutureOffset*/;

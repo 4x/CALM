@@ -8,7 +8,7 @@ public class PositionFactory {
 
     private static double tradeToCapRatio = 0.05;
     private static double leverage = 1;
-    private static double amount = 1000000.0;
+    private static double amount = 0;
     public static double cost = 0.0002;
     public static double rewardRiskRatio = 3.0;
     private static double minTakeProfit = 0.001;
@@ -35,9 +35,9 @@ public class PositionFactory {
     private static double sumProfit = 0;
 
     public static OpenPosition getPosition(long time, double pivot, TreeMap<Double, Double> histogram, long timeSpan, boolean goodTillClosed) {
-        if ((amount * tradeToCapRatio * leverage) < 1000) {
+        /*if ((amount * tradeToCapRatio * leverage) < 1000) {
             return null;
-        }
+        }*/
 
         Date executionInstant = new Date(time);
         Date exitTime = new Date(time + timeSpan);
@@ -318,14 +318,14 @@ public class PositionFactory {
     public static void positionClosed(OpenPosition position) {
         amount += position.getAmount() / leverage;
         amount += position.getPnL();
-        accruedPnL += position.getPnL();
+        accruedPnL += position.getAbsolutePNL();
 
-        if (position.getPnL() > 0) {
+        if (position.getAbsolutePNL() > 0) {
             totalProfit++;
-            sumProfit += position.getPnL();
+            sumProfit += position.getAbsolutePNL();
         } else {
             totalLoss++;
-            sumLoss -= position.getPnL();
+            sumLoss -= position.getAbsolutePNL();
         }
         totalTrades++;
     }

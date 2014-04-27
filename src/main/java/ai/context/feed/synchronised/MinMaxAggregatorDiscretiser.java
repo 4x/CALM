@@ -42,11 +42,11 @@ public class MinMaxAggregatorDiscretiser implements Feed {
         long time = fO.getTimeStamp();
         List data = (List) fO.getData();
 
-        String toPrintOut = "";
+        //String toPrintOut = "";
         for (Object o : data) {
-            toPrintOut += o + ",";
+            //toPrintOut += o + ",";
             if (o == null || !(o instanceof Number)) {
-                System.out.println(toPrintOut);
+                //System.out.println(toPrintOut);
                 timeStamp = time;
                 return new FeedObject(time, null);
             }

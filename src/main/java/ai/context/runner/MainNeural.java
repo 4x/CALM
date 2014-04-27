@@ -18,7 +18,6 @@ import ai.context.feed.transformer.series.online.*;
 import ai.context.feed.transformer.single.TimeVariablesAppenderFeed;
 import ai.context.feed.transformer.single.unpadded.LinearDiscretiser;
 import ai.context.feed.transformer.single.unpadded.LogarithmicDiscretiser;
-import ai.context.learning.Learner;
 import ai.context.learning.neural.NeuralLearner;
 import ai.context.learning.neural.NeuronCluster;
 import ai.context.trading.DukascopyConnection;
@@ -56,7 +55,7 @@ public class MainNeural {
 
     public void setup(String path) {
 
-        SynchFeed motherFeed = initFeed(path, null);
+        SynchFeed motherFeed = initFeed(path);
         NeuronCluster.getInstance().setMotherFeed(motherFeed);
 
         long[] horizonRange = new long[]{1 * 60 * 60 * 1000L, 12 * 60 * 60 * 1000L};
@@ -70,13 +69,14 @@ public class MainNeural {
         availableStimuli.removeAll(Arrays.asList(actionElements));
         //StimuliRankings.getInstance().newStimuli(availableStimuli);
 
-        for (int i = 0; i < 10; i++) {
-            Integer[] sigElements = new Integer[5];
+        for (int i = 0; i < 50; i++) {
+            Integer[] sigElements = new Integer[7];
             for (int sig = 0; sig < sigElements.length; sig++) {
                 if (availableStimuli.isEmpty()) {
                     for (int index = 0; index < motherFeed.getNumberOfOutputs(); index++) {
                         availableStimuli.add(index);
                     }
+                    availableStimuli.removeAll(Arrays.asList(actionElements));
                 }
                 List<Integer> available = new ArrayList<>(availableStimuli);
                 int chosenSig = available.get((int) (Math.random() * available.size()));
@@ -124,7 +124,7 @@ public class MainNeural {
         this.liveFXRateCHF = liveFXRateCHF;
     }
 
-    private SynchFeed initFeed(String path, Learner learner) {
+    private SynchFeed initFeed(String path) {
 
         if (!testing) {
             initFXAPI();
@@ -152,29 +152,29 @@ public class MainNeural {
         feedCalendar.setStitchableFeed(liveFXCalendar);
         feedCalendar.setPaddable(true);
         feedCalendar.setInterval(interval);
-        RowBasedTransformer f1 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0}, new String[]{"Nonfarm Payrolls"}, new int[]{3, 4, 5}, learner);
+        RowBasedTransformer f1 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0}, new String[]{"Nonfarm Payrolls"}, new int[]{3, 4, 5}, NeuronCluster.getInstance());
         feedCalendar.addChild(f1);
 
-        RowBasedTransformer f2 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Consumer Price Index \\(MoM\\)", "United Kingdom"}, new int[]{3, 4, 5}, learner);
+        RowBasedTransformer f2 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Consumer Price Index \\(MoM\\)", "United Kingdom"}, new int[]{3, 4, 5}, NeuronCluster.getInstance());
         feedCalendar.addChild(f2);
-        RowBasedTransformer f3 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Consumer Price Index \\(MoM\\)", "United States"}, new int[]{3, 4, 5}, learner);
+        RowBasedTransformer f3 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Consumer Price Index \\(MoM\\)", "United States"}, new int[]{3, 4, 5}, NeuronCluster.getInstance());
         feedCalendar.addChild(f3);
-        RowBasedTransformer f4 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Consumer Price Index \\(MoM\\)", "Germany"}, new int[]{3, 4, 5}, learner);
+        RowBasedTransformer f4 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Consumer Price Index \\(MoM\\)", "Germany"}, new int[]{3, 4, 5}, NeuronCluster.getInstance());
         feedCalendar.addChild(f4);
 
-        RowBasedTransformer f5 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Producer Price Index \\(MoM\\)", "European Monetary Union"}, new int[]{3, 4, 5}, learner);
+        RowBasedTransformer f5 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Producer Price Index \\(MoM\\)", "European Monetary Union"}, new int[]{3, 4, 5}, NeuronCluster.getInstance());
         feedCalendar.addChild(f5);
-        RowBasedTransformer f6 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Producer Price Index \\(MoM\\)", "United States"}, new int[]{3, 4, 5}, learner);
+        RowBasedTransformer f6 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Producer Price Index \\(MoM\\)", "United States"}, new int[]{3, 4, 5}, NeuronCluster.getInstance());
         feedCalendar.addChild(f6);
-        RowBasedTransformer f7 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Retail Price Index \\(MoM\\)", "United Kingdom"}, new int[]{3, 4, 5}, learner);
+        RowBasedTransformer f7 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Retail Price Index \\(MoM\\)", "United Kingdom"}, new int[]{3, 4, 5}, NeuronCluster.getInstance());
         feedCalendar.addChild(f7);
-        RowBasedTransformer f8 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Manufacturing Production \\(MoM\\)", "United Kingdom"}, new int[]{3, 4, 5}, learner);
+        RowBasedTransformer f8 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Manufacturing Production \\(MoM\\)", "United Kingdom"}, new int[]{3, 4, 5}, NeuronCluster.getInstance());
         feedCalendar.addChild(f8);
-        RowBasedTransformer f9 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Producer Price Index \\(MoM\\)", "Germany"}, new int[]{3, 4, 5}, learner);
+        RowBasedTransformer f9 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Producer Price Index \\(MoM\\)", "Germany"}, new int[]{3, 4, 5}, NeuronCluster.getInstance());
         feedCalendar.addChild(f9);
-        RowBasedTransformer f10 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"BoE Interest Rate Decision", "United Kingdom"}, new int[]{3, 4, 5}, learner);
+        RowBasedTransformer f10 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"BoE Interest Rate Decision", "United Kingdom"}, new int[]{3, 4, 5}, NeuronCluster.getInstance());
         feedCalendar.addChild(f10);
-        RowBasedTransformer f11 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Fed Interest Rate Decision", "United States"}, new int[]{3, 4, 5}, learner);
+        RowBasedTransformer f11 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Fed Interest Rate Decision", "United States"}, new int[]{3, 4, 5}, NeuronCluster.getInstance());
         feedCalendar.addChild(f11);*/
 
 
@@ -189,14 +189,14 @@ public class MainNeural {
 
         CSVFeed feedPriceEUR = new CSVFeed(path + "feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feedPriceEUR.setStitchableFeed(liveFXRateEUR);
-        CSVFeed feedPriceGBP = new CSVFeed(path + "feeds/GBPUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
-        feedPriceGBP.setStitchableFeed(liveFXRateGBP);
+        //CSVFeed feedPriceGBP = new CSVFeed(path + "feeds/GBPUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
+        //feedPriceGBP.setStitchableFeed(liveFXRateGBP);
         /*CSVFeed feedPriceCHF = new CSVFeed(path + "feeds/USDCHF.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  dateFP);
         feedPriceCHF.setStitchableFeed(liveFXRateCHF);*/
 
 
         SynchFeed feed = buildSynchFeed(null, feedPriceEUR);
-        feed = buildSynchFeed(feed, feedPriceGBP);
+        //feed = buildSynchFeed(feed, feedPriceGBP);
         /*feed = buildSynchFeed(feed, feedPriceCHF);*/
 
         //SmartDiscretiserOnSynchronisedFeed sFeed = new SmartDiscretiserOnSynchronisedFeed(feed, 5000, 5);
@@ -226,13 +226,14 @@ public class MainNeural {
         int i = 0;
         while (true) {
             FeedObject data = synchFeed.getNextComposite(this);
+            NeuronCluster.getInstance().setMeanTime(data.getTimeStamp());
             i++;
 
-            if (i == 5010) {
+            if (i == 5001) {
                 System.out.println(new Date(data.getTimeStamp()) + " " + data);
                 break;
             }
-            //System.out.println(new Date(data.getTimeStamp()) + " " + data);
+            System.out.println(new Date(data.getTimeStamp()) + " " + data);
         }
         return synchFeed;
     }
@@ -492,8 +493,8 @@ public class MainNeural {
             synch.addRawFeed(stdLL1);
             //synch.addRawFeed(stdLV1);
 
-            synch.addRawFeed(stdFeedH2);
-            synch.addRawFeed(stdFeedL2);
+            //synch.addRawFeed(stdFeedH2);
+            //synch.addRawFeed(stdFeedL2);
             //synch.addRawFeed(stdFeedV2);
 
             synch.addRawFeed(stdLH3);

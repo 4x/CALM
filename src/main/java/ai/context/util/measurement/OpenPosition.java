@@ -151,6 +151,10 @@ public class OpenPosition {
         return amount + getPnL();
     }
 
+    public double getAbsolutePNL(){
+        return (multiplier * (price - start)) - cost;
+    }
+
     public double getTarget() {
         return target;
     }

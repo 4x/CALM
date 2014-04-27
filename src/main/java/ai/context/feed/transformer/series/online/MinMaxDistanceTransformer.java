@@ -68,7 +68,7 @@ public class MinMaxDistanceTransformer extends OnlineTransformer {
                 max = maxA;
             }
         }
-        return new Double[]{this.min, this.max, (double) getLogarithmicDiscretisation(max - close, 0, 0.0001), (double) getLogarithmicDiscretisation(close - min, 0, 0.0001)};
+        return new Double[]{(double) getLogarithmicDiscretisation(max - close, 0, 0.0001), (double) getLogarithmicDiscretisation(close - min, 0, 0.0001)};
     }
 
     private void refreshMin() {
@@ -111,6 +111,6 @@ public class MinMaxDistanceTransformer extends OnlineTransformer {
 
     @Override
     public int getNumberOfOutputs() {
-        return 4;
+        return 2;
     }
 }
