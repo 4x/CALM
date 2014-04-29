@@ -91,7 +91,7 @@ public class DynamicPropertiesLoader {
     }
 
     private static void loadPositionFactoryConf() throws Exception {
-        if (new File(folder + "LearnerService.conf").exists()) {
+        if (new File(folder + "PositionFactory.conf").exists()) {
             if (!positionFactoryConfigChecksum.equals(getMD5Checksum(folder + "PositionFactory.conf"))) {
                 positionFactoryConfigChecksum = getMD5Checksum(folder + "PositionFactory.conf");
                 InputStream inputStream = null;
