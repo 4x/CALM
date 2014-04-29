@@ -21,6 +21,7 @@ import ai.context.feed.transformer.single.unpadded.LogarithmicDiscretiser;
 import ai.context.learning.neural.NeuralLearner;
 import ai.context.learning.neural.NeuronCluster;
 import ai.context.trading.DukascopyConnection;
+import ai.context.util.configuration.DynamicPropertiesLoader;
 import ai.context.util.trading.BlackBox;
 import com.dukascopy.api.Instrument;
 import com.dukascopy.api.Period;
@@ -50,6 +51,7 @@ public class MainNeural {
             path = args[0];
         }
         test.setup(path);
+        DynamicPropertiesLoader.start("");
     }
 
 
@@ -61,7 +63,7 @@ public class MainNeural {
         long[] horizonRange = new long[]{1 * 60 * 60 * 1000L, 12 * 60 * 60 * 1000L};
         Integer[] actionElements = new Integer[]{3, 1, 2, 0};
         long outputFutureOffset = 5 * 60 * 1000L;
-        double resolution = 0.0005;
+        double resolution = 0.0001;
         Set<Integer> availableStimuli = new HashSet<>();
         for (int i = 0; i < motherFeed.getNumberOfOutputs(); i++) {
             availableStimuli.add(i);
@@ -189,8 +191,8 @@ public class MainNeural {
 
         CSVFeed feedPriceEUR = new CSVFeed(path + "feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feedPriceEUR.setStitchableFeed(liveFXRateEUR);
-        //CSVFeed feedPriceGBP = new CSVFeed(path + "feeds/GBPUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
-        //feedPriceGBP.setStitchableFeed(liveFXRateGBP);
+        /*CSVFeed feedPriceGBP = new CSVFeed(path + "feeds/GBPUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
+        feedPriceGBP.setStitchableFeed(liveFXRateGBP);*/
         /*CSVFeed feedPriceCHF = new CSVFeed(path + "feeds/USDCHF.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  dateFP);
         feedPriceCHF.setStitchableFeed(liveFXRateCHF);*/
 
@@ -233,7 +235,7 @@ public class MainNeural {
                 System.out.println(new Date(data.getTimeStamp()) + " " + data);
                 break;
             }
-            System.out.println(new Date(data.getTimeStamp()) + " " + data);
+            //System.out.println(new Date(data.getTimeStamp()) + " " + data);
         }
         return synchFeed;
     }

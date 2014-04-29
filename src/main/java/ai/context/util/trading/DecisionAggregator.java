@@ -1,6 +1,7 @@
 package ai.context.util.trading;
 
 import ai.context.learning.DataObject;
+import ai.context.util.mathematics.Operations;
 import ai.context.util.measurement.OpenPosition;
 import com.dukascopy.api.JFException;
 
@@ -85,7 +86,7 @@ public class DecisionAggregator {
                 closed.add(position);
                 PositionFactory.positionClosed(position);
 
-                System.out.println(position.getClosingMessage() + " CHANGE: " + position.getAbsolutePNL() + " CAPITAL: " + PositionFactory.getAmount() + " ACCRUED PNL: " + PositionFactory.getAccruedPnL());
+                System.out.println("CHANGE: " + Operations.round(position.getAbsolutePNL(), 4) + " ACCRUED PNL: " +  Operations.round(PositionFactory.getAccruedPnL(), 4) + " CRED: " + Operations.round(position.getCredibility(), 2) + " " +position.getClosingMessage());
             }
             else{
                 long timeSpan = position.getGoodTillTime() - time;
@@ -105,7 +106,7 @@ public class DecisionAggregator {
                                 closed.add(position);
                                 PositionFactory.positionClosed(position);
 
-                                System.out.println(position.getClosingMessage() + " CHANGE: " + position.getAbsolutePNL() + " CAPITAL: " + PositionFactory.getAmount() + " ACCRUED PNL: " + PositionFactory.getAccruedPnL());
+                                System.out.println("CHANGE: " + Operations.round(position.getAbsolutePNL(), 4) + " ACCRUED PNL: " +  Operations.round(PositionFactory.getAccruedPnL(), 4) + " CRED: " + Operations.round(position.getCredibility(), 2) + " " +position.getClosingMessage());
                             }
                             newOpen.add(position);
                         }

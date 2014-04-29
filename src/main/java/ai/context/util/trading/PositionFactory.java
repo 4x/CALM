@@ -10,7 +10,7 @@ public class PositionFactory {
     private static double leverage = 1;
     private static double amount = 0;
     public static double cost = 0.0002;
-    public static double rewardRiskRatio = 3.0;
+    public static double rewardRiskRatio = 1.5;
     private static double minTakeProfit = 0.001;
     private static double minTakeProfitVertical = 0.001;
 
@@ -18,7 +18,7 @@ public class PositionFactory {
 
     private static boolean verticalRisk = false;
 
-    public static double minProbFraction = 0.75;
+    public static double minProbFraction = 0.8;
 
     private static long timeSpan = 6 * 3600 * 1000L;
 
@@ -89,6 +89,7 @@ public class PositionFactory {
             //directionalFreq.put(amplitude, longFreq - shortFreq);
         }
 
+        double credibility = (longFreq + shortFreq)/2;
         double decision = DecisionUtil.getDecision(sFreq, lFreq);
         boolean dirL = true;
         //decisionHistogram.update(sFreq, lFreq, minTakeProfit, rewardRiskRatio, Math.abs(decision));
@@ -96,7 +97,8 @@ public class PositionFactory {
             dirL = false;
         }
         if (decision != 0) {
-            OpenPosition position = new OpenPosition(time, pivot, decision, decision * 1.5, dirL, time + timeSpan, goodTillClosed);
+            OpenPosition position = new OpenPosition(time, pivot, decision, decision, dirL, time + timeSpan, goodTillClosed);
+            position.setCredibility(credibility);
             if (!live) {
                 position.setAmount(amount * tradeToCapRatio * leverage);
                 position.setCost(cost);

@@ -22,6 +22,7 @@ public class OpenPosition {
 
     private long goodTillTime;
     private long timeSpan;
+    private double credibility = 0;
 
     public OpenPosition(long timeOpen, double start, double targetProfit, double targetLoss, boolean isLong, long goodTillTime, boolean goodTillClosed) {
         this.timeOpen = timeOpen;
@@ -55,15 +56,15 @@ public class OpenPosition {
 
             if (isLong) {
                 if (price > start) {
-                    closingMessage = new Date(time) + ": PROFIT: Closing [LONG] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high + "} TIMEOUT";
+                    closingMessage = new Date(time) + ": PROFIT: [LONG] " + (time - timeOpen)/1000 + "s TIMEOUT";
                 } else {
-                    closingMessage = new Date(time) + ": LOSS: Closing [LONG] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high + "} TIMEOUT";
+                    closingMessage = new Date(time) + ": LOSS: [LONG] " + (time - timeOpen)/1000 + "s TIMEOUT";
                 }
             } else {
                 if (price < start) {
-                    closingMessage = new Date(time) + ": PROFIT: Closing [SHORT] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high + "} TIMEOUT";
+                    closingMessage = new Date(time) + ": PROFIT: [SHORT] " + (time - timeOpen)/1000 + "s TIMEOUT";
                 } else {
-                    closingMessage = new Date(time) + ": LOSS: Closing [SHORT] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high + "} TIMEOUT";
+                    closingMessage = new Date(time) + ": LOSS: [SHORT] " + (time - timeOpen)/1000 + "s TIMEOUT";
                 }
             }
             return true;
@@ -72,25 +73,25 @@ public class OpenPosition {
         if (isLong) {
             if (low <= stopLoss) {
                 price = stopLoss;
-                closingMessage = new Date(time) + ": LOSS: Closing [LONG] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high + "}";
+                closingMessage = new Date(time) + ": LOSS: [LONG] " + (time - timeOpen)/1000 + "s";
                 return true;
             }
 
             if (high >= takeProfit) {
                 price = takeProfit;
-                closingMessage = new Date(time) + ": PROFIT: Closing [LONG] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high + "}";
+                closingMessage = new Date(time) + ": PROFIT: [LONG] " + (time - timeOpen)/1000 + "s";
                 return true;
             }
         } else {
             if (high >= stopLoss) {
                 price = stopLoss;
-                closingMessage = new Date(time) + ": LOSS: Closing [SHORT] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high + "}";
+                closingMessage = new Date(time) + ": LOSS: [SHORT] " + (time - timeOpen)/1000 + "s";
                 return true;
             }
 
             if (low <= takeProfit) {
                 price = takeProfit;
-                closingMessage = new Date(time) + ": PROFIT: Closing [SHORT] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high + "}";
+                closingMessage = new Date(time) + ": PROFIT: [SHORT] " + (time - timeOpen)/1000 + "s";
                 return true;
             }
         }
@@ -99,13 +100,13 @@ public class OpenPosition {
             if (isLong) {
                 if (close > (start + 2*cost)) {
                     price = close;
-                    closingMessage = new Date(time) + ": PROFIT: Closing [LONG] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high + "} LOCKING_PROFIT";
+                    closingMessage = new Date(time) + ": PROFIT: [LONG] " + (time - timeOpen)/1000 + "s LOCKING_PROFIT";
                     return true;
                 }
             } else {
                 if (close < (start - 2*cost)) {
                     price = close;
-                    closingMessage = new Date(time) + ": PROFIT: Closing [SHORT] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " {" + low + " - " + high + "} LOCKING_PROFIT";
+                    closingMessage = new Date(time) + ": PROFIT: [SHORT] " + (time - timeOpen)/1000 + "s LOCKING_PROFIT";
                     return true;
                 }
             }
@@ -118,15 +119,15 @@ public class OpenPosition {
         this.price = price;
         if (isLong) {
             if (price > start) {
-                closingMessage = new Date(time) + ": PROFIT: Closing [LONG] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " FORCED";
+                closingMessage = new Date(time) + ": PROFIT: [LONG] " + (time - timeOpen)/1000 + "s FORCED";
             } else {
-                closingMessage = new Date(time) + ": LOSS: Closing [LONG] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " FORCED";
+                closingMessage = new Date(time) + ": LOSS: [LONG] " + (time - timeOpen)/1000 + "s FORCED";
             }
         } else {
             if (price < start) {
-                closingMessage = new Date(time) + ": PROFIT: Closing [SHORT] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " FORCED";
+                closingMessage = new Date(time) + ": PROFIT: [SHORT] " + (time - timeOpen)/1000 + "s FORCED";
             } else {
-                closingMessage = new Date(time) + ": LOSS: Closing [SHORT] position open at " + new Date(timeOpen) + " at " + start + " for " + price + " FORCED";
+                closingMessage = new Date(time) + ": LOSS: [SHORT] " + (time - timeOpen)/1000 + "s FORCED";
             }
         }
     }
@@ -189,5 +190,13 @@ public class OpenPosition {
 
     public long getTimeSpan() {
         return timeSpan;
+    }
+
+    public double getCredibility() {
+        return credibility;
+    }
+
+    public void setCredibility(double credibility) {
+        this.credibility = credibility;
     }
 }
