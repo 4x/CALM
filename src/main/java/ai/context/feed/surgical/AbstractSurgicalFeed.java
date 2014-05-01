@@ -34,10 +34,18 @@ public abstract class AbstractSurgicalFeed implements Feed {
         List data = new ArrayList();
         DataSetUtils.add(rawData.getData(), data);
         FeedObject feedObject = operate(rawData.getTimeStamp(), data);
+        List<Feed> toRemove = new ArrayList<>();
         for (Feed listener : buffers.keySet()) {
             if (listener != caller) {
-                buffers.get(listener).add(feedObject);
+                List<FeedObject> list = buffers.get(listener);
+                list.add(feedObject);
+                if(list.size() > 2000){
+                    toRemove.add(listener);
+                }
             }
+        }
+        for(Feed remove : toRemove){
+            buffers.remove(remove);
         }
         timeStamp = feedObject.getTimeStamp();
         return feedObject;
