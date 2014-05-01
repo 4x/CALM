@@ -28,10 +28,18 @@ public class SynchronisedToNormalFeed implements Feed {
             return buffers.get(caller).pollFirst();
         }
         FeedObject data = feed.getNextComposite(this);
+        List<Feed> toRemove = new ArrayList<>();
         for (Feed listener : buffers.keySet()) {
             if (listener != caller) {
-                buffers.get(listener).add(data);
+                List<FeedObject> list = buffers.get(listener);
+                list.add(data);
+                if(list.size() > 2000){
+                    toRemove.add(listener);
+                }
             }
+        }
+        for(Feed remove : toRemove){
+            buffers.remove(remove);
         }
         return data;
     }

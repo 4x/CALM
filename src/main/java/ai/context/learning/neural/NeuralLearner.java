@@ -496,10 +496,18 @@ public class NeuralLearner implements Feed, Runnable {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        List<Feed> toRemove = new ArrayList<>();
         for (Feed listener : buffers.keySet()) {
             if (listener != caller) {
-                buffers.get(listener).add(feedObject);
+                List<FeedObject> list = buffers.get(listener);
+                list.add(feedObject);
+                if(list.size() > 2000){
+                    toRemove.add(listener);
+                }
             }
+        }
+        for(Feed remove : toRemove){
+            buffers.remove(remove);
         }
         //System.out.println("["+id+"] RETURNING: " + feedObject);
         return feedObject;

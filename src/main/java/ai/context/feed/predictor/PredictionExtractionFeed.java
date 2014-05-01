@@ -77,10 +77,18 @@ public class PredictionExtractionFeed implements Feed {
         }
         FeedObject feedObject = new FeedObject(timeStamp, output);
 
+        List<Feed> toRemove = new ArrayList<>();
         for (Feed listener : buffers.keySet()) {
             if (listener != caller) {
-                buffers.get(listener).add(feedObject);
+                List<FeedObject> list = buffers.get(listener);
+                list.add(feedObject);
+                if(list.size() > 2000){
+                    toRemove.add(listener);
+                }
             }
+        }
+        for(Feed remove : toRemove){
+            buffers.remove(remove);
         }
 
         return feedObject;
