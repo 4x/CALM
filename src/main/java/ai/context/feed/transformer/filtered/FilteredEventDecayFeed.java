@@ -5,8 +5,10 @@ import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
 import ai.context.feed.row.CSVFeed;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 
 public abstract class FilteredEventDecayFeed implements Feed {
 
@@ -82,10 +84,18 @@ public abstract class FilteredEventDecayFeed implements Feed {
         }
 
         FeedObject feedObject = new FeedObject(tRaw, new Object[]{data, intensity});
+        List<Feed> toRemove = new ArrayList<>();
         for (Feed listener : buffers.keySet()) {
             if (listener != caller) {
-                buffers.get(listener).add(feedObject);
+                List<FeedObject> list = buffers.get(listener);
+                list.add(feedObject);
+                if(list.size() > 2000){
+                    toRemove.add(listener);
+                }
             }
+        }
+        for(Feed remove : toRemove){
+            buffers.remove(remove);
         }
         return feedObject;
     }
