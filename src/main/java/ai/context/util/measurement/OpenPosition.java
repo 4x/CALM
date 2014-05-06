@@ -34,6 +34,7 @@ public class OpenPosition {
         this.target = targetProfit;
         this.goodTillTime = goodTillTime;
         this.goodTillClosed = goodTillClosed;
+        this.timeSpan = goodTillTime - timeOpen;
 
         if (!isLong) {
             multiplier = -1;
@@ -96,7 +97,7 @@ public class OpenPosition {
             }
         }
 
-        if((double)(time - timeOpen)/(double)(goodTillTime - timeOpen) > 0.8){
+        /*if((double)(time - timeOpen)/(double)(goodTillTime - timeOpen) > 0.8){
             if (isLong) {
                 if (close > (start + 2*cost)) {
                     price = close;
@@ -110,7 +111,7 @@ public class OpenPosition {
                     return true;
                 }
             }
-        }
+        }*/
 
         return false;
     }

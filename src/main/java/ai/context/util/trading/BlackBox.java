@@ -42,23 +42,23 @@ public class BlackBox implements IStrategy {
                 while (!waitingPositions.isEmpty()) {
                     try {
                         OpenPosition position = waitingPositions.remove(0);
-                        double amount = Operations.roundFloor(((available / 100) * leverage) / 1000000, 4);
+                        double amount = Operations.round(((available / 100) * leverage) / 1000000, 4);
                         if (amount > 0) {
                             long tNow = System.currentTimeMillis();
                             IOrder out = null;
                             String direction = "LONG";
                             if (position.isLong()) {
                                 out = engine.submitOrder("EUR_" + tNow, Instrument.EURUSD, IEngine.OrderCommand.BUYLIMIT, amount,
-                                        Operations.roundFloor(position.getStart() - 0.0001, 5), 0.8,
-                                        Operations.roundFloor(position.getStopLoss(), 5),
-                                        Operations.roundFloor(position.getTakeProfit(), 5),
+                                        Operations.round(position.getStart() - 0.0001, 5), 0.8,
+                                        Operations.round(position.getStopLoss(), 5),
+                                        Operations.round(position.getTakeProfit(), 5),
                                         position.getGoodTillTime() + Period.FIVE_MINS.getInterval());
                             } else {
                                 direction = "SHORT";
                                 out = engine.submitOrder("EUR_" + tNow, Instrument.EURUSD, IEngine.OrderCommand.SELLLIMIT, amount,
-                                        Operations.roundFloor(position.getStart() + 0.0001, 5), 0.8,
-                                        Operations.roundFloor(position.getStopLoss(), 5),
-                                        Operations.roundFloor(position.getTakeProfit(), 5),
+                                        Operations.round(position.getStart() + 0.0001, 5), 0.8,
+                                        Operations.round(position.getStopLoss(), 5),
+                                        Operations.round(position.getTakeProfit(), 5),
                                         position.getGoodTillTime() + Period.FIVE_MINS.getInterval());
                             }
 

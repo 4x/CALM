@@ -45,7 +45,7 @@ public class ClusteredCopulae {
         }
     }
 
-    public synchronized double[] getCorrelationWeights(int[] state){
+    /*public synchronized double[] getCorrelationWeights(int[] state){
         if(warmedUp == 0 && refresh > 0){
             refresh--;
             return calcFromMatrix(state);
@@ -60,7 +60,7 @@ public class ClusteredCopulae {
             return calcCorrelationWeights(state);
         }
     }
-
+*/
     public double[] calcFromMatrix(int[] state){
         Set<Integer> changed = new HashSet<>();
         Set<Integer> unChanged = new HashSet<>();
@@ -178,7 +178,7 @@ public class ClusteredCopulae {
         return weights;
     }
 
-    public double[] calcCorrelationWeights(int[] state) {
+    public double[] getCorrelationWeights(int[] state) {
         matrix = new double[state.length][state.length];
         double[] weights = new double[state.length];
 

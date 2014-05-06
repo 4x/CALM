@@ -88,7 +88,7 @@ public class DecisionAggregator {
 
                 System.out.println("CHANGE: " + Operations.round(position.getAbsolutePNL(), 4) + " ACCRUED PNL: " +  Operations.round(PositionFactory.getAccruedPnL(), 4) + " CRED: " + Operations.round(position.getCredibility(), 2) + " " +position.getClosingMessage());
             }
-            else{
+            /*else{
                 long timeSpan = position.getGoodTillTime() - time;
                 if(timeBasedHistograms.containsKey(timeSpan)){
                     TreeMap<Double, Double> prediction = timeBasedHistograms.remove(timeSpan);
@@ -106,13 +106,13 @@ public class DecisionAggregator {
                                 closed.add(position);
                                 PositionFactory.positionClosed(position);
 
-                                System.out.println("CHANGE: " + Operations.round(position.getAbsolutePNL(), 4) + " ACCRUED PNL: " +  Operations.round(PositionFactory.getAccruedPnL(), 4) + " CRED: " + Operations.round(position.getCredibility(), 2) + " " +position.getClosingMessage());
+                                System.out.println("CHANGE: " + Operations.round(position.getAbsolutePNL(), 4) + " ACCRUED PNL: " +  Operations.round(PositionFactory.getAccruedPnL(), 4) + " CRED: " + Operations.round(position.getCredibility(), 2) + " TARGET: " + Operations.round(position.getTarget(), 2) + " LENGTH: " + (position.getTimeSpan()/1000) + "s " + position.getClosingMessage());
                             }
                             newOpen.add(position);
                         }
                     }
                 }
-            }
+            }*/
         }
         positions.removeAll(closed);
         positions.addAll(newOpen);
