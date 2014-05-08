@@ -83,8 +83,8 @@ public class DukascopyConnection {
         //subscribe to the instruments
         Set<Instrument> instruments = new HashSet<Instrument>();
         instruments.add(Instrument.EURUSD);
-        instruments.add(Instrument.GBPUSD);
-        instruments.add(Instrument.USDCHF);
+        /*instruments.add(Instrument.GBPUSD);
+        instruments.add(Instrument.USDCHF);*/
         LOGGER.info("Subscribing instruments...");
         client.setSubscribedInstruments(instruments);
 

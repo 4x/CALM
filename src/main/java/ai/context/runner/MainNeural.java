@@ -4,9 +4,7 @@ import ai.context.feed.DataType;
 import ai.context.feed.FeedObject;
 import ai.context.feed.fx.DukascopyFeed;
 import ai.context.feed.row.CSVFeed;
-import ai.context.feed.row.FXStreetCalendarRSSFeed;
 import ai.context.feed.stitchable.StitchableFXRate;
-import ai.context.feed.stitchable.StitchableFXStreetCalendarRSS;
 import ai.context.feed.stitchable.StitchableFeed;
 import ai.context.feed.surgical.ExtractOneFromListFeed;
 import ai.context.feed.synchronised.MinMaxAggregatorDiscretiser;
@@ -22,7 +20,9 @@ import ai.context.learning.neural.NeuralLearner;
 import ai.context.learning.neural.NeuronCluster;
 import ai.context.trading.DukascopyConnection;
 import ai.context.util.configuration.DynamicPropertiesLoader;
+import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.trading.BlackBox;
+import ai.context.util.trading.DecisionAggregator;
 import com.dukascopy.api.Instrument;
 import com.dukascopy.api.Period;
 import com.dukascopy.api.system.IClient;
@@ -33,8 +33,8 @@ import java.util.*;
 public class MainNeural {
 
     private boolean testing = true;
-    private String dukascopyUsername = "DEMO2LfagZ";
-    private String dukascopyPassword = "LfagZ";
+    private String dukascopyUsername = PropertiesHolder.dukascopyLogin;
+    private String dukascopyPassword = PropertiesHolder.dukascopyPass;
 
     private StitchableFeed liveFXCalendar;
     private StitchableFeed liveFXRateEUR;
@@ -110,7 +110,7 @@ public class MainNeural {
         try {
             client = new DukascopyConnection(dukascopyUsername, dukascopyPassword).getClient();
             blackBox = new BlackBox(client);
-            //trader.setBlackBox(blackBox);
+            DecisionAggregator.setBlackBox(blackBox);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -120,10 +120,10 @@ public class MainNeural {
         this.liveFXCalendar = liveFXCalendar;
     }
 
-    public void setLiveFXRates(StitchableFeed liveFXRateEUR, StitchableFeed liveFXRateGBP, StitchableFeed liveFXRateCHF) {
-        this.liveFXRateEUR = liveFXRateEUR;
-        this.liveFXRateGBP = liveFXRateGBP;
-        this.liveFXRateCHF = liveFXRateCHF;
+    public void setLiveFXRates(String path) {
+        this.liveFXRateEUR = new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.EURUSD));
+        //this.liveFXRateGBP = new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.GBPUSD));
+        //this.liveFXRateCHF = new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.USDCHF));
     }
 
     private SynchFeed initFeed(String path) {
@@ -131,11 +131,8 @@ public class MainNeural {
         if (!testing) {
             initFXAPI();
 
-            setLiveFXCalendar(new StitchableFXStreetCalendarRSS(path + "tmp/FXCalendar.csv", new FXStreetCalendarRSSFeed()));
-            setLiveFXRates(
-                    new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.EURUSD)),
-                    new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.GBPUSD)),
-                    new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.USDCHF)));
+            //setLiveFXCalendar(new StitchableFXStreetCalendarRSS(path + "tmp/FXCalendar.csv", new FXStreetCalendarRSSFeed()));
+            setLiveFXRates(path);
         }
 
         /*DataType[] typesCalendar = new DataType[]{

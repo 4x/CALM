@@ -66,14 +66,15 @@ public class DecisionAggregator {
             OpenPosition position = PositionFactory.getPosition(time, latestC, entry.getValue(), entry.getKey(), false);
             if (position != null) {
                 if (inLiveTrading) {
-                    try {
-                        blackBox.onDecision(position);
-                    } catch (JFException e) {
-                        e.printStackTrace();
+                    if(position.getCredibility() > 10 && position.getTarget() > 0.001 && position.getTarget() < 0.005){
+                        try {
+                            blackBox.onDecision(position);
+                        } catch (JFException e) {
+                            e.printStackTrace();
+                        }
                     }
-                } else {
-                    positions.add(position);
                 }
+                positions.add(position);
             }
         }
     }
@@ -88,33 +89,21 @@ public class DecisionAggregator {
 
                 System.out.println("CHANGE: " + Operations.round(position.getAbsolutePNL(), 4) + " ACCRUED PNL: " +  Operations.round(PositionFactory.getAccruedPnL(), 4) + " CRED: " + Operations.round(position.getCredibility(), 2) + " " +position.getClosingMessage());
             }
-            /*else{
-                long timeSpan = position.getGoodTillTime() - time;
-                if(timeBasedHistograms.containsKey(timeSpan)){
-                    TreeMap<Double, Double> prediction = timeBasedHistograms.remove(timeSpan);
-                    OpenPosition newPosition = PositionFactory.getPosition(time, latestC, prediction, timeSpan, false);
-                    if (position != null) {
-                        if (inLiveTrading) {
-                            try {
-                                blackBox.onDecision(position);
-                            } catch (JFException e) {
-                                e.printStackTrace();
-                            }
-                        } else {
-                            if(position.isLong() != newPosition.isLong()){
-                                position.close(latestC, time);
-                                closed.add(position);
-                                PositionFactory.positionClosed(position);
-
-                                System.out.println("CHANGE: " + Operations.round(position.getAbsolutePNL(), 4) + " ACCRUED PNL: " +  Operations.round(PositionFactory.getAccruedPnL(), 4) + " CRED: " + Operations.round(position.getCredibility(), 2) + " TARGET: " + Operations.round(position.getTarget(), 2) + " LENGTH: " + (position.getTimeSpan()/1000) + "s " + position.getClosingMessage());
-                            }
-                            newOpen.add(position);
-                        }
-                    }
-                }
-            }*/
         }
         positions.removeAll(closed);
         positions.addAll(newOpen);
+    }
+
+    public static void setBlackBox(BlackBox blackBox) {
+        DecisionAggregator.blackBox = blackBox;
+    }
+
+    public static void setInLiveTrading(boolean inLiveTrading) {
+        DecisionAggregator.inLiveTrading = inLiveTrading;
+        System.out.println("Going into LIVE TRADING");
+    }
+
+    public static boolean isInLiveTrading() {
+        return inLiveTrading;
     }
 }

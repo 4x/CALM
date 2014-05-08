@@ -8,6 +8,7 @@ import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.Operations;
 import ai.context.util.server.JettyServer;
 import ai.context.util.server.servlets.NeuralClusterInformationServlet;
+import ai.context.util.trading.DecisionAggregator;
 import ai.context.util.trading.PositionFactory;
 
 import java.util.*;
@@ -169,6 +170,11 @@ public class NeuronCluster implements TimedContainer{
                     latency /= neurons.size();
                     System.err.println("Mean Latency: " + Operations.round(latency, 3) + ", Points Consumed: " + totalPointsConsumed + ", Overall Score: " + Operations.round(rankings.getOverallMarking(), 4) + " as of " + new Date(meanTime));
                     dangerLevel = latency / minLatency;
+
+                    if(!DecisionAggregator.isInLiveTrading() && meanTime > (System.currentTimeMillis() - 10 * 60000L)){
+                        DecisionAggregator.setInLiveTrading(true);
+                    }
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

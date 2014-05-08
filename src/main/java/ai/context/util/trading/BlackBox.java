@@ -15,9 +15,9 @@ import java.util.TreeMap;
 public class BlackBox implements IStrategy {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BlackBox.class);
-    private double leverage = 50;
     private long maxWaitForFill = 1000L * 60L * 5L;
-    private double available = 0;
+    private double tradeToCreditRatio = 0.1;
+    private double available = 10000;
     private IEngine engine = null;
 
     private List<OpenPosition> waitingPositions = new ArrayList<>();
@@ -42,28 +42,29 @@ public class BlackBox implements IStrategy {
                 while (!waitingPositions.isEmpty()) {
                     try {
                         OpenPosition position = waitingPositions.remove(0);
-                        double amount = Operations.round(((available / 100) * leverage) / 1000000, 4);
+                        double amount = Operations.round((available * tradeToCreditRatio) / 1000000, 4);
                         if (amount > 0) {
                             long tNow = System.currentTimeMillis();
                             IOrder out = null;
                             String direction = "LONG";
                             if (position.isLong()) {
                                 out = engine.submitOrder("EUR_" + tNow, Instrument.EURUSD, IEngine.OrderCommand.BUYLIMIT, amount,
-                                        Operations.round(position.getStart() - 0.0001, 5), 0.8,
+                                        Operations.round(position.getStart() - 0.00005, 5), 0.25,
                                         Operations.round(position.getStopLoss(), 5),
                                         Operations.round(position.getTakeProfit(), 5),
-                                        position.getGoodTillTime() + Period.FIVE_MINS.getInterval());
+                                        position.getGoodTillTime());
                             } else {
                                 direction = "SHORT";
                                 out = engine.submitOrder("EUR_" + tNow, Instrument.EURUSD, IEngine.OrderCommand.SELLLIMIT, amount,
-                                        Operations.round(position.getStart() + 0.0001, 5), 0.8,
+                                        Operations.round(position.getStart() + 0.00005, 5), 0.25,
                                         Operations.round(position.getStopLoss(), 5),
                                         Operations.round(position.getTakeProfit(), 5),
-                                        position.getGoodTillTime() + Period.FIVE_MINS.getInterval());
+                                        position.getGoodTillTime());
                             }
 
                             LOGGER.info("OPENING: " + out.getLabel() + ", " + (out.getOriginalAmount() * 1000000D) + ", " + direction);
                             positions.put("EUR_" + tNow, out);
+                            Thread.sleep(2);
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -102,8 +103,7 @@ public class BlackBox implements IStrategy {
 
     @Override
     public void onAccount(IAccount account) throws JFException {
-        available = account.getBalance() - (1000000D * getOpen()) / leverage;
-        //available = account.getCreditLine();
+        available = account.getCreditLine();
     }
 
     @Override
@@ -120,7 +120,6 @@ public class BlackBox implements IStrategy {
     }
 
     public void onDecision(OpenPosition position) throws JFException {
-
         synchronized (waitingPositions) {
             waitingPositions.add(position);
         }

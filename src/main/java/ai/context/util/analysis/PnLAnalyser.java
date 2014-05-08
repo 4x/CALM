@@ -18,16 +18,19 @@ public class PnLAnalyser {
 
     public void load(){
         BufferedReader br = null;
+        double capital = 5000;
+        String lastDay = "";
+        String lastMonth = "";
+        int nDay = 0;
+        int nMonth = 0;
+        double tradeToCapRatio = 10;
 
         try {
 
             String sCurrentLine;
 
             br = new BufferedReader(new FileReader("/opt/dev/tmp/nohup.out"));
-            String lastDay = "";
-            String lastMonth = "";
-            int nDay = 0;
-            int nMonth = 0;
+
             while ((sCurrentLine = br.readLine()) != null) {
                 if(sCurrentLine.startsWith("CHANGE")){
                     String[] parts = sCurrentLine.split(" ");
@@ -73,13 +76,13 @@ public class PnLAnalyser {
                     //aggregate(credClass, change);
 
                     if((closing.equals("NORMAL")
-                            /*|| closing.equals("LOCKING_PROFIT")*/
-                            /*|| closing.equals("FORCED")*/
+                            || closing.equals("LOCKING_PROFIT")
+                            || closing.equals("FORCED")
                             || closing.equals("TIMEOUT"))
                             && cred >= 10
                             && changeClass > 0
                             && changeClass < 5
-                            && ((startHour > 3 && startHour < 9) || startHour == 12 || startHour == 13 || startHour == 18 || startHour == 19 || startHour == 20)
+                            /*&& ((startHour > 3 && startHour < 9) || startHour == 12 || startHour == 13 || startHour == 18 || startHour == 19 || startHour == 20)*/
                             ){
 
                         aggregate(nMonth, change);
@@ -108,6 +111,9 @@ public class PnLAnalyser {
                         System.out.print(dateString + "-" + month + "-" + year + " " + timeString + ",");
                         System.out.printf("%f\n", Operations.round(change, 4));*/
                         //System.out.println(sCurrentLine);
+
+                        capital += (tradeToCapRatio*capital*change);
+                        //System.out.println(Operations.round(capital, 2));
                     }
                 }
             }
@@ -145,6 +151,8 @@ public class PnLAnalyser {
         System.out.println("Net PNL: " + Operations.round(netPnL, 4));
         System.out.println("Green:Red: " + Operations.round(green/red, 3));
         System.out.println("Win:Lose: " + Operations.round(profits/(totalTrades - profits), 3));
+        System.out.println("PnL/Trade (BP): " + Operations.round(10000 * netPnL/totalTrades, 3));
+        System.out.println("End Capital: " + Operations.round(capital, 2));
     }
 
     public void aggregate(Object id, double change){

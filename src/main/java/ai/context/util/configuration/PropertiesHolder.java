@@ -6,4 +6,6 @@ public class PropertiesHolder {
     public static int maxPopulation = 20000;
     public static double copulaToUniversal = 20;
     public static int toleranceSearch = 2;
+    public static String dukascopyLogin = "DEMO10037BBQVKEU";
+    public static String dukascopyPass = "BBQVK";
 }

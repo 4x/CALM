@@ -36,7 +36,7 @@ public class DukascopyFeed implements IStrategy, Feed {
 
     @Override
     public void onTick(Instrument instrument, ITick tick) throws JFException {
-        //To change body of implemented methods use File | Settings | File Templates.
+        //System.out.println(instrument + " " + tick);
     }
 
     @Override
@@ -57,7 +57,7 @@ public class DukascopyFeed implements IStrategy, Feed {
 
     @Override
     public void onAccount(IAccount account) throws JFException {
-        //To change body of implemented methods use File | Settings | File Templates.
+        LOGGER.info("Current credit-line: " + account.getCreditLine());
     }
 
     @Override
