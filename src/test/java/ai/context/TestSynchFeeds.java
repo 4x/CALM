@@ -101,4 +101,9 @@ class TestFeed extends SynchronisableFeed {
     public int getNumberOfOutputs() {
         return 0;  //To change body of implemented methods use File | Settings | File Templates.
     }
+
+    @Override
+    public void addRawFeed(Feed feed) {
+
+    }
 }

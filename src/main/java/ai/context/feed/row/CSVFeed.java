@@ -116,6 +116,7 @@ public class CSVFeed extends RowFeed {
             try {
                 if (!stitching) {
                     nextLine = reader.readNext();
+                    //System.out.println(nextLine[0] + " " + nextLine[1] + " " + nextLine[2] + " " + nextLine[3] + " " + nextLine[4] + " " + nextLine[5]);
                     if (nextLine == null) {
                         if (stitchableFeed == null) {
                             return null;

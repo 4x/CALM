@@ -5,7 +5,7 @@ import ai.context.core.ai.LearningException;
 import ai.context.core.ai.StateActionPair;
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
-import ai.context.feed.synchronised.SynchFeed;
+import ai.context.feed.synchronised.ISynchFeed;
 import ai.context.learning.DataObject;
 import ai.context.learning.SelectLearnerFeed;
 import ai.context.util.common.StateActionInformationTracker;
@@ -25,7 +25,7 @@ public class NeuralLearner implements Feed, Runnable {
     private NeuronRankings neuronRankings = NeuronRankings.getInstance();
     private StimuliRankings stimuliRankings = StimuliRankings.getInstance();
     private long time = 0;
-    private SynchFeed motherFeed;
+    private ISynchFeed motherFeed;
     private SelectLearnerFeed learnerFeed;
     private Map<NeuralLearner, Integer> parentFeeds = new HashMap<>();
     private LearnerService core = new LearnerService();
@@ -61,7 +61,7 @@ public class NeuralLearner implements Feed, Runnable {
 
     private boolean adapting = true;
 
-    public NeuralLearner(long[] horizonRange, SynchFeed motherFeed, Integer[] actionElements, Integer[] sigElements, long outputFutureOffset, double resolution) {
+    public NeuralLearner(long[] horizonRange, ISynchFeed motherFeed, Integer[] actionElements, Integer[] sigElements, long outputFutureOffset, double resolution) {
         this.motherFeed = motherFeed;
         //learnerFeed.setName(id + "");
         this.horizonRange = horizonRange;

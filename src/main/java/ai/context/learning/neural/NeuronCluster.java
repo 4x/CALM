@@ -2,7 +2,7 @@ package ai.context.learning.neural;
 
 import ai.context.container.TimedContainer;
 import ai.context.core.ai.LearningException;
-import ai.context.feed.synchronised.SynchFeed;
+import ai.context.feed.synchronised.ISynchFeed;
 import ai.context.util.common.MapUtils;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.Operations;
@@ -21,7 +21,7 @@ public class NeuronCluster implements TimedContainer{
 
     private NeuronRankings rankings = NeuronRankings.getInstance();
     private StimuliRankings stimuliRankings = StimuliRankings.getInstance();
-    private SynchFeed motherFeed;
+    private ISynchFeed motherFeed;
     private JettyServer server = new JettyServer(8055);
     private static volatile NeuronCluster instance = null;
     private AtomicInteger newID = new AtomicInteger(0);
@@ -83,7 +83,7 @@ public class NeuronCluster implements TimedContainer{
         //service.execute(neuron);
     }
 
-    public void setMotherFeed(SynchFeed motherFeed) {
+    public void setMotherFeed(ISynchFeed motherFeed) {
         this.motherFeed = motherFeed;
     }
 

@@ -7,8 +7,10 @@ import ai.context.feed.row.CSVFeed;
 import ai.context.feed.stitchable.StitchableFXRate;
 import ai.context.feed.stitchable.StitchableFeed;
 import ai.context.feed.surgical.ExtractOneFromListFeed;
+import ai.context.feed.synchronised.ISynchFeed;
 import ai.context.feed.synchronised.MinMaxAggregatorDiscretiser;
 import ai.context.feed.synchronised.SynchFeed;
+import ai.context.feed.synchronised.SynchronisedFeed;
 import ai.context.feed.transformer.compound.AmplitudeWavelengthTransformer;
 import ai.context.feed.transformer.compound.SubtractTransformer;
 import ai.context.feed.transformer.filtered.RowBasedTransformer;
@@ -32,7 +34,7 @@ import java.util.*;
 
 public class MainNeural {
 
-    private boolean testing = true;
+    private boolean testing = false;
     private String dukascopyUsername = PropertiesHolder.dukascopyLogin;
     private String dukascopyPassword = PropertiesHolder.dukascopyPass;
 
@@ -57,7 +59,7 @@ public class MainNeural {
 
     public void setup(String path) {
 
-        SynchFeed motherFeed = initFeed(path);
+        ISynchFeed motherFeed = initFeed(path);
         NeuronCluster.getInstance().setMotherFeed(motherFeed);
 
         long[] horizonRange = new long[]{1 * 60 * 60 * 1000L, 12 * 60 * 60 * 1000L};
@@ -126,7 +128,7 @@ public class MainNeural {
         //this.liveFXRateCHF = new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.USDCHF));
     }
 
-    private SynchFeed initFeed(String path) {
+    private ISynchFeed initFeed(String path) {
 
         if (!testing) {
             initFXAPI();
@@ -184,7 +186,7 @@ public class MainNeural {
                 DataType.DOUBLE,
                 DataType.DOUBLE};
 
-        String dateFP = "2008.01.01 00:00:00";
+        String dateFP = "2010.08.01 00:00:00";
 
         CSVFeed feedPriceEUR = new CSVFeed(path + "feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feedPriceEUR.setStitchableFeed(liveFXRateEUR);
@@ -194,7 +196,7 @@ public class MainNeural {
         feedPriceCHF.setStitchableFeed(liveFXRateCHF);*/
 
 
-        SynchFeed feed = buildSynchFeed(null, feedPriceEUR);
+        ISynchFeed feed = buildSynchFeed(null, feedPriceEUR);
         //feed = buildSynchFeed(feed, feedPriceGBP);
         /*feed = buildSynchFeed(feed, feedPriceCHF);*/
 
@@ -206,7 +208,7 @@ public class MainNeural {
         TimeVariablesAppenderFeed tFeed = new TimeVariablesAppenderFeed(sFeed);
         sFeed.addChild(tFeed);
 
-        SynchFeed synchFeed = new SynchFeed();
+        ISynchFeed synchFeed = new SynchronisedFeed();
         synchFeed.addRawFeed(feedPriceEUR);
         synchFeed.addRawFeed(tFeed);
 
@@ -237,9 +239,9 @@ public class MainNeural {
         return synchFeed;
     }
 
-    private SynchFeed buildSynchFeed(SynchFeed synch, CSVFeed... feeds) {
+    private ISynchFeed buildSynchFeed(ISynchFeed synch, CSVFeed... feeds) {
         if (synch == null) {
-            synch = new SynchFeed();
+            synch = new SynchronisedFeed();
         }
         for (CSVFeed feed : feeds) {
             ExtractOneFromListFeed feedH = new ExtractOneFromListFeed(feed, 1);

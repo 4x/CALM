@@ -5,4 +5,5 @@ import ai.context.feed.FeedObject;
 
 public interface ISynchFeed extends Feed {
     public FeedObject getNextComposite(Object caller);
+    public void addRawFeed(Feed feed);
 }

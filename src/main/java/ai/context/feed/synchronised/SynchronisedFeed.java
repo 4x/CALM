@@ -10,6 +10,10 @@ public class SynchronisedFeed extends SynchronisableFeed {
 
     private Feed rawFeed;
 
+    public SynchronisedFeed(){
+        super(null);
+    }
+
     public SynchronisedFeed(Feed rawFeed, SynchronisableFeed sibling) {
         super(sibling);
         this.rawFeed = rawFeed;
@@ -38,6 +42,15 @@ public class SynchronisedFeed extends SynchronisableFeed {
 
     public Feed getRawFeed() {
         return rawFeed;
+    }
+
+    public void addRawFeed(Feed feed){
+        if(rawFeed == null){
+            rawFeed = feed;
+        }
+        else {
+            new SynchronisedFeed(feed, this);
+        }
     }
 
     @Override
