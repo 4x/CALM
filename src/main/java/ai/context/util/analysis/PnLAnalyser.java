@@ -129,7 +129,6 @@ public class PnLAnalyser {
                     }
                 }
             }
-            System.out.println("Days Traded: " + nDay);
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -159,7 +158,9 @@ public class PnLAnalyser {
             totalTrades += s.count;
             profits += s.nProfit;
         }
-        System.out.println("\nTrades: " + (int)totalTrades);
+
+        System.out.println("\nDays Traded: " + nDay);
+        System.out.println("Trades: " + (int)totalTrades);
         System.out.println("Net PNL: " + Operations.round(netPnL, 4));
         System.out.println("Green:Red: " + Operations.round(green/red, 3));
         System.out.println("Win:Lose: " + Operations.round(profits/(totalTrades - profits), 3));
