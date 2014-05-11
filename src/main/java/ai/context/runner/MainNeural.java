@@ -62,7 +62,6 @@ public class MainNeural {
         }
         //process.configureFrom("/opt/dev/tmp/2008-2011_logs.txt");
         process.setup(path);
-
         DynamicPropertiesLoader.start("");
     }
 
