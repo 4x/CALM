@@ -30,11 +30,16 @@ import com.dukascopy.api.Period;
 import com.dukascopy.api.system.IClient;
 import scala.actors.threadpool.Arrays;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
 
 public class MainNeural {
 
-    private boolean testing = false;
+    private String config;
+    private boolean testing = true;
     private String dukascopyUsername = PropertiesHolder.dukascopyLogin;
     private String dukascopyPassword = PropertiesHolder.dukascopyPass;
 
@@ -47,22 +52,30 @@ public class MainNeural {
     private BlackBox blackBox;
 
     public static void main(String[] args) {
-        MainNeural test = new MainNeural();
+        MainNeural process = new MainNeural();
         String path = "/opt/dev/data/";
         if (!(args == null || args.length == 0)) {
             path = args[0];
+            if(args.length >= 2){
+                process.configureFrom(args[1]);
+            }
         }
-        test.setup(path);
+        //process.configureFrom("/opt/dev/tmp/2008-2011_logs.txt");
+        process.setup(path);
+
         DynamicPropertiesLoader.start("");
     }
 
+    private void configureFrom(String config) {
+        this.config = config;
+    }
 
     public void setup(String path) {
 
         ISynchFeed motherFeed = initFeed(path);
         NeuronCluster.getInstance().setMotherFeed(motherFeed);
 
-        long[] horizonRange = new long[]{1 * 60 * 60 * 1000L, 12 * 60 * 60 * 1000L};
+        long[] horizonRange = new long[]{1 * 60 * 60 * 1000L, 4 * 60 * 60 * 1000L};
         Integer[] actionElements = new Integer[]{3, 1, 2, 0};
         long outputFutureOffset = 5 * 60 * 1000L;
         double resolution = 0.0001;
@@ -71,39 +84,74 @@ public class MainNeural {
             availableStimuli.add(i);
         }
         availableStimuli.removeAll(Arrays.asList(actionElements));
-        //StimuliRankings.getInstance().newStimuli(availableStimuli);
 
-        for (int i = 0; i < 50; i++) {
-            Integer[] sigElements = new Integer[7];
-            for (int sig = 0; sig < sigElements.length; sig++) {
-                if (availableStimuli.isEmpty()) {
-                    for (int index = 0; index < motherFeed.getNumberOfOutputs(); index++) {
-                        availableStimuli.add(index);
+        if(config != null){
+            try {
+                BufferedReader br = new BufferedReader(new FileReader(config));
+                String sCurrentLine;
+                while ((sCurrentLine = br.readLine()) != null) {
+                    if(sCurrentLine.startsWith("New Neuron:")){
+
+                        Integer[] actArr = null;
+                        Integer[] sigArr = null;
+                        String parents = null;
+
+                        String[] parts = sCurrentLine.split("\\[");
+                        if(parts.length > 2){
+                            String actions = parts[2].substring(0, parts[2].indexOf(']'));
+                            List<Integer> actionArray = new ArrayList<>();
+                            for(String action : actions.split(",")){
+                                actionArray.add(Integer.parseInt(action.replaceAll(" ", "")));
+                            }
+                            actArr = new Integer[actionArray.size()];
+                            for(int i = 0; i < actArr.length; i++){
+                                actArr[i] = actionArray.get(i);
+                            }
+                            System.out.println("Actions: " + actionArray);
+                        }
+                        if(parts.length > 3){
+                            String signals = parts[3].substring(0, parts[3].indexOf(']'));
+                            List<Integer> sigArray = new ArrayList<>();
+                            for(String signal : signals.split(",")){
+                                sigArray.add(Integer.parseInt(signal.replaceAll(" ", "")));
+                            }
+                            sigArr = new Integer[sigArray.size()];
+                            for(int i = 0; i < sigArr.length; i++){
+                                sigArr[i] = sigArray.get(i);
+                            }
+                            System.out.println("Signals: " + sigArray);
+                        }
+                        if(parts.length > 4){
+                            parents = parts[4].substring(0, parts[4].indexOf(']'));
+                            System.out.println("Parents: " + parents);
+                        }
+                        NeuronCluster.getInstance().start(new NeuralLearner(horizonRange, motherFeed, actArr, sigArr, parents,outputFutureOffset, resolution));
                     }
-                    availableStimuli.removeAll(Arrays.asList(actionElements));
                 }
-                List<Integer> available = new ArrayList<>(availableStimuli);
-                int chosenSig = available.get((int) (Math.random() * available.size()));
-                availableStimuli.remove(chosenSig);
-                sigElements[sig] = chosenSig;
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            NeuronCluster.getInstance().start(new NeuralLearner(horizonRange, motherFeed, actionElements, sigElements, outputFutureOffset, resolution));
         }
-        /*for(int i = 0 ; i < 50; i++){
-            Integer[] sigElements = new Integer[0];
-            for(int sig = 0; sig < sigElements.length; sig++){
-                if(availableStimuli.isEmpty()){
-                    for(int index = 0 ; index < motherFeed.getNumberOfOutputs(); index++){
-                        availableStimuli.add(index);
+        else {
+            for (int i = 0; i < 50; i++) {
+                Integer[] sigElements = new Integer[7];
+                for (int sig = 0; sig < sigElements.length; sig++) {
+                    if (availableStimuli.isEmpty()) {
+                        for (int index = 0; index < motherFeed.getNumberOfOutputs(); index++) {
+                            availableStimuli.add(index);
+                        }
+                        availableStimuli.removeAll(Arrays.asList(actionElements));
                     }
+                    List<Integer> available = new ArrayList<>(availableStimuli);
+                    int chosenSig = available.get((int) (Math.random() * available.size()));
+                    availableStimuli.remove(chosenSig);
+                    sigElements[sig] = chosenSig;
                 }
-                List<Integer> available = new ArrayList<>(availableStimuli);
-                int chosenSig = available.get((int) (Math.random() * available.size()));
-                availableStimuli.remove(chosenSig);
-                sigElements[sig] = chosenSig;
+                NeuronCluster.getInstance().start(new NeuralLearner(horizonRange, motherFeed, actionElements, sigElements, null, outputFutureOffset, resolution));
             }
-            NeuronCluster.getInstance().start(new NeuralLearner(horizonRange, motherFeed, actionElements, sigElements, outputFutureOffset, resolution));
-        }*/
+        }
         NeuronCluster.getInstance().startServer();
         NeuronCluster.getInstance().start();
     }

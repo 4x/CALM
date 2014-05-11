@@ -26,11 +26,12 @@ public class PnLAnalyser {
         double tradeToCapRatio = 10;
 
         try {
+            //String file = "/opt/dev/tmp/nohup.out";
+            String file = "/opt/dev/tmp/2008-2011_logs.txt";
+            boolean hasTargetLogging = false;
 
+            br = new BufferedReader(new FileReader(file));
             String sCurrentLine;
-
-            br = new BufferedReader(new FileReader("/opt/dev/tmp/nohup.out"));
-
             while ((sCurrentLine = br.readLine()) != null) {
                 if(sCurrentLine.startsWith("CHANGE")){
                     String[] parts = sCurrentLine.split(" ");
@@ -39,7 +40,12 @@ public class PnLAnalyser {
                     String state = parts[13].substring(0, parts[13].length() - 1);
                     String dir = parts[14];
                     Double cred = Double.parseDouble(parts[6]);
-                    Long span = Long.parseLong(parts[15].substring(0, parts[15].length() - 1));
+                    Long span = Long.parseLong(parts[15].substring(0, parts[15].indexOf('s')));
+                    Double targetPnL = 0D;
+                    if(hasTargetLogging){
+                        targetPnL = Double.parseDouble(parts[16]);
+                    }
+
                     String day = parts[7];
                     String month = parts[8];
                     Long date = Long.parseLong(parts[9]);
@@ -54,8 +60,12 @@ public class PnLAnalyser {
                     }
 
                     String closing = "NORMAL";
-                    if(parts.length == 17){
-                        closing = parts[16];
+                    int index = 16;
+                    if(hasTargetLogging){
+                        index = 17;
+                    }
+                    if(parts.length == 1 + index){
+                        closing = parts[index];
                     }
 
                     if(!day.equals(lastDay)){
@@ -72,10 +82,10 @@ public class PnLAnalyser {
                     double rebate = 0.00010;
                     long startHour = startTime/60;
                     change += rebate;
-                    int credClass = (int)(Math.log(cred * cred * 1000 + 1));
+                    int credClass = (int)(cred * 10);
                     //aggregate(credClass, change);
 
-                    if((closing.equals("NORMAL")
+                    if(/*true || */(closing.equals("NORMAL")
                             || closing.equals("LOCKING_PROFIT")
                             || closing.equals("FORCED")
                             || closing.equals("TIMEOUT"))
@@ -91,6 +101,8 @@ public class PnLAnalyser {
                         //aggregate(hour, change);
                         //aggregate(nDay, change);
                         //aggregate(closing, change);
+                        //aggregate(span, change);
+                        //aggregate(credClass, change);
 
                         /*String dateString = "";
                         if(date < 10){

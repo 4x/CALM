@@ -51,7 +51,6 @@ public class NeuralLearner implements Feed, Runnable {
 
     private Integer[] outputElements;
 
-
     //Performance
     private HashSet<OpenPosition> positions = new HashSet<OpenPosition>();
     private double accruedPnL = 0;
@@ -61,7 +60,7 @@ public class NeuralLearner implements Feed, Runnable {
 
     private boolean adapting = true;
 
-    public NeuralLearner(long[] horizonRange, ISynchFeed motherFeed, Integer[] actionElements, Integer[] sigElements, long outputFutureOffset, double resolution) {
+    public NeuralLearner(long[] horizonRange, ISynchFeed motherFeed, Integer[] actionElements, Integer[] sigElements, String parentConfig, long outputFutureOffset, double resolution) {
         this.motherFeed = motherFeed;
         //learnerFeed.setName(id + "");
         this.horizonRange = horizonRange;
@@ -72,12 +71,22 @@ public class NeuralLearner implements Feed, Runnable {
         this.resolution = resolution;
         core.setActionResolution(resolution);
 
-        NeuralLearner[] candidates = cluster.getNeurons();
-        double chance = 3.0 / candidates.length;
-        for (NeuralLearner parentCandidate : candidates) {
-            if (Math.random() < chance) {
-                parentFeeds.put(parentCandidate, (int) (Math.random() * parentCandidate.getNumberOfOutputs()));
-                parentCandidate.addChild(this);
+        if(parentConfig == null || parentConfig.length() == 0){
+            NeuralLearner[] candidates = cluster.getNeurons();
+            double chance = 3.0 / candidates.length;
+            for (NeuralLearner parentCandidate : candidates) {
+                if (Math.random() < chance) {
+                    parentFeeds.put(parentCandidate, (int) (Math.random() * parentCandidate.getNumberOfOutputs()));
+                    parentCandidate.addChild(this);
+                }
+            }
+        }
+        else{
+            for(String parentFeed : parentConfig.split(",")){
+                NeuralLearner parent = cluster.getNeuronForId(Integer.parseInt(parentFeed.split(":")[0]));
+                int feed = Integer.parseInt(parentFeed.split(":")[1]);
+                parentFeeds.put(parent, feed);
+                parent.addChild(this);
             }
         }
         this.learnerFeed = new SelectLearnerFeed(motherFeed, actionElements, sigElements);
@@ -353,7 +362,7 @@ public class NeuralLearner implements Feed, Runnable {
             }
         }
 
-        NeuralLearner child = new NeuralLearner(horizonRange, motherFeed, actionElements, sigElements, outputFutureOffset, resolution);
+        NeuralLearner child = new NeuralLearner(horizonRange, motherFeed, actionElements, sigElements, null, outputFutureOffset, resolution);
         cluster.start(child);
     }
 
@@ -589,7 +598,14 @@ public class NeuralLearner implements Feed, Runnable {
 
     @Override
     public String getDescription(int startIndex, String padding) {
-        return padding + "[" + id + "] Neural Learner with Actions: " + Arrays.asList(actionElements) + " and Signals: " + Arrays.asList(sigElements);
+        String parentDesc = "";
+        for(Map.Entry<NeuralLearner, Integer> parent : parentFeeds.entrySet()){
+            parentDesc += parent.getKey().getID() + ":" + parent.getValue() + ",";
+        }
+        if(parentDesc.length() > 0){
+            parentDesc = parentDesc.substring(0, parentDesc.length() - 1);
+        }
+        return padding + "[" + id + "] Neural Learner with Actions: " + Arrays.asList(actionElements) + " and Signals: " + Arrays.asList(sigElements) + " and Parents: [" + parentDesc + "]";
     }
 
     @Override

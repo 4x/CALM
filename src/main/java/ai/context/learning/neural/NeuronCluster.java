@@ -28,6 +28,8 @@ public class NeuronCluster implements TimedContainer{
 
     private Map<Integer, NeuralLearner> outputToNeuron = new HashMap<>();
 
+    private Map<Integer, NeuralLearner> idToNeuron = new HashMap<>();
+
     private long meanTime = 0;
     private long totalPointsConsumed = 0;
     private long minLatency = 50L;
@@ -80,6 +82,7 @@ public class NeuronCluster implements TimedContainer{
 
     public void start(NeuralLearner neuron) {
         neurons.add(neuron);
+        idToNeuron.put(neuron.getID(), neuron);
         //service.execute(neuron);
     }
 
@@ -307,5 +310,9 @@ public class NeuronCluster implements TimedContainer{
     @Override
     public long getTime() {
         return meanTime;
+    }
+
+    public NeuralLearner getNeuronForId(int id) {
+        return idToNeuron.get(id);
     }
 }

@@ -66,7 +66,7 @@ public class DecisionAggregator {
             OpenPosition position = PositionFactory.getPosition(time, latestC, entry.getValue(), entry.getKey(), false);
             if (position != null) {
                 if (inLiveTrading) {
-                    if(position.getCredibility() > 10 && position.getTarget() > 0.001 && position.getTarget() < 0.005){
+                    if(position.getCredibility() > PositionFactory.getCredThreshold() && position.getTarget() > 0.001 && position.getTarget() < 0.005){
                         try {
                             blackBox.onDecision(position);
                         } catch (JFException e) {
@@ -86,8 +86,9 @@ public class DecisionAggregator {
             if (position.canCloseOnBar_Pessimistic(time, latestH, latestL, latestC)) {
                 closed.add(position);
                 PositionFactory.positionClosed(position);
+                blackBox.toClose(position.getOrder());
 
-                System.out.println("CHANGE: " + Operations.round(position.getAbsolutePNL(), 4) + " ACCRUED PNL: " +  Operations.round(PositionFactory.getAccruedPnL(), 4) + " CRED: " + Operations.round(position.getCredibility(), 2) + " " +position.getClosingMessage());
+                System.out.println("CHANGE: " + Operations.round(position.getAbsolutePNL(), 4) + " ACCRUED PNL: " +  Operations.round(PositionFactory.getAccruedPnL(), 4) + " CRED: " + Operations.round(position.getCredibility(), 2) + " " + position.getClosingMessage());
             }
         }
         positions.removeAll(closed);

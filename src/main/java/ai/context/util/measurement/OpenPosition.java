@@ -1,9 +1,13 @@
 package ai.context.util.measurement;
 
+import ai.context.util.mathematics.Operations;
+import com.dukascopy.api.IOrder;
+
 import java.util.Date;
 
 public class OpenPosition {
 
+    private IOrder order;
     private boolean goodTillClosed = false;
     private double amount = 1.0;
     private double cost = 0.0;
@@ -31,7 +35,7 @@ public class OpenPosition {
         this.takeProfit = start + targetProfit;
         this.stopLoss = start - targetLoss;
         this.isLong = isLong;
-        this.target = targetProfit;
+        this.target = Operations.round(Math.abs(targetProfit), 5);
         this.goodTillTime = goodTillTime;
         this.goodTillClosed = goodTillClosed;
         this.timeSpan = goodTillTime - timeOpen;
@@ -57,15 +61,15 @@ public class OpenPosition {
 
             if (isLong) {
                 if (price > start) {
-                    closingMessage = new Date(time) + ": PROFIT: [LONG] " + (time - timeOpen)/1000 + "s TIMEOUT";
+                    closingMessage = new Date(time) + ": PROFIT: [LONG] " + (time - timeOpen)/1000 + "s " + target + " TIMEOUT";
                 } else {
-                    closingMessage = new Date(time) + ": LOSS: [LONG] " + (time - timeOpen)/1000 + "s TIMEOUT";
+                    closingMessage = new Date(time) + ": LOSS: [LONG] " + (time - timeOpen)/1000 + "s " + target + " TIMEOUT";
                 }
             } else {
                 if (price < start) {
-                    closingMessage = new Date(time) + ": PROFIT: [SHORT] " + (time - timeOpen)/1000 + "s TIMEOUT";
+                    closingMessage = new Date(time) + ": PROFIT: [SHORT] " + (time - timeOpen)/1000 + "s " + target + " TIMEOUT";
                 } else {
-                    closingMessage = new Date(time) + ": LOSS: [SHORT] " + (time - timeOpen)/1000 + "s TIMEOUT";
+                    closingMessage = new Date(time) + ": LOSS: [SHORT] " + (time - timeOpen)/1000 + "s " + target + " TIMEOUT";
                 }
             }
             return true;
@@ -74,44 +78,44 @@ public class OpenPosition {
         if (isLong) {
             if (low <= stopLoss) {
                 price = stopLoss;
-                closingMessage = new Date(time) + ": LOSS: [LONG] " + (time - timeOpen)/1000 + "s";
+                closingMessage = new Date(time) + ": LOSS: [LONG] " + (time - timeOpen)/1000 + "s " + target;
                 return true;
             }
 
             if (high >= takeProfit) {
                 price = takeProfit;
-                closingMessage = new Date(time) + ": PROFIT: [LONG] " + (time - timeOpen)/1000 + "s";
+                closingMessage = new Date(time) + ": PROFIT: [LONG] " + (time - timeOpen)/1000 + "s " + target;
                 return true;
             }
         } else {
             if (high >= stopLoss) {
                 price = stopLoss;
-                closingMessage = new Date(time) + ": LOSS: [SHORT] " + (time - timeOpen)/1000 + "s";
+                closingMessage = new Date(time) + ": LOSS: [SHORT] " + (time - timeOpen)/1000 + "s " + target;
                 return true;
             }
 
             if (low <= takeProfit) {
                 price = takeProfit;
-                closingMessage = new Date(time) + ": PROFIT: [SHORT] " + (time - timeOpen)/1000 + "s";
+                closingMessage = new Date(time) + ": PROFIT: [SHORT] " + (time - timeOpen)/1000 + "s " + target;
                 return true;
             }
         }
 
-        /*if((double)(time - timeOpen)/(double)(goodTillTime - timeOpen) > 0.8){
+        if((double)(time - timeOpen)/(double)(goodTillTime - timeOpen) > 0.8){
             if (isLong) {
                 if (close > (start + 2*cost)) {
                     price = close;
-                    closingMessage = new Date(time) + ": PROFIT: [LONG] " + (time - timeOpen)/1000 + "s LOCKING_PROFIT";
+                    closingMessage = new Date(time) + ": PROFIT: [LONG] " + (time - timeOpen)/1000 + "s " + target + " LOCKING_PROFIT";
                     return true;
                 }
             } else {
                 if (close < (start - 2*cost)) {
                     price = close;
-                    closingMessage = new Date(time) + ": PROFIT: [SHORT] " + (time - timeOpen)/1000 + "s LOCKING_PROFIT";
+                    closingMessage = new Date(time) + ": PROFIT: [SHORT] " + (time - timeOpen)/1000 + "s " + target + " LOCKING_PROFIT";
                     return true;
                 }
             }
-        }*/
+        }
 
         return false;
     }
@@ -120,15 +124,15 @@ public class OpenPosition {
         this.price = price;
         if (isLong) {
             if (price > start) {
-                closingMessage = new Date(time) + ": PROFIT: [LONG] " + (time - timeOpen)/1000 + "s FORCED";
+                closingMessage = new Date(time) + ": PROFIT: [LONG] " + (time - timeOpen)/1000 + "s " + target + " FORCED";
             } else {
-                closingMessage = new Date(time) + ": LOSS: [LONG] " + (time - timeOpen)/1000 + "s FORCED";
+                closingMessage = new Date(time) + ": LOSS: [LONG] " + (time - timeOpen)/1000 + "s " + target + " FORCED";
             }
         } else {
             if (price < start) {
-                closingMessage = new Date(time) + ": PROFIT: [SHORT] " + (time - timeOpen)/1000 + "s FORCED";
+                closingMessage = new Date(time) + ": PROFIT: [SHORT] " + (time - timeOpen)/1000 + "s " + target + " FORCED";
             } else {
-                closingMessage = new Date(time) + ": LOSS: [SHORT] " + (time - timeOpen)/1000 + "s FORCED";
+                closingMessage = new Date(time) + ": LOSS: [SHORT] " + (time - timeOpen)/1000 + "s " + target + " FORCED";
             }
         }
     }
@@ -199,5 +203,13 @@ public class OpenPosition {
 
     public void setCredibility(double credibility) {
         this.credibility = credibility;
+    }
+
+    public IOrder getOrder() {
+        return order;
+    }
+
+    public void setOrder(IOrder order) {
+        this.order = order;
     }
 }

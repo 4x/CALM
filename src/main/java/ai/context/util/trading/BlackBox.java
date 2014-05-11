@@ -7,10 +7,7 @@ import com.dukascopy.api.system.IClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class BlackBox implements IStrategy {
 
@@ -23,6 +20,7 @@ public class BlackBox implements IStrategy {
     private List<OpenPosition> waitingPositions = new ArrayList<>();
 
     private TreeMap<String, IOrder> positions = new TreeMap<>();
+    private Set<IOrder> toClose = new HashSet<>();
 
     public BlackBox(IClient client) {
         client.startStrategy(this);
@@ -64,6 +62,7 @@ public class BlackBox implements IStrategy {
 
                             LOGGER.info("OPENING: " + out.getLabel() + ", " + (out.getOriginalAmount() * 1000000D) + ", " + direction);
                             positions.put("EUR_" + tNow, out);
+                            position.setOrder(out);
                             Thread.sleep(2);
                         }
                     } catch (Exception e) {
@@ -71,6 +70,9 @@ public class BlackBox implements IStrategy {
                     }
                 }
             }
+
+            engine.closeOrders(toClose);
+            toClose.clear();
         }
     }
 
@@ -122,6 +124,12 @@ public class BlackBox implements IStrategy {
     public void onDecision(OpenPosition position) throws JFException {
         synchronized (waitingPositions) {
             waitingPositions.add(position);
+        }
+    }
+
+    public void toClose(IOrder order){
+        if(order != null){
+            toClose.add(order);
         }
     }
 }

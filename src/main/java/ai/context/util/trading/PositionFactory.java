@@ -33,6 +33,7 @@ public class PositionFactory {
     private static long totalProfit = 0;
     private static double sumLoss = 0;
     private static double sumProfit = 0;
+    private static double credThreshold = 1.0;
 
     public static OpenPosition getPosition(long time, double pivot, TreeMap<Double, Double> histogram, long timeSpan, boolean goodTillClosed) {
         /*if ((amount * tradeToCapRatio * leverage) < 1000) {
@@ -403,5 +404,13 @@ public class PositionFactory {
 
     public static double getSumProfit() {
         return sumProfit;
+    }
+
+    public static void setCredThreshold(double credThreshold) {
+        PositionFactory.credThreshold = credThreshold;
+    }
+
+    public static double getCredThreshold() {
+        return credThreshold;
     }
 }
