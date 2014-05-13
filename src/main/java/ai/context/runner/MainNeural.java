@@ -60,7 +60,7 @@ public class MainNeural {
                 process.configureFrom(args[1]);
             }
         }
-        //process.configureFrom("/opt/dev/tmp/2008-2011_logs.txt");
+        //process.configureFrom("/opt/dev/source/GitHub/CALM/src/main/resources/NeuralPopulation_1.conf");
         process.setup(path);
         DynamicPropertiesLoader.start("");
     }
