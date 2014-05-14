@@ -206,25 +206,13 @@ public class NeuralLearner implements Feed, Runnable {
 
 
             Date executionInstant = new Date(time);
-            if (/*positions.size() < 15 && */!(executionInstant.getDay() == 0 || executionInstant.getDay() == 6)) {
+            if (!(executionInstant.getDay() == 0 || executionInstant.getDay() == 6)) {
                 TreeMap<Integer, Double> distribution = core.getActionDistribution(signal);
                 TreeMap<Double, Double> prediction = new TreeMap<Double, Double>();
                 for (Map.Entry<Integer, Double> entry : distribution.entrySet()) {
                     prediction.put(data.getValue()[0] + entry.getKey() * core.getActionResolution(), entry.getValue());
                 }
                 DecisionAggregator.aggregateDecision(data, data.getValue()[0], prediction, horizon, false);
-                /*OpenPosition position = PositionFactory.getPosition(data.getTimeStamp(), data.getValue()[0], prediction, horizon, false);
-                if (position != null) {
-                    if (inLiveTrading) {
-                        try {
-                            blackBox.onDecision(position);
-                        } catch (JFException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        positions.add(position);
-                    }
-                }*/
             }
 
         }

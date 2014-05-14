@@ -26,9 +26,9 @@ public class PnLAnalyser {
         double tradeToCapRatio = 10;
 
         try {
-            //String file = "/opt/dev/tmp/nohup.out";
-            String file = "/opt/dev/tmp/2008-2011_logs.txt";
-            boolean hasTargetLogging = false;
+            String file = "/opt/dev/tmp/nohup.out";
+            //String file = "/opt/dev/tmp/2008-2011_logs.txt";
+            boolean hasTargetLogging = true;
 
             br = new BufferedReader(new FileReader(file));
             String sCurrentLine;
@@ -43,7 +43,7 @@ public class PnLAnalyser {
                     Long span = Long.parseLong(parts[15].substring(0, parts[15].indexOf('s')));
                     Double targetPnL = 0D;
                     if(hasTargetLogging){
-                        targetPnL = Double.parseDouble(parts[16]);
+                        targetPnL = Double.parseDouble(parts[16].split("Mean")[0]);
                     }
 
                     String day = parts[7];
@@ -78,21 +78,22 @@ public class PnLAnalyser {
                         nMonth++;
                     }
 
-                    int changeClass = (int)(Math.abs(change + 0.0002)*1000);
-                    double rebate = 0.00010;
+                    int changeClass = (int)(Math.abs(targetPnL)*1000);
+                    double rebate = 0.00020;
                     long startHour = startTime/60;
                     change += rebate;
                     int credClass = (int)(cred * 10);
-                    //aggregate(credClass, change);
 
-                    if(/*true || */(closing.equals("NORMAL")
+                    if(     //true ||
+                            (closing.equals("NORMAL")
                             || closing.equals("LOCKING_PROFIT")
                             || closing.equals("FORCED")
                             || closing.equals("TIMEOUT"))
-                            && cred >= 10
-                            && changeClass > 0
-                            && changeClass < 5
-                            /*&& ((startHour > 3 && startHour < 9) || startHour == 12 || startHour == 13 || startHour == 18 || startHour == 19 || startHour == 20)*/
+                            && cred >= 1.75
+                            && targetPnL > 0.001
+                            && targetPnL < 0.002
+                            && ((startHour > 4 && startHour < 9) || (startHour > 14 && startHour < 17))
+                            //&& nMonth > 2
                             ){
 
                         aggregate(nMonth, change);
@@ -100,6 +101,7 @@ public class PnLAnalyser {
                         //aggregate(changeClass, change);
                         //aggregate(hour, change);
                         //aggregate(nDay, change);
+                        //aggregate(day, change);
                         //aggregate(closing, change);
                         //aggregate(span, change);
                         //aggregate(credClass, change);

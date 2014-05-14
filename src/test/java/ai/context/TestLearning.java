@@ -17,13 +17,13 @@ public class TestLearning {
 
     private int numInputs = 6;
     private int degreesOfFreedom = 10;
-    private int numPoints = 10000;
+    private int numPoints = 1000;
 
     private int numPredict = 1000;
 
     private double tolerance = 0.025;
     private double actionResolution = 1.0;
-    private int maxPopulation = 1000;
+    private int maxPopulation = 200;
 
     @Before
     public void setup() {

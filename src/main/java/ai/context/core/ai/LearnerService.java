@@ -4,6 +4,7 @@ import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.learning.AmalgamateUtils;
 import ai.context.util.learning.ClusteredCopulae;
 import ai.context.util.mathematics.CorrelationCalculator;
+import ai.context.util.mathematics.Operations;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -136,7 +137,7 @@ public class LearnerService {
 
     public synchronized void addStateAction(int[] state, double movement) throws LearningException {
 
-        int actionClass = (int) (movement / actionResolution);
+        int actionClass = (int) Operations.round(movement / actionResolution, 0);
         if (!distribution.containsKey(actionClass)) {
             distribution.put(actionClass, 0L);
         }
@@ -214,22 +215,10 @@ public class LearnerService {
         for (int i = 0; i < correlationWeights.length; i++) {
             double correlation = magCorrelations[i];
             if (correlation >= 0 && !Double.isInfinite(correlation)) {
-                //correlationWeights[i] = (correlationWeights[i] + correlation)/2;
+                //correlationWeights[i] = (0.75 * correlationWeights[i] + 0.25 * correlation);
                 correlationWeights[i] = Math.sqrt(correlationWeights[i] * correlation);
             }
         }
-
-        /*if(correlations != null)
-        {
-            for (int i = 0; i < correlationWeights.length; i++)
-            {
-                double correlation = correlations[i];
-                if(correlation >= 0 && !Double.isInfinite(correlation))
-                {
-                    correlationWeights[i] += Math.abs((correlations[i])/PropertiesHolder.copulaToUniversal);
-                }
-            }
-        }*/
         return correlationWeights;
     }
 
@@ -293,7 +282,7 @@ public class LearnerService {
         if (max == min) {
             return 0;
         }
-        return Math.pow((max - x) / (max - min), 4);
+        return Math.pow((max - x) / (max - min), 2);
     }
 
     private synchronized void mergeStates() throws LearningException {

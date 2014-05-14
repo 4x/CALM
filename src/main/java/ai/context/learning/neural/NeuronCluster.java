@@ -22,7 +22,7 @@ public class NeuronCluster implements TimedContainer{
     private NeuronRankings rankings = NeuronRankings.getInstance();
     private StimuliRankings stimuliRankings = StimuliRankings.getInstance();
     private ISynchFeed motherFeed;
-    private JettyServer server = new JettyServer(8055);
+    private JettyServer server = new JettyServer(8056);
     private static volatile NeuronCluster instance = null;
     private AtomicInteger newID = new AtomicInteger(0);
 
@@ -39,7 +39,7 @@ public class NeuronCluster implements TimedContainer{
 
     private NeuronCluster() {
         PropertiesHolder.maxPopulation = 500;
-        PropertiesHolder.tolerance = 0.02;
+        PropertiesHolder.tolerance = 0.05;
 
         server.addServlet(NeuralClusterInformationServlet.class, "info");
     }

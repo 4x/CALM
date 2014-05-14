@@ -66,7 +66,12 @@ public class DecisionAggregator {
             OpenPosition position = PositionFactory.getPosition(time, latestC, entry.getValue(), entry.getKey(), false);
             if (position != null) {
                 if (inLiveTrading) {
-                    if(position.getCredibility() > PositionFactory.getCredThreshold() && position.getTarget() > 0.001 && position.getTarget() < 0.005){
+                    int startHour = new Date().getHours();
+                    if(position.getCredibility() > PositionFactory.getCredThreshold()
+                            && position.getTarget() > 0.001
+                            && position.getTarget() < 0.002
+                            && ((startHour > 4 && startHour < 9) || (startHour > 14 && startHour < 17))
+                            ){
                         try {
                             if(blackBox != null){
                                 blackBox.onDecision(position);
