@@ -238,31 +238,6 @@ public class NeuralLearner implements Feed, Runnable {
         if (cluster.size() < 40 || cluster.getDangerLevel() < 2 && cluster.getDangerLevel() * Math.random() < 0.1) {
             spawn();
         }
-        /*else if(pointsConsumed > 5000){
-            if(cluster.getDangerLevel() * Math.random() < 2.5){
-                //selectStimuli();
-            }
-            else {
-                double rank = 0;
-                double total = 0;
-                boolean found = false;
-                for(NeuralLearner neuron : neuronRankings.getRankings().values()){
-                    if(neuron.getPointsConsumed() > 5000){
-                        total++;
-                        if(!found){
-                            rank++;
-                        }
-                        if(this == neuron){
-                            found = true;
-                        }
-                    }
-                }
-
-                if(total > 10 && rank/total < 0.1){
-                    die();
-                }
-            }
-        }*/
     }
 
     public void updateRankings() {
@@ -271,57 +246,12 @@ public class NeuralLearner implements Feed, Runnable {
         }
         double score = 0;
         Map<Double, StateActionPair> alphas = core.getAlphaStates();
-        //double[] stimuliScores = new double[sigElements.length];
         for (Map.Entry<Double, StateActionPair> entry : alphas.entrySet()) {
             score += Math.pow(entry.getKey(), 2) * Math.log(entry.getValue().getTotalWeight());
-            /*int i = 0;
-            for(double weight : core.getCorrelationWeightsForState(entry.getValue())){
-                stimuliScores[i] += entry.getKey() * weight * Math.log(entry.getValue().getTotalWeight());
-                i++;
-            }*/
         }
         score /= alphas.size();
         neuronRankings.update(this, score);
-
-        /*HashMap<Integer, Double> data = new HashMap<>();
-        for(int i = 0; i < sigElements.length; i++){
-            data.put(sigElements[i], stimuliScores[i]);
-        }
-        stimuliRankings.update(this, data);*/
     }
-
-    /*long lastSelect = 0;
-    public void selectStimuli(){
-        if(paused || time - lastSelect < (Math.random() * 90 * 86400000L)){
-            return;
-        }
-        Map<Integer, Double> rankings = MapUtils.reverse(stimuliRankings.getRankings());
-        double worseRanking = Double.MAX_VALUE;
-        int worstSigPos = 0;
-        for(int i = 0; i < sigElements.length; i++){
-            int sig = sigElements[i];
-            if(rankings.containsKey(sig) && rankings.get(sig) < worseRanking){
-                worseRanking = rankings.get(sig);
-                worstSigPos = i;
-            }
-        }
-        rankings.keySet().removeAll(Arrays.asList(sigElements));
-        rankings.keySet().retainAll(stimuliRankings.getStimuli());
-        double level = 0;
-        int chosen = sigElements[worstSigPos];
-        for(Map.Entry<Integer, Double> entry : rankings.entrySet()){
-            if(entry.getValue() > worseRanking && entry.getValue() > level * Math.random()){
-                level = entry.getValue() * 2;
-                chosen = entry.getKey();
-            }
-        }
-        if(chosen != sigElements[worstSigPos]){
-            System.out.println(getDescription(0, "") + " replaced signal at position " + worstSigPos + " (" + sigElements[worstSigPos] + " -> " + chosen + ")");
-            sigElements[worstSigPos] = chosen;
-            lastSelect = time;
-        }
-        learnerFeed.setSignalElements(sigElements);
-    }*/
 
     public void spawn() {
         if (paused) {
@@ -353,16 +283,6 @@ public class NeuralLearner implements Feed, Runnable {
         NeuralLearner child = new NeuralLearner(horizonRange, motherFeed, actionElements, sigElements, null, outputFutureOffset, resolution);
         cluster.start(child);
     }
-
-    /*public void die(){
-        if(paused || time - lastSelect < (Math.random() * 90 * 86400000L)){
-            return;
-        }
-        System.out.println(getDescription(0, "") + " dies...");
-        alive = false;
-
-        stimuliRankings.removeAllStimuli(this, this.getFlowData()[2]);
-    }*/
 
     public int getID() {
         return id;

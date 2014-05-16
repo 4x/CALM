@@ -12,7 +12,7 @@ import java.util.*;
 public class BlackBox implements IStrategy {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BlackBox.class);
-    private long maxWaitForFill = 1000L * 60L * 5L;
+    private long maxWaitForFill = 1000L * 60L * 10L;
     private double tradeToCreditRatio = 0.1;
     private double available = 10000;
     private IEngine engine = null;
@@ -47,14 +47,14 @@ public class BlackBox implements IStrategy {
                             String direction = "LONG";
                             if (position.isLong()) {
                                 out = engine.submitOrder("EUR_" + tNow, Instrument.EURUSD, IEngine.OrderCommand.BUYLIMIT, amount,
-                                        Operations.round(position.getStart() - 0.00005, 5), 0.25,
+                                        Operations.round(position.getStart() - 0.0001, 5), 0.5,
                                         Operations.round(position.getStopLoss(), 5),
                                         Operations.round(position.getTakeProfit(), 5),
                                         position.getGoodTillTime());
                             } else {
                                 direction = "SHORT";
                                 out = engine.submitOrder("EUR_" + tNow, Instrument.EURUSD, IEngine.OrderCommand.SELLLIMIT, amount,
-                                        Operations.round(position.getStart() + 0.00005, 5), 0.25,
+                                        Operations.round(position.getStart() + 0.0001, 5), 0.5,
                                         Operations.round(position.getStopLoss(), 5),
                                         Operations.round(position.getTakeProfit(), 5),
                                         position.getGoodTillTime());

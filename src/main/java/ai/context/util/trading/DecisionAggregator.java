@@ -26,6 +26,12 @@ public class DecisionAggregator {
     private static BlackBox blackBox;
 
     public static void aggregateDecision(DataObject data, double pivot, TreeMap<Double, Double> histogram, long timeSpan, boolean goodTillClosed){
+
+        double[] results = PositionFactory.getDecision(data.getTimeStamp(), pivot, histogram, timeSpan);
+        if(results == null || Math.abs(results[1]) < 5 * PositionFactory.cost){
+            return;
+        }
+
         long time = data.getTimeStamp();
         latestH = data.getValue()[1];
         latestL = data.getValue()[2];

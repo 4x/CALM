@@ -24,9 +24,6 @@ public class PositionFactory {
 
     private static PositionEngine engine;
 
-    //private static DecisionHistogram decisionHistogram = new DecisionHistogram();
-
-
     private static double accruedPnL = 0;
     private static long totalTrades = 0;
     private static long totalLoss = 0;
@@ -36,10 +33,32 @@ public class PositionFactory {
     private static double credThreshold = 1.0;
 
     public static OpenPosition getPosition(long time, double pivot, TreeMap<Double, Double> histogram, long timeSpan, boolean goodTillClosed) {
-        /*if ((amount * tradeToCapRatio * leverage) < 1000) {
+        double[] results = getDecision(time, pivot, histogram, timeSpan);
+        if(results == null){
             return null;
-        }*/
+        }
 
+        double credibility = results[0];
+        double decision = results[1];
+        boolean dirL = true;
+
+        if (decision < 0) {
+            dirL = false;
+        }
+        if (decision != 0) {
+            OpenPosition position = new OpenPosition(time, pivot, decision, decision, dirL, time + timeSpan, goodTillClosed);
+            position.setCredibility(credibility);
+            if (!live) {
+                position.setAmount(amount * tradeToCapRatio * leverage);
+                position.setCost(cost);
+                amount -= position.getAmount() / leverage;
+            }
+            return position;
+        }
+        return null;
+    }
+
+    public static double[] getDecision(long time, double pivot, TreeMap<Double, Double> histogram, long timeSpan){
         Date executionInstant = new Date(time);
         Date exitTime = new Date(time + timeSpan);
         if (executionInstant.getDay() == 0 || executionInstant.getDay() == 6 || exitTime.getDay() == 0 || exitTime.getDay() == 6) {
@@ -48,7 +67,6 @@ public class PositionFactory {
 
         SortedMap<Double, Double> shortMap = histogram.descendingMap().tailMap(pivot, false);
         SortedMap<Double, Double> longMap = histogram.tailMap(pivot, false);
-        //TreeMap<Double, Double> directionalFreq = new TreeMap<Double, Double>();
 
         TreeMap<Double, Double> sFreq = new TreeMap<Double, Double>();
         TreeMap<Double, Double> lFreq = new TreeMap<Double, Double>();
@@ -86,224 +104,11 @@ public class PositionFactory {
 
             sFreq.put(amplitude, shortFreq);
             lFreq.put(amplitude, longFreq);
-
-            //directionalFreq.put(amplitude, longFreq - shortFreq);
         }
 
         double credibility = (longFreq + shortFreq)/2;
         double decision = DecisionUtil.getDecision(sFreq, lFreq);
-        boolean dirL = true;
-        //decisionHistogram.update(sFreq, lFreq, minTakeProfit, rewardRiskRatio, Math.abs(decision));
-        if (decision < 0) {
-            dirL = false;
-        }
-        if (decision != 0) {
-            OpenPosition position = new OpenPosition(time, pivot, decision, decision, dirL, time + timeSpan, goodTillClosed);
-            position.setCredibility(credibility);
-            if (!live) {
-                position.setAmount(amount * tradeToCapRatio * leverage);
-                position.setCost(cost);
-                amount -= position.getAmount() / leverage;
-            }
-            return position;
-        }
-
-        /*if(engine != null){
-            return engine.getPosition(time, pivot, histogram);
-        }
-
-        double multiplier = 1.0;
-
-        List<Double> tickList = new ArrayList<Double>();
-        tickList.addAll(ticks);
-        int i = 0;
-
-        if(verticalRisk){
-            boolean dirLong = true;
-            int crossings = 0;
-            multiplier = 1.0;
-
-            for(Double tick : tickList){
-                if(tick > minTakeProfitVertical){
-                    if(directionalFreq.get(tick) > 0){
-                        if(crossings == 0){
-                            crossings++;
-                        }
-                        else if(!dirLong){
-                            crossings++;
-                        }
-                        dirLong = true;
-                    }
-                    else{
-                        if(crossings == 0){
-                            crossings++;
-                        }
-                        else if(dirLong){
-                            crossings++;
-                        }
-                        dirLong = false;
-                    }
-                }
-            }
-            if(!dirLong){
-                multiplier = -1.0;
-            }
-
-            if(crossings == 1){
-                double maxPayoff = 0;
-                double amp = 0;
-                double maxProb = 0;
-                for(Double tick : tickList){
-                    double longProb = lFreq.get(tick);
-                    double shortProb = sFreq.get(tick);
-                    maxProb = Math.max(maxProb, shortProb);
-                    maxProb = Math.max(maxProb, longProb);
-
-                    if(tick > minTakeProfitVertical){
-                        if(dirLong){
-                            if(longProb > shortProb * rewardRiskRatio && longProb/maxProb > minProbFraction){
-                                double payoff = (longProb - shortProb) * tick;
-                                if(payoff > maxPayoff){
-                                    maxPayoff = payoff;
-                                    amp = tick;
-                                }
-                            }
-                        }
-                        else {
-                            if(shortProb > longProb * rewardRiskRatio && shortProb/maxProb > minProbFraction){
-                                double payoff = (shortProb - longProb) * tick;
-                                if(payoff > maxPayoff){
-                                    maxPayoff = payoff;
-                                    amp = tick;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if(amp > minTakeProfitVertical){
-                    OpenPosition position = new OpenPosition(time, pivot, multiplier * amp, multiplier * amp, dirLong, time + timeSpan);
-                    if(!live){
-                        position.setAmount(amount * tradeToCapRatio * leverage);
-                        position.setCost(cost);
-                        amount -= position.getAmount()/leverage;
-                    }
-                    return position;
-                }
-            }
-            else {
-                return null;
-            }
-        }
-        else{
-            for(Double tick : tickList){
-                //System.out.println(tick + " " + lFreq.get(tick) + " " + sFreq.get(tick));
-                i++;
-                if(directionalFreq.get(tick) > 0){
-                    if(tickList.size() > i){
-                        if(sFreq.get(tick) > sFreq.get(tickList.get(i))){
-                            multiplier = 1.0;
-                            double tp = rewardRiskRatio * tick;
-                            if( lFreq.tailMap(tp, true).size() > 0){
-                                Double freqSL = sFreq.get(tick);
-                                boolean found = false;
-                                Double tpAmp = tp;
-                                for(Map.Entry<Double, Double> further : lFreq.tailMap(tp, true).entrySet()){
-                                    if(further.getValue() > freqSL){
-                                        found = true;
-                                        tpAmp = further.getKey();
-                                    }
-                                    else {
-                                        break;
-                                    }
-                                }
-                                if(found && tpAmp > minTakeProfit && amount > 100){
-
-                                    Double min = null;
-                                    Double slAmp = null;
-                                    for(Map.Entry<Double, Double> entry : sFreq.tailMap(tick, true).entrySet()){
-                                        if(entry.getKey() > tpAmp/rewardRiskRatio){
-                                            break;
-                                        }
-                                        if(min == null){
-                                            min = entry.getValue() * entry.getKey();
-                                            slAmp = entry.getKey();
-                                        }
-                                        else {
-                                            if(min < (entry.getValue() * entry.getKey())){
-                                                min = entry.getValue() * entry.getKey();
-                                                slAmp = entry.getKey();
-                                            }
-                                        }
-                                    }
-                                    if(slAmp != null){
-                                        OpenPosition position = new OpenPosition(time, pivot, multiplier * tpAmp, multiplier * slAmp, true, time + timeSpan);
-                                        if(!live){
-                                            position.setAmount(amount * tradeToCapRatio * leverage);
-                                            position.setCost(cost);
-                                            amount -= position.getAmount()/leverage;
-                                        }
-                                        return position;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                else{
-                    if(tickList.size() > i){
-                        if(lFreq.get(tick) > lFreq.get(tickList.get(i))){
-                            multiplier = -1.0;
-                            double tp = rewardRiskRatio * tick;
-                            if(sFreq.tailMap(tp, true).size() > 0){
-                                Double freqSL = lFreq.get(tick);
-                                boolean found = false;
-                                Double tpAmp = tp;
-                                for(Map.Entry<Double, Double> further : sFreq.tailMap(tp, true).entrySet()){
-                                    if(further.getValue() > freqSL){
-                                        found = true;
-                                        tpAmp = further.getKey();
-                                    }
-                                    else {
-                                        break;
-                                    }
-                                }
-                                if(found && tpAmp > minTakeProfit && amount > 100){
-
-                                    Double min = null;
-                                    Double slAmp = null;
-                                    for(Map.Entry<Double, Double> entry : lFreq.tailMap(tick, true).entrySet()){
-                                        if(entry.getKey() > tpAmp/rewardRiskRatio){
-                                            break;
-                                        }
-                                        if(min == null){
-                                            min = entry.getValue() * entry.getKey();
-                                            slAmp = entry.getKey();
-                                        }
-                                        else {
-                                            if(min < (entry.getValue() * entry.getKey())){
-                                                min = entry.getValue() * entry.getKey();
-                                                slAmp = entry.getKey();
-                                            }
-                                        }
-                                    }
-                                    if(slAmp != null){
-                                        OpenPosition position = new OpenPosition(time, pivot, multiplier * tpAmp, multiplier * slAmp, false, time + timeSpan);
-                                        if(!live){
-                                            position.setAmount(amount * tradeToCapRatio * leverage);
-                                            position.setCost(cost);
-                                            amount -= position.getAmount()/leverage;
-                                        }
-                                        return position;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }*/
-        return null;
+        return new double[]{credibility, decision};
     }
 
     public static double getAmount() {
