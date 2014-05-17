@@ -62,9 +62,9 @@ public class NeuralLearner implements Feed, Runnable {
 
     public NeuralLearner(long[] horizonRange, ISynchFeed motherFeed, Integer[] actionElements, Integer[] sigElements, String parentConfig, long outputFutureOffset, double resolution) {
         this.motherFeed = motherFeed;
-        //learnerFeed.setName(id + "");
         this.horizonRange = horizonRange;
-        horizon = (long) (Math.random() * (horizonRange[1] - horizonRange[0]) + horizonRange[0]);
+        double horizon = (Math.random() * (horizonRange[1] - horizonRange[0]) + horizonRange[0]);
+        this.horizon = (long) Math.ceil(horizon / DecisionAggregator.getTimeQuantum()) * DecisionAggregator.getTimeQuantum();
         this.outputFutureOffset = outputFutureOffset;
         this.actionElements = actionElements;
         this.sigElements = sigElements;

@@ -39,7 +39,7 @@ import java.util.*;
 public class MainNeural {
 
     private String config;
-    private boolean testing = true;
+    private boolean testing = false;
     private String dukascopyUsername = PropertiesHolder.dukascopyLogin;
     private String dukascopyPassword = PropertiesHolder.dukascopyPass;
 
@@ -134,7 +134,7 @@ public class MainNeural {
             }
         }
         else {
-            for (int i = 0; i < 75; i++) {
+            for (int i = 0; i < 100; i++) {
                 Integer[] sigElements = new Integer[7];
                 for (int sig = 0; sig < sigElements.length; sig++) {
                     if (availableStimuli.isEmpty()) {
@@ -233,7 +233,7 @@ public class MainNeural {
                 DataType.DOUBLE,
                 DataType.DOUBLE};
 
-        String dateFP = "2010.08.01 00:00:00";
+        String dateFP = "2013.05.01 00:00:00";
 
         CSVFeed feedPriceEUR = new CSVFeed(path + "feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feedPriceEUR.setStitchableFeed(liveFXRateEUR);

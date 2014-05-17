@@ -22,7 +22,7 @@ public class PnLAnalyser {
     int nDay = 0;
     int nMonth = 0;
     double tradeToCapRatio = 10;
-    double credThreshold = 35;
+    double credThreshold = 0;
     double rebate = 0.00010;
     double sourceCharge = 0.00020;
     boolean hasTargetLogging = true;
@@ -103,19 +103,19 @@ public class PnLAnalyser {
 
                     if (//true ||
                             cred >= credThreshold
-                            && targetPnL > 0.001
+                            && targetPnL > 0.0015
                             && targetPnL < 0.002
                             && ((startHour > 4 && startHour < 9) || (startHour > 14 && startHour < 17))
                             ) {
 
-                        aggregate(nMonth, change);
+                        //aggregate(nMonth, change);
                         //aggregate(startHour, change);
                         //aggregate(changeClass, change);
                         //aggregate(hour, change);
                         //aggregate(nDay, change);
                         //aggregate(day, change);
                         //aggregate(closing, change);
-                        //aggregate(span, change);
+                        aggregate(span, change);
                         //aggregate(credClass, change);
 
                         /*String dateString = "";

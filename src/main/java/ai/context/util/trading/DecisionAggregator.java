@@ -1,6 +1,7 @@
 package ai.context.util.trading;
 
 import ai.context.learning.DataObject;
+import ai.context.learning.neural.NeuronCluster;
 import ai.context.util.mathematics.Operations;
 import ai.context.util.measurement.OpenPosition;
 import com.dukascopy.api.JFException;
@@ -25,32 +26,38 @@ public class DecisionAggregator {
     private static boolean inLiveTrading = false;
     private static BlackBox blackBox;
 
+    private static int decisionsCollected = 0;
     public static void aggregateDecision(DataObject data, double pivot, TreeMap<Double, Double> histogram, long timeSpan, boolean goodTillClosed){
-
-        double[] results = PositionFactory.getDecision(data.getTimeStamp(), pivot, histogram, timeSpan);
-        if(results == null || Math.abs(results[1]) < 5 * PositionFactory.cost){
-            return;
-        }
 
         long time = data.getTimeStamp();
         latestH = data.getValue()[1];
         latestL = data.getValue()[2];
         latestC = data.getValue()[0];
 
-        Date executionInstant = new Date(time);
-        Date exitTime = new Date(time + timeSpan);
-        if (executionInstant.getDay() == 0 || executionInstant.getDay() == 6 || exitTime.getDay() == 0 || exitTime.getDay() == 6) {
-            return;
-        }
-
         if(DecisionAggregator.time == 0){
             DecisionAggregator.time = time;
         }
         else if(time > DecisionAggregator.time){
             DecisionAggregator.time = time;
+            timeBasedHistograms.clear();
+            decisionsCollected = 0;
+        }
+
+        decisionsCollected++;
+        if(decisionsCollected == NeuronCluster.getInstance().size()){
             checkExit();
             decide();
-            timeBasedHistograms.clear();
+        }
+
+        double[] results = PositionFactory.getDecision(data.getTimeStamp(), pivot, histogram, timeSpan);
+        if(results == null || Math.abs(results[1]) < 5 * PositionFactory.cost){
+            return;
+        }
+
+        Date executionInstant = new Date(time);
+        Date exitTime = new Date(time + timeSpan);
+        if (executionInstant.getDay() == 0 || executionInstant.getDay() == 6 || exitTime.getDay() == 0 || exitTime.getDay() == 6) {
+            return;
         }
 
         long tExit = (long) Math.ceil((double) timeSpan / (double) timeQuantum) * timeQuantum;
@@ -121,5 +128,9 @@ public class DecisionAggregator {
 
     public static boolean isInLiveTrading() {
         return inLiveTrading;
+    }
+
+    public static long getTimeQuantum() {
+        return timeQuantum;
     }
 }
