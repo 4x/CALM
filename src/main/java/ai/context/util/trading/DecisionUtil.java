@@ -26,7 +26,7 @@ public class DecisionUtil {
                 break;
             }
 
-            if (amplitude > 5 * PositionFactory.cost && Math.max(probL, probS) / Math.min(probL, probS) > PositionFactory.rewardRiskRatio) {
+            if (amplitude > PositionFactory.cost && Math.max(probL, probS) / Math.min(probL, probS) > PositionFactory.rewardRiskRatio) {
                 double thisPayoff = Math.abs(probL - probS) * amplitude;
                 int multiplier = 1;
                 if (probL < probS) {

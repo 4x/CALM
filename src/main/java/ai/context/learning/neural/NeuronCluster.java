@@ -83,7 +83,6 @@ public class NeuronCluster implements TimedContainer{
     public void start(NeuralLearner neuron) {
         neurons.add(neuron);
         idToNeuron.put(neuron.getID(), neuron);
-        //service.execute(neuron);
     }
 
     public void setMotherFeed(ISynchFeed motherFeed) {
@@ -110,12 +109,6 @@ public class NeuronCluster implements TimedContainer{
                     }
                 }
 
-                /*for(NeuralLearner neuron : neurons){
-                    if(Math.random() > 0.99){
-                        neuron.lifeEvent();
-                    }
-                }*/
-
                 if (neurons.isEmpty()) {
                     try {
                         Thread.sleep(1000);
@@ -133,14 +126,6 @@ public class NeuronCluster implements TimedContainer{
             while (true) {
                 try {
                     Thread.sleep(10000);
-                    /*outputToNeuron.clear();
-                    for(NeuralLearner neuron : neurons){
-                        if(neuron.getFlowData()[2] != null){
-                            for(int i : neuron.getFlowData()[2]){
-                                outputToNeuron.put(i, neuron);
-                            }
-                        }
-                    }*/
                     totalPointsConsumed = 0;
                     double latency = 0;
                     long meanT = 0;
@@ -151,20 +136,14 @@ public class NeuronCluster implements TimedContainer{
                         } else {
                             latency += neuron.getLatency();
                             totalPointsConsumed += neuron.getPointsConsumed();
-                            //System.err.println(neuron.getDescription(0, "") + ": Latency: " + neuron.getLatency() + " Time: " + new Date(neuron.getLatestTime()));
                             meanT += neuron.getLatestTime();
                         }
                     }
 
                     for (NeuralLearner removed : toRemove) {
                         neurons.remove(removed);
-                        /*for(NeuralLearner neuron : neurons){
-                            neuron.inputsRemoved(removed.getFlowData()[2]);
-                        }
-                        motherFeed.removeRawFeed(removed);*/
                         removed.cleanup();
                     }
-                    //stimuliRankings.clearAndRepopulateStimuli(motherFeed.getNumberOfOutputs());
                     for (NeuralLearner neuron : neurons) {
                         neuron.updateRankings();
                     }

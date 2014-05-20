@@ -39,7 +39,7 @@ import java.util.*;
 public class MainNeural {
 
     private String config;
-    private boolean testing = false;
+    private boolean testing = true;
     private String dukascopyUsername = PropertiesHolder.dukascopyLogin;
     private String dukascopyPassword = PropertiesHolder.dukascopyPass;
 
@@ -74,10 +74,10 @@ public class MainNeural {
         ISynchFeed motherFeed = initFeed(path);
         NeuronCluster.getInstance().setMotherFeed(motherFeed);
 
-        long[] horizonRange = new long[]{1 * 60 * 60 * 1000L, 4 * 60 * 60 * 1000L};
+        long[] horizonRange = new long[]{4 * 60 * 60 * 1000L, 4 * 60 * 60 * 1000L};
         Integer[] actionElements = new Integer[]{3, 1, 2, 0};
         long outputFutureOffset = 5 * 60 * 1000L;
-        double resolution = 0.0001;
+        double resolution = 0.00005;
         Set<Integer> availableStimuli = new HashSet<>();
         for (int i = 0; i < motherFeed.getNumberOfOutputs(); i++) {
             availableStimuli.add(i);

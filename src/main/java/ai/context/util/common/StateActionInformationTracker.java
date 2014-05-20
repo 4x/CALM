@@ -1,21 +1,19 @@
 package ai.context.util.common;
 
-import ai.context.util.mathematics.MinMaxAggregator;
+import ai.context.util.mathematics.Latcher;
 
 public class StateActionInformationTracker {
     private final long timeStamp;
     private final int[] state;
     private final double initialLevel;
-    MinMaxAggregator aggregator = new MinMaxAggregator();
+    private Latcher latcher;
 
-    public StateActionInformationTracker(long timeStamp, int[] state, double initialLevel) {
+    public StateActionInformationTracker(long timeStamp, int[] state, double initialLevel, double significantMovement) {
         this.timeStamp = timeStamp;
         this.state = state;
         this.initialLevel = initialLevel;
-    }
 
-    public void aggregate(double newLevel) {
-        aggregator.addValue(newLevel - initialLevel);
+        this.latcher = new Latcher(initialLevel, timeStamp, significantMovement);
     }
 
     public long getTimeStamp() {
@@ -26,11 +24,19 @@ public class StateActionInformationTracker {
         return state;
     }
 
-    public double getMax() {
-        return aggregator.getMax();
+    public void processHigh(double high, long timeStamp){
+        latcher.registerHigh(high, timeStamp);
     }
 
-    public double getMin() {
-        return aggregator.getMin();
+    public void processLow(double low, long timeStamp){
+        latcher.registerLow(low, timeStamp);
+    }
+
+    public double getMaxUp(){
+        return latcher.getMaxUp();
+    }
+
+    public double getMaxDown(){
+        return latcher.getMaxDown();
     }
 }

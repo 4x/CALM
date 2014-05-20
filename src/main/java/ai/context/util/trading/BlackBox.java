@@ -70,9 +70,10 @@ public class BlackBox implements IStrategy {
                     }
                 }
             }
-
-            engine.closeOrders(toClose);
-            toClose.clear();
+            if(!toClose.isEmpty()){
+                engine.closeOrders(toClose);
+                toClose.clear();
+            }
         }
     }
 
@@ -128,7 +129,7 @@ public class BlackBox implements IStrategy {
     }
 
     public void toClose(IOrder order){
-        if(order != null){
+        if(order != null && positions.containsKey(order.getLabel())){
             toClose.add(order);
         }
     }

@@ -150,20 +150,16 @@ public class NeuralLearner implements Feed, Runnable {
                 time = data.getTimeStamp();
                 while (!trackers.isEmpty() && trackers.get(0).getTimeStamp() < (time - horizon)) {
                     StateActionInformationTracker tracker = trackers.remove(0);
-                    core.addStateAction(tracker.getState(), tracker.getMax());
-                    core.addStateAction(tracker.getState(), tracker.getMin());
-                    //core.addStateAction(tracker.getState(), data.getValue()[0]);
-
-                    //System.out.println("Learned: " + Arrays.toString(tracker.getState()) + " -> {" + tracker.getMin() + ", " + tracker.getMax() + "}");
+                    core.addStateAction(tracker.getState(), tracker.getMaxUp());
+                    core.addStateAction(tracker.getState(), tracker.getMaxDown());
                     pointsConsumed++;
                 }
 
                 for (StateActionInformationTracker tracker : trackers) {
-                    for (double newLevel : data.getValue()) {
-                        tracker.aggregate(newLevel);
-                    }
+                    tracker.processHigh(data.getValue()[1], time);
+                    tracker.processLow(data.getValue()[2], time);
                 }
-                trackers.add(new StateActionInformationTracker(time, signal, data.getValue()[0]));
+                trackers.add(new StateActionInformationTracker(time, signal, data.getValue()[0], 10 * resolution));
 
                 int[] outputSignal = new int[getNumberOfOutputs()];
                 if (pointsConsumed > 200) {
@@ -192,19 +188,6 @@ public class NeuralLearner implements Feed, Runnable {
 
     public void checkPerformance(int[] signal, DataObject data) {
         if (!adapting) {
-
-            /*HashSet<OpenPosition> closed = new HashSet<OpenPosition>();
-            for (OpenPosition position : positions) {
-                if (position.canCloseOnBar_Pessimistic(data.getTimeStamp(), data.getValue()[1], data.getValue()[2], data.getValue()[0])) {
-                    closed.add(position);
-                    PositionFactory.positionClosed(position);
-
-                    System.out.println(position.getClosingMessage() + " CHANGE: " + position.getPnL() + " CAPITAL: " + PositionFactory.getAmount() + " ACCRUED PNL: " + PositionFactory.getAccruedPnL());
-                }
-            }
-            positions.removeAll(closed);*/
-
-
             Date executionInstant = new Date(time);
             if (!(executionInstant.getDay() == 0 || executionInstant.getDay() == 6)) {
                 TreeMap<Integer, Double> distribution = core.getActionDistribution(signal);

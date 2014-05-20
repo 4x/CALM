@@ -91,7 +91,7 @@ public class PnLAnalyser {
                     int changeClass = (int) (Math.abs(targetPnL) * 1000);
 
                     long startHour = startTime / 60;
-                    int credClass = (int) (cred / 5);
+                    int credClass = (int) (cred * 10);
 
                     Order order = new Order(change + sourceCharge, pnl, state, dir, cred, span, targetPnL, day, month, date, year, hour, min, closing);
                     if (!orders.containsKey(order.getID())) {
@@ -101,7 +101,7 @@ public class PnLAnalyser {
                     }
                     change += rebate;
 
-                    if (//true ||
+                    if (true ||
                             cred >= credThreshold
                             && targetPnL > 0.0015
                             && targetPnL < 0.002
@@ -115,8 +115,8 @@ public class PnLAnalyser {
                         //aggregate(nDay, change);
                         //aggregate(day, change);
                         //aggregate(closing, change);
-                        aggregate(span, change);
-                        //aggregate(credClass, change);
+                        //aggregate(span, change);
+                        aggregate(credClass, change);
 
                         /*String dateString = "";
                         if(date < 10){

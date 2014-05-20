@@ -34,10 +34,7 @@ public class DecisionAggregator {
         latestL = data.getValue()[2];
         latestC = data.getValue()[0];
 
-        if(DecisionAggregator.time == 0){
-            DecisionAggregator.time = time;
-        }
-        else if(time > DecisionAggregator.time){
+        if(time > DecisionAggregator.time){
             DecisionAggregator.time = time;
             timeBasedHistograms.clear();
             decisionsCollected = 0;
@@ -49,14 +46,14 @@ public class DecisionAggregator {
             decide();
         }
 
-        double[] results = PositionFactory.getDecision(data.getTimeStamp(), pivot, histogram, timeSpan);
-        if(results == null || Math.abs(results[1]) < 5 * PositionFactory.cost){
-            return;
-        }
-
         Date executionInstant = new Date(time);
         Date exitTime = new Date(time + timeSpan);
         if (executionInstant.getDay() == 0 || executionInstant.getDay() == 6 || exitTime.getDay() == 0 || exitTime.getDay() == 6) {
+            return;
+        }
+
+        double[] results = PositionFactory.getDecision(data.getTimeStamp(), pivot, histogram, timeSpan);
+        if(results == null){
             return;
         }
 
@@ -80,11 +77,7 @@ public class DecisionAggregator {
             if (position != null) {
                 if (inLiveTrading) {
                     int startHour = new Date().getHours();
-                    if(position.getCredibility() > PositionFactory.getCredThreshold()
-                            && position.getTarget() > 0.001
-                            && position.getTarget() < 0.002
-                            && ((startHour > 4 && startHour < 9) || (startHour > 14 && startHour < 17))
-                            ){
+                    if(position.getCredibility() > PositionFactory.getCredThreshold()){
                         try {
                             if(blackBox != null){
                                 blackBox.onDecision(position);
