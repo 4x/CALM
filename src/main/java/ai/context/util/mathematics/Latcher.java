@@ -24,7 +24,7 @@ public class Latcher {
                 maxUp = delta;
                 end = time;
             }
-            else if(maxUp - delta > quantum && delta/maxUp < 0.5){
+            else if(maxUp > quantum && maxUp - delta > quantum && delta/maxUp < 0.5){
                 lockedTime = time;
             }
         }
@@ -37,7 +37,7 @@ public class Latcher {
                 maxDown = delta;
                 end = time;
             }
-            else if(maxDown - delta > quantum && delta/maxDown < 0.5){
+            else if(maxDown > quantum && maxDown - delta > quantum && delta/maxDown < 0.5){
                 lockedTime = time;
             }
         }
@@ -48,7 +48,7 @@ public class Latcher {
     }
 
     public double getMaxDown() {
-        return maxDown;
+        return -maxDown;
     }
 
     public long getEnd() {

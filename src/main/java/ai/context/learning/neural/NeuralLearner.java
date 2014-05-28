@@ -73,7 +73,7 @@ public class NeuralLearner implements Feed, Runnable {
 
         if(parentConfig == null || parentConfig.length() == 0){
             NeuralLearner[] candidates = cluster.getNeurons();
-            double chance = 3.0 / candidates.length;
+            double chance = 2.0 / candidates.length;
             for (NeuralLearner parentCandidate : candidates) {
                 if (Math.random() < chance) {
                     parentFeeds.put(parentCandidate, (int) (Math.random() * parentCandidate.getNumberOfOutputs()));

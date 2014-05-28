@@ -4,15 +4,16 @@ import java.util.TreeMap;
 
 public class DecisionUtil {
 
-    public static double getDecision(TreeMap<Double, Double> sFreq, TreeMap<Double, Double> lFreq) {
+    public static double[] getDecision(TreeMap<Double, Double> sFreq, TreeMap<Double, Double> lFreq) {
 
         if (sFreq.isEmpty()) {
-            return 0;
+            return new double[]{0, 0};
         }
 
         double max = (sFreq.firstEntry().getValue() + lFreq.firstEntry().getValue()) / 2;
-        double payoff = 0;
         double target = 0;
+        double ratio = 0;
+        double probFraction = 0;
 
         for (double amplitude : sFreq.keySet()) {
 
@@ -22,23 +23,20 @@ public class DecisionUtil {
             double probS = freqS / max;
             double probL = freqL / max;
 
-            if (Math.max(probL, probS) < PositionFactory.minProbFraction) {
+            probFraction = Math.max(probL, probS);
+            if (probFraction < PositionFactory.minProbFraction) {
                 break;
             }
 
-            if (amplitude > PositionFactory.cost && Math.max(probL, probS) / Math.min(probL, probS) > PositionFactory.rewardRiskRatio) {
-                double thisPayoff = Math.abs(probL - probS) * amplitude;
+            ratio = Math.max(probL, probS) / Math.min(probL, probS);
+            if (amplitude > PositionFactory.cost && ratio > PositionFactory.rewardRiskRatio) {
                 int multiplier = 1;
                 if (probL < probS) {
                     multiplier = -1;
                 }
-                if (thisPayoff > payoff) {
-                    payoff = thisPayoff;
-                    target = multiplier * amplitude;
-                }
+                target = multiplier * amplitude;
             }
         }
-
-        return target;
+        return new double[]{target, ratio, probFraction};
     }
 }

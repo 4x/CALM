@@ -53,7 +53,9 @@ public class DecisionAggregator {
         }
 
         double[] results = PositionFactory.getDecision(data.getTimeStamp(), pivot, histogram, timeSpan);
-        if(results == null){
+        if(results == null
+                || results[2] < PositionFactory.rewardRiskRatio + 0.25
+                || results[3] < (PositionFactory.minProbFraction + 1)/2){
             return;
         }
 

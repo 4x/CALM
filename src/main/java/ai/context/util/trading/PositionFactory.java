@@ -107,8 +107,8 @@ public class PositionFactory {
         }
 
         double credibility = (longFreq + shortFreq)/2;
-        double decision = DecisionUtil.getDecision(sFreq, lFreq);
-        return new double[]{credibility, decision};
+        double[] decision = DecisionUtil.getDecision(sFreq, lFreq);
+        return new double[]{credibility, decision[0], decision[1], decision[2]};
     }
 
     public static double getAmount() {

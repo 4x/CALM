@@ -38,8 +38,8 @@ public class NeuronCluster implements TimedContainer{
     private List<NeuralLearner> neurons = new CopyOnWriteArrayList<>();
 
     private NeuronCluster() {
-        PropertiesHolder.maxPopulation = 500;
-        PropertiesHolder.tolerance = 0.05;
+        PropertiesHolder.maxPopulation = 1000;
+        PropertiesHolder.tolerance = 0.01;
 
         server.addServlet(NeuralClusterInformationServlet.class, "info");
     }

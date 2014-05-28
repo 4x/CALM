@@ -74,7 +74,7 @@ public class MainNeural {
         ISynchFeed motherFeed = initFeed(path);
         NeuronCluster.getInstance().setMotherFeed(motherFeed);
 
-        long[] horizonRange = new long[]{4 * 60 * 60 * 1000L, 4 * 60 * 60 * 1000L};
+        long[] horizonRange = new long[]{2 * 60 * 60 * 1000L, 2 * 60 * 60 * 1000L};
         Integer[] actionElements = new Integer[]{3, 1, 2, 0};
         long outputFutureOffset = 5 * 60 * 1000L;
         double resolution = 0.00005;
@@ -134,8 +134,8 @@ public class MainNeural {
             }
         }
         else {
-            for (int i = 0; i < 100; i++) {
-                Integer[] sigElements = new Integer[7];
+            for (int i = 0; i < 200; i++) {
+                Integer[] sigElements = new Integer[4];
                 for (int sig = 0; sig < sigElements.length; sig++) {
                     if (availableStimuli.isEmpty()) {
                         for (int index = 0; index < motherFeed.getNumberOfOutputs(); index++) {
@@ -171,7 +171,7 @@ public class MainNeural {
 
     public void setLiveFXRates(String path) {
         this.liveFXRateEUR = new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.EURUSD));
-        //this.liveFXRateGBP = new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.GBPUSD));
+        this.liveFXRateGBP = new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.GBPUSD));
         //this.liveFXRateCHF = new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.USDCHF));
     }
 
@@ -233,22 +233,22 @@ public class MainNeural {
                 DataType.DOUBLE,
                 DataType.DOUBLE};
 
-        String dateFP = "2013.05.01 00:00:00";
+        String dateFP = "2008.01.01 00:00:00";
 
         CSVFeed feedPriceEUR = new CSVFeed(path + "feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feedPriceEUR.setStitchableFeed(liveFXRateEUR);
-        /*CSVFeed feedPriceGBP = new CSVFeed(path + "feeds/GBPUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
-        feedPriceGBP.setStitchableFeed(liveFXRateGBP);*/
+        CSVFeed feedPriceGBP = new CSVFeed(path + "feeds/GBPUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
+        feedPriceGBP.setStitchableFeed(liveFXRateGBP);
         /*CSVFeed feedPriceCHF = new CSVFeed(path + "feeds/USDCHF.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  dateFP);
         feedPriceCHF.setStitchableFeed(liveFXRateCHF);*/
 
 
         ISynchFeed feed = buildSynchFeed(null, feedPriceEUR);
-        //feed = buildSynchFeed(feed, feedPriceGBP);
+        feed = buildSynchFeed(feed, feedPriceGBP);
         /*feed = buildSynchFeed(feed, feedPriceCHF);*/
 
         //SmartDiscretiserOnSynchronisedFeed sFeed = new SmartDiscretiserOnSynchronisedFeed(feed, 5000, 5);
-        MinMaxAggregatorDiscretiser sFeed = new MinMaxAggregatorDiscretiser(feed, 5000, 10);
+        MinMaxAggregatorDiscretiser sFeed = new MinMaxAggregatorDiscretiser(feed, 50000, 10);
         sFeed.lock();
 
         feed.addChild(sFeed);
@@ -277,8 +277,9 @@ public class MainNeural {
             NeuronCluster.getInstance().setMeanTime(data.getTimeStamp());
             i++;
 
-            if (i == 5001) {
+            if (i == 50001) {
                 System.out.println(new Date(data.getTimeStamp()) + " " + data);
+                System.out.println(synchFeed.getDescription(0, ""));
                 break;
             }
             //System.out.println(new Date(data.getTimeStamp()) + " " + data);
@@ -516,12 +517,12 @@ public class MainNeural {
             RadarOnlineTransformer r1 = new RadarOnlineTransformer(50, feedL, feedH, feedC, 0.0001);
             RadarOnlineTransformer r2 = new RadarOnlineTransformer(100, feedL, feedH, feedC, 0.0001);
             RadarOnlineTransformer r3 = new RadarOnlineTransformer(400, feedL, feedH, feedC, 0.0001);
-            //RadarOnlineTransformer r4 = new RadarOnlineTransformer(800, feedL, feedH, feedC, 0.0001);
+            RadarOnlineTransformer r4 = new RadarOnlineTransformer(800, feedL, feedH, feedC, 0.0001);
 
             synch.addRawFeed(r1);
             synch.addRawFeed(r2);
             synch.addRawFeed(r3);
-            //synch.addRawFeed(r4);
+            synch.addRawFeed(r4);
 
             synch.addRawFeed(dH);
             synch.addRawFeed(dL);
