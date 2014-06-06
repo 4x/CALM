@@ -12,7 +12,7 @@ import java.util.List;
 
 public class SmartDiscretiserOnSynchronisedFeed implements Feed {
 
-    private SynchronisedFeed feed;
+    private ISynchFeed feed;
     private long criticalMass = 10000;
     private int clusters = 5;
 
@@ -21,7 +21,7 @@ public class SmartDiscretiserOnSynchronisedFeed implements Feed {
     private ArrayList<SmartDiscretiser> discretisers = new ArrayList<SmartDiscretiser>();
     private HashMap<Feed, LinkedList<FeedObject>> buffers = new HashMap<>();
 
-    public SmartDiscretiserOnSynchronisedFeed(SynchronisedFeed feed, long criticalMass, int clusters) {
+    public SmartDiscretiserOnSynchronisedFeed(ISynchFeed feed, long criticalMass, int clusters) {
         this.feed = feed;
         this.criticalMass = criticalMass;
         this.clusters = clusters;

@@ -15,7 +15,7 @@ import ai.context.feed.surgical.FXModuloFeed;
 import ai.context.feed.synchronised.MinMaxAggregatorDiscretiser;
 import ai.context.feed.synchronised.SynchronisedFeed;
 import ai.context.feed.transformer.compound.AmplitudeWavelengthTransformer;
-import ai.context.feed.transformer.compound.SubtractTransformer;
+import ai.context.feed.transformer.compound.SubstractTransformer;
 import ai.context.feed.transformer.filtered.RowBasedTransformer;
 import ai.context.feed.transformer.series.learning.BufferedTransformer;
 import ai.context.feed.transformer.series.online.*;
@@ -668,11 +668,11 @@ public class Main {
         ExtractOneFromListFeed e3 = new ExtractOneFromListFeed(raw, 2);
         raw.addChild(e3);
 
-        SubtractTransformer s1 = new SubtractTransformer(e1, e2);
+        SubstractTransformer s1 = new SubstractTransformer(e1, e2);
         e1.addChild(s1);
         e2.addChild(s1);
 
-        SubtractTransformer s2 = new SubtractTransformer(e1, e3);
+        SubstractTransformer s2 = new SubstractTransformer(e1, e3);
         e1.addChild(s2);
         e3.addChild(s2);
 

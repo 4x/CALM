@@ -142,13 +142,13 @@ public class RadarOnlineTransformer extends OnlineTransformer {
                 convergence = getLogarithmicDiscretisation(Math.abs(lastTSpace + lastBSpace) / Math.abs(lastTop - lastBottom), 0, resolution);
             }
 
-            return new Double[]{lastTop, lastTSpace, lastBottom, lastBSpace, convergence};
+            return new Double[]{lastTSpace, lastBSpace, convergence};
         } else {
             buffer.clear();
             while (buffer.size() < bufferSize) {
                 buffer.add(new FeedObject(0, arriving.getData()));
             }
-            return new Double[]{0.0, 0.0, 0.0, 0.0, 0.0};
+            return new Double[]{0.0, 0.0, 0.0};
         }
     }
 
@@ -174,6 +174,6 @@ public class RadarOnlineTransformer extends OnlineTransformer {
 
     @Override
     public int getNumberOfOutputs() {
-        return 5;
+        return 3;
     }
 }
