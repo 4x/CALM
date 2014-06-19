@@ -3,8 +3,14 @@ package ai.context.runner;
 import ai.context.feed.DataType;
 import ai.context.feed.FeedObject;
 import ai.context.feed.fx.DukascopyFeed;
+import ai.context.feed.manipulation.FeedWrapper;
+import ai.context.feed.manipulation.Manipulator;
+import ai.context.feed.manipulation.TimeDecaySingleSentimentManipulator;
 import ai.context.feed.row.CSVFeed;
+import ai.context.feed.row.FXStreetCalendarRSSFeed;
+import ai.context.feed.row.RowFeed;
 import ai.context.feed.stitchable.StitchableFXRate;
+import ai.context.feed.stitchable.StitchableFXStreetCalendarRSS;
 import ai.context.feed.stitchable.StitchableFeed;
 import ai.context.feed.surgical.ExtractOneFromListFeed;
 import ai.context.feed.surgical.FXHLDiffFeed;
@@ -21,6 +27,7 @@ import ai.context.feed.transformer.single.TimeVariablesAppenderFeed;
 import ai.context.feed.transformer.single.unpadded.LinearDiscretiser;
 import ai.context.learning.neural.NeuralLearner;
 import ai.context.learning.neural.NeuronCluster;
+import ai.context.learning.neural.NeuronRankings;
 import ai.context.trading.DukascopyConnection;
 import ai.context.util.configuration.DynamicPropertiesLoader;
 import ai.context.util.configuration.PropertiesHolder;
@@ -39,10 +46,15 @@ import java.util.*;
 
 public class MainNeural {
 
+    private NeuronCluster cluster = NeuronCluster.getInstance();
+    private boolean calibrating = true;
     private String config;
+    private String path;
     private boolean testing = true;
     private String dukascopyUsername = PropertiesHolder.dukascopyLogin;
     private String dukascopyPassword = PropertiesHolder.dukascopyPass;
+
+    private Set<RowFeed> rowFeeds = new HashSet<>();
 
     private StitchableFeed liveFXCalendar;
     private StitchableFeed liveFXRateEUR;
@@ -53,7 +65,13 @@ public class MainNeural {
     private BlackBox blackBox;
 
     public static void main(String[] args) {
-        MainNeural process = new MainNeural();
+        DynamicPropertiesLoader.start("");
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        MainNeural process = new MainNeural(false);
         String path = "/opt/dev/data/";
         if (!(args == null || args.length == 0)) {
             path = args[0];
@@ -63,7 +81,11 @@ public class MainNeural {
         }
         //process.configureFrom("/opt/dev/source/GitHub/CALM/src/main/resources/NeuralPopulation_1.conf");
         process.setup(path);
-        DynamicPropertiesLoader.start("");
+    }
+
+    public MainNeural(boolean calibrating) {
+        this.calibrating = calibrating;
+        cluster.setContainer(this);
     }
 
     private void configureFrom(String config) {
@@ -72,6 +94,7 @@ public class MainNeural {
 
     public void setup(String path) {
 
+        this.path = path;
         ISynchFeed motherFeed = initFeed(path);
         NeuronCluster.getInstance().setMotherFeed(motherFeed);
 
@@ -85,7 +108,33 @@ public class MainNeural {
         }
         availableStimuli.removeAll(Arrays.asList(actionElements));
 
-        if(config != null){
+        if(calibrating){
+            int newNeurons = 20;
+            if(!cluster.seedFeeds.isEmpty()){
+                newNeurons = cluster.seedFeeds.size();
+            }
+
+            for (Integer[] sigElements : cluster.seedFeeds) {
+                NeuronCluster.getInstance().start(new NeuralLearner(horizonRange, motherFeed, actionElements, sigElements, null, null, outputFutureOffset, resolution));
+            }
+            for (int i = 0; i < newNeurons; i++) {
+                Integer[] sigElements = new Integer[PropertiesHolder.coreStimuliPerNeuron];
+                for (int sig = 0; sig < sigElements.length; sig++) {
+                    if (availableStimuli.isEmpty()) {
+                        for (int index = 0; index < motherFeed.getNumberOfOutputs(); index++) {
+                            availableStimuli.add(index);
+                        }
+                        availableStimuli.removeAll(Arrays.asList(actionElements));
+                    }
+                    List<Integer> available = new ArrayList<>(availableStimuli);
+                    int chosenSig = available.get((int) (Math.random() * available.size()));
+                    availableStimuli.remove(chosenSig);
+                    sigElements[sig] = chosenSig;
+                }
+                NeuronCluster.getInstance().start(new NeuralLearner(horizonRange, motherFeed, actionElements, sigElements, null, null, outputFutureOffset, resolution));
+            }
+        }
+        else if(config != null){
             try {
                 BufferedReader br = new BufferedReader(new FileReader(config));
                 String sCurrentLine;
@@ -95,6 +144,7 @@ public class MainNeural {
                         Integer[] actArr = null;
                         Integer[] sigArr = null;
                         String parents = null;
+                        String wrappers = null;
 
                         String[] parts = sCurrentLine.split("\\[");
                         if(parts.length > 2){
@@ -125,7 +175,12 @@ public class MainNeural {
                             parents = parts[4].substring(0, parts[4].indexOf(']'));
                             System.out.println("Parents: " + parents);
                         }
-                        NeuronCluster.getInstance().start(new NeuralLearner(horizonRange, motherFeed, actArr, sigArr, parents,outputFutureOffset, resolution));
+
+                        if(parts.length > 5){
+                            wrappers = parts[5].substring(0, parts[5].indexOf(']'));
+                            System.out.println("WrapperManipulators: " + parents);
+                        }
+                        NeuronCluster.getInstance().start(new NeuralLearner(horizonRange, motherFeed, actArr, sigArr, parents, wrappers, outputFutureOffset, resolution));
                     }
                 }
             } catch (FileNotFoundException e) {
@@ -135,8 +190,11 @@ public class MainNeural {
             }
         }
         else {
-            for (int i = 0; i < 100; i++) {
-                Integer[] sigElements = new Integer[4];
+            for (Integer[] sigElements : cluster.seedFeeds) {
+                NeuronCluster.getInstance().start(new NeuralLearner(horizonRange, motherFeed, actionElements, sigElements, null, null, outputFutureOffset, resolution));
+            }
+            for (int i = 0; i < PropertiesHolder.totalNeurons - cluster.seedFeeds.size(); i++) {
+                Integer[] sigElements = new Integer[PropertiesHolder.coreStimuliPerNeuron];
                 for (int sig = 0; sig < sigElements.length; sig++) {
                     if (availableStimuli.isEmpty()) {
                         for (int index = 0; index < motherFeed.getNumberOfOutputs(); index++) {
@@ -149,11 +207,9 @@ public class MainNeural {
                     availableStimuli.remove(chosenSig);
                     sigElements[sig] = chosenSig;
                 }
-                NeuronCluster.getInstance().start(new NeuralLearner(horizonRange, motherFeed, actionElements, sigElements, null, outputFutureOffset, resolution));
+                NeuronCluster.getInstance().start(new NeuralLearner(horizonRange, motherFeed, actionElements, sigElements, null, null, outputFutureOffset, resolution));
             }
         }
-        NeuronCluster.getInstance().startServer();
-        NeuronCluster.getInstance().start();
     }
 
     public void initFXAPI() {
@@ -170,22 +226,45 @@ public class MainNeural {
         this.liveFXCalendar = liveFXCalendar;
     }
 
+    public boolean isCalibrating() {
+        return calibrating;
+    }
+
+    public void nextCalibrationRound(){
+        NeuronRankings.getInstance().updateCalibrationInputs();
+        cluster.reset();
+        for(RowFeed feed : rowFeeds){
+            feed.close();
+        }
+
+        MainNeural process = null;
+        if(cluster.calibrationCount.incrementAndGet() > cluster.maxCalibrationIterations){
+            process = new MainNeural(false);
+
+        }
+        else{
+            process = new MainNeural(true);
+        }
+        process.configureFrom(config);
+        process.setup(path);
+    }
+
     public void setLiveFXRates(String path) {
         this.liveFXRateEUR = new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.EURUSD));
-        this.liveFXRateGBP = new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.GBPUSD));
+        //this.liveFXRateGBP = new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.GBPUSD));
         //this.liveFXRateCHF = new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.USDCHF));
     }
 
     private ISynchFeed initFeed(String path) {
 
-        if (!testing) {
+        if (!testing && !calibrating) {
             initFXAPI();
 
-            //setLiveFXCalendar(new StitchableFXStreetCalendarRSS(path + "tmp/FXCalendar.csv", new FXStreetCalendarRSSFeed()));
+            setLiveFXCalendar(new StitchableFXStreetCalendarRSS(path + "tmp/FXCalendar.csv", new FXStreetCalendarRSSFeed()));
             setLiveFXRates(path);
         }
 
-        /*DataType[] typesCalendar = new DataType[]{
+        DataType[] typesCalendar = new DataType[]{
                 DataType.OTHER,
                 DataType.OTHER,
                 DataType.INTEGER,
@@ -194,37 +273,49 @@ public class MainNeural {
                 DataType.EXTRACTABLE_DOUBLE};
 
         String dateFC = "20080101 00:00:00";
-
-
         long interval = 1*60000L;
         CSVFeed feedCalendar = new CSVFeed(path + "feeds/Calendar_2008.csv", "yyyyMMdd HH:mm:ss", typesCalendar, dateFC);
+        rowFeeds.add(feedCalendar);
         feedCalendar.setStitchableFeed(liveFXCalendar);
         feedCalendar.setPaddable(true);
         feedCalendar.setInterval(interval);
-        RowBasedTransformer f1 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0}, new String[]{"Nonfarm Payrolls"}, new int[]{3, 4, 5}, NeuronCluster.getInstance());
-        feedCalendar.addChild(f1);
 
-        RowBasedTransformer f2 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Consumer Price Index \\(MoM\\)", "United Kingdom"}, new int[]{3, 4, 5}, NeuronCluster.getInstance());
-        feedCalendar.addChild(f2);
-        RowBasedTransformer f3 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Consumer Price Index \\(MoM\\)", "United States"}, new int[]{3, 4, 5}, NeuronCluster.getInstance());
-        feedCalendar.addChild(f3);
-        RowBasedTransformer f4 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Consumer Price Index \\(MoM\\)", "Germany"}, new int[]{3, 4, 5}, NeuronCluster.getInstance());
-        feedCalendar.addChild(f4);
+        FeedWrapper calendarWrapper = new FeedWrapper(feedCalendar);
+        Manipulator manipulator1 = new TimeDecaySingleSentimentManipulator("Germany", "Markit Manufacturing PMI");
+        Manipulator manipulator2 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Markit Manufacturing PMI");
+        Manipulator manipulator3 = new TimeDecaySingleSentimentManipulator("United Kingdom", "Markit Manufacturing PMI");
+        Manipulator manipulator4 = new TimeDecaySingleSentimentManipulator("Germany", "Unemployment Rate s.a.");
+        Manipulator manipulator5 = new TimeDecaySingleSentimentManipulator("United States", "Unemployment Rate");
+        Manipulator manipulator6 = new TimeDecaySingleSentimentManipulator("United States", "Producer Price Index (MoM)");
+        Manipulator manipulator7 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Producer Price Index (MoM)");
+        Manipulator manipulator8 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Unemployment Rate");
+        Manipulator manipulator9 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Retail Sales (MoM)");
+        Manipulator manipulator10 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Gross Domestic Product s.a. (QoQ)");
+        Manipulator manipulator11 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "ECB Interest Rate Decision");
+        Manipulator manipulator12 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Economic Sentiment");
+        Manipulator manipulator13 = new TimeDecaySingleSentimentManipulator("Japan", "BoJ Interest Rate Decision");
+        Manipulator manipulator14 = new TimeDecaySingleSentimentManipulator("United States", "Gross Domestic Product (QoQ)");
+        Manipulator manipulator15 = new TimeDecaySingleSentimentManipulator("United Kingdom", "Gross Domestic Product (QoQ)");
+        Manipulator manipulator16 = new TimeDecaySingleSentimentManipulator("United States", "Nonfarm Payrolls");
 
-        RowBasedTransformer f5 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Producer Price Index \\(MoM\\)", "European Monetary Union"}, new int[]{3, 4, 5}, NeuronCluster.getInstance());
-        feedCalendar.addChild(f5);
-        RowBasedTransformer f6 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Producer Price Index \\(MoM\\)", "United States"}, new int[]{3, 4, 5}, NeuronCluster.getInstance());
-        feedCalendar.addChild(f6);
-        RowBasedTransformer f7 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Retail Price Index \\(MoM\\)", "United Kingdom"}, new int[]{3, 4, 5}, NeuronCluster.getInstance());
-        feedCalendar.addChild(f7);
-        RowBasedTransformer f8 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Manufacturing Production \\(MoM\\)", "United Kingdom"}, new int[]{3, 4, 5}, NeuronCluster.getInstance());
-        feedCalendar.addChild(f8);
-        RowBasedTransformer f9 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Producer Price Index \\(MoM\\)", "Germany"}, new int[]{3, 4, 5}, NeuronCluster.getInstance());
-        feedCalendar.addChild(f9);
-        RowBasedTransformer f10 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"BoE Interest Rate Decision", "United Kingdom"}, new int[]{3, 4, 5}, NeuronCluster.getInstance());
-        feedCalendar.addChild(f10);
-        RowBasedTransformer f11 = new RowBasedTransformer(feedCalendar, 4L*60L*60L*1000L,  new int[]{0, 1}, new String[]{"Fed Interest Rate Decision", "United States"}, new int[]{3, 4, 5}, NeuronCluster.getInstance());
-        feedCalendar.addChild(f11);*/
+        calendarWrapper.putManipulator("1", manipulator1);
+        calendarWrapper.putManipulator("2", manipulator2);
+        calendarWrapper.putManipulator("3", manipulator3);
+        calendarWrapper.putManipulator("4", manipulator4);
+        calendarWrapper.putManipulator("5", manipulator5);
+        calendarWrapper.putManipulator("6", manipulator6);
+        calendarWrapper.putManipulator("7", manipulator7);
+        calendarWrapper.putManipulator("8", manipulator8);
+        calendarWrapper.putManipulator("9", manipulator9);
+        calendarWrapper.putManipulator("10", manipulator10);
+        calendarWrapper.putManipulator("11", manipulator11);
+        calendarWrapper.putManipulator("12", manipulator12);
+        calendarWrapper.putManipulator("13", manipulator13);
+        calendarWrapper.putManipulator("14", manipulator14);
+        calendarWrapper.putManipulator("15", manipulator15);
+        calendarWrapper.putManipulator("16", manipulator16);
+
+        cluster.addFeedWrapper(calendarWrapper);
 
 
         DataType[] typesPrice = new DataType[]{
@@ -238,18 +329,20 @@ public class MainNeural {
 
         CSVFeed feedPriceEUR = new CSVFeed(path + "feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feedPriceEUR.setStitchableFeed(liveFXRateEUR);
-        CSVFeed feedPriceGBP = new CSVFeed(path + "feeds/GBPUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
-        feedPriceGBP.setStitchableFeed(liveFXRateGBP);
+        rowFeeds.add(feedPriceEUR);
+        //CSVFeed feedPriceGBP = new CSVFeed(path + "feeds/GBPUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
+        //feedPriceGBP.setStitchableFeed(liveFXRateGBP);
+        //rowFeeds.add(feedPriceGBP);
         /*CSVFeed feedPriceCHF = new CSVFeed(path + "feeds/USDCHF.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  dateFP);
         feedPriceCHF.setStitchableFeed(liveFXRateCHF);*/
 
 
         ISynchFeed feed = buildSynchFeed(null, feedPriceEUR);
-        feed = buildSynchFeed(feed, feedPriceGBP);
+        //feed = buildSynchFeed(feed, feedPriceGBP);
         /*feed = buildSynchFeed(feed, feedPriceCHF);*/
 
         //SmartDiscretiserOnSynchronisedFeed sFeed = new SmartDiscretiserOnSynchronisedFeed(feed, 50000, 10);
-        MinMaxAggregatorDiscretiser sFeed = new MinMaxAggregatorDiscretiser(feed, 20000, 6);
+        MinMaxAggregatorDiscretiser sFeed = new MinMaxAggregatorDiscretiser(feed, PropertiesHolder.initialSeriesOffset, 6);
         sFeed.lock();
 
         feed.addChild(sFeed);
@@ -260,17 +353,6 @@ public class MainNeural {
         synchFeed.addRawFeed(feedPriceEUR);
         synchFeed.addRawFeed(tFeed);
 
-        /*addToSynchFeed(feed, f1, 25, 100);
-        addToSynchFeed(feed, f2, 0.1, 0);
-        addToSynchFeed(feed, f3, 0.1, 0);
-        addToSynchFeed(feed, f4, 0.1, 0);
-        addToSynchFeed(feed, f5, 0.1, 0);
-        addToSynchFeed(feed, f6, 0.1, 0);
-        addToSynchFeed(feed, f7, 0.1, 0);
-        addToSynchFeed(feed, f8, 0.1, 0);
-        addToSynchFeed(feed, f9, 0.1, 0);
-        addToSynchFeed(feed, f10, 0.1, 0);
-        addToSynchFeed(feed, f11, 0.1, 0);*/
 
         int i = 0;
         while (true) {
@@ -278,9 +360,8 @@ public class MainNeural {
             NeuronCluster.getInstance().setMeanTime(data.getTimeStamp());
             i++;
 
-            if (i == 20001) {
+            if (i == PropertiesHolder.initialSeriesOffset + 1) {
                 System.out.println(new Date(data.getTimeStamp()) + " " + data);
-                System.out.println(synchFeed.getDescription(0, ""));
                 break;
             }
             //System.out.println(new Date(data.getTimeStamp()) + " " + data);

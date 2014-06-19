@@ -2,6 +2,7 @@ package ai.context.util.trading;
 
 import ai.context.learning.DataObject;
 import ai.context.learning.neural.NeuronCluster;
+import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.Operations;
 import ai.context.util.measurement.OpenPosition;
 import com.dukascopy.api.JFException;
@@ -27,6 +28,8 @@ public class DecisionAggregator {
     private static BlackBox blackBox;
 
     private static int decisionsCollected = 0;
+    private static int participants = 0;
+
     public static void aggregateDecision(DataObject data, double pivot, TreeMap<Double, Double> histogram, long timeSpan, boolean goodTillClosed){
 
         long time = data.getTimeStamp();
@@ -48,15 +51,21 @@ public class DecisionAggregator {
 
         Date executionInstant = new Date(time);
         Date exitTime = new Date(time + timeSpan);
-        if (executionInstant.getDay() == 0 || executionInstant.getDay() == 6 || exitTime.getDay() == 0 || exitTime.getDay() == 6) {
+        if (histogram == null || executionInstant.getDay() == 0 || executionInstant.getDay() == 6 || exitTime.getDay() == 0 || exitTime.getDay() == 6) {
             return;
         }
 
-        double[] results = PositionFactory.getDecision(data.getTimeStamp(), pivot, histogram, timeSpan);
+        double[] results = PositionFactory.getDecision(data.getTimeStamp(), pivot, histogram, timeSpan, null, null, null);
         if(results == null
-                || results[2] < PositionFactory.rewardRiskRatio + 0.25
+                || results[2] < PositionFactory.rewardRiskRatio + PropertiesHolder.additionalPassRatio
                 /*|| results[3] < (PositionFactory.minProbFraction + 1)/2*/){
             return;
+        }
+
+        participants++;
+        double cred = 1;
+        if(PropertiesHolder.normalisationOfSuggestion){
+            cred = Math.sqrt(results[0]);
         }
 
         long tExit = (long) Math.ceil((double) timeSpan / (double) timeQuantum) * timeQuantum;
@@ -69,13 +78,14 @@ public class DecisionAggregator {
             if(!hist.containsKey(entry.getKey())){
                 hist.put(entry.getKey(), 0.0);
             }
-            hist.put(entry.getKey(), hist.get(entry.getKey()) + entry.getValue());
+            hist.put(entry.getKey(), hist.get(entry.getKey()) + entry.getValue()/cred);
         }
     }
 
     public static  void decide(){
         for(Map.Entry<Long, TreeMap<Double, Double>> entry : timeBasedHistograms.entrySet()){
             OpenPosition position = PositionFactory.getPosition(time, latestC, entry.getValue(), entry.getKey(), false);
+            position.setParticipants(participants);
             if (position != null) {
                 if (inLiveTrading) {
                     int startHour = new Date().getHours();
@@ -92,6 +102,7 @@ public class DecisionAggregator {
                 positions.add(position);
             }
         }
+        participants = 0;
     }
 
     public static void checkExit(){
@@ -105,7 +116,7 @@ public class DecisionAggregator {
                     blackBox.toClose(position.getOrder());
                 }
 
-                System.out.println("CHANGE: " + Operations.round(position.getAbsolutePNL(), 4) + " ACCRUED PNL: " +  Operations.round(PositionFactory.getAccruedPnL(), 4) + " CRED: " + Operations.round(position.getCredibility(), 2) + " " + position.getClosingMessage());
+                System.out.println("CHANGE: " + Operations.round(position.getAbsolutePNL(), 4) + " ACCRUED PNL: " +  Operations.round(PositionFactory.getAccruedPnL(), 4) + " CRED: " + Operations.round(position.getCredibility(), 2) + " Participants: " + position.getParticipants() + " " + position.getClosingMessage());
             }
         }
         positions.removeAll(closed);

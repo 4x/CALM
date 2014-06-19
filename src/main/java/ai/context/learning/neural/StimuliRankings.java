@@ -80,4 +80,10 @@ public class StimuliRankings {
             stimuli.add(i);
         }
     }
+
+    public void reset() {
+        stimuli.clear();
+        rankings.clear();
+        scores.clear();
+    }
 }

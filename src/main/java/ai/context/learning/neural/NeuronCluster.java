@@ -2,7 +2,11 @@ package ai.context.learning.neural;
 
 import ai.context.container.TimedContainer;
 import ai.context.core.ai.LearningException;
+import ai.context.feed.FeedObject;
+import ai.context.feed.manipulation.FeedWrapper;
+import ai.context.feed.manipulation.WrapperManipulatorPair;
 import ai.context.feed.synchronised.ISynchFeed;
+import ai.context.runner.MainNeural;
 import ai.context.util.common.MapUtils;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.Operations;
@@ -20,33 +24,40 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class NeuronCluster implements TimedContainer{
 
     private NeuronRankings rankings = NeuronRankings.getInstance();
-    private StimuliRankings stimuliRankings = StimuliRankings.getInstance();
     private ISynchFeed motherFeed;
-    private JettyServer server = new JettyServer(8055);
+    private JettyServer server = new JettyServer(PropertiesHolder.httpPort);
     private static volatile NeuronCluster instance = null;
     private AtomicInteger newID = new AtomicInteger(0);
 
     private Map<Integer, NeuralLearner> outputToNeuron = new HashMap<>();
-
     private Map<Integer, NeuralLearner> idToNeuron = new HashMap<>();
 
+    public List<Integer[]> seedFeeds = new ArrayList<>();
+    public AtomicInteger calibrationCount = new AtomicInteger(0);
+    public int maxCalibrationIterations = 5;
+
+    private long calibrationPoints = 20000;
     private long meanTime = 0;
     private long totalPointsConsumed = 0;
     private long minLatency = 50L;
     private double dangerLevel = 1;
     private ExecutorService service = Executors.newCachedThreadPool();
     private List<NeuralLearner> neurons = new CopyOnWriteArrayList<>();
+    private List<FeedWrapper> feedWrappers = new ArrayList<>();
+
+    private MainNeural container;
 
     private NeuronCluster() {
-        PropertiesHolder.maxPopulation = 1000;
-        PropertiesHolder.tolerance = 0.01;
-
         server.addServlet(NeuralClusterInformationServlet.class, "info");
     }
 
     public void start() {
         service.submit(stepper);
         service.submit(environmentCheck);
+    }
+
+    public void setContainer(MainNeural container) {
+        this.container = container;
     }
 
     private boolean parentsHaveNext(NeuralLearner neuron) {
@@ -66,6 +77,8 @@ public class NeuronCluster implements TimedContainer{
             synchronized (NeuronRankings.class) {
                 if (instance == null) {
                     instance = new NeuronCluster();
+                    instance.startServer();
+                    instance.start();
                 }
             }
         }
@@ -83,6 +96,39 @@ public class NeuronCluster implements TimedContainer{
     public void start(NeuralLearner neuron) {
         neurons.add(neuron);
         idToNeuron.put(neuron.getID(), neuron);
+    }
+
+    public void addFeedWrapper(FeedWrapper wrapper){
+        feedWrappers.add(wrapper);
+    }
+
+    public WrapperManipulatorPair assign(){
+        int wrapper = (int) (Math.random() * feedWrappers.size());
+        if(wrapper == feedWrappers.size()){
+            return null;
+        }
+        else {
+            List<String> possibilities = feedWrappers.get(wrapper).getPossibleManipulators();
+            int m = (int) (Math.random() * possibilities.size());
+            if(m == possibilities.size()){
+                return null;
+            }
+            String manipulator = possibilities.get(m);
+            return new WrapperManipulatorPair(wrapper, manipulator);
+        }
+    }
+
+    public FeedObject<Integer[]> getFromFeedWrapper(WrapperManipulatorPair id, long time){
+        return feedWrappers.get(id.getWrapperId()).getAtTimeForManipulator(time, id.getManipulatorId());
+    }
+
+    public int getNumberOfOutputsFor(List<WrapperManipulatorPair> pairs){
+        int n = 0;
+
+        for(WrapperManipulatorPair pair : pairs){
+            n += feedWrappers.get(pair.getWrapperId()).getManipulator(pair.getManipulatorId()).getNumberOfOutputs();
+        }
+        return n;
     }
 
     public void setMotherFeed(ISynchFeed motherFeed) {
@@ -126,35 +172,40 @@ public class NeuronCluster implements TimedContainer{
             while (true) {
                 try {
                     Thread.sleep(10000);
-                    totalPointsConsumed = 0;
-                    double latency = 0;
-                    long meanT = 0;
-                    Set<NeuralLearner> toRemove = new HashSet<>();
-                    for (NeuralLearner neuron : neurons) {
-                        if (!neuron.isAlive()) {
-                            toRemove.add(neuron);
-                        } else {
-                            latency += neuron.getLatency();
-                            totalPointsConsumed += neuron.getPointsConsumed();
-                            meanT += neuron.getLatestTime();
+                    if(!neurons.isEmpty()){
+                        totalPointsConsumed = 0;
+                        double latency = 0;
+                        long meanT = 0;
+                        Set<NeuralLearner> toRemove = new HashSet<>();
+                        for (NeuralLearner neuron : neurons) {
+                            if (!neuron.isAlive()) {
+                                toRemove.add(neuron);
+                            } else {
+                                latency += neuron.getLatency();
+                                totalPointsConsumed += neuron.getPointsConsumed();
+                                meanT += neuron.getLatestTime();
+                            }
                         }
-                    }
 
-                    for (NeuralLearner removed : toRemove) {
-                        neurons.remove(removed);
-                        removed.cleanup();
-                    }
-                    for (NeuralLearner neuron : neurons) {
-                        neuron.updateRankings();
-                    }
+                        for (NeuralLearner removed : toRemove) {
+                            neurons.remove(removed);
+                            removed.cleanup();
+                        }
+                        for (NeuralLearner neuron : neurons) {
+                            neuron.updateRankings();
+                        }
 
-                    meanTime = meanT / neurons.size();
-                    latency /= neurons.size();
-                    System.err.println("Mean Latency: " + Operations.round(latency, 3) + ", Points Consumed: " + totalPointsConsumed + ", Overall Score: " + Operations.round(rankings.getOverallMarking(), 4) + " as of " + new Date(meanTime));
-                    dangerLevel = latency / minLatency;
+                        meanTime = meanT / neurons.size();
+                        latency /= neurons.size();
+                        System.err.println("Mean Latency: " + Operations.round(latency, 3) + ", Points Consumed: " + totalPointsConsumed + ", Overall Score: " + Operations.round(rankings.getOverallMarking(), 4) + " as of " + new Date(meanTime));
+                        dangerLevel = latency / minLatency;
 
-                    if(!DecisionAggregator.isInLiveTrading() && meanTime > (System.currentTimeMillis() - 10 * 60000L)){
-                        DecisionAggregator.setInLiveTrading(true);
+                        if(container.isCalibrating() && totalPointsConsumed/neurons.size() > calibrationPoints){
+                            container.nextCalibrationRound();
+                        }
+                        else if(!DecisionAggregator.isInLiveTrading() && meanTime > (System.currentTimeMillis() - 10 * 60000L)){
+                            DecisionAggregator.setInLiveTrading(true);
+                        }
                     }
 
                 } catch (Exception e) {
@@ -273,6 +324,22 @@ public class NeuronCluster implements TimedContainer{
 
     public void setMeanTime(long meanTime) {
         this.meanTime = meanTime;
+    }
+
+    public void reset(){
+        neurons = new CopyOnWriteArrayList<>();
+
+        rankings.reset();
+        motherFeed = null;
+        newID = new AtomicInteger(0);
+
+        outputToNeuron = new HashMap<>();
+        idToNeuron = new HashMap<>();
+
+        meanTime = 0;
+        totalPointsConsumed = 0;
+        minLatency = 50L;
+        dangerLevel = 1;
     }
 
     public String getStats() {

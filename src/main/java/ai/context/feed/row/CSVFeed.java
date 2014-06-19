@@ -300,6 +300,14 @@ public class CSVFeed extends RowFeed {
         this.paddable = paddable;
     }
 
+    public void close(){
+        try {
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public String getDescription(int startIndex, String padding) {
         return padding + "[" + startIndex + "] CSV File: " + fileName;

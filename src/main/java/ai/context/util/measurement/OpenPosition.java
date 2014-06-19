@@ -28,6 +28,8 @@ public class OpenPosition {
     private long timeSpan;
     private double credibility = 0;
 
+    private int participants = 0;
+
     public OpenPosition(long timeOpen, double start, double targetProfit, double targetLoss, boolean isLong, long goodTillTime, boolean goodTillClosed) {
         this.timeOpen = timeOpen;
         this.start = start;
@@ -211,5 +213,13 @@ public class OpenPosition {
 
     public void setOrder(IOrder order) {
         this.order = order;
+    }
+
+    public int getParticipants() {
+        return participants;
+    }
+
+    public void setParticipants(int participants) {
+        this.participants = participants;
     }
 }

@@ -11,9 +11,11 @@ import static ai.context.util.common.FileUtils.getMD5Checksum;
 
 public class DynamicPropertiesLoader {
 
+    private static String globalPropertiesFile = "global.conf";
+
     private static String positionEngineChecksum = "";
     private static String positionFactoryConfigChecksum = "";
-    private static String learnerServiceConfigCheckSum = "";
+    private static String globalPropertiesConfigCheckSum = "";
 
     private static String folder = "";
 
@@ -27,7 +29,7 @@ public class DynamicPropertiesLoader {
                 try {
                     loadPositionFactoryConf();
                     loadPositionFactoryEngine();
-                    loadLearnerServiceConf();
+                    loadGlobalPropertiesConf();
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -57,13 +59,13 @@ public class DynamicPropertiesLoader {
         }
     }
 
-    private static void loadLearnerServiceConf() throws Exception {
-        if (new File(folder + "LearnerService.conf").exists()) {
-            if (!learnerServiceConfigCheckSum.equals(getMD5Checksum(folder + "LearnerService.conf"))) {
-                learnerServiceConfigCheckSum = getMD5Checksum(folder + "LearnerService.conf");
+    private static void loadGlobalPropertiesConf() throws Exception {
+        if (new File(folder + globalPropertiesFile).exists()) {
+            if (!globalPropertiesConfigCheckSum.equals(getMD5Checksum(folder + globalPropertiesFile))) {
+                globalPropertiesConfigCheckSum = getMD5Checksum(folder + globalPropertiesFile);
                 InputStream inputStream = null;
                 try {
-                    inputStream = new FileInputStream(folder + "LearnerService.conf");
+                    inputStream = new FileInputStream(folder + globalPropertiesFile);
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 }
@@ -83,9 +85,30 @@ public class DynamicPropertiesLoader {
                         PropertiesHolder.copulaToUniversal = Double.parseDouble(parts[1]);
                     } else if (parts[0].equals("toleranceSearch")) {
                         PropertiesHolder.toleranceSearch = Integer.parseInt(parts[1]);
+                    } else if (parts[0].equals("dukascopyLogin")) {
+                        PropertiesHolder.dukascopyLogin = parts[1];
+                    } else if (parts[0].equals("dukascopyPass")) {
+                        PropertiesHolder.dukascopyPass = parts[1];
+                    } else if (parts[0].equals("initialSeriesOffset")) {
+                        PropertiesHolder.initialSeriesOffset = Integer.parseInt(parts[1]);
+                    } else if (parts[0].equals("parentsPerNeuron")) {
+                        PropertiesHolder.parentsPerNeuron = Integer.parseInt(parts[1]);
+                    } else if (parts[0].equals("addtionalStimuliPerNeuron")) {
+                        PropertiesHolder.addtionalStimuliPerNeuron = Integer.parseInt(parts[1]);
+                    } else if (parts[0].equals("coreStimuliPerNeuron")) {
+                        PropertiesHolder.coreStimuliPerNeuron = Integer.parseInt(parts[1]);
+                    } else if (parts[0].equals("totalNeurons")) {
+                        PropertiesHolder.totalNeurons = Integer.parseInt(parts[1]);
+                    } else if (parts[0].equals("httpPort")) {
+                        PropertiesHolder.httpPort = Integer.parseInt(parts[1]);
+                    } else if (parts[0].equals("normalisationOfSuggestion")) {
+                        PropertiesHolder.normalisationOfSuggestion = Boolean.valueOf(parts[1]);
+                    } else if (parts[0].equals("additionalPassRatio")) {
+                        PropertiesHolder.additionalPassRatio = Double.parseDouble(parts[1]);
                     }
+
                 }
-                System.out.println("Learner Service configuration changed");
+                System.out.println("Global configuration changed");
             }
         }
     }

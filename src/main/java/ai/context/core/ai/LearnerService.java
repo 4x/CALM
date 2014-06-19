@@ -22,7 +22,7 @@ public class LearnerService {
     private double[] correlations;
 
     private ClusteredCopulae copulae = new ClusteredCopulae();
-    private ClusteredCopulae magnitudeCopulae = new ClusteredCopulae();
+    //private ClusteredCopulae magnitudeCopulae = new ClusteredCopulae();
 
     private TreeMap<Integer, Long> distribution = new TreeMap<Integer, Long>();
 
@@ -177,8 +177,8 @@ public class LearnerService {
             if (counterpart != null) {
                 if (doubleCheckMerge) {
                     updateAndGetCorrelationWeights(counterpart.getAmalgamate());
-                    currentDev += getDeviation(counterpart.getAmalgamate(), population.get(id));
-                    currentDev /= 2;
+                    currentDev *= getDeviation(counterpart.getAmalgamate(), population.get(id));
+                    currentDev = Math.sqrt(currentDev);
 
                     if (currentDev < minDevForMerge) {
                         merge(population.get(id), counterpart);
@@ -196,7 +196,7 @@ public class LearnerService {
 
     public synchronized void refreshCorrelations(int[] state, double movement) {
         copulae.addObservation(state, movement);
-        magnitudeCopulae.addObservation(state, Math.abs(movement));
+        //magnitudeCopulae.addObservation(state, Math.abs(movement));
 
         correlations = new double[state.length];
 
@@ -211,14 +211,14 @@ public class LearnerService {
 
     public double[] updateAndGetCorrelationWeights(int[] state) {
         correlationWeights = copulae.getCorrelationWeights(state);
-        double[] magCorrelations = magnitudeCopulae.getCorrelationWeights(state);
-        for (int i = 0; i < correlationWeights.length; i++) {
+        //double[] magCorrelations = magnitudeCopulae.getCorrelationWeights(state);
+        /*for (int i = 0; i < correlationWeights.length; i++) {
             double correlation = magCorrelations[i];
             if (correlation >= 0 && !Double.isInfinite(correlation)) {
                 //correlationWeights[i] = (0.75 * correlationWeights[i] + 0.25 * correlation);
                 correlationWeights[i] = Math.sqrt(correlationWeights[i] * correlation);
             }
-        }
+        }*/
         return correlationWeights;
     }
 
@@ -235,7 +235,7 @@ public class LearnerService {
             TreeMap<Double, StateActionPair> top2 = new TreeMap<Double, StateActionPair>();
             for (Map.Entry<Double, StateActionPair> pair : top.entrySet()) {
                 updateAndGetCorrelationWeights(pair.getValue().getAmalgamate());
-                double deviation = (getDeviation(pair.getValue().getAmalgamate(), state, correlationWeights) + pair.getKey()) / 2;
+                double deviation = Math.sqrt(getDeviation(pair.getValue().getAmalgamate(), state, correlationWeights) * pair.getKey());
                 top2.put(deviation, pair.getValue());
             }
             top = top2;
@@ -282,7 +282,7 @@ public class LearnerService {
         if (max == min) {
             return 0;
         }
-        return Math.pow((max - x) / (max - min), 2);
+        return Math.pow((max - x) / (max - min), 3);
     }
 
     private synchronized void mergeStates() throws LearningException {
@@ -311,6 +311,7 @@ public class LearnerService {
             int y = 0;
             int z = 0;
             int a = 0;
+            int sinceLastMerge = 0;
             HashSet<StateActionPair> check = new HashSet<>();
             for (StateActionPair pair : pairs) {
                 if (population.values().contains(pair)) {
@@ -323,12 +324,13 @@ public class LearnerService {
                             double deviation = getDeviation(pair.getAmalgamate(), counterpart);
                             if (doubleCheckMerge) {
                                 updateAndGetCorrelationWeights(counterpart.getAmalgamate());
-                                deviation += getDeviation(counterpart.getAmalgamate(), pair);
-                                deviation /= 2;
+                                deviation *= getDeviation(counterpart.getAmalgamate(), pair);
+                                deviation = Math.sqrt(deviation);
                             }
                             z++;
                             if (deviation <= minDevForMerge) {
                                 merge(pair, counterpart);
+                                sinceLastMerge = 0;
                                 a++;
                                 if (population.size() < getMaxPopulation() / 2) {
                                     targetReached = true;
@@ -337,9 +339,10 @@ public class LearnerService {
                             }
                         }
                     }
-                    if (targetReached) {
+                    if (targetReached || sinceLastMerge > 10) {
                         break;
                     }
+                    sinceLastMerge++;
                 }
             }
 

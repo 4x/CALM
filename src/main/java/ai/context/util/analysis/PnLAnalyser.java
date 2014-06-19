@@ -7,9 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class PnLAnalyser {
 
@@ -22,7 +20,8 @@ public class PnLAnalyser {
     int nDay = 0;
     int nMonth = 0;
     double tradeToCapRatio = 10;
-    double credThreshold = 7;
+    double[] credRange = new double[]{0, 2};
+    Integer[] hoursToTrade = new Integer[]{6,7,8,9,10,14,15,16,17,18,19,20,21,22};
     double rebate = 0.00010;
     double sourceCharge = 0.00020;
     boolean hasTargetLogging = true;
@@ -42,11 +41,12 @@ public class PnLAnalyser {
             String file = "/opt/dev/tmp/nohup.out";
             //String file = "/opt/dev/tmp/2008-2011_logs.txt";
 
-            int useConfigChange = -1;
+            int useConfigChange = 10;
             int configChange = 0;
 
             br = new BufferedReader(new FileReader(file));
             String sCurrentLine;
+            Set<Integer> hours = new HashSet<Integer>(Arrays.<Integer>asList(hoursToTrade));
             while ((sCurrentLine = br.readLine()) != null) {
                 if(sCurrentLine.contains("Position Factory configuration changed")){
                     configChange++;
@@ -101,8 +101,8 @@ public class PnLAnalyser {
 
                         int changeClass = (int) (Math.abs(targetPnL) * 1000);
 
-                        long startHour = startTime / 60;
-                        int credClass = cred.intValue();
+                        int startHour = (int) (startTime / 60);
+                        int credClass = (int)(cred.doubleValue());
 
                         Order order = new Order(change + sourceCharge, pnl, state, dir, cred, span, targetPnL, day, month, date, year, hour, min, closing);
                         if (!orders.containsKey(order.getID())) {
@@ -112,23 +112,25 @@ public class PnLAnalyser {
                         }
                         change += rebate;
 
-                        if (true ||
-                                cred >= credThreshold
-                                /*&& targetPnL > 0.0015
-                                && targetPnL < 0.002
-                                && ((startHour > 4 && startHour < 9) || (startHour > 14 && startHour < 17))*/
-                                ) {
+                        if (    //true ||
+                                cred >= credRange[0] &&
+                                cred <= credRange[1] &&
+                                targetPnL >= 0.0015 &&
+                                targetPnL < 0.002 &&
+                                hours.contains(startHour) &&
+                                true) {
 
                             //aggregate(nMonth, change);
                             //aggregate(startHour, change);
                             //aggregate(changeClass, change);
                             //aggregate(hour, change);
-                            //aggregate(nDay, change);
+                            aggregate(nDay, change);
                             //aggregate(day, change);
                             //aggregate(closing, change);
                             //aggregate(span, change);
-                            aggregate(credClass, change);
+                            //aggregate(credClass, change);
                             //aggregate(targetPnL, change);
+                            //aggregate((int)(targetPnL * 2000), change);
                             //aggregate(Math.abs((int)(change * 10000)), change);
 
                             /*String dateString = "";

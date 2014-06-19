@@ -33,7 +33,7 @@ public class PositionFactory {
     private static double credThreshold = 1.0;
 
     public static OpenPosition getPosition(long time, double pivot, TreeMap<Double, Double> histogram, long timeSpan, boolean goodTillClosed) {
-        double[] results = getDecision(time, pivot, histogram, timeSpan);
+        double[] results = getDecision(time, pivot, histogram, timeSpan, null, null, null);
         if(results == null){
             return null;
         }
@@ -58,7 +58,7 @@ public class PositionFactory {
         return null;
     }
 
-    public static double[] getDecision(long time, double pivot, TreeMap<Double, Double> histogram, long timeSpan){
+    public static double[] getDecision(long time, double pivot, TreeMap<Double, Double> histogram, long timeSpan, Double minProbFraction, Double cost, Double rewardRiskRatio){
         Date executionInstant = new Date(time);
         Date exitTime = new Date(time + timeSpan);
         if (executionInstant.getDay() == 0 || executionInstant.getDay() == 6 || exitTime.getDay() == 0 || exitTime.getDay() == 6) {
@@ -107,7 +107,7 @@ public class PositionFactory {
         }
 
         double credibility = (longFreq + shortFreq)/2;
-        double[] decision = DecisionUtil.getDecision(sFreq, lFreq);
+        double[] decision = DecisionUtil.getDecision(sFreq, lFreq, minProbFraction, cost, rewardRiskRatio);
         return new double[]{credibility, decision[0], decision[1], decision[2]};
     }
 
