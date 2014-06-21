@@ -18,7 +18,10 @@ import ai.context.feed.transformer.compound.AmplitudeWavelengthTransformer;
 import ai.context.feed.transformer.compound.SubstractTransformer;
 import ai.context.feed.transformer.filtered.RowBasedTransformer;
 import ai.context.feed.transformer.series.learning.BufferedTransformer;
-import ai.context.feed.transformer.series.online.*;
+import ai.context.feed.transformer.series.online.CrossingSeriesOnlineTransformer;
+import ai.context.feed.transformer.series.online.MinMaxDistanceTransformer;
+import ai.context.feed.transformer.series.online.RSIOnlineTransformer;
+import ai.context.feed.transformer.series.online.StandardDeviationOnlineTransformer;
 import ai.context.feed.transformer.single.TimeVariablesAppenderFeed;
 import ai.context.feed.transformer.single.unpadded.LinearDiscretiser;
 import ai.context.feed.transformer.single.unpadded.LogarithmicDiscretiser;
@@ -38,8 +41,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-
-import static ai.context.util.common.DateUtils.getTimeFromString_YYYYMMddHHmmss;
 
 public class Main {
 
@@ -79,7 +80,6 @@ public class Main {
     public void setTraderOutput(String output) {
         trader = new Learner(output);
         trader.setBlackBox(blackBox);
-        successfullMemoryLoading = trader.loadMemories("./memories", getTimeFromString_YYYYMMddHHmmss("20130201000000"));
     }
 
     private void goLive() {

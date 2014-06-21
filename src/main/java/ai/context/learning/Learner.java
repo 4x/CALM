@@ -1,6 +1,5 @@
 package ai.context.learning;
 
-import ai.context.builder.LearnerServiceBuilder;
 import ai.context.container.TimedContainer;
 import ai.context.core.ai.LearnerService;
 import ai.context.core.ai.LearningException;
@@ -78,12 +77,6 @@ public class Learner implements Runnable, TimedContainer {
 
             if (adapting && tNow > timeToSave) {
                 break;
-            }
-
-            if (!learner.isMerging() && !saved && tNow > timeToSave) {
-                System.out.println("Saving at " + new Date(tNow) + " " + new Date(timeToSave));
-                LearnerServiceBuilder.save(learner, "./memories", timeToSave);
-                saved = true;
             }
 
             if (tNow % (6 * 3600 * 1000L) == 0) {
@@ -207,15 +200,6 @@ public class Learner implements Runnable, TimedContainer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public boolean loadMemories(String folder, long time) {
-        if (new File(folder + "/LearnerService_" + time).exists()) {
-            learner = LearnerServiceBuilder.load(folder, time);
-            saved = true;
-            return true;
-        }
-        return false;
     }
 
     public LearnerService getLearner() {

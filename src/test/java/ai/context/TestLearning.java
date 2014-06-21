@@ -15,7 +15,7 @@ public class TestLearning {
 
     private LearnerService learner = new LearnerService();
 
-    private int numInputs = 3;
+    private int numInputs = 8;
     private int degreesOfFreedom = 10;
     private int numPoints = 10000;
 
@@ -32,6 +32,7 @@ public class TestLearning {
         learner.setMaxPopulation(maxPopulation);
         learner.setTolerance(tolerance);
 
+        long t = System.currentTimeMillis();
         int[] signal = null;
         for (int i = 0; i < numPoints; i++) {
             signal = getRandomSignal();
@@ -45,7 +46,7 @@ public class TestLearning {
             System.out.println("Learned: point " + i + ": Signal: " + getStringFromSignal(signal) + " Movement: " + movement);
         }
 
-        System.out.println(learner.getPopulation().size());
+        System.out.println(learner.getPopulation().size() + " Time: " + (System.currentTimeMillis() - t));
         //LearnerServiceBuilder.save(learner, "src/test/resources", 1);
     }
 

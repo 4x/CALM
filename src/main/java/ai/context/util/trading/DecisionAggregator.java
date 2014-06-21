@@ -85,7 +85,6 @@ public class DecisionAggregator {
     public static  void decide(){
         for(Map.Entry<Long, TreeMap<Double, Double>> entry : timeBasedHistograms.entrySet()){
             OpenPosition position = PositionFactory.getPosition(time, latestC, entry.getValue(), entry.getKey(), false);
-            position.setParticipants(participants);
             if (position != null) {
                 if (inLiveTrading) {
                     int startHour = new Date().getHours();
@@ -99,6 +98,7 @@ public class DecisionAggregator {
                         }
                     }
                 }
+                position.setParticipants(participants);
                 positions.add(position);
             }
         }

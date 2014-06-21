@@ -282,13 +282,13 @@ public class LearnerService {
         if (max == min) {
             return 0;
         }
-        return Math.pow((max - x) / (max - min), 3);
+        return Math.pow((max - x) / (max - min), 1);
     }
 
     private synchronized void mergeStates() throws LearningException {
         merging = true;
         if (minDevForMerge == -1) {
-            minDevForMerge = 4 * (minDev + maxDev) / getMaxPopulation();
+            minDevForMerge = 400 * (minDev + maxDev) / getMaxPopulation();
         } else if (minDevForMerge < 0) {
             throw new LearningException("Negative Deviation For Merge");
         }
