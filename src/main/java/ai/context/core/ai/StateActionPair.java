@@ -2,7 +2,6 @@ package ai.context.core.ai;
 
 import ai.context.util.learning.AmalgamateUtils;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -12,7 +11,7 @@ public class StateActionPair {
     private final int[] amalgamate;
     private double actionResolution;
     private TreeMap<Integer, Double> actionDistribution = new TreeMap<Integer, Double>();
-    private HashSet<StateActionPair> closestNeighbours = new HashSet<>();
+    private TreeMap<Double, StateActionPair> closestNeighbours = new TreeMap<>();
 
     private double totalWeight = 0.0;
 
@@ -108,11 +107,11 @@ public class StateActionPair {
         return deviation;
     }
 
-    public HashSet<StateActionPair> getClosestNeighbours() {
+    public TreeMap<Double, StateActionPair> getClosestNeighbours() {
         return closestNeighbours;
     }
 
-    public void setClosestNeighbours(HashSet<StateActionPair> closestNeighbours) {
+    public void setClosestNeighbours(TreeMap<Double, StateActionPair> closestNeighbours) {
         this.closestNeighbours = closestNeighbours;
     }
 

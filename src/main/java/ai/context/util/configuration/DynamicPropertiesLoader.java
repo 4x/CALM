@@ -105,10 +105,16 @@ public class DynamicPropertiesLoader {
                         PropertiesHolder.normalisationOfSuggestion = Boolean.valueOf(parts[1]);
                     } else if (parts[0].equals("additionalPassRatio")) {
                         PropertiesHolder.additionalPassRatio = Double.parseDouble(parts[1]);
+                    } else if (parts[0].equals("horizonLowerBound")) {
+                        PropertiesHolder.horizonLowerBound = Long.parseLong(parts[1]);
+                    } else if (parts[0].equals("horizonUpperBound")) {
+                        PropertiesHolder.horizonUpperBound = Long.parseLong(parts[1]);
+                    } else if (parts[0].equals("neuronLearningPeriod")) {
+                        PropertiesHolder.neuronLearningPeriod = Long.parseLong(parts[1]);
                     }
 
                 }
-                System.out.println("Global configuration changed");
+                System.out.println("Global configuration changed: " + PropertiesHolder.getInfo());
             }
         }
     }

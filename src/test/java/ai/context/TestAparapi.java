@@ -14,11 +14,16 @@ import com.amd.aparapi.Range;
 
 public class TestAparapi {
 
-    public static void main(String[] _args) {
+    static final int size = 8192 * 8192;
 
-        System.out.println(System.getenv("LD_LIBRARY_PATH"));
-        System.out.println(System.getenv("PATH"));
-        final int size = 512;
+    public static void main(String[] _args) {
+        runOnGPU();
+        runNormally();
+    }
+
+    public static void runOnGPU(){
+
+        long t = System.nanoTime();
 
         /** Input float array for which square values need to be computed. */
         final float[] values = new float[size];
@@ -46,15 +51,26 @@ public class TestAparapi {
         kernel.execute(Range.create(512));
 
         // Report target execution mode: GPU or JTP (Java Thread Pool).
-        System.out.println("Execution mode=" + kernel.getExecutionMode());
-
-        // Display computed square values.
-        for (int i = 0; i < size; i++) {
-            System.out.printf("%6.0f %8.0f\n", values[i], squares[i]);
-        }
-
-        // Dispose Kernel resources.
+        //System.out.println("Execution mode=" + kernel.getExecutionMode());
         kernel.dispose();
+
+        System.out.println("Time: " + (System.nanoTime() - t));
     }
 
+    public static void runNormally(){
+        long t = System.nanoTime();
+
+        final float[] values = new float[size];
+        for (int i = 0; i < size; i++) {
+            values[i] = i;
+        }
+
+        final float[] squares = new float[size];
+
+        for(int i = 0; i < size; i++){
+            squares[i] = values[i] * values[i];
+        }
+
+        System.out.println("Time: " + (System.nanoTime() - t));
+    }
 }

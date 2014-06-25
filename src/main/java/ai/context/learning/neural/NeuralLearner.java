@@ -11,6 +11,7 @@ import ai.context.learning.DataObject;
 import ai.context.learning.SelectLearnerFeed;
 import ai.context.util.common.StateActionInformationTracker;
 import ai.context.util.configuration.PropertiesHolder;
+import ai.context.util.mathematics.discretisation.AbsoluteMovementDiscretiser;
 import ai.context.util.measurement.OpenPosition;
 import ai.context.util.trading.BlackBox;
 import ai.context.util.trading.DecisionAggregator;
@@ -38,6 +39,8 @@ public class NeuralLearner implements Feed, Runnable {
 
     private List<WrapperManipulatorPair> wrapperManipulatorPairs = new ArrayList<>();
     private int numberOfWrapperOutputs = 0;
+
+    private AbsoluteMovementDiscretiser discretiser;
 
     private final long horizon;
     private long oneHour = 60 * 60 * 1000L;
@@ -102,9 +105,7 @@ public class NeuralLearner implements Feed, Runnable {
 
         if(wrapperConfig == null || wrapperConfig.length() == 0){
             for(int i = 0; i < PropertiesHolder.addtionalStimuliPerNeuron; i++){
-                if(Math.random() > 0.5){
-                    wrapperManipulatorPairs.add(cluster.assign());
-                }
+                wrapperManipulatorPairs.add(cluster.assign());
             }
         }
         else{
@@ -115,6 +116,10 @@ public class NeuralLearner implements Feed, Runnable {
         }
         numberOfWrapperOutputs = cluster.getNumberOfOutputsFor(wrapperManipulatorPairs);
         this.learnerFeed = new SelectLearnerFeed(motherFeed, actionElements, sigElements);
+        discretiser = new AbsoluteMovementDiscretiser(0.01);
+        discretiser.addLayer(0.002, 0.0001);
+        discretiser.addLayer(0.005, 0.0005);
+        discretiser.addLayer(0.01, 0.001);
         System.out.println("New Neuron: " + getDescription(0, ""));
     }
 
@@ -200,19 +205,20 @@ public class NeuralLearner implements Feed, Runnable {
                     tracker.processHigh(data.getValue()[1], time);
                     tracker.processLow(data.getValue()[2], time);
                 }
-                trackers.add(new StateActionInformationTracker(time, signal, data.getValue()[0], 10 * resolution));
+                StateActionInformationTracker tracker = new StateActionInformationTracker(time, signal, data.getValue()[0], 20 * resolution);
+                tracker.setDiscretisation(discretiser);
+                trackers.add(tracker);
 
                 int[] outputSignal = new int[getNumberOfOutputs()];
                 if (pointsConsumed > 200) {
-                    double movement = getPredictedMovement(signal);
+                    outputSignal = getSignalForDistribution(core.getActionDistribution(signal));
+                    /*double movement = getPredictedMovement(signal);
                     lastMean = (1 - lambda) * lastMean + lambda * movement;
 
-                    lastDecision = outputSignal[0] = getLogarithmicDiscretisation(movement, 0, 0.00005, 2);
-                    outputSignal[1] = getLogarithmicDiscretisation(movement - lastMean, 0, 0.00005, 2);
-                    //System.out.println("Signal [" + id + "]: " + movement);
+                    lastDecision = outputSignal[0] = getLogarithmicDiscretisation(movement, 0, 0.00005, 2);*/
                 }
 
-                if (pointsConsumed > 50000) {
+                if (pointsConsumed > PropertiesHolder.neuronLearningPeriod) {
                     adapting = false;
                 }
                 long eventTime = time/* + outputFutureOffset*/;
@@ -226,8 +232,6 @@ public class NeuralLearner implements Feed, Runnable {
             System.err.println("Learning exception: " + e.getReason() + " Neuron " + id + " is dying...");
             throw e;
         } catch (Exception e) {
-            /*System.err.println("Exception: " + e.getMessage() + " Neuron "+ id +" is dying...");
-            break;*/
             e.printStackTrace();
         }
     }
@@ -388,7 +392,7 @@ public class NeuralLearner implements Feed, Runnable {
         //signal[2] = getLogarithmicDiscretisation(firstQuartile, 0, 1, 2);
         //signal[3] = getLogarithmicDiscretisation(median, 0, 1, 2);
         //signal[4] = getLogarithmicDiscretisation(thirdQuartile, 0, 1, 2);
-        signal[1] = getLogarithmicDiscretisation(mean - lastMean, 0, 1, 2);
+        //signal[1] = getLogarithmicDiscretisation(mean - lastMean, 0, 1, 2);
 
         /*System.out.println(mean + ", " +
                 stddev + ", " +
@@ -547,6 +551,6 @@ public class NeuralLearner implements Feed, Runnable {
 
     @Override
     public int getNumberOfOutputs() {
-        return 2;
+        return 1;
     }
 }

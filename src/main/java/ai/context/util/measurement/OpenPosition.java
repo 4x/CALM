@@ -63,15 +63,15 @@ public class OpenPosition {
 
             if (isLong) {
                 if (price > start) {
-                    closingMessage = new Date(time) + ": PROFIT: [LONG] " + (time - timeOpen)/1000 + "s " + target + " TIMEOUT";
+                    closingMessage = new Date(time) + ": PROFIT: [LONG] " + (time - timeOpen)/1000 + "s " + target + " " + timeSpan + " TIMEOUT";
                 } else {
-                    closingMessage = new Date(time) + ": LOSS: [LONG] " + (time - timeOpen)/1000 + "s " + target + " TIMEOUT";
+                    closingMessage = new Date(time) + ": LOSS: [LONG] " + (time - timeOpen)/1000 + "s " + target + " " + timeSpan + " TIMEOUT";
                 }
             } else {
                 if (price < start) {
-                    closingMessage = new Date(time) + ": PROFIT: [SHORT] " + (time - timeOpen)/1000 + "s " + target + " TIMEOUT";
+                    closingMessage = new Date(time) + ": PROFIT: [SHORT] " + (time - timeOpen)/1000 + "s " + target + " " + timeSpan + " TIMEOUT";
                 } else {
-                    closingMessage = new Date(time) + ": LOSS: [SHORT] " + (time - timeOpen)/1000 + "s " + target + " TIMEOUT";
+                    closingMessage = new Date(time) + ": LOSS: [SHORT] " + (time - timeOpen)/1000 + "s " + target + " " + timeSpan + " TIMEOUT";
                 }
             }
             return true;
@@ -80,25 +80,25 @@ public class OpenPosition {
         if (isLong) {
             if (low <= stopLoss) {
                 price = stopLoss;
-                closingMessage = new Date(time) + ": LOSS: [LONG] " + (time - timeOpen)/1000 + "s " + target;
+                closingMessage = new Date(time) + ": LOSS: [LONG] " + (time - timeOpen)/1000 + "s " + target + " " + timeSpan + " NORMAL";
                 return true;
             }
 
             if (high >= takeProfit) {
                 price = takeProfit;
-                closingMessage = new Date(time) + ": PROFIT: [LONG] " + (time - timeOpen)/1000 + "s " + target;
+                closingMessage = new Date(time) + ": PROFIT: [LONG] " + (time - timeOpen)/1000 + "s " + target + " " + timeSpan + " NORMAL";
                 return true;
             }
         } else {
             if (high >= stopLoss) {
                 price = stopLoss;
-                closingMessage = new Date(time) + ": LOSS: [SHORT] " + (time - timeOpen)/1000 + "s " + target;
+                closingMessage = new Date(time) + ": LOSS: [SHORT] " + (time - timeOpen)/1000 + "s " + target + " " + timeSpan + " NORMAL";
                 return true;
             }
 
             if (low <= takeProfit) {
                 price = takeProfit;
-                closingMessage = new Date(time) + ": PROFIT: [SHORT] " + (time - timeOpen)/1000 + "s " + target;
+                closingMessage = new Date(time) + ": PROFIT: [SHORT] " + (time - timeOpen)/1000 + "s " + target + " " + timeSpan + " NORMAL";
                 return true;
             }
         }
@@ -107,13 +107,13 @@ public class OpenPosition {
             if (isLong) {
                 if (close > (start + 2*cost)) {
                     price = close;
-                    closingMessage = new Date(time) + ": PROFIT: [LONG] " + (time - timeOpen)/1000 + "s " + target + " LOCKING_PROFIT";
+                    closingMessage = new Date(time) + ": PROFIT: [LONG] " + (time - timeOpen)/1000 + "s " + target + " " + timeSpan + " LOCKING_PROFIT";
                     return true;
                 }
             } else {
                 if (close < (start - 2*cost)) {
                     price = close;
-                    closingMessage = new Date(time) + ": PROFIT: [SHORT] " + (time - timeOpen)/1000 + "s " + target + " LOCKING_PROFIT";
+                    closingMessage = new Date(time) + ": PROFIT: [SHORT] " + (time - timeOpen)/1000 + "s " + target + " " + timeSpan + " LOCKING_PROFIT";
                     return true;
                 }
             }
@@ -126,15 +126,15 @@ public class OpenPosition {
         this.price = price;
         if (isLong) {
             if (price > start) {
-                closingMessage = new Date(time) + ": PROFIT: [LONG] " + (time - timeOpen)/1000 + "s " + target + " FORCED";
+                closingMessage = new Date(time) + ": PROFIT: [LONG] " + (time - timeOpen)/1000 + "s " + target + " " + timeSpan + " FORCED";
             } else {
-                closingMessage = new Date(time) + ": LOSS: [LONG] " + (time - timeOpen)/1000 + "s " + target + " FORCED";
+                closingMessage = new Date(time) + ": LOSS: [LONG] " + (time - timeOpen)/1000 + "s " + target + " " + timeSpan + " FORCED";
             }
         } else {
             if (price < start) {
-                closingMessage = new Date(time) + ": PROFIT: [SHORT] " + (time - timeOpen)/1000 + "s " + target + " FORCED";
+                closingMessage = new Date(time) + ": PROFIT: [SHORT] " + (time - timeOpen)/1000 + "s " + target + " " + timeSpan + " FORCED";
             } else {
-                closingMessage = new Date(time) + ": LOSS: [SHORT] " + (time - timeOpen)/1000 + "s " + target + " FORCED";
+                closingMessage = new Date(time) + ": LOSS: [SHORT] " + (time - timeOpen)/1000 + "s " + target + " " + timeSpan + " FORCED";
             }
         }
     }

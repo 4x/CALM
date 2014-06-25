@@ -24,7 +24,6 @@ public class PnLAnalyser {
     Integer[] hoursToTrade = new Integer[]{6,7,8,9,10,14,15,16,17,18,19,20,21,22};
     double rebate = 0.00010;
     double sourceCharge = 0.00020;
-    boolean hasTargetLogging = true;
 
     SimpleDateFormat format = new SimpleDateFormat("yyyy-MMM-dd HH:mm");
 
@@ -37,11 +36,11 @@ public class PnLAnalyser {
         BufferedReader br = null;
 
         try {
-            long tStart = format.parse("2008-Jan-13 06:00").getTime();
+            long tStart = format.parse("2005-Jan-13 06:00").getTime();
             String file = "/opt/dev/tmp/nohup.out";
             //String file = "/opt/dev/tmp/2008-2011_logs.txt";
 
-            int useConfigChange = 10;
+            int useConfigChange = -1;
             int configChange = 0;
 
             br = new BufferedReader(new FileReader(file));
@@ -56,23 +55,22 @@ public class PnLAnalyser {
                     String[] parts = sCurrentLine.split(" ");
                     Double change = Double.parseDouble(parts[1]);
                     Double pnl = Double.parseDouble(parts[4]);
-                    String state = parts[13].substring(0, parts[13].length() - 1);
-                    String dir = parts[14];
+                    String state = parts[15].substring(0, parts[15].length() - 1);
+                    String dir = parts[16];
                     Double cred = Double.parseDouble(parts[6]);
-                    Long span = Long.parseLong(parts[15].substring(0, parts[15].indexOf('s')));
-                    Double targetPnL = Math.abs(change + 0.0002);
-                    if (hasTargetLogging) {
-                        targetPnL = Double.parseDouble(parts[16].split("Mean")[0]);
-                    }
+                    int participants = Integer.parseInt(parts[8]);
+                    Long span = Long.parseLong(parts[17].substring(0, parts[17].indexOf('s')));
+                    long lifeSpan = Long.parseLong(parts[19]);
+                    Double targetPnL = Double.parseDouble(parts[18].split("Mean")[0]);
 
-                    String day = parts[7];
-                    String month = parts[8];
-                    Long date = Long.parseLong(parts[9]);
-                    Long year = Long.parseLong(parts[12].substring(0, parts[12].length() - 1));
-                    Long hour = Long.parseLong(parts[10].split(":")[0]);
-                    Long min = Long.parseLong(parts[10].split(":")[1]);
+                    String day = parts[9];
+                    String month = parts[10];
+                    Long date = Long.parseLong(parts[11]);
+                    Long year = Long.parseLong(parts[14].substring(0, parts[14].length() - 1));
+                    Long hour = Long.parseLong(parts[12].split(":")[0]);
+                    Long min = Long.parseLong(parts[12].split(":")[1]);
 
-                    long t = format.parse(year + "-" + month + "-" + parts[9] + " " + parts[10]).getTime();
+                    long t = format.parse(year + "-" + month + "-" + parts[11] + " " + parts[12]).getTime();
                     if(t >= tStart && (useConfigChange + 1 == configChange || useConfigChange == -1)){
                         Long endTime = hour * 60 + min;
                         Long startTime = (endTime - span / 60) % (24 * 60);
@@ -80,14 +78,7 @@ public class PnLAnalyser {
                             startTime = (24 * 60) + startTime;
                         }
 
-                        String closing = "NORMAL";
-                        int index = 16;
-                        if (hasTargetLogging) {
-                            index = 17;
-                        }
-                        if (parts.length == 1 + index) {
-                            closing = parts[index];
-                        }
+                        String closing = parts[parts.length - 1];
 
                         if (!day.equals(lastDay)) {
                             lastDay = day;
@@ -112,7 +103,7 @@ public class PnLAnalyser {
                         }
                         change += rebate;
 
-                        if (    //true ||
+                        if (    true ||
                                 cred >= credRange[0] &&
                                 cred <= credRange[1] &&
                                 targetPnL >= 0.0015 &&
@@ -124,12 +115,12 @@ public class PnLAnalyser {
                             //aggregate(startHour, change);
                             //aggregate(changeClass, change);
                             //aggregate(hour, change);
-                            aggregate(nDay, change);
+                            //aggregate(nDay, change);
                             //aggregate(day, change);
                             //aggregate(closing, change);
                             //aggregate(span, change);
                             //aggregate(credClass, change);
-                            //aggregate(targetPnL, change);
+                            aggregate(targetPnL, change);
                             //aggregate((int)(targetPnL * 2000), change);
                             //aggregate(Math.abs((int)(change * 10000)), change);
 

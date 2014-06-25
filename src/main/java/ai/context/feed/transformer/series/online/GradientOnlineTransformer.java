@@ -15,13 +15,16 @@ public class GradientOnlineTransformer extends OnlineTransformer {
     private Feed feedMax;
     private Feed feedClose;
 
+    private double res;
+
     private LinkedList<Double> vals = new LinkedList<>();
 
-    public GradientOnlineTransformer(int bufferSize, Feed feedMin, Feed feedMax, Feed feedClose) {
+    public GradientOnlineTransformer(int bufferSize, Feed feedMin, Feed feedMax, Feed feedClose, double res) {
         super(bufferSize, feedMin, feedMax, feedClose);
         this.feedMin = feedMin;
         this.feedMax = feedMax;
         this.feedClose = feedClose;
+        this.res = res;
     }
 
     double xMean = 0;
@@ -66,14 +69,14 @@ public class GradientOnlineTransformer extends OnlineTransformer {
             xMean = (bufferSize - 1)/2.0;
             x2MeanMinusXMean2 = x2Mean - (xMean * xMean);
         }
-        return new Double[]{(double) getLogarithmicDiscretisation(grad, 0, 0.00001), (double)getLogarithmicDiscretisation(diff, 0, 0.0001)};
+        return new Double[]{(double) getLogarithmicDiscretisation(grad, 0, res), (double)getLogarithmicDiscretisation(diff, 0, res)};
     }
 
 
 
     @Override
     public Feed getCopy() {
-        return new GradientOnlineTransformer(bufferSize, feedMin.getCopy(), feedMax.getCopy(), feedClose.getCopy());
+        return new GradientOnlineTransformer(bufferSize, feedMin.getCopy(), feedMax.getCopy(), feedClose.getCopy(), res);
     }
 
     @Override

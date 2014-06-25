@@ -10,18 +10,19 @@ public class ClusteredCopulae {
 
     public synchronized void addObservation(int state[], double value) {
         if(variableClusteredCorrelations == null){
-            variableClusteredCorrelations = new CorrelationCalculator[state.length][state.length][base*2];
+            variableClusteredCorrelations = new CorrelationCalculator[state.length][state.length][base * 2];
         }
         for (int i = 0; i < state.length; i++) {
             for (int j = 0; j < state.length; j++) {
                 if (j != i) {
                     int index = state[i] + base;
-                    if(index > base * 2){
-                        index = base * 2 -1;
+                    if(index >= base * 2){
+                        index = base * 2 - 1;
                     }
                     else if(index < 0){
                         index = 0;
                     }
+
                     if(variableClusteredCorrelations[i][j][index] == null){
                         variableClusteredCorrelations[i][j][index] = new CorrelationCalculator();
                     }
@@ -38,9 +39,13 @@ public class ClusteredCopulae {
             for (int j = 0; j < state.length; j++) {
                 if (j != i) {
                     int index = state[i] + base;
-                    if(index > base * 2){
+                    if(index >= base * 2){
                         index = base * 2 - 1;
                     }
+                    else if(index < 0){
+                        index = 0;
+                    }
+
                     CorrelationCalculator calc = variableClusteredCorrelations[i][j][index];
                     double correlation = 0;
 
