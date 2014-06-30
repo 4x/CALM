@@ -4,10 +4,10 @@ import java.util.TreeMap;
 
 public class DecisionUtil {
 
-    public static double[] getDecision(TreeMap<Double, Double> sFreq, TreeMap<Double, Double> lFreq, Double minProbFraction, Double cost, Double rewardRiskRatio) {
+    public static double[] getDecision(TreeMap<Double, Double> sFreq, TreeMap<Double, Double> lFreq, Double minProbFraction, Double cost, Double rewardRiskRatio, double marketMakerConfidence) {
 
         if (sFreq.isEmpty()) {
-            return new double[]{0, 0, 0};
+            return new double[]{0, 0, 0, 0, 0};
         }
 
         if(cost == null){
@@ -27,6 +27,8 @@ public class DecisionUtil {
         double ratio = 0;
         double probFraction = 0;
         double payoff = 0;
+        double high = 0;
+        double low = 0;
         for (double amplitude : sFreq.keySet()) {
 
             double freqS = sFreq.get(amplitude);
@@ -34,6 +36,13 @@ public class DecisionUtil {
 
             double probS = freqS / max;
             double probL = freqL / max;
+
+            if(probS > marketMakerConfidence){
+                low = amplitude;
+            }
+            if(probL > marketMakerConfidence){
+                high = amplitude;
+            }
 
             probFraction = Math.max(probL, probS);
             if (probFraction < minProbFraction) {
@@ -53,6 +62,6 @@ public class DecisionUtil {
                 }
             }
         }
-        return new double[]{target, ratio, probFraction};
+        return new double[]{target, ratio, probFraction, high, low};
     }
 }

@@ -111,8 +111,21 @@ public class DynamicPropertiesLoader {
                         PropertiesHolder.horizonUpperBound = Long.parseLong(parts[1]);
                     } else if (parts[0].equals("neuronLearningPeriod")) {
                         PropertiesHolder.neuronLearningPeriod = Long.parseLong(parts[1]);
+                    } else if (parts[0].equals("generationLifespan")) {
+                        PropertiesHolder.generationLifespan = Long.parseLong(parts[1]);
+                    } else if (parts[0].equals("marketMakerConfidence")) {
+                        PropertiesHolder.marketMakerConfidence = Double.parseDouble(parts[1]);
+                    } else if (parts[0].equals("marketMakerAmplitude")) {
+                        PropertiesHolder.marketMakerAmplitude = Double.parseDouble(parts[1]);
+                    } else if (parts[0].equals("neuronReplacement")) {
+                        PropertiesHolder.neuronReplacement = Boolean.valueOf(parts[1]);
+                    } else if (parts[0].equals("tradeNormal")) {
+                        PropertiesHolder.tradeNormal = Boolean.valueOf(parts[1]);
+                    } else if (parts[0].equals("tradeMarketMarker")) {
+                        PropertiesHolder.tradeMarketMarker = Boolean.valueOf(parts[1]);
+                    } else if (parts[0].equals("startDateTime")) {
+                        PropertiesHolder.startDateTime = line.substring(parts[0].length() + 1);
                     }
-
                 }
                 System.out.println("Global configuration changed: " + PropertiesHolder.getInfo());
             }

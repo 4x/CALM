@@ -26,4 +26,8 @@ public class MinMaxAggregator {
     public Double getMax() {
         return max;
     }
+
+    public double getMid() {
+        return (min + max) / 2;
+    }
 }

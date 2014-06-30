@@ -105,13 +105,13 @@ public class OpenPosition {
 
         if((double)(time - timeOpen)/(double)(goodTillTime - timeOpen) > 0.8){
             if (isLong) {
-                if (close > (start + 2*cost)) {
+                if (close > (start + 5*cost)) {
                     price = close;
                     closingMessage = new Date(time) + ": PROFIT: [LONG] " + (time - timeOpen)/1000 + "s " + target + " " + timeSpan + " LOCKING_PROFIT";
                     return true;
                 }
             } else {
-                if (close < (start - 2*cost)) {
+                if (close < (start - 5*cost)) {
                     price = close;
                     closingMessage = new Date(time) + ": PROFIT: [SHORT] " + (time - timeOpen)/1000 + "s " + target + " " + timeSpan + " LOCKING_PROFIT";
                     return true;

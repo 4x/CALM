@@ -1,5 +1,6 @@
 package ai.context.core.ai;
 
+import ai.context.util.common.Count;
 import ai.context.util.learning.AmalgamateUtils;
 
 import java.util.Map;
@@ -10,12 +11,12 @@ public class StateActionPair {
     private final String id;
     private final int[] amalgamate;
     private double actionResolution;
-    private TreeMap<Integer, Double> actionDistribution = new TreeMap<Integer, Double>();
+    private TreeMap<Integer, Count> actionDistribution = new TreeMap<>();
     private TreeMap<Double, StateActionPair> closestNeighbours = new TreeMap<>();
 
     private double totalWeight = 0.0;
 
-    public StateActionPair(String id, int[] amalgamate, double actionResolution, TreeMap<Integer, Double> actionDistribution, double totalWeight) {
+    public StateActionPair(String id, int[] amalgamate, double actionResolution, TreeMap<Integer, Count> actionDistribution, double totalWeight) {
         this.id = id;
         this.amalgamate = amalgamate;
         this.actionResolution = actionResolution;
@@ -30,16 +31,15 @@ public class StateActionPair {
     }
 
     public void newMovement(double movement, double weight) {
-        int actionClass = (int) (movement / actionResolution);
+        int actionClass = (int) Math.round(movement / actionResolution);
         populate(actionClass, weight);
     }
 
     public void populate(int actionClass, double weight) {
         if (!actionDistribution.containsKey(actionClass)) {
-            actionDistribution.put(actionClass, 0.0);
+            actionDistribution.put(actionClass, new Count());
         }
-        double currentWeight = actionDistribution.get(actionClass);
-        actionDistribution.put(actionClass, weight + currentWeight);
+        actionDistribution.get(actionClass).val += weight;
         totalWeight += weight;
     }
 
@@ -55,16 +55,16 @@ public class StateActionPair {
         return actionResolution;
     }
 
-    public TreeMap<Integer, Double> getRawActionDistribution() {
+    public TreeMap<Integer, Count> getRawActionDistribution() {
 
         return actionDistribution;
     }
 
     public TreeMap<Integer, Double> getActionDistribution() {
 
-        TreeMap<Integer, Double> distribution = new TreeMap<Integer, Double>();
-        for (Map.Entry<Integer, Double> entry : actionDistribution.entrySet()) {
-            distribution.put(entry.getKey(), entry.getValue() / totalWeight);
+        TreeMap<Integer, Double> distribution = new TreeMap<>();
+        for (Map.Entry<Integer, Count> entry : actionDistribution.entrySet()) {
+            distribution.put(entry.getKey(), entry.getValue().val / totalWeight);
         }
 
         return distribution;
@@ -85,12 +85,12 @@ public class StateActionPair {
 
         StateActionPair merged = new StateActionPair(AmalgamateUtils.getAmalgamateString(mergedAmalgamate), mergedAmalgamate, actionResolution);
 
-        for (Map.Entry<Integer, Double> entry : actionDistribution.entrySet()) {
-            merged.populate(entry.getKey(), entry.getValue());
+        for (Map.Entry<Integer, Count> entry : actionDistribution.entrySet()) {
+            merged.populate(entry.getKey(), entry.getValue().val);
         }
 
-        for (Map.Entry<Integer, Double> entry : counterpart.getRawActionDistribution().entrySet()) {
-            merged.populate(entry.getKey(), entry.getValue());
+        for (Map.Entry<Integer, Count> entry : counterpart.getRawActionDistribution().entrySet()) {
+            merged.populate(entry.getKey(), entry.getValue().val);
         }
 
         return merged;
@@ -119,8 +119,8 @@ public class StateActionPair {
     public String toString() {
 
         String data = "";
-        for (Map.Entry<Integer, Double> entry : actionDistribution.entrySet()) {
-            data += entry.getKey() + ":" + entry.getValue() + ";";
+        for (Map.Entry<Integer, Count> entry : actionDistribution.entrySet()) {
+            data += entry.getKey() + ":" + entry.getValue().val + ";";
         }
 
         return "id=" + System.identityHashCode(this) +

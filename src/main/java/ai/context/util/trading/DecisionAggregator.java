@@ -2,8 +2,10 @@ package ai.context.util.trading;
 
 import ai.context.learning.DataObject;
 import ai.context.learning.neural.NeuronCluster;
+import ai.context.util.analysis.StatsHolder;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.Operations;
+import ai.context.util.measurement.MarketMakerPosition;
 import ai.context.util.measurement.OpenPosition;
 import com.dukascopy.api.JFException;
 
@@ -14,9 +16,10 @@ import java.util.TreeMap;
 
 public class DecisionAggregator {
 
-    private static HashSet<OpenPosition> positions = new HashSet<OpenPosition>();
+    private static HashSet<OpenPosition> positions = new HashSet<>();
+    private static HashSet<MarketMakerPosition> marketMakerPositions = new HashSet<>();
 
-    private static long timeQuantum = 60*60*1000L;
+    private static long timeQuantum = 30*60*1000L;
     private static long time = 0;
     private static TreeMap<Long, TreeMap<Double, Double>> timeBasedHistograms = new TreeMap<>();
 
@@ -55,12 +58,7 @@ public class DecisionAggregator {
             return;
         }
 
-        double[] results = PositionFactory.getDecision(data.getTimeStamp(), pivot, histogram, timeSpan, null, null, null);
-        if(results == null
-                || results[2] < PositionFactory.rewardRiskRatio + PropertiesHolder.additionalPassRatio
-                /*|| results[3] < (PositionFactory.minProbFraction + 1)/2*/){
-            return;
-        }
+        double[] results = PositionFactory.getDecision(data.getTimeStamp(), pivot, histogram, timeSpan, null, null, null, 0.5);
 
         participants++;
         double cred = 1;
@@ -84,22 +82,33 @@ public class DecisionAggregator {
 
     public static  void decide(){
         for(Map.Entry<Long, TreeMap<Double, Double>> entry : timeBasedHistograms.entrySet()){
-            OpenPosition position = PositionFactory.getPosition(time, latestC, entry.getValue(), entry.getKey(), false);
-            if (position != null) {
-                if (inLiveTrading) {
-                    int startHour = new Date().getHours();
-                    if(position.getCredibility() > PositionFactory.getCredThreshold()){
-                        try {
-                            if(blackBox != null){
-                                blackBox.onDecision(position);
+
+            double[] results = PositionFactory.getDecision(time, latestC, entry.getValue(), entry.getKey(),null, null, null, PropertiesHolder.marketMakerConfidence);
+
+            if(PropertiesHolder.tradeNormal){
+                OpenPosition position = PositionFactory.getPosition(time, latestC, results, entry.getKey(), false);
+                if (position != null) {
+                    if (inLiveTrading) {
+                        int startHour = new Date().getHours();
+                        if(position.getCredibility() > PositionFactory.getCredThreshold()){
+                            try {
+                                if(blackBox != null){
+                                    blackBox.onDecision(position);
+                                }
+                            } catch (JFException e) {
+                                e.printStackTrace();
                             }
-                        } catch (JFException e) {
-                            e.printStackTrace();
                         }
                     }
+                    position.setParticipants(participants);
+                    positions.add(position);
                 }
-                position.setParticipants(participants);
-                positions.add(position);
+            }
+
+            if(PropertiesHolder.tradeMarketMarker){
+                if(results[4] + results[5] > PositionFactory.cost * PropertiesHolder.marketMakerAmplitude){
+                    marketMakerPositions.add(new MarketMakerPosition(time, latestC + results[4],  latestC - results[5], time + entry.getKey()));
+                }
             }
         }
         participants = 0;
@@ -107,7 +116,6 @@ public class DecisionAggregator {
 
     public static void checkExit(){
         HashSet<OpenPosition> closed = new HashSet<OpenPosition>();
-        HashSet<OpenPosition> newOpen = new HashSet<>();
         for (OpenPosition position : positions) {
             if (position.canCloseOnBar_Pessimistic(time, latestH, latestL, latestC)) {
                 closed.add(position);
@@ -120,7 +128,23 @@ public class DecisionAggregator {
             }
         }
         positions.removeAll(closed);
-        positions.addAll(newOpen);
+
+        HashSet<MarketMakerPosition> mClosed = new HashSet<>();
+        for (MarketMakerPosition position : marketMakerPositions) {
+            if (position.notify(latestH, latestL, latestC, time)) {
+                StatsHolder.pnLMarketMaker += position.getPnL();
+                String state = "P";
+                if(position.getPnL() < 0){
+                    state = "L";
+                }
+                else if(position.getPnL() == 0){
+                    state = "N";
+                }
+                System.out.println("MMP_CHANGE: " + state + " " + Operations.round(position.getPnL(), 4) + " ACCRUED PNL: " +  Operations.round(StatsHolder.pnLMarketMaker, 4) + " " + position.getClosingMessage());
+                mClosed.add(position);
+            }
+        }
+        marketMakerPositions.removeAll(mClosed);
     }
 
     public static void setBlackBox(BlackBox blackBox) {

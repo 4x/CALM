@@ -24,13 +24,23 @@ public class FeedWrapper {
             FeedObject data = feed.readNext(this);
             this.time = data.getTimeStamp();
 
-            if(!history.containsKey(this.time)){
-                history.put(this.time, new HashSet<FeedObject>());
-            }
+            boolean isOfInterest = false;
 
-            history.get(this.time).add(data);
-            if(history.size() > 100){
-                history.remove(history.firstKey());
+            for(Manipulator m : manipulators.values()){
+                if(m.isOfInterest(data)){
+                    isOfInterest = true;
+                    break;
+                }
+            }
+            if(isOfInterest){
+                if(!history.containsKey(this.time)){
+                    history.put(this.time, new HashSet<FeedObject>());
+                }
+
+                history.get(this.time).add(data);
+                if(history.size() > manipulators.size()*4){
+                    history.remove(history.firstKey());
+                }
             }
         }
         if(!manipulators.containsKey(manipulator)){

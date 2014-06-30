@@ -19,6 +19,13 @@ public class PropertiesHolder {
     public static long horizonLowerBound = 12 * 60 * 60 * 1000L;
     public static long horizonUpperBound = 24 * 60 * 60 * 1000L;
     public static long neuronLearningPeriod = 10000;
+    public static long generationLifespan = 100000;
+    public static double marketMakerConfidence = 0.95;
+    public static double marketMakerAmplitude = 2;
+    public static boolean neuronReplacement = true;
+    public static boolean tradeNormal = true;
+    public static boolean tradeMarketMarker = true;
+    public static String startDateTime = "2006.01.01 00:00:00";
 
     public static String getInfo() {
         return "PropertiesHolder{" +
@@ -40,6 +47,13 @@ public class PropertiesHolder {
                 ", horizonLowerBound=" + horizonLowerBound +
                 ", horizonUpperBound=" + horizonUpperBound +
                 ", neuronLearningPeriod=" + neuronLearningPeriod +
+                ", generationLifespan=" + generationLifespan +
+                ", marketMakerConfidence=" + marketMakerConfidence +
+                ", marketMakerAmplitude=" + marketMakerAmplitude +
+                ", neuronReplacement=" + neuronReplacement +
+                ", tradeNormal=" + tradeNormal +
+                ", tradeMarketMarker=" + tradeMarketMarker +
+                ", startDateTime=" + startDateTime +
                 '}';
     }
 }

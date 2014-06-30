@@ -9,4 +9,5 @@ public interface Manipulator {
     public FeedObject<Integer[]> manipulate(long t, TreeMap<Long, Set<FeedObject>> history);
 
     public int getNumberOfOutputs();
+    public boolean isOfInterest(FeedObject data);
 }

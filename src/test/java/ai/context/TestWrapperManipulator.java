@@ -6,6 +6,7 @@ import ai.context.feed.manipulation.FeedWrapper;
 import ai.context.feed.manipulation.Manipulator;
 import ai.context.feed.manipulation.TimeDecaySingleSentimentManipulator;
 import ai.context.feed.row.CSVFeed;
+import ai.context.util.analysis.LookAheadScheduler;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -22,7 +23,10 @@ public class TestWrapperManipulator {
                 DataType.EXTRACTABLE_DOUBLE,
                 DataType.EXTRACTABLE_DOUBLE};
 
-        CSVFeed feed = new CSVFeed("/opt/dev/data/feeds/Calendar_2008.csv", "yyyyMMdd HH:mm:ss", types, null);
+        CSVFeed feed = new CSVFeed("/opt/dev/data/feeds/Calendar.csv", "yyyyMMdd HH:mm:ss", types, null);
+        CSVFeed scheduleFeed = new CSVFeed("/opt/dev/data/feeds/Calendar.csv", "yyyyMMdd HH:mm:ss", types, null);
+        LookAheadScheduler scheduler = new LookAheadScheduler(scheduleFeed, 0, 1);
+
 
         for (int i = 0; i < 100; i++) {
             FeedObject data = feed.readNext(this);
@@ -35,22 +39,22 @@ public class TestWrapperManipulator {
         }
 
         FeedWrapper wrapper = new FeedWrapper(feed);
-        Manipulator manipulator1 = new TimeDecaySingleSentimentManipulator("Germany", "Markit Manufacturing PMI");
-        Manipulator manipulator2 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Markit Manufacturing PMI");
-        Manipulator manipulator3 = new TimeDecaySingleSentimentManipulator("United Kingdom", "Markit Manufacturing PMI");
-        Manipulator manipulator4 = new TimeDecaySingleSentimentManipulator("Germany", "Unemployment Rate s.a.");
-        Manipulator manipulator5 = new TimeDecaySingleSentimentManipulator("United States", "Unemployment Rate");
-        Manipulator manipulator6 = new TimeDecaySingleSentimentManipulator("United States", "Producer Price Index (MoM)");
-        Manipulator manipulator7 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Producer Price Index (MoM)");
-        Manipulator manipulator8 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Unemployment Rate");
-        Manipulator manipulator9 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Retail Sales (MoM)");
-        Manipulator manipulator10 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Gross Domestic Product s.a. (QoQ)");
-        Manipulator manipulator11 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "ECB Interest Rate Decision");
-        Manipulator manipulator12 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Economic Sentiment");
-        Manipulator manipulator13 = new TimeDecaySingleSentimentManipulator("Japan", "BoJ Interest Rate Decision");
-        Manipulator manipulator14 = new TimeDecaySingleSentimentManipulator("United States", "Gross Domestic Product (QoQ)");
-        Manipulator manipulator15 = new TimeDecaySingleSentimentManipulator("United Kingdom", "Gross Domestic Product (QoQ)");
-        Manipulator manipulator16 = new TimeDecaySingleSentimentManipulator("United States", "Nonfarm Payrolls");
+        Manipulator manipulator1 = new TimeDecaySingleSentimentManipulator("Germany", "Markit Manufacturing PMI", scheduler);
+        Manipulator manipulator2 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Markit Manufacturing PMI", scheduler);
+        Manipulator manipulator3 = new TimeDecaySingleSentimentManipulator("United Kingdom", "Markit Manufacturing PMI", scheduler);
+        Manipulator manipulator4 = new TimeDecaySingleSentimentManipulator("Germany", "Unemployment Rate s.a.", scheduler);
+        Manipulator manipulator5 = new TimeDecaySingleSentimentManipulator("United States", "Unemployment Rate", scheduler);
+        Manipulator manipulator6 = new TimeDecaySingleSentimentManipulator("United States", "Producer Price Index (MoM)", scheduler);
+        Manipulator manipulator7 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Producer Price Index (MoM)", scheduler);
+        Manipulator manipulator8 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Unemployment Rate", scheduler);
+        Manipulator manipulator9 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Retail Sales (MoM)", scheduler);
+        Manipulator manipulator10 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Gross Domestic Product s.a. (QoQ)", scheduler);
+        Manipulator manipulator11 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "ECB Interest Rate Decision", scheduler);
+        Manipulator manipulator12 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Economic Sentiment", scheduler);
+        Manipulator manipulator13 = new TimeDecaySingleSentimentManipulator("Japan", "BoJ Interest Rate Decision", scheduler);
+        Manipulator manipulator14 = new TimeDecaySingleSentimentManipulator("United States", "Gross Domestic Product (QoQ)", scheduler);
+        Manipulator manipulator15 = new TimeDecaySingleSentimentManipulator("United Kingdom", "Gross Domestic Product (QoQ)", scheduler);
+        Manipulator manipulator16 = new TimeDecaySingleSentimentManipulator("United States", "Nonfarm Payrolls", scheduler);
 
         wrapper.putManipulator("1", manipulator1);
         wrapper.putManipulator("2", manipulator2);
@@ -69,10 +73,11 @@ public class TestWrapperManipulator {
         wrapper.putManipulator("15", manipulator15);
         wrapper.putManipulator("16", manipulator16);
 
-        for(long t = 1199264100000L; t < 1199264100000L + 365 * 86400000L; t += 300000L){
+        for(long t = 1199264100000L; t < 1199264100000L + 10 * 86400000L; t += 1800000L){
             for(int i = 0; i < 16; i++){
-                System.out.println(wrapper.getAtTimeForManipulator(t, "" + (1 + i)));
+                System.out.println("" + (1 + i) + " " + wrapper.getAtTimeForManipulator(t, "" + (1 + i)));
             }
+            //System.out.println(wrapper.getAtTimeForManipulator(t, "16"));
         }
 
     }

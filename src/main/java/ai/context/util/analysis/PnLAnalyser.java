@@ -20,12 +20,14 @@ public class PnLAnalyser {
     int nDay = 0;
     int nMonth = 0;
     double tradeToCapRatio = 10;
-    double[] credRange = new double[]{0, 2};
+    double[] credRange = new double[]{1, 2};
     Integer[] hoursToTrade = new Integer[]{6,7,8,9,10,14,15,16,17,18,19,20,21,22};
-    double rebate = 0.00010;
+    double rebate = 0.0000;
     double sourceCharge = 0.00020;
 
     SimpleDateFormat format = new SimpleDateFormat("yyyy-MMM-dd HH:mm");
+
+    boolean marketMakerAnalysis = true;
 
     public static void main(String[] args){
         PnLAnalyser analyser = new PnLAnalyser();
@@ -51,29 +53,49 @@ public class PnLAnalyser {
                     configChange++;
                     System.out.print(configChange);
                 }
-                if (sCurrentLine.startsWith("CHANGE")) {
+                if (sCurrentLine.contains("CHANGE") && !sCurrentLine.contains("Mean")) {
                     String[] parts = sCurrentLine.split(" ");
-                    Double change = Double.parseDouble(parts[1]);
-                    Double pnl = Double.parseDouble(parts[4]);
-                    String state = parts[15].substring(0, parts[15].length() - 1);
-                    String dir = parts[16];
-                    Double cred = Double.parseDouble(parts[6]);
-                    int participants = Integer.parseInt(parts[8]);
-                    Long span = Long.parseLong(parts[17].substring(0, parts[17].indexOf('s')));
-                    long lifeSpan = Long.parseLong(parts[19]);
-                    Double targetPnL = Double.parseDouble(parts[18].split("Mean")[0]);
 
-                    String day = parts[9];
-                    String month = parts[10];
-                    Long date = Long.parseLong(parts[11]);
-                    Long year = Long.parseLong(parts[14].substring(0, parts[14].length() - 1));
-                    Long hour = Long.parseLong(parts[12].split(":")[0]);
-                    Long min = Long.parseLong(parts[12].split(":")[1]);
+                    int dateIndex = 9;
+                    int changePart = 1;
+                    int dirPart = 16;
+                    int lifeSpanPart = 19;
+                    int targetPnlPart = 18;
+                    if(marketMakerAnalysis){
+                        changePart = 2;
+                        dateIndex = 15;
+                        dirPart = 1;
+                        lifeSpanPart = 14;
+                        targetPnlPart = 12;
+                    }
 
-                    long t = format.parse(year + "-" + month + "-" + parts[11] + " " + parts[12]).getTime();
+                    Double change = Double.parseDouble(parts[changePart]);
+                    String dir = parts[dirPart];
+                    long lifeSpan = Long.parseLong(parts[lifeSpanPart]);
+                    Double targetPnL = Double.parseDouble(parts[targetPnlPart].split("Mean")[0]);
+
+                    long span = lifeSpan;
+                    String state = "NORMAL";
+                    double cred = 0;
+                    int participants = 0;
+                    if(!marketMakerAnalysis){
+                        span = Long.parseLong(parts[17].substring(0, parts[17].indexOf('s')));
+                        state = parts[15].substring(0, parts[15].length() - 1);
+                        cred = Double.parseDouble(parts[6]);
+                        participants = Integer.parseInt(parts[8]);
+                    }
+
+                    String day = parts[dateIndex];
+                    String month = parts[dateIndex + 1];
+                    long date = Long.parseLong(parts[dateIndex + 2]);
+                    long year = Long.parseLong(parts[dateIndex + 5]);
+                    long hour = Long.parseLong(parts[dateIndex + 3].split(":")[0]);
+                    long min = Long.parseLong(parts[dateIndex + 3].split(":")[1]);
+                    long t = format.parse(year + "-" + month + "-" + parts[dateIndex + 2] + " " + parts[dateIndex + 3]).getTime();
+
                     if(t >= tStart && (useConfigChange + 1 == configChange || useConfigChange == -1)){
-                        Long endTime = hour * 60 + min;
-                        Long startTime = (endTime - span / 60) % (24 * 60);
+                        long endTime = hour * 60 + min;
+                        long startTime = (endTime - span / 60) % (24 * 60);
                         if (startTime < 0) {
                             startTime = (24 * 60) + startTime;
                         }
@@ -93,24 +115,21 @@ public class PnLAnalyser {
                         int changeClass = (int) (Math.abs(targetPnL) * 1000);
 
                         int startHour = (int) (startTime / 60);
-                        int credClass = (int)(cred.doubleValue());
-
-                        Order order = new Order(change + sourceCharge, pnl, state, dir, cred, span, targetPnL, day, month, date, year, hour, min, closing);
-                        if (!orders.containsKey(order.getID())) {
-                            orders.put(order.getID(), order);
-                        } else {
-                            orders.get(order.getID()).merge(order);
-                        }
+                        int credClass = (int)(cred);
                         change += rebate;
 
-                        if (    true ||
-                                cred >= credRange[0] &&
-                                cred <= credRange[1] &&
-                                targetPnL >= 0.0015 &&
-                                targetPnL < 0.002 &&
-                                hours.contains(startHour) &&
+                        if (    //lifeSpan/3600000 == 2 &&
+                                //cred >= credRange[0] &&
+                                //cred <= credRange[1] &&
+                                //targetPnL >= 0.0015 &&
+                                //targetPnL < 0.002 &&
+                                //hours.contains(startHour) &&
+                                //lifeSpan/3600000 > 17 &&
                                 true) {
 
+                            aggregate(lifeSpan/3600000, change);
+                            //aggregate(participants, change);
+                            //aggregate((int)(100*cred/participants), change);
                             //aggregate(nMonth, change);
                             //aggregate(startHour, change);
                             //aggregate(changeClass, change);
@@ -120,9 +139,8 @@ public class PnLAnalyser {
                             //aggregate(closing, change);
                             //aggregate(span, change);
                             //aggregate(credClass, change);
-                            aggregate(targetPnL, change);
+                            //aggregate(targetPnL, change);
                             //aggregate((int)(targetPnL * 2000), change);
-                            //aggregate(Math.abs((int)(change * 10000)), change);
 
                             /*String dateString = "";
                             if(date < 10){

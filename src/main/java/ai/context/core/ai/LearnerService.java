@@ -267,9 +267,10 @@ public class LearnerService {
         if (max == min) {
             return 0;
         }
-        return Math.pow((max - x) / (max - min), 1);
+        return Math.pow((max - x) / (max - min), 2);
     }
 
+    private boolean initialMerge = true;
     private synchronized void mergeStates() throws LearningException {
         merging = true;
         if (minDevForMerge == -1) {
@@ -283,9 +284,11 @@ public class LearnerService {
 
         boolean targetReached = false;
 
+        int runsSinceLastMerge = 0;
         int runs = 0;
         while (true) {
             runs++;
+            runsSinceLastMerge++;
             HashSet<StateActionPair> pairs = new HashSet<>();
             pairs.addAll(population.values());
 
@@ -307,6 +310,7 @@ public class LearnerService {
                             if (entry.getKey() <= minDevForMerge) {
                                 merge(pair, counterpart);
                                 sinceLastMerge = 0;
+                                runsSinceLastMerge = 0;
                                 a++;
                                 if (population.size() < getMaxPopulation() / 2) {
                                     targetReached = true;
@@ -322,8 +326,13 @@ public class LearnerService {
             }
 
             System.err.println("Run: " + runs + " x: " + x + " y: " + y + " z: " + z + " Check: " + check.size() + " a: " + a);
+            if(!initialMerge && runsSinceLastMerge > 2){
+                minDevForMerge /= ((double) population.size() / (getMaxPopulation() / 2)) * 1.01;
+                System.err.println("MinDevForMerge reverted to: " + minDevForMerge);
+                break;
+            }
             if (!targetReached && (runs % 4 == 0 || a < (double) population.size() / 20)) {
-                minDevForMerge = minDevForMerge * ((double) population.size() / (getMaxPopulation() / 2)) * 1.01;
+                minDevForMerge *= ((double) population.size() / (getMaxPopulation() / 2)) * 1.01;
                 System.err.println("MinDevForMerge pushed to: " + minDevForMerge);
                 if(runs % 4 == 0){
                     for (StateActionPair pair : population.values()) {
@@ -335,6 +344,7 @@ public class LearnerService {
             }
         }
         System.err.println("Ending merge: " + (System.currentTimeMillis() - t) + "ms  (" + minDevForMerge + ")");
+        initialMerge = false;
         merging = false;
     }
 

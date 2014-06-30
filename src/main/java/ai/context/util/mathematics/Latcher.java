@@ -51,6 +51,10 @@ public class Latcher {
         return -maxDown;
     }
 
+    public double getMid(){
+        return (maxUp - maxDown)/2;
+    }
+
     public long getEnd() {
         return end;
     }

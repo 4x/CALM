@@ -1,6 +1,7 @@
 package ai.context.feed.manipulation;
 
 import ai.context.feed.FeedObject;
+import ai.context.util.analysis.LookAheadScheduler;
 import ai.context.util.mathematics.Discretiser;
 
 import java.util.Map;
@@ -11,10 +12,12 @@ public class TimeDecaySingleSentimentManipulator implements Manipulator{
 
     private final String location;
     private final String type;
+    private LookAheadScheduler schedule;
 
     private TreeMap<Long, FeedObject> mem = new TreeMap<>();
 
-    public TimeDecaySingleSentimentManipulator(String location, String type) {
+    public TimeDecaySingleSentimentManipulator(String location, String type, LookAheadScheduler schedule) {
+        this.schedule = schedule;
         this.location = location;
         this.type = type;
     }
@@ -35,9 +38,7 @@ public class TimeDecaySingleSentimentManipulator implements Manipulator{
             }
             for(FeedObject feedObject : entry.getValue()){
                 Object[] data = (Object[]) feedObject.getData();
-                String type = (String) data[0];
-                String location = (String) data[1];
-                if(type.contains(this.type) && location.equals(this.location)){
+                if(isOfInterest(feedObject)){
                     lastSeen = feedObject.getTimeStamp();
                     Double actual = (Double) data[3];
                     Double previous = (Double) data[4];
@@ -54,7 +55,14 @@ public class TimeDecaySingleSentimentManipulator implements Manipulator{
             }
         }
 
-        int decay = (int) (5 * Math.exp((double) (lastSeen - t) / (double) (2 * 86400 * 1000L)));
+        int comingUp = 0;
+        try{
+            comingUp = (int) (5 * Math.exp(-(double) schedule.getTimeToNext(t, new String[]{type, location}) / (double) (4 * 86400 * 1000L)));
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        int decay = (int) (5 * Math.exp((double) (lastSeen - t) / (double) (4 * 86400 * 1000L))) - comingUp;
         int index = Discretiser.getLogarithmicDiscretisation(
                 (lastSatisfaction - satisfaction) / Math.pow(satisfaction, 2) + lastSatisfaction,
                 0, 0.01, 10.0);
@@ -64,6 +72,14 @@ public class TimeDecaySingleSentimentManipulator implements Manipulator{
         }
         mem.put(t, toStore);
         return toStore;
+    }
+
+    @Override
+    public boolean isOfInterest(FeedObject data) {
+        Object[] contents = (Object[]) data.getData();
+        String type = (String) contents[0];
+        String location = (String) contents[1];
+        return (type.contains(this.type) && location.equals(this.location));
     }
 
     @Override

@@ -29,6 +29,7 @@ import ai.context.learning.neural.NeuralLearner;
 import ai.context.learning.neural.NeuronCluster;
 import ai.context.learning.neural.NeuronRankings;
 import ai.context.trading.DukascopyConnection;
+import ai.context.util.analysis.LookAheadScheduler;
 import ai.context.util.configuration.DynamicPropertiesLoader;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.trading.BlackBox;
@@ -275,29 +276,32 @@ public class MainNeural {
 
         String dateFC = "20060101 00:00:00";
         long interval = 1*60000L;
-        CSVFeed feedCalendar = new CSVFeed(path + "feeds/Calendar_2008.csv", "yyyyMMdd HH:mm:ss", typesCalendar, dateFC);
+        CSVFeed feedCalendar = new CSVFeed(path + "feeds/Calendar.csv", "yyyyMMdd HH:mm:ss", typesCalendar, dateFC);
+        CSVFeed calendarSchedule = new CSVFeed(path + "feeds/Calendar.csv", "yyyyMMdd HH:mm:ss", typesCalendar, dateFC);
+        LookAheadScheduler scheduler = new LookAheadScheduler(calendarSchedule, 0, 1);
         rowFeeds.add(feedCalendar);
+        rowFeeds.add(calendarSchedule);
         feedCalendar.setStitchableFeed(liveFXCalendar);
         feedCalendar.setPaddable(true);
         feedCalendar.setInterval(interval);
 
         FeedWrapper calendarWrapper = new FeedWrapper(feedCalendar);
-        Manipulator manipulator1 = new TimeDecaySingleSentimentManipulator("Germany", "Markit Manufacturing PMI");
-        Manipulator manipulator2 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Markit Manufacturing PMI");
-        Manipulator manipulator3 = new TimeDecaySingleSentimentManipulator("United Kingdom", "Markit Manufacturing PMI");
-        Manipulator manipulator4 = new TimeDecaySingleSentimentManipulator("Germany", "Unemployment Rate s.a.");
-        Manipulator manipulator5 = new TimeDecaySingleSentimentManipulator("United States", "Unemployment Rate");
-        Manipulator manipulator6 = new TimeDecaySingleSentimentManipulator("United States", "Producer Price Index (MoM)");
-        Manipulator manipulator7 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Producer Price Index (MoM)");
-        Manipulator manipulator8 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Unemployment Rate");
-        Manipulator manipulator9 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Retail Sales (MoM)");
-        Manipulator manipulator10 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Gross Domestic Product s.a. (QoQ)");
-        Manipulator manipulator11 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "ECB Interest Rate Decision");
-        Manipulator manipulator12 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Economic Sentiment");
-        Manipulator manipulator13 = new TimeDecaySingleSentimentManipulator("Japan", "BoJ Interest Rate Decision");
-        Manipulator manipulator14 = new TimeDecaySingleSentimentManipulator("United States", "Gross Domestic Product (QoQ)");
-        Manipulator manipulator15 = new TimeDecaySingleSentimentManipulator("United Kingdom", "Gross Domestic Product (QoQ)");
-        Manipulator manipulator16 = new TimeDecaySingleSentimentManipulator("United States", "Nonfarm Payrolls");
+        Manipulator manipulator1 = new TimeDecaySingleSentimentManipulator("Germany", "Markit Manufacturing PMI", scheduler);
+        Manipulator manipulator2 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Markit Manufacturing PMI", scheduler);
+        Manipulator manipulator3 = new TimeDecaySingleSentimentManipulator("United Kingdom", "Markit Manufacturing PMI", scheduler);
+        Manipulator manipulator4 = new TimeDecaySingleSentimentManipulator("Germany", "Unemployment Rate s.a.", scheduler);
+        Manipulator manipulator5 = new TimeDecaySingleSentimentManipulator("United States", "Unemployment Rate", scheduler);
+        Manipulator manipulator6 = new TimeDecaySingleSentimentManipulator("United States", "Producer Price Index (MoM)", scheduler);
+        Manipulator manipulator7 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Producer Price Index (MoM)", scheduler);
+        Manipulator manipulator8 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Unemployment Rate", scheduler);
+        Manipulator manipulator9 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Retail Sales (MoM)", scheduler);
+        Manipulator manipulator10 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Gross Domestic Product s.a. (QoQ)", scheduler);
+        Manipulator manipulator11 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "ECB Interest Rate Decision", scheduler);
+        Manipulator manipulator12 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Economic Sentiment", scheduler);
+        Manipulator manipulator13 = new TimeDecaySingleSentimentManipulator("Japan", "BoJ Interest Rate Decision", scheduler);
+        Manipulator manipulator14 = new TimeDecaySingleSentimentManipulator("United States", "Gross Domestic Product (QoQ)", scheduler);
+        Manipulator manipulator15 = new TimeDecaySingleSentimentManipulator("United Kingdom", "Gross Domestic Product (QoQ)", scheduler);
+        Manipulator manipulator16 = new TimeDecaySingleSentimentManipulator("United States", "Nonfarm Payrolls", scheduler);
 
         calendarWrapper.putManipulator("1", manipulator1);
         calendarWrapper.putManipulator("2", manipulator2);
@@ -326,7 +330,7 @@ public class MainNeural {
                 DataType.DOUBLE,
                 DataType.DOUBLE};
 
-        String dateFP = "2006.01.01 00:00:00";
+        String dateFP = PropertiesHolder.startDateTime;
 
         CSVFeed feedPriceEUR = new CSVFeed(path + "feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feedPriceEUR.setStitchableFeed(liveFXRateEUR);
@@ -337,16 +341,11 @@ public class MainNeural {
         CSVFeed feedPriceJPY = new CSVFeed(path + "feeds/USDJPY.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feedPriceJPY.setStitchableFeed(liveFXRateJPY);
         rowFeeds.add(feedPriceJPY);
-        /*CSVFeed feedPriceCHF = new CSVFeed(path + "feeds/USDCHF.csv", "yyyy.MM.dd HH:mm:ss", typesPrice,  dateFP);
-        feedPriceCHF.setStitchableFeed(liveFXRateCHF);*/
-
 
         ISynchFeed feed = buildSynchFeed(null, 0.0001,feedPriceEUR);
         feed = buildSynchFeed(feed, 0.0001,feedPriceGBP);
         feed = buildSynchFeed(feed, 0.01, feedPriceJPY);
-        /*feed = buildSynchFeed(feed, feedPriceCHF);*/
 
-        //SmartDiscretiserOnSynchronisedFeed sFeed = new SmartDiscretiserOnSynchronisedFeed(feed, 50000, 10);
         MinMaxAggregatorDiscretiser sFeed = new MinMaxAggregatorDiscretiser(feed, PropertiesHolder.initialSeriesOffset, 6);
         sFeed.lock();
 
@@ -589,14 +588,14 @@ public class MainNeural {
             MinMaxDistanceTransformer mmdT2 = new MinMaxDistanceTransformer(50, feedL, feedH, feedC);
             MinMaxDistanceTransformer mmdT3 = new MinMaxDistanceTransformer(100, feedL, feedH, feedC);
             MinMaxDistanceTransformer mmdT4 = new MinMaxDistanceTransformer(200, feedL, feedH, feedC);
-            //MinMaxDistanceTransformer mmdT5 = new MinMaxDistanceTransformer(800, feedL, feedH, feedC);
+            MinMaxDistanceTransformer mmdT5 = new MinMaxDistanceTransformer(800, feedL, feedH, feedC);
 
 
             synch.addRawFeed(mmdT1);
             synch.addRawFeed(mmdT2);
             synch.addRawFeed(mmdT3);
             synch.addRawFeed(mmdT4);
-            //synch.addRawFeed(mmdT5);
+            synch.addRawFeed(mmdT5);
 
             RadarOnlineTransformer r1 = new RadarOnlineTransformer(50, feedL, feedH, feedC, res);
             RadarOnlineTransformer r2 = new RadarOnlineTransformer(100, feedL, feedH, feedC, res);
@@ -651,17 +650,14 @@ public class MainNeural {
             //synch.addRawFeed(feedDiff);
             //synch.addRawFeed(feedModulo);
 
-            //synch.addRawFeed(stdLH1);
-            //synch.addRawFeed(stdLL1);
-            //synch.addRawFeed(stdLV1);
+            synch.addRawFeed(stdFeedH);
+            synch.addRawFeed(stdFeedL);
 
-            //synch.addRawFeed(stdFeedH2);
-            //synch.addRawFeed(stdFeedL2);
-            //synch.addRawFeed(stdFeedV2);
+            synch.addRawFeed(stdFeedH2);
+            synch.addRawFeed(stdFeedL2);
 
-            //synch.addRawFeed(stdLH3);
-            //synch.addRawFeed(stdLL3);
-            //synch.addRawFeed(stdFeedV3);
+            synch.addRawFeed(stdFeedH3);
+            synch.addRawFeed(stdFeedL3);
 
             synch.addRawFeed(awFeedH);
             synch.addRawFeed(awFeedL);
