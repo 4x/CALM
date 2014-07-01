@@ -19,10 +19,10 @@ public class PnLAnalyser {
     String lastMonth = "";
     int nDay = 0;
     int nMonth = 0;
-    double tradeToCapRatio = 10;
+    double tradeToCapRatio = 2;
     double[] credRange = new double[]{1, 2};
-    Integer[] hoursToTrade = new Integer[]{6,7,8,9,10,14,15,16,17,18,19,20,21,22};
-    double rebate = 0.0000;
+    Integer[] hoursToTrade = new Integer[]{0,1,2,3,4,5,6,7,23};
+    double rebate = -0.0001;
     double sourceCharge = 0.00020;
 
     SimpleDateFormat format = new SimpleDateFormat("yyyy-MMM-dd HH:mm");
@@ -49,123 +49,127 @@ public class PnLAnalyser {
             String sCurrentLine;
             Set<Integer> hours = new HashSet<Integer>(Arrays.<Integer>asList(hoursToTrade));
             while ((sCurrentLine = br.readLine()) != null) {
-                if(sCurrentLine.contains("Position Factory configuration changed")){
-                    configChange++;
-                    System.out.print(configChange);
-                }
-                if (sCurrentLine.contains("CHANGE") && !sCurrentLine.contains("Mean")) {
-                    String[] parts = sCurrentLine.split(" ");
-
-                    int dateIndex = 9;
-                    int changePart = 1;
-                    int dirPart = 16;
-                    int lifeSpanPart = 19;
-                    int targetPnlPart = 18;
-                    if(marketMakerAnalysis){
-                        changePart = 2;
-                        dateIndex = 15;
-                        dirPart = 1;
-                        lifeSpanPart = 14;
-                        targetPnlPart = 12;
+                try{
+                    if(sCurrentLine.contains("Position Factory configuration changed")){
+                        configChange++;
+                        System.out.print(configChange);
                     }
+                    if (sCurrentLine.contains("CHANGE") && !sCurrentLine.contains("Mean") && !sCurrentLine.contains("E: N")) {
+                        String[] parts = sCurrentLine.split(" ");
 
-                    Double change = Double.parseDouble(parts[changePart]);
-                    String dir = parts[dirPart];
-                    long lifeSpan = Long.parseLong(parts[lifeSpanPart]);
-                    Double targetPnL = Double.parseDouble(parts[targetPnlPart].split("Mean")[0]);
+                        int dateIndex = 9;
+                        int changePart = 1;
+                        int dirPart = 16;
+                        int lifeSpanPart = 19;
+                        int targetPnlPart = 18;
+                        if(marketMakerAnalysis){
+                            changePart = 2;
+                            dateIndex = 16;
+                            dirPart = 1;
+                            lifeSpanPart = 15;
+                            targetPnlPart = 13;
+                        }
 
-                    long span = lifeSpan;
-                    String state = "NORMAL";
-                    double cred = 0;
-                    int participants = 0;
-                    if(!marketMakerAnalysis){
-                        span = Long.parseLong(parts[17].substring(0, parts[17].indexOf('s')));
-                        state = parts[15].substring(0, parts[15].length() - 1);
-                        cred = Double.parseDouble(parts[6]);
-                        participants = Integer.parseInt(parts[8]);
+                        Double change = Double.parseDouble(parts[changePart]);
+                        String dir = parts[dirPart];
+                        long lifeSpan = Long.parseLong(parts[lifeSpanPart]);
+                        Double targetPnL = Double.parseDouble(parts[targetPnlPart].split("Mean")[0]);
+
+                        long span = lifeSpan;
+                        String state = "NORMAL";
+                        double cred = 0;
+                        int participants = 0;
+                        if(!marketMakerAnalysis){
+                            span = Long.parseLong(parts[17].substring(0, parts[17].indexOf('s')));
+                            state = parts[15].substring(0, parts[15].length() - 1);
+                            cred = Double.parseDouble(parts[6]);
+                            participants = Integer.parseInt(parts[8]);
+                        }
+
+                        String day = parts[dateIndex];
+                        String month = parts[dateIndex + 1];
+                        long date = Long.parseLong(parts[dateIndex + 2]);
+                        long year = Long.parseLong(parts[dateIndex + 5]);
+                        long hour = Long.parseLong(parts[dateIndex + 3].split(":")[0]);
+                        long min = Long.parseLong(parts[dateIndex + 3].split(":")[1]);
+                        long t = format.parse(year + "-" + month + "-" + parts[dateIndex + 2] + " " + parts[dateIndex + 3]).getTime();
+
+                        if(t >= tStart && (useConfigChange + 1 == configChange || useConfigChange == -1)){
+                            long endTime = hour * 60 + min;
+                            long startTime = (endTime - span / 60) % (24 * 60);
+                            if (startTime < 0) {
+                                startTime = (24 * 60) + startTime;
+                            }
+
+                            String closing = parts[parts.length - 1];
+
+                            if (!day.equals(lastDay)) {
+                                lastDay = day;
+                                nDay++;
+                            }
+
+                            if (!month.equals(lastMonth)) {
+                                lastMonth = month;
+                                nMonth++;
+                            }
+
+                            int changeClass = (int) (Math.abs(targetPnL) * 1000);
+
+                            int startHour = (int) (startTime / 60);
+                            int credClass = (int)(cred);
+                            change += rebate;
+
+                            if (
+                                    lifeSpan/1800000 > 4 &&
+                                    //cred >= credRange[0] &&
+                                    //cred <= credRange[1] &&
+                                    //targetPnL >= 0.0015 &&
+                                    //targetPnL < 0.002 &&
+                                    hours.contains(startHour) &&
+                                    true) {
+
+                                //aggregate(lifeSpan/1800000, change);
+                                //aggregate(participants, change);
+                                //aggregate((int)(100*cred/participants), change);
+                                aggregate(nMonth, change);
+                                //aggregate(startHour, change);
+                                //aggregate(changeClass, change);
+                                //aggregate(hour, change);
+                                //aggregate(nDay, change);
+                                //aggregate(day, change);
+                                //aggregate(closing, change);
+                                //aggregate(span, change);
+                                //aggregate(credClass, change);
+                                //aggregate(targetPnL, change);
+                                //aggregate((int)(targetPnL * 2000), change);
+
+                                /*String dateString = "";
+                                if(date < 10){
+                                    dateString += "0";
+                                }
+                                dateString += date;
+
+                                String timeString = "";
+                                if(startHour < 10){
+                                    timeString += "0";
+                                }
+                                timeString+= startHour + ":";
+                                if(min < 10){
+                                    timeString += "0";
+                                }
+                                timeString += min;
+
+                                System.out.print(dateString + "-" + month + "-" + year + " " + timeString + ",");
+                                System.out.printf("%f\n", Operations.round(change, 4));*/
+                                //System.out.println(sCurrentLine);
+
+                                capital += (tradeToCapRatio * capital * change);
+                                //System.out.println(Operations.round(capital, 2));
+                            }
+                        }
                     }
-
-                    String day = parts[dateIndex];
-                    String month = parts[dateIndex + 1];
-                    long date = Long.parseLong(parts[dateIndex + 2]);
-                    long year = Long.parseLong(parts[dateIndex + 5]);
-                    long hour = Long.parseLong(parts[dateIndex + 3].split(":")[0]);
-                    long min = Long.parseLong(parts[dateIndex + 3].split(":")[1]);
-                    long t = format.parse(year + "-" + month + "-" + parts[dateIndex + 2] + " " + parts[dateIndex + 3]).getTime();
-
-                    if(t >= tStart && (useConfigChange + 1 == configChange || useConfigChange == -1)){
-                        long endTime = hour * 60 + min;
-                        long startTime = (endTime - span / 60) % (24 * 60);
-                        if (startTime < 0) {
-                            startTime = (24 * 60) + startTime;
-                        }
-
-                        String closing = parts[parts.length - 1];
-
-                        if (!day.equals(lastDay)) {
-                            lastDay = day;
-                            nDay++;
-                        }
-
-                        if (!month.equals(lastMonth)) {
-                            lastMonth = month;
-                            nMonth++;
-                        }
-
-                        int changeClass = (int) (Math.abs(targetPnL) * 1000);
-
-                        int startHour = (int) (startTime / 60);
-                        int credClass = (int)(cred);
-                        change += rebate;
-
-                        if (    //lifeSpan/3600000 == 2 &&
-                                //cred >= credRange[0] &&
-                                //cred <= credRange[1] &&
-                                //targetPnL >= 0.0015 &&
-                                //targetPnL < 0.002 &&
-                                //hours.contains(startHour) &&
-                                //lifeSpan/3600000 > 17 &&
-                                true) {
-
-                            aggregate(lifeSpan/3600000, change);
-                            //aggregate(participants, change);
-                            //aggregate((int)(100*cred/participants), change);
-                            //aggregate(nMonth, change);
-                            //aggregate(startHour, change);
-                            //aggregate(changeClass, change);
-                            //aggregate(hour, change);
-                            //aggregate(nDay, change);
-                            //aggregate(day, change);
-                            //aggregate(closing, change);
-                            //aggregate(span, change);
-                            //aggregate(credClass, change);
-                            //aggregate(targetPnL, change);
-                            //aggregate((int)(targetPnL * 2000), change);
-
-                            /*String dateString = "";
-                            if(date < 10){
-                                dateString += "0";
-                            }
-                            dateString += date;
-
-                            String timeString = "";
-                            if(startHour < 10){
-                                timeString += "0";
-                            }
-                            timeString+= startHour + ":";
-                            if(min < 10){
-                                timeString += "0";
-                            }
-                            timeString += min;
-
-                            System.out.print(dateString + "-" + month + "-" + year + " " + timeString + ",");
-                            System.out.printf("%f\n", Operations.round(change, 4));*/
-                            //System.out.println(sCurrentLine);
-
-                            capital += (tradeToCapRatio * capital * change);
-                            //System.out.println(Operations.round(capital, 2));
-                        }
-                    }
+                }catch (Exception e){
+                    e.printStackTrace();
                 }
             }
             printStats();
