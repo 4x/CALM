@@ -19,18 +19,17 @@ public class PnLAnalyser {
     String lastMonth = "";
     int nDay = 0;
     int nMonth = 0;
-    double tradeToCapRatio = 2;
+    double tradeToCapRatio = 5;
     double[] credRange = new double[]{1, 2};
     Integer[] hoursToTrade = new Integer[]{0,1,2,3,4,5,6,7,23};
-    double rebate = -0.0001;
-    double sourceCharge = 0.00020;
+    double rebate = 0.0000;
 
     SimpleDateFormat format = new SimpleDateFormat("yyyy-MMM-dd HH:mm");
 
     boolean marketMakerAnalysis = true;
 
     public static void main(String[] args){
-        PnLAnalyser analyser = new PnLAnalyser();
+        MarketMakerAnalyser analyser = new MarketMakerAnalyser();
         analyser.load();
     }
 
@@ -120,12 +119,12 @@ public class PnLAnalyser {
                             change += rebate;
 
                             if (
-                                    lifeSpan/1800000 > 4 &&
+                                    //lifeSpan/1800000 > 4 &&
                                     //cred >= credRange[0] &&
                                     //cred <= credRange[1] &&
                                     //targetPnL >= 0.0015 &&
                                     //targetPnL < 0.002 &&
-                                    hours.contains(startHour) &&
+                                    //hours.contains(startHour) &&
                                     true) {
 
                                 //aggregate(lifeSpan/1800000, change);

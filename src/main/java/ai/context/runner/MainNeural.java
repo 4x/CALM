@@ -34,6 +34,7 @@ import ai.context.util.configuration.DynamicPropertiesLoader;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.trading.BlackBox;
 import ai.context.util.trading.DecisionAggregator;
+import ai.context.util.trading.MarketMakerDeciderHistorical;
 import com.dukascopy.api.Instrument;
 import com.dukascopy.api.Period;
 import com.dukascopy.api.system.IClient;
@@ -98,6 +99,7 @@ public class MainNeural {
         this.path = path;
         ISynchFeed motherFeed = initFeed(path);
         NeuronCluster.getInstance().setMotherFeed(motherFeed);
+        DecisionAggregator.setMarketMakerDeciderHistorical(new MarketMakerDeciderHistorical(path + "feeds/EURUSD_UTC_Ticks_2006.01.02_2014.07.02.csv"));
 
         long[] horizonRange = new long[]{PropertiesHolder.horizonLowerBound, PropertiesHolder.horizonUpperBound};
         Integer[] actionElements = new Integer[]{3, 1, 2, 0};

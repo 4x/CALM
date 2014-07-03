@@ -29,6 +29,8 @@ public class DecisionAggregator {
 
     private static boolean inLiveTrading = false;
     private static BlackBox blackBox;
+    private static MarketMakerDecider marketMakerDecider;
+    private static MarketMakerDeciderHistorical marketMakerDeciderHistorical;
 
     private static int decisionsCollected = 0;
     private static int participants = 0;
@@ -107,11 +109,25 @@ public class DecisionAggregator {
 
             if(PropertiesHolder.tradeMarketMarker){
                 if(results[4] + results[5] > PositionFactory.cost * PropertiesHolder.marketMakerAmplitude){
-                    marketMakerPositions.add(new MarketMakerPosition(time, latestC + results[4],  latestC - results[5], time + entry.getKey()));
+                    if(inLiveTrading && marketMakerDecider != null){
+                        marketMakerDecider.addAdvice(new MarketMakerPosition(time, latestC + results[4],  latestC - results[5], latestC + results[6],  latestC - results[7], time + entry.getKey()));
+                    }
+                    else if(marketMakerDeciderHistorical != null){
+                        MarketMakerPosition advice = new MarketMakerPosition(time, latestC + results[4],  latestC - results[5], latestC + results[6],  latestC - results[7], time + entry.getKey());
+                        advice.adjustTimes(DecisionAggregator.getTimeQuantum());
+                        marketMakerDeciderHistorical.addAdvice(advice);
+                    }
+                    else {
+                        marketMakerPositions.add(new MarketMakerPosition(time, latestC + results[4],  latestC - results[5], latestC + results[6],  latestC - results[7], time + entry.getKey()));
+                    }
                 }
             }
         }
         participants = 0;
+        if(marketMakerDeciderHistorical != null){
+            marketMakerDeciderHistorical.setTime(time);
+            marketMakerDeciderHistorical.step();
+        }
     }
 
     public static void checkExit(){
@@ -149,6 +165,14 @@ public class DecisionAggregator {
 
     public static void setBlackBox(BlackBox blackBox) {
         DecisionAggregator.blackBox = blackBox;
+    }
+
+    public static void setMarketMakerDecider(MarketMakerDecider marketMakerDecider) {
+        DecisionAggregator.marketMakerDecider = marketMakerDecider;
+    }
+
+    public static void setMarketMakerDeciderHistorical(MarketMakerDeciderHistorical marketMakerDeciderHistorical) {
+        DecisionAggregator.marketMakerDeciderHistorical = marketMakerDeciderHistorical;
     }
 
     public static void setInLiveTrading(boolean inLiveTrading) {

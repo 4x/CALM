@@ -16,7 +16,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class FXStreetCalendarRSSFeed extends RowFeed {
 
     private Thread updater;
-    private long pollingFrequency = 10000;
+    private long pollingFrequency = 1000;
     private long reached = 0;
     private HashSet<Integer> existing = new HashSet<Integer>();
 

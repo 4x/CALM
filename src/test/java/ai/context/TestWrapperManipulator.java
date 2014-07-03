@@ -10,6 +10,7 @@ import ai.context.util.analysis.LookAheadScheduler;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class TestWrapperManipulator {
@@ -73,11 +74,11 @@ public class TestWrapperManipulator {
         wrapper.putManipulator("15", manipulator15);
         wrapper.putManipulator("16", manipulator16);
 
-        for(long t = 1199264100000L; t < 1199264100000L + 10 * 86400000L; t += 1800000L){
-            for(int i = 0; i < 16; i++){
-                System.out.println("" + (1 + i) + " " + wrapper.getAtTimeForManipulator(t, "" + (1 + i)));
-            }
-            //System.out.println(wrapper.getAtTimeForManipulator(t, "16"));
+        for(long t = 1199262600000L; t < 1199264100000L + 10 * 86400000L; t += 1800000L){
+            /*for(int i = 0; i < 16; i++){
+                System.out.println(new Date(t) + " " + (1 + i) + " " + wrapper.getAtTimeForManipulator(t, "" + (1 + i)));
+            }*/
+            System.out.println(new Date(t) + " " + wrapper.getAtTimeForManipulator(t, "16"));
         }
 
     }

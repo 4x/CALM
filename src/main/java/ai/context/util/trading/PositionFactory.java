@@ -133,7 +133,7 @@ public class PositionFactory {
 
         double credibility = (longFreq + shortFreq)/2;
         double[] decision = DecisionUtil.getDecision(sFreq, lFreq, minProbFraction, cost, rewardRiskRatio, marketMakerConfidence);
-        return new double[]{credibility, decision[0], decision[1], decision[2], decision[3], decision[4]};
+        return new double[]{credibility, decision[0], decision[1], decision[2], decision[3], decision[4], decision[5], decision[6]};
     }
 
     public static double getAmount() {
