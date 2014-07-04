@@ -144,14 +144,16 @@ public class MarketMakerDeciderHistorical implements OnTickDecider{
 
         while(lastTime <= time + DecisionAggregator.getTimeQuantum()){
             data = priceFeed.readNext(this);
-            lastTime = data.getTimeStamp();
-            lastBid = (double) ((Object[])data.getData())[1];
-            lastAsk = (double) ((Object[])data.getData())[0];
-            if(lastTime > time + DecisionAggregator.getTimeQuantum()){
-                break;
-            }
+            if(data != null){
+                lastTime = data.getTimeStamp();
+                lastBid = (double) ((Object[])data.getData())[1];
+                lastAsk = (double) ((Object[])data.getData())[0];
+                if(lastTime > time + DecisionAggregator.getTimeQuantum()){
+                    break;
+                }
 
-            onTick(lastTime, lastBid, lastAsk);
+                onTick(lastTime, lastBid, lastAsk);
+            }
         }
     }
 }

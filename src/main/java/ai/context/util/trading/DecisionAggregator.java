@@ -110,7 +110,9 @@ public class DecisionAggregator {
             if(PropertiesHolder.tradeMarketMarker){
                 if(results[4] + results[5] > PositionFactory.cost * PropertiesHolder.marketMakerAmplitude){
                     if(inLiveTrading && marketMakerDecider != null){
-                        marketMakerDecider.addAdvice(new MarketMakerPosition(time, latestC + results[4],  latestC - results[5], latestC + results[6],  latestC - results[7], time + entry.getKey()));
+                        MarketMakerPosition advice = new MarketMakerPosition(time, latestC + results[4],  latestC - results[5], latestC + results[6],  latestC - results[7], time + entry.getKey());
+                        advice.adjustTimes(DecisionAggregator.getTimeQuantum());
+                        marketMakerDecider.addAdvice(advice);
                     }
                     else if(marketMakerDeciderHistorical != null){
                         MarketMakerPosition advice = new MarketMakerPosition(time, latestC + results[4],  latestC - results[5], latestC + results[6],  latestC - results[7], time + entry.getKey());

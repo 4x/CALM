@@ -25,6 +25,7 @@ public class PropertiesHolder {
     public static boolean neuronReplacement = true;
     public static boolean tradeNormal = true;
     public static boolean tradeMarketMarker = true;
+    public static boolean liveTrading = true;
     public static String startDateTime = "2006.01.01 00:00:00";
 
     public static String getInfo() {
@@ -54,6 +55,7 @@ public class PropertiesHolder {
                 ", tradeNormal=" + tradeNormal +
                 ", tradeMarketMarker=" + tradeMarketMarker +
                 ", startDateTime=" + startDateTime +
+                ", liveTrading=" + liveTrading +
                 '}';
     }
 }

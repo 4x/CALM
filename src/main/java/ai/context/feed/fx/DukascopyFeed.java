@@ -52,17 +52,14 @@ public class DukascopyFeed implements IStrategy, Feed {
 
     @Override
     public void onMessage(IMessage message) throws JFException {
-        //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public void onAccount(IAccount account) throws JFException {
-        LOGGER.info("Current credit-line: " + account.getCreditLine());
     }
 
     @Override
     public void onStop() throws JFException {
-        //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override

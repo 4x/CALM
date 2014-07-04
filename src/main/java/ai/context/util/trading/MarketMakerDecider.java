@@ -7,6 +7,7 @@ import com.dukascopy.api.system.IClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
@@ -28,7 +29,7 @@ public class MarketMakerDecider implements OnTickDecider, IStrategy{
 
     @Override
     public void onTick(long time, double bid, double ask) throws InterruptedException, JFException {
-        while(adviceByGoodTillTime.firstKey() < time){
+        while(!adviceByGoodTillTime.isEmpty() && adviceByGoodTillTime.firstKey() < time){
             Set<MarketMakerPosition> ending = adviceByGoodTillTime.remove(adviceByGoodTillTime.firstKey());
 
             for(MarketMakerPosition advice : ending){
@@ -84,10 +85,13 @@ public class MarketMakerDecider implements OnTickDecider, IStrategy{
                                     Operations.round(advice.getTargetHigh() + 0.0001, 5),
                                     advice.getGoodTillTime());
                         }
-                        LOGGER.info("OPENING: " + out.getLabel() + ", " + (out.getOriginalAmount() * 1000000D) + ", " + direction);
-                        positions.put(out.getLabel(), out);
-                        advice.setOrderId(out.getLabel());
-                        Thread.sleep(2);
+
+                        if(out != null){
+                            LOGGER.info("OPENING: " + out.getLabel() + ", " + (out.getOriginalAmount() * 1000000D) + ", " + direction);
+                            positions.put(out.getLabel(), out);
+                            advice.setOrderId(out.getLabel());
+                            Thread.sleep(2);
+                        }
                     }
                 }
             }
@@ -95,10 +99,16 @@ public class MarketMakerDecider implements OnTickDecider, IStrategy{
     }
 
     public void addAdvice(MarketMakerPosition advice){
-        if(!adviceByGoodTillTime.containsKey(advice.getGoodTillTime())){
-            adviceByGoodTillTime.put(advice.getGoodTillTime(), new HashSet<MarketMakerPosition>());
+        if(advice.getTimeAdvised() > System.currentTimeMillis() - 30000){
+            if(!adviceByGoodTillTime.containsKey(advice.getGoodTillTime())){
+                adviceByGoodTillTime.put(advice.getGoodTillTime(), new HashSet<MarketMakerPosition>());
+            }
+            adviceByGoodTillTime.get(advice.getGoodTillTime()).add(advice);
+            LOGGER.info("Added advice [" + advice.getTargetLow() + " -> " + advice.getTargetHigh() + "] good till " + new Date(advice.getGoodTillTime()));
         }
-        adviceByGoodTillTime.get(advice.getGoodTillTime()).add(advice);
+        else {
+            LOGGER.info("Discarded advice [" + advice.getTargetLow() + " -> " + advice.getTargetHigh() + "] expired time " + new Date(advice.getTimeAdvised()));
+        }
     }
 
     @Override

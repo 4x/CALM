@@ -32,8 +32,8 @@ import ai.context.trading.DukascopyConnection;
 import ai.context.util.analysis.LookAheadScheduler;
 import ai.context.util.configuration.DynamicPropertiesLoader;
 import ai.context.util.configuration.PropertiesHolder;
-import ai.context.util.trading.BlackBox;
 import ai.context.util.trading.DecisionAggregator;
+import ai.context.util.trading.MarketMakerDecider;
 import ai.context.util.trading.MarketMakerDeciderHistorical;
 import com.dukascopy.api.Instrument;
 import com.dukascopy.api.Period;
@@ -52,7 +52,6 @@ public class MainNeural {
     private boolean calibrating = true;
     private String config;
     private String path;
-    private boolean testing = true;
     private String dukascopyUsername = PropertiesHolder.dukascopyLogin;
     private String dukascopyPassword = PropertiesHolder.dukascopyPass;
 
@@ -65,8 +64,6 @@ public class MainNeural {
     private StitchableFeed liveFXRateJPY;
 
     private IClient client;
-    private BlackBox blackBox;
-
     public static void main(String[] args) {
         DynamicPropertiesLoader.start("");
         try {
@@ -99,7 +96,7 @@ public class MainNeural {
         this.path = path;
         ISynchFeed motherFeed = initFeed(path);
         NeuronCluster.getInstance().setMotherFeed(motherFeed);
-        DecisionAggregator.setMarketMakerDeciderHistorical(new MarketMakerDeciderHistorical(path + "feeds/EURUSD_UTC_Ticks_2006.01.02_2014.07.02.csv"));
+        DecisionAggregator.setMarketMakerDeciderHistorical(new MarketMakerDeciderHistorical(path + "feeds/EURUSD_Ticks.csv"));
 
         long[] horizonRange = new long[]{PropertiesHolder.horizonLowerBound, PropertiesHolder.horizonUpperBound};
         Integer[] actionElements = new Integer[]{3, 1, 2, 0};
@@ -218,8 +215,8 @@ public class MainNeural {
     public void initFXAPI() {
         try {
             client = new DukascopyConnection(dukascopyUsername, dukascopyPassword).getClient();
-            blackBox = new BlackBox(client);
-            DecisionAggregator.setBlackBox(blackBox);
+            //DecisionAggregator.setBlackBox(new BlackBox(client));
+            DecisionAggregator.setMarketMakerDecider(new MarketMakerDecider(client));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -253,15 +250,15 @@ public class MainNeural {
     }
 
     public void setLiveFXRates(String path) {
-        this.liveFXRateEUR = new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.EURUSD));
-        this.liveFXRateGBP = new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.GBPUSD));
+        this.liveFXRateEUR = new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.THIRTY_MINS, Instrument.EURUSD));
+        this.liveFXRateGBP = new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.THIRTY_MINS, Instrument.GBPUSD));
         //this.liveFXRateCHF = new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.USDCHF));
-        this.liveFXRateJPY = new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.USDJPY));
+        this.liveFXRateJPY = new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.THIRTY_MINS, Instrument.USDJPY));
     }
 
     private ISynchFeed initFeed(String path) {
 
-        if (!testing && !calibrating) {
+        if (PropertiesHolder.liveTrading && !calibrating) {
             initFXAPI();
 
             setLiveFXCalendar(new StitchableFXStreetCalendarRSS(path + "tmp/FXCalendar.csv", new FXStreetCalendarRSSFeed()));

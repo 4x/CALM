@@ -203,7 +203,7 @@ public class NeuronCluster implements TimedContainer{
                         if(container.isCalibrating() && totalPointsConsumed/neurons.size() > calibrationPoints){
                             container.nextCalibrationRound();
                         }
-                        else if(!DecisionAggregator.isInLiveTrading() && meanTime > (System.currentTimeMillis() - 10 * 60000L)){
+                        else if(!DecisionAggregator.isInLiveTrading() && meanTime > (System.currentTimeMillis() - 120 * 60000L)){
                             DecisionAggregator.setInLiveTrading(true);
                         }
                     }
