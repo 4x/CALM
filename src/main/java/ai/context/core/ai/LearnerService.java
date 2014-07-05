@@ -37,44 +37,8 @@ public class LearnerService {
 
     private boolean correlating = false;
 
-    private ExecutorService mergeExecutor = Executors.newSingleThreadExecutor();
-
-    private Runnable batchMergeTask = new Runnable() {
-        @Override
-        public void run() {
-            if (!merging) {
-                try {
-                    thisService.mergeStates();
-                } catch (LearningException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    };
-
     public boolean isMerging() {
         return merging;
-    }
-
-    private class MergeTask implements Runnable {
-
-        private StateActionPair sap1;
-        private StateActionPair sap2;
-
-        private MergeTask(StateActionPair sap1, StateActionPair sap2) {
-            this.sap1 = sap1;
-            this.sap2 = sap2;
-        }
-
-        @Override
-        public void run() {
-            thisService.merge(sap1, sap2);
-        }
-    }
-
-    ;
-
-    public LearnerService() {
     }
 
     public LearnerService(ConcurrentHashMap<String, StateActionPair> population, ConcurrentSkipListMap<Integer, ConcurrentSkipListMap<Integer, CopyOnWriteArraySet<StateActionPair>>> indices, double[] correlationWeights, TreeMap<Integer, CorrelationCalculator> correlationCalculators, double[] correlations, ClusteredCopulae copulae, double actionResolution, int maxPopulation, double tolerance, double copulaToUniversal, double minDev, double maxDev, double minDevForMerge, TreeMap<Integer, Long> distribution) {
@@ -299,13 +263,13 @@ public class LearnerService {
             int sinceLastMerge = 0;
             HashSet<StateActionPair> check = new HashSet<>();
             for (StateActionPair pair : pairs) {
-                if (population.values().contains(pair)) {
+                if (population.containsKey(pair.getId())) {
                     x++;
                     for (Map.Entry<Double, StateActionPair> entry : pair.getClosestNeighbours().entrySet()) {
                         StateActionPair counterpart = entry.getValue();
                         check.addAll(pair.getClosestNeighbours().values());
                         y++;
-                        if (pair != counterpart && population.values().contains(counterpart)) {
+                        if (pair != counterpart && population.containsKey(counterpart.getId())) {
                             z++;
                             if (entry.getKey() <= minDevForMerge) {
                                 merge(pair, counterpart);
