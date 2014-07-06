@@ -30,32 +30,32 @@ public class PropertiesHolder {
 
     public static String getInfo() {
         return "PropertiesHolder{" +
-                "recencyBias=" + recencyBias +
-                ", tolerance=" + tolerance +
-                ", initialSeriesOffset=" + initialSeriesOffset +
-                ", maxPopulation=" + maxPopulation +
-                ", copulaToUniversal=" + copulaToUniversal +
-                ", toleranceSearch=" + toleranceSearch +
-                ", dukascopyLogin='" + dukascopyLogin + '\'' +
-                ", dukascopyPass='" + dukascopyPass + '\'' +
-                ", parentsPerNeuron=" + parentsPerNeuron +
-                ", addtionalStimuliPerNeuron=" + addtionalStimuliPerNeuron +
-                ", coreStimuliPerNeuron=" + coreStimuliPerNeuron +
-                ", totalNeurons=" + totalNeurons +
-                ", httpPort=" + httpPort +
-                ", normalisationOfSuggestion=" + normalisationOfSuggestion +
-                ", additionalPassRatio=" + additionalPassRatio +
-                ", horizonLowerBound=" + horizonLowerBound +
-                ", horizonUpperBound=" + horizonUpperBound +
-                ", neuronLearningPeriod=" + neuronLearningPeriod +
-                ", generationLifespan=" + generationLifespan +
-                ", marketMakerConfidence=" + marketMakerConfidence +
-                ", marketMakerAmplitude=" + marketMakerAmplitude +
-                ", neuronReplacement=" + neuronReplacement +
-                ", tradeNormal=" + tradeNormal +
-                ", tradeMarketMarker=" + tradeMarketMarker +
-                ", startDateTime=" + startDateTime +
-                ", liveTrading=" + liveTrading +
+                "\nrecencyBias=" + recencyBias +
+                ",\ntolerance=" + tolerance +
+                ",\ninitialSeriesOffset=" + initialSeriesOffset +
+                ",\nmaxPopulation=" + maxPopulation +
+                ",\ncopulaToUniversal=" + copulaToUniversal +
+                ",\ntoleranceSearch=" + toleranceSearch +
+                ",\ndukascopyLogin='" + dukascopyLogin +
+                ",\ndukascopyPass='" + dukascopyPass +
+                ",\nparentsPerNeuron=" + parentsPerNeuron +
+                ",\naddtionalStimuliPerNeuron=" + addtionalStimuliPerNeuron +
+                ",\ncoreStimuliPerNeuron=" + coreStimuliPerNeuron +
+                ",\ntotalNeurons=" + totalNeurons +
+                ",\nhttpPort=" + httpPort +
+                ",\nnormalisationOfSuggestion=" + normalisationOfSuggestion +
+                ",\nadditionalPassRatio=" + additionalPassRatio +
+                ",\nhorizonLowerBound=" + horizonLowerBound +
+                ",\nhorizonUpperBound=" + horizonUpperBound +
+                ",\nneuronLearningPeriod=" + neuronLearningPeriod +
+                ",\ngenerationLifespan=" + generationLifespan +
+                ",\nmarketMakerConfidence=" + marketMakerConfidence +
+                ",\nmarketMakerAmplitude=" + marketMakerAmplitude +
+                ",\nneuronReplacement=" + neuronReplacement +
+                ",\ntradeNormal=" + tradeNormal +
+                ",\ntradeMarketMarker=" + tradeMarketMarker +
+                ",\nstartDateTime=" + startDateTime +
+                ",\nliveTrading=" + liveTrading +
                 '}';
     }
 }

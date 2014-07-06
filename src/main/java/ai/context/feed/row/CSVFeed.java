@@ -39,6 +39,8 @@ public class CSVFeed extends RowFeed {
 
     private boolean testing = false;
 
+    private boolean skipWeekends = false;
+
     private Object previousData;
     private FeedObject previousLive;
     private ArrayBlockingQueue<FeedObject> liveData = new ArrayBlockingQueue<FeedObject>(1000);
@@ -156,7 +158,15 @@ public class CSVFeed extends RowFeed {
                 e.printStackTrace();
             }
             if (timeStamp > this.timeStamp || (timeStamp == this.timeStamp && nextLine.hashCode() != lastLineHash)) {
-                break;
+                if(skipWeekends){
+                    Date d = new Date(timeStamp);
+                    if(!(d.getDay() == 6 || d.getDay() == 0)){
+                        break;
+                    }
+                }
+                else {
+                    break;
+                }
             }
         }
         lastLineHash = nextLine.hashCode();
@@ -272,7 +282,16 @@ public class CSVFeed extends RowFeed {
                 if (paddable) {
                     long t = System.currentTimeMillis();
                     t = t - (t % interval) + interval;
-                    return new FeedObject(t, paddingData);
+
+                    if(skipWeekends){
+                        Date d = new Date(t);
+                        if(!(d.getDay() == 6 || d.getDay() == 0)){
+                            return new FeedObject(t, paddingData);
+                        }
+                    }
+                    else {
+                        return new FeedObject(t, paddingData);
+                    }
                 } else {
                     try {
                         Thread.sleep(interval);
@@ -281,10 +300,26 @@ public class CSVFeed extends RowFeed {
                     }
                 }
             } else if (data.getTimeStamp() >= timeStamp) {
-                break;
+                if(skipWeekends){
+                    Date d = new Date(data.getTimeStamp());
+                    if(!(d.getDay() == 6 || d.getDay() == 0)){
+                        break;
+                    }
+                }
+                else {
+                    break;
+                }
             }
         }
         return data;
+    }
+
+    public boolean isSkipWeekends() {
+        return skipWeekends;
+    }
+
+    public void setSkipWeekends(boolean skipWeekends) {
+        this.skipWeekends = skipWeekends;
     }
 
     @Override

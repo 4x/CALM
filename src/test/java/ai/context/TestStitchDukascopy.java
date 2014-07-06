@@ -34,6 +34,7 @@ public class TestStitchDukascopy {
                 DataType.DOUBLE};
 
         CSVFeed feedPriceEUR = new CSVFeed("src/test/resources/TestRateHist.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, null);
+        feedPriceEUR.setSkipWeekends(true);
         feedPriceEUR.setStitchableFeed(feed);
         for (int i = 0; i < 2000; i++) {
             FeedObject data = feedPriceEUR.readNext(this);

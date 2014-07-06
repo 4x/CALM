@@ -23,7 +23,12 @@ public abstract class StitchableFeed implements Feed {
     public StitchableFeed(String liveFileName, Feed liveFeed) {
         this.liveFeed = liveFeed;
         this.liveFileName = liveFileName;
+
         try {
+            File  file = new File(liveFileName);
+            if(!file.exists()){
+                file.createNewFile();
+            }
             FileOutputStream fos = new FileOutputStream(liveFileName);
             writer = new BufferedWriter(new OutputStreamWriter(fos));
         } catch (FileNotFoundException e) {

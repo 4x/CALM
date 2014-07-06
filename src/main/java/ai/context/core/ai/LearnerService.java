@@ -41,6 +41,8 @@ public class LearnerService {
         return merging;
     }
 
+    public LearnerService(){}
+
     public LearnerService(ConcurrentHashMap<String, StateActionPair> population, ConcurrentSkipListMap<Integer, ConcurrentSkipListMap<Integer, CopyOnWriteArraySet<StateActionPair>>> indices, double[] correlationWeights, TreeMap<Integer, CorrelationCalculator> correlationCalculators, double[] correlations, ClusteredCopulae copulae, double actionResolution, int maxPopulation, double tolerance, double copulaToUniversal, double minDev, double maxDev, double minDevForMerge, TreeMap<Integer, Long> distribution) {
         this.population = population;
         this.indices = indices;

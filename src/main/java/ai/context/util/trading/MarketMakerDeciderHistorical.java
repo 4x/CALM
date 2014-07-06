@@ -154,6 +154,10 @@ public class MarketMakerDeciderHistorical implements OnTickDecider{
 
                 onTick(lastTime, lastBid, lastAsk);
             }
+            else {
+                adviceByGoodTillTime.clear();
+                break;
+            }
         }
     }
 }

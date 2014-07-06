@@ -50,6 +50,7 @@ public class Learner implements Runnable, TimedContainer {
     private boolean saved = false;
     private long timeToSave = getTimeFromString_YYYYMMddHHmmss("20130201000000");
 
+
     public Learner(String outputDir) {
         try {
             fileOutputStream = new BufferedWriter(new FileWriter(outputDir + "PNL_" + System.currentTimeMillis() + ".csv"));

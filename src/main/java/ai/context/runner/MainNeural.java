@@ -60,7 +60,6 @@ public class MainNeural {
     private StitchableFeed liveFXCalendar;
     private StitchableFeed liveFXRateEUR;
     private StitchableFeed liveFXRateGBP;
-    private StitchableFeed liveFXRateCHF;
     private StitchableFeed liveFXRateJPY;
 
     private IClient client;
@@ -250,10 +249,9 @@ public class MainNeural {
     }
 
     public void setLiveFXRates(String path) {
-        this.liveFXRateEUR = new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.THIRTY_MINS, Instrument.EURUSD));
-        this.liveFXRateGBP = new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.THIRTY_MINS, Instrument.GBPUSD));
-        //this.liveFXRateCHF = new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.USDCHF));
-        this.liveFXRateJPY = new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.THIRTY_MINS, Instrument.USDJPY));
+        this.liveFXRateEUR = new StitchableFXRate(path + "tmp/FX1Rate.csv", new DukascopyFeed(client, Period.THIRTY_MINS, Instrument.EURUSD));
+        this.liveFXRateGBP = new StitchableFXRate(path + "tmp/FX2Rate.csv", new DukascopyFeed(client, Period.THIRTY_MINS, Instrument.GBPUSD));
+        this.liveFXRateJPY = new StitchableFXRate(path + "tmp/FX3Rate.csv", new DukascopyFeed(client, Period.THIRTY_MINS, Instrument.USDJPY));
     }
 
     private ISynchFeed initFeed(String path) {
@@ -333,12 +331,15 @@ public class MainNeural {
 
         CSVFeed feedPriceEUR = new CSVFeed(path + "feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feedPriceEUR.setStitchableFeed(liveFXRateEUR);
+        feedPriceEUR.setSkipWeekends(true);
         rowFeeds.add(feedPriceEUR);
         CSVFeed feedPriceGBP = new CSVFeed(path + "feeds/GBPUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feedPriceGBP.setStitchableFeed(liveFXRateGBP);
+        feedPriceGBP.setSkipWeekends(true);
         rowFeeds.add(feedPriceGBP);
         CSVFeed feedPriceJPY = new CSVFeed(path + "feeds/USDJPY.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feedPriceJPY.setStitchableFeed(liveFXRateJPY);
+        feedPriceJPY.setSkipWeekends(true);
         rowFeeds.add(feedPriceJPY);
 
         ISynchFeed feed = buildSynchFeed(null, 0.0001,feedPriceEUR);
