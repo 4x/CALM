@@ -115,8 +115,14 @@ public class DynamicPropertiesLoader {
                         PropertiesHolder.generationLifespan = Long.parseLong(parts[1]);
                     } else if (parts[0].equals("marketMakerConfidence")) {
                         PropertiesHolder.marketMakerConfidence = Double.parseDouble(parts[1]);
+                    } else if (parts[0].equals("marketMakerLeeway")) {
+                        PropertiesHolder.marketMakerLeeway = Double.parseDouble(parts[1]);
                     } else if (parts[0].equals("marketMakerAmplitude")) {
                         PropertiesHolder.marketMakerAmplitude = Double.parseDouble(parts[1]);
+                    } else if (parts[0].equals("marketMakerStopLoss")) {
+                        PropertiesHolder.marketMakerStopLoss = Double.parseDouble(parts[1]);
+                    } else if (parts[0].equals("marketMakerBeyond")) {
+                        PropertiesHolder.marketMakerBeyond = Double.parseDouble(parts[1]);
                     } else if (parts[0].equals("neuronReplacement")) {
                         PropertiesHolder.neuronReplacement = Boolean.valueOf(parts[1]);
                     } else if (parts[0].equals("tradeNormal")) {

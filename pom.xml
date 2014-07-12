@@ -152,7 +152,7 @@
             <version>9.0.5.v20130815</version>
         </dependency>
 
-        <dependency>
+        <!--<dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>
             <version>9.1.0.RC2</version>
@@ -168,9 +168,9 @@
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-util</artifactId>
             <version>9.1.0.RC2</version>
-        </dependency>
+        </dependency>-->
 
-        <dependency>
+        <!--<dependency>
             <groupId>org.eclipse.jetty.websocket</groupId>
             <artifactId>websocket-core</artifactId>
             <version>9.0.0.M2</version>
@@ -180,9 +180,9 @@
             <groupId>org.eclipse.jetty.websocket</groupId>
             <artifactId>websocket-client</artifactId>
             <version>9.0.0.M2</version>
-        </dependency>
+        </dependency>-->
 
-        <dependency>
+        <!--<dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-servlets</artifactId>
             <version>9.1.0.RC2</version>
@@ -192,9 +192,9 @@
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-http</artifactId>
             <version>9.1.0.RC2</version>
-        </dependency>
+        </dependency>-->
 
-        <dependency>
+        <!--<dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-io</artifactId>
             <version>9.1.0.RC2</version>
@@ -216,7 +216,7 @@
             <groupId>org.eclipse.jetty.toolchain</groupId>
             <artifactId>jetty-test-helper</artifactId>
             <version>2.5</version>
-        </dependency>
+        </dependency>-->
 
         <!--<dependency>
             <groupId>org.springframework</groupId>
@@ -253,6 +253,19 @@
             <artifactId>spring-orm</artifactId>
             <version>4.0.0.RELEASE</version>
         </dependency>-->
+
+        <dependency>
+            <groupId>org.mnode.ical4j</groupId>
+            <artifactId>ical4j</artifactId>
+            <version>1.0.5</version>
+        </dependency>
+
+        <dependency>
+            <groupId>backport-util-concurrent</groupId>
+            <artifactId>backport-util-concurrent</artifactId>
+            <version>3.1</version>
+        </dependency>
+
 
         <dependency>
             <groupId>com.cedarsoftware</groupId>

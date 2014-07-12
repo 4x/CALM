@@ -22,6 +22,8 @@ public class MarketMakerAnalyser {
     int nMonth = 0;
     double tradeToCapRatio = 5;
 
+    double cost = 0.0000;
+
     public static void main(String[] args){
         MarketMakerAnalyser analyser = new MarketMakerAnalyser();
         analyser.load();
@@ -46,9 +48,16 @@ public class MarketMakerAnalyser {
                         Date date = format.parse(sCurrentLine.substring(0, 23));
                         int changePart = 3;
                         int dirPart = 10;
-
-                        Double change = Double.parseDouble(parts[changePart]);
+                        int lifeSpanPart = 12;
+                        Double change = Double.parseDouble(parts[changePart]) - cost;
                         String dir = parts[dirPart];
+                        long lifeSpan = 0;
+                        if(parts[lifeSpanPart].equals("TIMEOUT")){
+                            lifeSpan = Long.parseLong(parts[lifeSpanPart + 1]);
+                        }
+                        else {
+                            lifeSpan = Long.parseLong(parts[lifeSpanPart]);
+                        }
 
                         String state = "NORMAL";
 

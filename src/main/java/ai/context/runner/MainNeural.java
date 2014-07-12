@@ -8,9 +8,11 @@ import ai.context.feed.manipulation.Manipulator;
 import ai.context.feed.manipulation.TimeDecaySingleSentimentManipulator;
 import ai.context.feed.row.CSVFeed;
 import ai.context.feed.row.FXStreetCalendarRSSFeed;
+import ai.context.feed.row.FXStreetCalendarScheduleFeed;
 import ai.context.feed.row.RowFeed;
 import ai.context.feed.stitchable.StitchableFXRate;
 import ai.context.feed.stitchable.StitchableFXStreetCalendarRSS;
+import ai.context.feed.stitchable.StitchableFXStreetCalendarSchedule;
 import ai.context.feed.stitchable.StitchableFeed;
 import ai.context.feed.surgical.ExtractOneFromListFeed;
 import ai.context.feed.surgical.FXHLDiffFeed;
@@ -58,6 +60,7 @@ public class MainNeural {
     private Set<RowFeed> rowFeeds = new HashSet<>();
 
     private StitchableFeed liveFXCalendar;
+    private StitchableFeed liveFXCalendaScheduler;
     private StitchableFeed liveFXRateEUR;
     private StitchableFeed liveFXRateGBP;
     private StitchableFeed liveFXRateJPY;
@@ -95,7 +98,7 @@ public class MainNeural {
         this.path = path;
         ISynchFeed motherFeed = initFeed(path);
         NeuronCluster.getInstance().setMotherFeed(motherFeed);
-        DecisionAggregator.setMarketMakerDeciderHistorical(new MarketMakerDeciderHistorical(path + "feeds/EURUSD_Ticks.csv"));
+        DecisionAggregator.setMarketMakerDeciderHistorical(new MarketMakerDeciderHistorical(path + "feeds/EURUSD_Ticks.csv", null));
 
         long[] horizonRange = new long[]{PropertiesHolder.horizonLowerBound, PropertiesHolder.horizonUpperBound};
         Integer[] actionElements = new Integer[]{3, 1, 2, 0};
@@ -225,6 +228,10 @@ public class MainNeural {
         this.liveFXCalendar = liveFXCalendar;
     }
 
+    public void setLiveFXCalendarSchedule(final StitchableFeed liveFXCalendarSchedule) {
+        this.liveFXCalendaScheduler = liveFXCalendarSchedule;
+    }
+
     public boolean isCalibrating() {
         return calibrating;
     }
@@ -260,6 +267,8 @@ public class MainNeural {
             initFXAPI();
 
             setLiveFXCalendar(new StitchableFXStreetCalendarRSS(path + "tmp/FXCalendar.csv", new FXStreetCalendarRSSFeed()));
+            setLiveFXCalendarSchedule(new StitchableFXStreetCalendarSchedule(path + "tmp/FXCalendarSchedule.csv", new FXStreetCalendarScheduleFeed()));
+
             setLiveFXRates(path);
         }
 
@@ -274,13 +283,16 @@ public class MainNeural {
         String dateFC = "20060101 00:00:00";
         long interval = 1*60000L;
         CSVFeed feedCalendar = new CSVFeed(path + "feeds/Calendar.csv", "yyyyMMdd HH:mm:ss", typesCalendar, dateFC);
-        CSVFeed calendarSchedule = new CSVFeed(path + "feeds/Calendar.csv", "yyyyMMdd HH:mm:ss", typesCalendar, dateFC);
+
+        DataType[] typesCalendarSchedule  = new DataType[]{
+                DataType.OTHER,
+                DataType.OTHER};
+        CSVFeed calendarSchedule = new CSVFeed(path + "feeds/Calendar_Schedule.csv", "yyyyMMdd HH:mm:ss", typesCalendarSchedule, dateFC);
         LookAheadScheduler scheduler = new LookAheadScheduler(calendarSchedule, 0, 1);
         rowFeeds.add(feedCalendar);
         rowFeeds.add(calendarSchedule);
         feedCalendar.setStitchableFeed(liveFXCalendar);
-        feedCalendar.setPaddable(true);
-        feedCalendar.setInterval(interval);
+        calendarSchedule.setStitchableFeed(liveFXCalendaScheduler);
 
         FeedWrapper calendarWrapper = new FeedWrapper(feedCalendar);
         Manipulator manipulator1 = new TimeDecaySingleSentimentManipulator("Germany", "Markit Manufacturing PMI", scheduler);

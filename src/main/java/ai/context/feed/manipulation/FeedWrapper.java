@@ -1,17 +1,17 @@
 package ai.context.feed.manipulation;
 
-import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
+import ai.context.feed.row.CSVFeed;
 
 import java.util.*;
 
 public class FeedWrapper {
-    private Feed feed;
+    private CSVFeed feed;
     private long time = 0;
     private TreeMap<Long, Set<FeedObject>> history = new TreeMap<>();
     private HashMap<String, Manipulator> manipulators = new HashMap<>();
 
-    public FeedWrapper(Feed feed) {
+    public FeedWrapper(CSVFeed feed) {
         this.feed = feed;
     }
 
@@ -20,7 +20,8 @@ public class FeedWrapper {
     }
 
     public FeedObject<Integer[]> getAtTimeForManipulator(long time, String manipulator){
-        while(this.time <= time){
+
+        while(this.time <= time && (!feed.isStitching() || feed.hasNext())){
             FeedObject data = feed.readNext(this);
             this.time = data.getTimeStamp();
 

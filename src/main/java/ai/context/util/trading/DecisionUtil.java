@@ -1,5 +1,7 @@
 package ai.context.util.trading;
 
+import ai.context.util.configuration.PropertiesHolder;
+
 import java.util.TreeMap;
 
 public class DecisionUtil {
@@ -22,7 +24,7 @@ public class DecisionUtil {
             rewardRiskRatio = PositionFactory.rewardRiskRatio;
         }
 
-        double max = (sFreq.firstEntry().getValue() + lFreq.firstEntry().getValue()) / 2;
+        double max = Math.max(sFreq.firstEntry().getValue(), lFreq.firstEntry().getValue());
         double target = 0;
         double ratio = 0;
         double probFraction = 0;
@@ -47,10 +49,10 @@ public class DecisionUtil {
                 high = amplitude;
             }
 
-            if(probS > 0.75){
+            if(probS > PropertiesHolder.marketMakerLeeway){
                 low1 = amplitude;
             }
-            if(probL > 0.75){
+            if(probL > PropertiesHolder.marketMakerLeeway){
                 high1 = amplitude;
             }
 

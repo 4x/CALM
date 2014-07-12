@@ -128,7 +128,7 @@ public class FXStreetCalendarRSSFeed extends RowFeed {
 
     @Override
     public boolean hasNext() {
-        return !closed;
+        return !closed && queue.size() > 0;
     }
 
     @Override
@@ -166,7 +166,7 @@ public class FXStreetCalendarRSSFeed extends RowFeed {
 
     @Override
     public RowFeed getCopy() {
-        return new FXStreetCalendarRSSFeed();
+        return new FXStreetCalendarScheduleFeed();
     }
 
     @Override

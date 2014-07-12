@@ -31,7 +31,7 @@ public class CSVFeed extends RowFeed {
     private int lastLineHash = 0;
     private String startDateTime;
 
-    private long interval = 1000;
+    private long interval = 500;
 
     protected boolean paddable = false;
 
@@ -99,6 +99,10 @@ public class CSVFeed extends RowFeed {
 
     @Override
     public boolean hasNext() {
+        if(stitching){
+            return stitchableFeed.hasNext();
+        }
+
         try {
             nextLine = reader.readNext();
         } catch (IOException e) {
@@ -118,7 +122,6 @@ public class CSVFeed extends RowFeed {
             try {
                 if (!stitching) {
                     nextLine = reader.readNext();
-                    //System.out.println(nextLine[0] + " " + nextLine[1] + " " + nextLine[2] + " " + nextLine[3] + " " + nextLine[4] + " " + nextLine[5]);
                     if (nextLine == null) {
                         if (stitchableFeed == null) {
                             return null;
@@ -126,27 +129,12 @@ public class CSVFeed extends RowFeed {
                             stitching = true;
                             System.out.println("Switched to stitching " + fileName);
                             startCollectingLive();
-                            FeedObject toReturn = getNextLive();
-                            append(toReturn);
-                            this.timeStamp = toReturn.getTimeStamp();
-                            for (Feed listener : buffers.keySet()) {
-                                if (listener != caller) {
-                                    buffers.get(listener).add(toReturn);
-                                }
-                            }
-                            return toReturn;
+
+                            return returnNextLive(caller);
                         }
                     }
                 } else {
-                    FeedObject toReturn = getNextLive();
-                    append(toReturn);
-                    this.timeStamp = toReturn.getTimeStamp();
-                    for (Feed listener : buffers.keySet()) {
-                        if (listener != caller) {
-                            buffers.get(listener).add(toReturn);
-                        }
-                    }
-                    return toReturn;
+                    return returnNextLive(caller);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -213,6 +201,31 @@ public class CSVFeed extends RowFeed {
         this.timeStamp = feedObject.getTimeStamp();
         previousLive = feedObject;
         return feedObject;
+    }
+
+    private FeedObject returnNextLive(Object caller){
+        FeedObject toReturn;
+        while (true){
+            toReturn = getNextLive();
+
+            if(skipWeekends){
+                Date d = new Date(toReturn.getTimeStamp());
+                if(!(d.getDay() == 6 || d.getDay() == 0)){
+                    break;
+                }
+            }
+            else {
+                break;
+            }
+        }
+        append(toReturn);
+        this.timeStamp = toReturn.getTimeStamp();
+        for (Feed listener : buffers.keySet()) {
+            if (listener != caller) {
+                buffers.get(listener).add(toReturn);
+            }
+        }
+        return toReturn;
     }
 
     public CSVFeed getCopy() {

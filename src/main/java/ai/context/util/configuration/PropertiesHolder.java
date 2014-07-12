@@ -21,7 +21,10 @@ public class PropertiesHolder {
     public static long neuronLearningPeriod = 10000;
     public static long generationLifespan = 100000;
     public static double marketMakerConfidence = 0.95;
+    public static double marketMakerLeeway = 0.8;
     public static double marketMakerAmplitude = 2;
+    public static double marketMakerBeyond = 0.0005;
+    public static double marketMakerStopLoss = 0.005;
     public static boolean neuronReplacement = true;
     public static boolean tradeNormal = true;
     public static boolean tradeMarketMarker = true;
@@ -36,8 +39,8 @@ public class PropertiesHolder {
                 ",\nmaxPopulation=" + maxPopulation +
                 ",\ncopulaToUniversal=" + copulaToUniversal +
                 ",\ntoleranceSearch=" + toleranceSearch +
-                ",\ndukascopyLogin='" + dukascopyLogin +
-                ",\ndukascopyPass='" + dukascopyPass +
+                ",\ndukascopyLogin=" + dukascopyLogin +
+                ",\ndukascopyPass=" + dukascopyPass +
                 ",\nparentsPerNeuron=" + parentsPerNeuron +
                 ",\naddtionalStimuliPerNeuron=" + addtionalStimuliPerNeuron +
                 ",\ncoreStimuliPerNeuron=" + coreStimuliPerNeuron +
@@ -50,7 +53,10 @@ public class PropertiesHolder {
                 ",\nneuronLearningPeriod=" + neuronLearningPeriod +
                 ",\ngenerationLifespan=" + generationLifespan +
                 ",\nmarketMakerConfidence=" + marketMakerConfidence +
+                ",\nmarketMakerLeeway=" + marketMakerLeeway +
                 ",\nmarketMakerAmplitude=" + marketMakerAmplitude +
+                ",\nmarketMakerBeyond=" + marketMakerBeyond +
+                ",\nmarketMakerStopLoss=" + marketMakerStopLoss +
                 ",\nneuronReplacement=" + neuronReplacement +
                 ",\ntradeNormal=" + tradeNormal +
                 ",\ntradeMarketMarker=" + tradeMarketMarker +

@@ -1,5 +1,6 @@
 package ai.context.util.trading;
 
+import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.Operations;
 import ai.context.util.measurement.MarketMakerPosition;
 import com.dukascopy.api.*;
@@ -65,25 +66,37 @@ public class MarketMakerDecider implements OnTickDecider, IStrategy{
                         IOrder out = null;
                         String direction = null;
 
-                        if(bid > advice.getTargetHigh() && advice.getTargetLow() > avgLow){
-                            advice.setHasOpenedWithShort(true, bid);
+                        if(bid - PropertiesHolder.marketMakerBeyond > advice.getTargetHigh()){
+                            advice.addFlag("A");
+                        }
+                        else if(advice.containsFlag("A")
+                                && bid > advice.getTargetHigh()
+                                && bid - PropertiesHolder.marketMakerBeyond/2 < advice.getTargetHigh()
+                                && advice.getTargetLow() > avgLow){
                             direction = "SHORT";
 
                             out = engine.submitOrder("EUR_" + tNow, Instrument.EURUSD, IEngine.OrderCommand.SELLLIMIT, amount,
-                                    Operations.round(advice.getTargetHigh() + 0.0001, 5), 0,
-                                    Operations.round(advice.getTargetHigh() + 0.01, 5),
-                                    Operations.round(advice.getTargetLow() - 0.0001, 5),
+                                    Operations.round(bid, 5), 0,
+                                    Operations.round(bid + PropertiesHolder.marketMakerStopLoss, 5),
+                                    Operations.round(advice.getTargetLow(), 5),
                                     advice.getGoodTillTime());
+                            advice.setHasOpenedWithShort(true, bid);
                         }
-                        else if(ask < advice.getTargetLow() && advice.getTargetHigh() < avgHigh){
-                            advice.setHasOpenedWithLong(true, ask);
+                        else if(ask + PropertiesHolder.marketMakerBeyond < advice.getTargetLow()){
+                            advice.addFlag("B");
+                        }
+                        else if(advice.containsFlag("B")
+                                && ask < advice.getTargetLow()
+                                && ask + PropertiesHolder.marketMakerBeyond/2 > advice.getTargetLow()
+                                && advice.getTargetHigh() < avgHigh){
                             direction = "LONG";
 
                             out = engine.submitOrder("EUR_" + tNow, Instrument.EURUSD, IEngine.OrderCommand.BUYLIMIT, amount,
-                                    Operations.round(advice.getTargetLow() - 0.0001, 5), 0,
-                                    Operations.round(advice.getTargetLow() - 0.01, 5),
-                                    Operations.round(advice.getTargetHigh() + 0.0001, 5),
+                                    Operations.round(ask, 5), 0,
+                                    Operations.round(ask - PropertiesHolder.marketMakerStopLoss, 5),
+                                    Operations.round(advice.getTargetHigh(), 5),
                                     advice.getGoodTillTime());
+                            advice.setHasOpenedWithLong(true, ask);
                         }
 
                         if(out != null){

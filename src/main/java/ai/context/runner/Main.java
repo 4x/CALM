@@ -5,7 +5,7 @@ import ai.context.feed.DataType;
 import ai.context.feed.FeedObject;
 import ai.context.feed.fx.DukascopyFeed;
 import ai.context.feed.row.CSVFeed;
-import ai.context.feed.row.FXStreetCalendarRSSFeed;
+import ai.context.feed.row.FXStreetCalendarScheduleFeed;
 import ai.context.feed.stitchable.StitchableFXRate;
 import ai.context.feed.stitchable.StitchableFXStreetCalendarRSS;
 import ai.context.feed.stitchable.StitchableFeed;
@@ -243,7 +243,7 @@ public class Main {
         if (!testing) {
             initFXAPI();
 
-            setLiveFXCalendar(new StitchableFXStreetCalendarRSS(path + "tmp/FXCalendar.csv", new FXStreetCalendarRSSFeed()));
+            setLiveFXCalendar(new StitchableFXStreetCalendarRSS(path + "tmp/FXCalendar.csv", new FXStreetCalendarScheduleFeed()));
             setLiveFXRates(
                     new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.EURUSD)),
                     new StitchableFXRate(path + "tmp/FXRate.csv", new DukascopyFeed(client, Period.FIVE_MINS, Instrument.GBPUSD)),

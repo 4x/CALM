@@ -3,6 +3,7 @@ package ai.context.util.trading;
 import ai.context.feed.DataType;
 import ai.context.feed.FeedObject;
 import ai.context.feed.row.CSVFeed;
+import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.Operations;
 import ai.context.util.measurement.MarketMakerPosition;
 
@@ -22,14 +23,14 @@ public class MarketMakerDeciderHistorical implements OnTickDecider{
     private SimpleDateFormat format = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss.SSS");
 
 
-    public MarketMakerDeciderHistorical(String priceFeedFile){
+    public MarketMakerDeciderHistorical(String priceFeedFile, String startDate){
         DataType[] typesPrice = new DataType[]{
                 DataType.DOUBLE,
                 DataType.DOUBLE,
                 DataType.DOUBLE,
                 DataType.DOUBLE};
 
-        priceFeed = new CSVFeed(priceFeedFile, "yyyy.MM.dd HH:mm:ss.SSS", typesPrice, null);
+        priceFeed = new CSVFeed(priceFeedFile, "yyyy.MM.dd HH:mm:ss.SSS", typesPrice, startDate);
     }
 
     @Override
@@ -47,7 +48,7 @@ public class MarketMakerDeciderHistorical implements OnTickDecider{
                         if(change <= 0){
                             state = "L";
                         }
-                        System.out.println(format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + advice.getOpen() + " CLOSE: " + bid + " NET: " + Operations.round(pnl, 5) + " LONG TIMEOUT");
+                        System.out.println(format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + advice.getOpen() + " CLOSE: " + bid + " NET: " + Operations.round(pnl, 5) + " LONG TIMEOUT " + advice.getTimeSpan());
                         advice.setClosed(true);
                     }
                     else {
@@ -57,7 +58,7 @@ public class MarketMakerDeciderHistorical implements OnTickDecider{
                         if(change <= 0){
                             state = "L";
                         }
-                        System.out.println(format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + advice.getOpen() + " CLOSE: " + ask + "  NET: " + Operations.round(pnl, 5) + " SHORT TIMEOUT");
+                        System.out.println(format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + advice.getOpen() + " CLOSE: " + ask + "  NET: " + Operations.round(pnl, 5) + " SHORT TIMEOUT " + advice.getTimeSpan());
                         advice.setClosed(true);
                     }
                 }
@@ -77,36 +78,48 @@ public class MarketMakerDeciderHistorical implements OnTickDecider{
             avgLow /= advices.size();
 
             for(MarketMakerPosition advice : advices){
-                if(!advice.isOpen() && advice.getTimeAdvised() >= time){
-                    if(bid > advice.getTargetHigh() && advice.getTargetLow() > avgLow){
+                if(!advice.isOpen() && advice.getTimeAdvised() <= time){
+
+                    if(bid - PropertiesHolder.marketMakerBeyond > advice.getTargetHigh()){
+                        advice.addFlag("A");
+                    }
+                    else if(advice.containsFlag("A")
+                            && bid > advice.getTargetHigh()
+                            && bid - PropertiesHolder.marketMakerBeyond/2 < advice.getTargetHigh()
+                            && advice.getTargetLow() > avgLow){
                         advice.setHasOpenedWithShort(true, bid);
                         //System.out.println(format.format(new Date(time)) + " Selling @ " + bid);
-
                     }
-                    else if(ask < advice.getTargetLow() && advice.getTargetHigh() < avgHigh){
+                    else if(ask + PropertiesHolder.marketMakerBeyond < advice.getTargetLow()){
+                        advice.addFlag("B");
+                    }
+                    else if(advice.containsFlag("B")
+                            && ask < advice.getTargetLow()
+                            && ask + PropertiesHolder.marketMakerBeyond/2 > advice.getTargetLow()
+                            && advice.getTargetHigh() < avgHigh){
                         advice.setHasOpenedWithLong(true, ask);
                         //System.out.println(format.format(new Date(time)) + " Buying @ " + ask);
                     }
                 }
-                else if(!advice.isClosed() && advice.getTimeAdvised() >= time){
-                    if(advice.isHasOpenedWithLong() && advice.getTargetHigh() <= bid){
+                else if(!advice.isClosed()){
+                    if(advice.isHasOpenedWithLong() && (advice.getTargetHigh() <= bid || advice.getOpen() >= bid + PropertiesHolder.marketMakerStopLoss)){
                         double change = (bid - advice.getOpen());
                         pnl += change;
                         String state = "P";
                         if(change <= 0){
                             state = "L";
                         }
-                        System.out.println(format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + advice.getOpen() + " CLOSE: " + bid + " NET: " + Operations.round(pnl, 5) + " LONG NORMAL" );
+                        System.out.println(format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + advice.getOpen() + " CLOSE: " + bid + " NET: " + Operations.round(pnl, 5) + " LONG NORMAL " + advice.getTimeSpan() );
                         advice.setClosed(true);
                     }
-                    else if(advice.isHasOpenedWithShort() && advice.getTargetLow() >= ask){
+                    else if(advice.isHasOpenedWithShort() && (advice.getTargetLow() >= ask || advice.getOpen() <= ask - PropertiesHolder.marketMakerStopLoss)){
                         double change = (advice.getOpen() - ask);
                         pnl += change;
                         String state = "P";
                         if(change <= 0){
                             state = "L";
                         }
-                        System.out.println(format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + advice.getOpen() + " CLOSE: " + ask + " NET: " + Operations.round(pnl, 5) + " SHORT NORMAL");
+                        System.out.println(format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + advice.getOpen() + " CLOSE: " + ask + " NET: " + Operations.round(pnl, 5) + " SHORT NORMAL " + advice.getTimeSpan());
                         advice.setClosed(true);
                     }
                 }

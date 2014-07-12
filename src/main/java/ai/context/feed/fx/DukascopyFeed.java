@@ -64,7 +64,7 @@ public class DukascopyFeed implements IStrategy, Feed {
 
     @Override
     public boolean hasNext() {
-        return true;
+        return channel.size() > 0;
     }
 
     @Override

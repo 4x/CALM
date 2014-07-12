@@ -9,7 +9,7 @@ import java.text.SimpleDateFormat;
 public class TestMarketMakerDeciderHistorical {
 
     public static void main(String[] _args) {
-        MarketMakerDeciderHistorical marketMakerDeciderHistorical = new MarketMakerDeciderHistorical("/opt/dev/data/feeds/EURUSD_UTC_Ticks_2006.01.02_2014.07.02.csv");
+        MarketMakerDeciderHistorical marketMakerDeciderHistorical = new MarketMakerDeciderHistorical("/opt/dev/data/feeds/EURUSD_UTC_Ticks_2006.01.02_2014.07.02.csv", null);
 
         SimpleDateFormat format = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss");
 

@@ -3,6 +3,8 @@ package ai.context.util.measurement;
 import ai.context.util.mathematics.Operations;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 public class MarketMakerPosition {
     private long time;
@@ -22,6 +24,8 @@ public class MarketMakerPosition {
     private boolean closed = false;
     private double open;
     private String orderId;
+
+    private Set<String> flags = new HashSet<>();
 
     public MarketMakerPosition(long time, double targetHigh, double targetLow, double high1, double low1, long goodTill) {
         this.time = time;
@@ -144,6 +148,22 @@ public class MarketMakerPosition {
 
     public long getTimeAdvised() {
         return time;
+    }
+
+    public long getTimeSpan(){
+        return (goodTill - time);
+    }
+
+    public void addFlag(String flag){
+        flags.add(flag);
+    }
+
+    public void removeFlag(String flag){
+        flags.remove(flag);
+    }
+
+    public boolean containsFlag(String flag){
+        return flags.contains(flag);
     }
 }
 

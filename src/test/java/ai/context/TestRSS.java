@@ -3,7 +3,7 @@ package ai.context;
 import ai.context.feed.DataType;
 import ai.context.feed.FeedObject;
 import ai.context.feed.row.CSVFeed;
-import ai.context.feed.row.FXStreetCalendarRSSFeed;
+import ai.context.feed.row.FXStreetCalendarScheduleFeed;
 import ai.context.feed.stitchable.StitchableFXStreetCalendarRSS;
 import org.junit.Test;
 
@@ -16,7 +16,7 @@ public class TestRSS {
     @Test
     public void testRSS() {
 
-        FXStreetCalendarRSSFeed feed = new FXStreetCalendarRSSFeed();
+        FXStreetCalendarScheduleFeed feed = new FXStreetCalendarScheduleFeed();
 
         for (int i = 0; i < 1000; i++) {
             FeedObject data = feed.readNext(this);
@@ -44,7 +44,7 @@ public class TestRSS {
 
     @Test
     public void testRSSInStitch() {
-        StitchableFXStreetCalendarRSS liveFeed = new StitchableFXStreetCalendarRSS("src/test/resources/TestRSS.csv", new FXStreetCalendarRSSFeed());
+        StitchableFXStreetCalendarRSS liveFeed = new StitchableFXStreetCalendarRSS("src/test/resources/TestRSS.csv", new FXStreetCalendarScheduleFeed());
 
         DataType[] types = new DataType[]{
                 DataType.OTHER,

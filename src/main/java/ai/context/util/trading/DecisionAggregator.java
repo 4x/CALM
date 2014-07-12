@@ -61,6 +61,9 @@ public class DecisionAggregator {
         }
 
         double[] results = PositionFactory.getDecision(data.getTimeStamp(), pivot, histogram, timeSpan, null, null, null, 0.5);
+        if(results[1] < 5 * PositionFactory.cost){
+            return;
+        }
 
         participants++;
         double cred = 1;

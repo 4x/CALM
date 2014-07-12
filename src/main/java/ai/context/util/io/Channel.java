@@ -27,4 +27,8 @@ public class Channel<T> {
         }
         return queue.poll();
     }
+
+    public int size() {
+        return queue.size();
+    }
 }

@@ -25,7 +25,11 @@ public class TestWrapperManipulator {
                 DataType.EXTRACTABLE_DOUBLE};
 
         CSVFeed feed = new CSVFeed("/opt/dev/data/feeds/Calendar.csv", "yyyyMMdd HH:mm:ss", types, null);
-        CSVFeed scheduleFeed = new CSVFeed("/opt/dev/data/feeds/Calendar.csv", "yyyyMMdd HH:mm:ss", types, null);
+
+        types = new DataType[]{
+                DataType.OTHER,
+                DataType.OTHER};
+        CSVFeed scheduleFeed = new CSVFeed("/opt/dev/data/feeds/Calendar_Schedule.csv", "yyyyMMdd HH:mm:ss", types, null);
         LookAheadScheduler scheduler = new LookAheadScheduler(scheduleFeed, 0, 1);
 
 
