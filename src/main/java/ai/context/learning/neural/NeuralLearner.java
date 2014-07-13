@@ -40,6 +40,8 @@ public class NeuralLearner implements Feed, Runnable {
     private List<WrapperManipulatorPair> wrapperManipulatorPairs = new ArrayList<>();
     private int numberOfWrapperOutputs = 0;
 
+    private TreeMap<Integer, Double> predictionRaw;
+
     private AbsoluteMovementDiscretiser discretiser;
 
     private final long horizon;
@@ -220,7 +222,7 @@ public class NeuralLearner implements Feed, Runnable {
                     }
 
                     int[] outputSignal = new int[getNumberOfOutputs()];
-                    TreeMap<Integer, Double> predictionRaw = null;
+
 
                     if (pointsConsumed > 200) {
                         predictionRaw = getDistribution(signal);
@@ -267,11 +269,29 @@ public class NeuralLearner implements Feed, Runnable {
         double downMult = netWeight/weightDown;
 
         for (Map.Entry<Integer, Double> entry : distUp.entrySet()) {
-            distribution.put(entry.getKey(), entry.getValue() * upMult);
+            int key = entry.getKey();
+            double val = entry.getValue() * upMult;
+            if(key == 0){
+                key = 1;
+            }
+            else if(key == 1 && distribution.containsKey(key)){
+                val += distribution.get(key);
+            }
+
+            distribution.put(key, val);
         }
 
         for (Map.Entry<Integer, Double> entry : distDown.entrySet()) {
-            distribution.put(entry.getKey(), entry.getValue() * downMult);
+            int key = entry.getKey();
+            double val = entry.getValue() * downMult;
+            if(key == 0){
+                key = -1;
+            }
+            else if(key == -1 && distribution.containsKey(key)){
+                val += distribution.get(key);
+            }
+
+            distribution.put(key, val);
         }
 
         return distribution;
@@ -517,5 +537,9 @@ public class NeuralLearner implements Feed, Runnable {
     @Override
     public int getNumberOfOutputs() {
         return 1;
+    }
+
+    public TreeMap<Integer, Double> getPredictionRaw() {
+        return predictionRaw;
     }
 }

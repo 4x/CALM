@@ -31,7 +31,7 @@ public class AbsoluteMovementDiscretiser implements Discretisation{
         }
 
         double discretisation = 0;
-        for(Map.Entry<Double, Double> entry : discretisationLayers.entrySet()){
+        for(Map.Entry<Double, Double> entry : discretisationLayers.descendingMap().entrySet()){
             if(abs < entry.getKey()){
                 discretisation = entry.getValue();
             }

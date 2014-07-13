@@ -353,6 +353,15 @@ public class NeuronCluster implements TimedContainer{
         return stats;
     }
 
+    public String getPred(int neuronId){
+        TreeMap<Integer, Double> predRaw = idToNeuron.get(neuronId).getPredictionRaw();
+        String toReturn = "";
+        for(Map.Entry<Integer, Double> entry : predRaw.entrySet()){
+            toReturn += entry.getKey() + "," + entry.getValue() + "\n";
+        }
+        return toReturn;
+    }
+
     @Override
     public long getTime() {
         return meanTime;
