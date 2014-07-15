@@ -14,6 +14,9 @@ public class SubstractTransformer extends CompoundedTransformer {
         super(new Feed[]{subtractFrom, subtractThis});
         this.subtractFrom = subtractFrom;
         this.subtractThis = subtractThis;
+
+        subtractFrom.addChild(this);
+        subtractThis.addChild(this);
     }
 
     @Override

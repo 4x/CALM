@@ -233,7 +233,7 @@ public class LearnerService {
         if (max == min) {
             return 0;
         }
-        return Math.pow((max - x) / (max - min), 0.5);
+        return Math.pow((max - x) / (max - min), 1);
     }
 
     private boolean initialMerge = true;

@@ -17,6 +17,7 @@ public abstract class AbstractSurgicalFeed implements Feed {
 
     public AbstractSurgicalFeed(Feed rawFeed) {
         this.feed = rawFeed;
+        rawFeed.addChild(this);
     }
 
     @Override

@@ -14,6 +14,7 @@ public class TimeVariablesAppenderFeed implements Feed {
 
     public TimeVariablesAppenderFeed(Feed rawFeed) {
         this.rawFeed = rawFeed;
+        rawFeed.addChild(this);
     }
 
     @Override
@@ -33,7 +34,7 @@ public class TimeVariablesAppenderFeed implements Feed {
         int hour = date.getHours();
         int min = date.getMinutes();
 
-        return new FeedObject(data.getTimeStamp(), new Object[]{day - 3, dayOfMonth/5, month - 6, hour/2 - 6, min/10 - 6, data.getData()});
+        return new FeedObject(data.getTimeStamp(), new Object[]{day, dayOfMonth/2, month - 6, hour - 12, min/5 - 6, data.getData()});
     }
 
     @Override

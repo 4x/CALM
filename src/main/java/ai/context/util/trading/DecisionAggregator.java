@@ -60,15 +60,16 @@ public class DecisionAggregator {
             return;
         }
 
-        double[] results = PositionFactory.getDecision(data.getTimeStamp(), pivot, histogram, timeSpan, null, null, null, 0.5);
-        if(results[1] < 5 * PositionFactory.cost){
+        double[] results = PositionFactory.getDecision(data.getTimeStamp(), pivot, histogram, timeSpan, null, null, null, PropertiesHolder.marketMakerConfidence);
+        if(results[4] + results[5] < PositionFactory.cost * PropertiesHolder.marketMakerAmplitude){
             return;
         }
 
         participants++;
         double cred = 1;
         if(PropertiesHolder.normalisationOfSuggestion){
-            cred = Math.sqrt(results[0]);
+            //cred = Math.sqrt(results[0]);
+            cred = results[0];
         }
 
         long tExit = (long) Math.ceil((double) timeSpan / (double) timeQuantum) * timeQuantum;

@@ -20,6 +20,8 @@ public class LogarithmicDiscretiser extends UnPaddedTransformer {
         this.resolution = resolution;
         this.feedComponent = feedComponent;
         this.feed = feed;
+
+        feed.addChild(this);
     }
 
     @Override

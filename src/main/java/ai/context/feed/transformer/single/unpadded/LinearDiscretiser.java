@@ -24,6 +24,8 @@ public class LinearDiscretiser implements Feed {
         this.resolution = resolution;
         this.feedComponent = feedComponent;
         this.feed = feed;
+
+        feed.addChild(this);
     }
 
     public synchronized FeedObject readNext(Object caller) {

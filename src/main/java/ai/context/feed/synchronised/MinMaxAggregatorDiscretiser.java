@@ -25,6 +25,7 @@ public class MinMaxAggregatorDiscretiser implements Feed {
         this.feed = feed;
         this.criticalMass = criticalMass;
         this.clusters = clusters;
+        feed.addChild(this);
     }
 
     @Override

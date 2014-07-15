@@ -4,7 +4,7 @@ import ai.context.util.mathematics.CorrelationCalculator;
 
 public class ClusteredCopulae {
 
-    private int base = 10;
+    private int base = 20;
 
     private CorrelationCalculator[][][] variableClusteredCorrelations;
 
