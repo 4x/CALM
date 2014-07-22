@@ -22,7 +22,8 @@ public class MarketMakerAnalyser {
     int nMonth = 0;
     double tradeToCapRatio = 5;
 
-    double cost = 0.0000;
+    double cost = 0.00007;
+    double costPerMillion = 0;
 
     public static void main(String[] args){
         MarketMakerAnalyser analyser = new MarketMakerAnalyser();
@@ -51,6 +52,9 @@ public class MarketMakerAnalyser {
                         int lifeSpanPart = 12;
                         Double change = Double.parseDouble(parts[changePart]) - cost;
                         String dir = parts[dirPart];
+                        if(!(dir.equals("SHORT") || dir.equals("LONG"))){
+                            dir = parts[11];
+                        }
                         long lifeSpan = 0;
                         if(parts[lifeSpanPart].equals("TIMEOUT")){
                             lifeSpan = Long.parseLong(parts[lifeSpanPart + 1]);
@@ -89,16 +93,18 @@ public class MarketMakerAnalyser {
                             aggregate(nMonth, change);
                             //aggregate(date.getHours(), change);
                             //aggregate(changeClass, change);
-                            //aggregate(hour, change);
+                            //aggregate(date.getHours(), change);
                             //aggregate(nDay, change);
-                            //aggregate(day, change);
+                            //aggregate(dir, change);
+                            //aggregate(date.getDay(), change);
                             //aggregate(closing, change);
                             //aggregate(span, change);
                             //aggregate(credClass, change);
                             //aggregate(targetPnL, change);
                             //aggregate((int)(targetPnL * 2000), change);
 
-                            capital += (tradeToCapRatio * capital * change);
+                            double commision = 2 * tradeToCapRatio * capital * costPerMillion / 1000000;
+                            capital += (tradeToCapRatio * capital * change) - commision;
                         }
                     }
 

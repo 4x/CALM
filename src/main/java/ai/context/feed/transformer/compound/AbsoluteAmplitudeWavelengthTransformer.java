@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-public class AmplitudeWavelengthTransformer extends CompoundedTransformer {
+public class AbsoluteAmplitudeWavelengthTransformer extends CompoundedTransformer {
 
     private LinkedList<Double[]> history = new LinkedList<Double[]>();
 
@@ -17,33 +17,26 @@ public class AmplitudeWavelengthTransformer extends CompoundedTransformer {
 
     private long index = 0;
 
-    private double nDeviations;
+    private double deviation;
     private double lambda;
 
     private Feed rawFeed;
-    private Feed stdDevFeed;
 
     private double res = 0.0001;
 
-    public AmplitudeWavelengthTransformer(Feed rawFeed, Feed stdDevFeed, double nDeviations, double lambda, double res) {
-        super(new Feed[]{rawFeed, stdDevFeed});
-        this.nDeviations = nDeviations;
+    public AbsoluteAmplitudeWavelengthTransformer(Feed rawFeed, double deviation, double lambda, double res) {
+        super(new Feed[]{rawFeed});
+        this.deviation = deviation;
         this.lambda = lambda;
         this.rawFeed = rawFeed;
-        this.stdDevFeed = stdDevFeed;
         this.res = res;
     }
 
     @Override
     protected Object getOutput(Object input) {
 
-        List<Object> data = (List<Object>) input;
-        Double raw = (Double) data.get(0);
-        Double stdev = (Double) data.get(1);
-        if (stdev == null || raw == null) {
-            return null;
-        }
-        history.add(new Double[]{raw, stdev});
+        Double raw = (Double) input;
+        history.add(new Double[]{raw});
 
         double start = history.peekFirst()[0];
         double last = start;
@@ -71,22 +64,22 @@ public class AmplitudeWavelengthTransformer extends CompoundedTransformer {
 
             if (!found) {
                 if (snapshot[0] > last) {
-                    if (expectingCrest && Math.abs(snapshot[0] - start) > (nDeviations * snapshot[1])) {
+                    if (expectingCrest && Math.abs(snapshot[0] - start) > deviation * res) {
                         found = true;
                     }
                 } else {
-                    if (!expectingCrest && Math.abs(snapshot[0] - start) > (nDeviations * snapshot[1])) {
+                    if (!expectingCrest && Math.abs(snapshot[0] - start) > deviation * res) {
                         found = true;
                     }
                 }
             } else {
                 if (snapshot[0] > last) {
-                    if (Math.abs(highest - snapshot[0]) > (nDeviations * snapshot[1])) {
+                    if (Math.abs(highest - snapshot[0]) > deviation * res) {
                         confirmed = true;
                         break;
                     }
                 } else {
-                    if (Math.abs(snapshot[0] - lowest) > (nDeviations * snapshot[1])) {
+                    if (Math.abs(snapshot[0] - lowest) > deviation * res) {
                         confirmed = true;
                         break;
                     }
@@ -133,13 +126,13 @@ public class AmplitudeWavelengthTransformer extends CompoundedTransformer {
 
     @Override
     public Feed getCopy() {
-        return new AmplitudeWavelengthTransformer(rawFeed.getCopy(), stdDevFeed.getCopy(), nDeviations, lambda, res);
+        return new AbsoluteAmplitudeWavelengthTransformer(rawFeed.getCopy(), deviation, lambda, res);
     }
 
     @Override
     public String getDescription(int startIndex, String padding) {
 
-        String desciption = padding + "[" + startIndex + "] Amplitude-Wavelength transformer with nDeviations: " + nDeviations + " and Lambda: " + lambda + " giving: \n";
+        String desciption = padding + "[" + startIndex + "] Amplitude-Wavelength transformer with deviations: " + deviation + " and Lambda: " + lambda + " giving: \n";
 
         desciption += padding + " [" + startIndex + "] Wavelength\n";
         startIndex++;
@@ -149,7 +142,7 @@ public class AmplitudeWavelengthTransformer extends CompoundedTransformer {
         startIndex++;
         desciption += padding + " [" + startIndex + "] Dist last trough";
 
-        desciption += padding + " for feed: " + rawFeed.getDescription(startIndex, "") + ", using Standard Deviation feed: " + stdDevFeed.getDescription(startIndex, "");
+        desciption += padding + " for feed: " + rawFeed.getDescription(startIndex, "");
 
         return desciption;
     }
@@ -170,7 +163,6 @@ public class AmplitudeWavelengthTransformer extends CompoundedTransformer {
 
         list.add(this);
         list.add(rawFeed.getElementChain(0));
-        list.add(stdDevFeed.getElementChain(0));
         return list;
     }
 

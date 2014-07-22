@@ -5,7 +5,6 @@ import ai.context.feed.FeedObject;
 
 import java.util.*;
 
-import static ai.context.util.mathematics.Discretiser.getLogarithmicDiscretisation;
 import static ai.context.util.mathematics.Operations.tanInverse;
 
 public class RadarOnlineTransformer extends OnlineTransformer {
@@ -131,24 +130,19 @@ public class RadarOnlineTransformer extends OnlineTransformer {
                     }
                 }*/
             }
-            double convergence = 0;
             double lambda = 1;
             lastTop = (1 - lambda) * lastTop + lambda * top;
             lastBottom = (1 - lambda) * lastBottom + lambda * bottom;
             lastTSpace = (1 - lambda) * lastTSpace + lambda * topSpace;
             lastBSpace = (1 - lambda) * lastBSpace + lambda * bottomSpace;
 
-            if (lastTop != lastBottom) {
-                convergence = getLogarithmicDiscretisation(Math.abs(lastTSpace + lastBSpace) / Math.abs(lastTop - lastBottom), 0, resolution);
-            }
-
-            return new Double[]{lastTSpace, lastBSpace, convergence};
+            return new Double[]{lastTSpace, lastBSpace, lastTop, lastBottom};
         } else {
             buffer.clear();
             while (buffer.size() < bufferSize) {
                 buffer.add(new FeedObject(0, arriving.getData()));
             }
-            return new Double[]{0.0, 0.0, 0.0};
+            return new Double[]{0.0, 0.0, 0.0, 0.0};
         }
     }
 
@@ -174,6 +168,6 @@ public class RadarOnlineTransformer extends OnlineTransformer {
 
     @Override
     public int getNumberOfOutputs() {
-        return 3;
+        return 4;
     }
 }

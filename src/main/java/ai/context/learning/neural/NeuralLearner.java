@@ -175,7 +175,7 @@ public class NeuralLearner implements Feed, Runnable {
 
                 if (day != 0 && day != 6){
                     String inputDates = new Date(data.getTimeStamp()) + " ";
-                    int[] signal = new int[data.getSignal().length + getParents().size() + numberOfWrapperOutputs + 1];
+                    int[] signal = new int[data.getSignal().length + getParents().size() + numberOfWrapperOutputs + 2];
                     int index = 0;
                     for (int sig : data.getSignal()) {
                         signal[index] = sig;
@@ -192,9 +192,15 @@ public class NeuralLearner implements Feed, Runnable {
                         signal[index] = sig;
                         index++;
                     }
-                    /*signal[index] = lastDecision;
-                    index++;*/
+
                     signal[index] = (int) ((time % (86400000))/(3 * 3600000));
+                    index++;
+
+                    int pred = 0;
+                    if (pointsConsumed > 200) {
+                        pred = getSignalForDistribution(getDistribution(signal), 0)[0];
+                    }
+                    signal[index] = pred;
                     index++;
 
                     for(WrapperManipulatorPair pair : wrapperManipulatorPairs){
@@ -222,7 +228,6 @@ public class NeuralLearner implements Feed, Runnable {
                     }
 
                     int[] outputSignal = new int[getNumberOfOutputs()];
-
 
                     if (pointsConsumed > 200) {
                         predictionRaw = getDistribution(signal);

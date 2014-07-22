@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import static ai.context.util.mathematics.Discretiser.getLinearDiscretisation;
 import static ai.context.util.mathematics.Discretiser.getLogarithmicDiscretisation;
 
 public class GradientOnlineTransformer extends OnlineTransformer {
@@ -69,7 +70,7 @@ public class GradientOnlineTransformer extends OnlineTransformer {
             xMean = (bufferSize - 1)/2.0;
             x2MeanMinusXMean2 = x2Mean - (xMean * xMean);
         }
-        return new Double[]{(double) getLogarithmicDiscretisation(grad, 0, res), (double)getLogarithmicDiscretisation(diff, 0, res)};
+        return new Double[]{(double) getLinearDiscretisation(grad, 0, res), (double)getLogarithmicDiscretisation(diff, 0, res)};
     }
 
 

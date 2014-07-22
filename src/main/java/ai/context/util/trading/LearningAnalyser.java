@@ -26,7 +26,7 @@ public class LearningAnalyser extends JPanel{
         new LearningAnalyser();
     }
 
-    private int neurons = 300;
+    private int neurons = 500;
     private String address = "http://hyophorbe-associates.com:8056";
 
     private TreeMap<Integer, TreeMap<Integer, Double>> dists;
@@ -71,6 +71,7 @@ public class LearningAnalyser extends JPanel{
         int aX = (1 + Math.max(maxX, Math.abs(minX))/10) * 10;
 
         g2d.setColor(new Color(255, 0, 0 , 30));
+        //g2d.setColor(Color.RED);
         for(Map.Entry<Integer, TreeMap<Integer, Double>> entry : dists.entrySet()){
             int lastXPos = -1;
             int lastYPos = -1;
@@ -85,6 +86,7 @@ public class LearningAnalyser extends JPanel{
 
                 if(lastXPos != -1){
                     g2d.drawLine(lastXPos, lastYPos, xPos, yPos);
+                    //g2d.fillRect(xPos, yPos, 1, 1);
                 }
                 lastXPos = xPos;
                 lastYPos = yPos;

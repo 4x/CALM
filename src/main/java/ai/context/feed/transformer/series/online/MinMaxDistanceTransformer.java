@@ -19,11 +19,14 @@ public class MinMaxDistanceTransformer extends OnlineTransformer {
     private LinkedList<Double> mins = new LinkedList<>();
     private LinkedList<Double> maxs = new LinkedList<>();
 
-    public MinMaxDistanceTransformer(int bufferSize, Feed feedMin, Feed feedMax, Feed feedClose) {
+    private double res = 0.0001;
+
+    public MinMaxDistanceTransformer(int bufferSize, Feed feedMin, Feed feedMax, Feed feedClose, double res) {
         super(bufferSize, feedMin, feedMax, feedClose);
         this.feedMin = feedMin;
         this.feedMax = feedMax;
         this.feedClose = feedClose;
+        this.res = res;
     }
 
     @Override
@@ -68,7 +71,7 @@ public class MinMaxDistanceTransformer extends OnlineTransformer {
                 max = maxA;
             }
         }
-        return new Double[]{(double) getLogarithmicDiscretisation(max - close, 0, 0.0001), (double) getLogarithmicDiscretisation(close - min, 0, 0.0001)};
+        return new Double[]{(double) getLogarithmicDiscretisation(max - close, 0, res), (double) getLogarithmicDiscretisation(close - min, 0, res)};
     }
 
     private void refreshMin() {
@@ -91,7 +94,7 @@ public class MinMaxDistanceTransformer extends OnlineTransformer {
 
     @Override
     public Feed getCopy() {
-        return new MinMaxDistanceTransformer(bufferSize, feedMin.getCopy(), feedMax.getCopy(), feedClose.getCopy());
+        return new MinMaxDistanceTransformer(bufferSize, feedMin.getCopy(), feedMax.getCopy(), feedClose.getCopy(), res);
     }
 
     @Override

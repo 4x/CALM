@@ -72,7 +72,8 @@ public class MarketMakerDecider implements OnTickDecider, IStrategy{
                         else if(advice.containsFlag("A")
                                 && bid > advice.getTargetHigh()
                                 && bid - PropertiesHolder.marketMakerBeyond/2 < advice.getTargetHigh()
-                                && advice.getTargetLow() > avgLow){
+                                && advice.getTargetLow() > avgLow
+                                && avgHigh - bid < (bid - advice.getTargetLow())/2){
                             direction = "SHORT";
 
                             out = engine.submitOrder("EUR_" + tNow, Instrument.EURUSD, IEngine.OrderCommand.SELLLIMIT, amount,
@@ -88,7 +89,8 @@ public class MarketMakerDecider implements OnTickDecider, IStrategy{
                         else if(advice.containsFlag("B")
                                 && ask < advice.getTargetLow()
                                 && ask + PropertiesHolder.marketMakerBeyond/2 > advice.getTargetLow()
-                                && advice.getTargetHigh() < avgHigh){
+                                && advice.getTargetHigh() < avgHigh
+                                && ask - avgLow < (advice.getTargetHigh() - ask)/2){
                             direction = "LONG";
 
                             out = engine.submitOrder("EUR_" + tNow, Instrument.EURUSD, IEngine.OrderCommand.BUYLIMIT, amount,

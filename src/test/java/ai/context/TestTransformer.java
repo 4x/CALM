@@ -1,17 +1,25 @@
 package ai.context;
 
+import ai.context.feed.DataType;
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
+import ai.context.feed.row.CSVFeed;
 import ai.context.feed.surgical.ExtractOneFromListFeed;
 import ai.context.feed.synchronised.SynchronisedFeed;
+import ai.context.feed.transformer.compound.AbsoluteAmplitudeWavelengthTransformer;
 import ai.context.feed.transformer.compound.AmplitudeWavelengthTransformer;
 import ai.context.feed.transformer.series.learning.MATransformer;
 import ai.context.feed.transformer.series.learning.RSITransformer;
 import ai.context.feed.transformer.series.learning.StandardDeviationTransformer;
 import ai.context.feed.transformer.series.learning.VarianceTransformer;
+import ai.context.feed.transformer.series.online.GradientOnlineTransformer;
+import ai.context.feed.transformer.series.online.MinMaxDistanceTransformer;
+import ai.context.feed.transformer.series.online.RSIOnlineTransformer;
 import ai.context.feed.transformer.series.online.RadarOnlineTransformer;
 import ai.context.feed.transformer.single.unpadded.LinearDiscretiser;
 import ai.context.feed.transformer.single.unpadded.LogarithmicDiscretiser;
+import ai.context.util.DataSetUtils;
+import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.learning.AmalgamateUtils;
 import com.tictactec.ta.lib.MAType;
 import org.junit.Test;
@@ -97,7 +105,7 @@ public class TestTransformer {
     @Test
     public void testAmplitudeWavelengthTransformer() {
         StandardDeviationTransformer transformer = new StandardDeviationTransformer(10, 1, new TestFeed1());
-        AmplitudeWavelengthTransformer awT = new AmplitudeWavelengthTransformer(new TestFeed1(), transformer, 0.1, 0.5);
+        AmplitudeWavelengthTransformer awT = new AmplitudeWavelengthTransformer(new TestFeed1(), transformer, 0.1, 0.5, 0.1);
 
         for (int i = 0; i < 1000; i++) {
             FeedObject data = awT.readNext(this);
@@ -136,6 +144,136 @@ public class TestTransformer {
         }
 
     }
+
+    @Test
+    public void testGradient(){
+        DataType[] typesPrice = new DataType[]{
+                DataType.DOUBLE,
+                DataType.DOUBLE,
+                DataType.DOUBLE,
+                DataType.DOUBLE,
+                DataType.DOUBLE};
+
+        String dateFP = PropertiesHolder.startDateTime;
+
+        CSVFeed feed = new CSVFeed("/opt/dev/data/feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
+        feed.setSkipWeekends(true);
+        ExtractOneFromListFeed feedH = new ExtractOneFromListFeed(feed, 1);
+        ExtractOneFromListFeed feedL = new ExtractOneFromListFeed(feed, 2);
+        ExtractOneFromListFeed feedC = new ExtractOneFromListFeed(feed, 3);
+
+        GradientOnlineTransformer transformer = new GradientOnlineTransformer(50, feedL, feedH, feedC, 0.0001);
+
+        for (int i = 0; i < 2000; i++) {
+            FeedObject data = transformer.readNext(this);
+            System.out.println(data);
+        }
+    }
+
+    @Test
+    public void testMinMax(){
+        DataType[] typesPrice = new DataType[]{
+                DataType.DOUBLE,
+                DataType.DOUBLE,
+                DataType.DOUBLE,
+                DataType.DOUBLE,
+                DataType.DOUBLE};
+
+        String dateFP = PropertiesHolder.startDateTime;
+
+        CSVFeed feed = new CSVFeed("/opt/dev/data/feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
+        feed.setSkipWeekends(true);
+        ExtractOneFromListFeed feedH = new ExtractOneFromListFeed(feed, 1);
+        ExtractOneFromListFeed feedL = new ExtractOneFromListFeed(feed, 2);
+        ExtractOneFromListFeed feedC = new ExtractOneFromListFeed(feed, 3);
+
+        MinMaxDistanceTransformer transformer = new MinMaxDistanceTransformer(50, feedL, feedH, feedC, 0.0001);
+
+        for (int i = 0; i < 2000; i++) {
+            FeedObject data = transformer.readNext(this);
+            System.out.println(data);
+        }
+    }
+
+    @Test
+    public void testRSI1(){
+        DataType[] typesPrice = new DataType[]{
+                DataType.DOUBLE,
+                DataType.DOUBLE,
+                DataType.DOUBLE,
+                DataType.DOUBLE,
+                DataType.DOUBLE};
+
+        String dateFP = PropertiesHolder.startDateTime;
+
+        CSVFeed feed = new CSVFeed("/opt/dev/data/feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
+        feed.setSkipWeekends(true);
+        ExtractOneFromListFeed feedH = new ExtractOneFromListFeed(feed, 1);
+        ExtractOneFromListFeed feedL = new ExtractOneFromListFeed(feed, 2);
+        ExtractOneFromListFeed feedC = new ExtractOneFromListFeed(feed, 3);
+
+        RSIOnlineTransformer transformer = new RSIOnlineTransformer(feedH, 5, 25, 0.5);
+
+        for (int i = 0; i < 2000; i++) {
+            FeedObject data = transformer.readNext(this);
+            System.out.println(data);
+        }
+    }
+
+    @Test
+    public void testAbsoluteAmplitudeWavelength(){
+        DataType[] typesPrice = new DataType[]{
+                DataType.DOUBLE,
+                DataType.DOUBLE,
+                DataType.DOUBLE,
+                DataType.DOUBLE,
+                DataType.DOUBLE};
+
+        String dateFP = PropertiesHolder.startDateTime;
+
+        CSVFeed feed = new CSVFeed("/opt/dev/data/feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
+        feed.setSkipWeekends(true);
+        ExtractOneFromListFeed feedH = new ExtractOneFromListFeed(feed, 1);
+        ExtractOneFromListFeed feedL = new ExtractOneFromListFeed(feed, 2);
+        ExtractOneFromListFeed feedC = new ExtractOneFromListFeed(feed, 3);
+
+        AbsoluteAmplitudeWavelengthTransformer transformer = new AbsoluteAmplitudeWavelengthTransformer(feedH, 10, 0.125, 0.0001);
+
+        for (int i = 0; i < 2000; i++) {
+            FeedObject data = transformer.readNext(this);
+            List<Double>  out = new ArrayList<>();
+            DataSetUtils.add(data.getData(), out);
+            System.out.println(data.getTimeStamp() + " " + out);
+        }
+    }
+
+    @Test
+    public void testRadar1(){
+        DataType[] typesPrice = new DataType[]{
+                DataType.DOUBLE,
+                DataType.DOUBLE,
+                DataType.DOUBLE,
+                DataType.DOUBLE,
+                DataType.DOUBLE};
+
+        String dateFP = PropertiesHolder.startDateTime;
+
+        CSVFeed feed = new CSVFeed("/opt/dev/data/feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
+        feed.setSkipWeekends(true);
+        ExtractOneFromListFeed feedH = new ExtractOneFromListFeed(feed, 1);
+        ExtractOneFromListFeed feedL = new ExtractOneFromListFeed(feed, 2);
+        ExtractOneFromListFeed feedC = new ExtractOneFromListFeed(feed, 3);
+
+        RadarOnlineTransformer transformer = new RadarOnlineTransformer(100, feedL, feedH, feedC, 0.0001);
+
+        for (int i = 0; i < 2000; i++) {
+            FeedObject data = transformer.readNext(this);
+            List<Double>  out = new ArrayList<>();
+            DataSetUtils.add(data.getData(), out);
+            System.out.println(data.getTimeStamp() + " " + out);
+        }
+    }
+
 
     private void appendToFile(String data, BufferedWriter out) {
         try {

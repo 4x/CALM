@@ -171,7 +171,7 @@ public class NeuronCluster implements TimedContainer{
         public void run() {
             while (true) {
                 try {
-                    Thread.sleep(300000);
+                    Thread.sleep(600000);
                     if(!neurons.isEmpty()){
                         totalPointsConsumed = 0;
                         double latency = 0;

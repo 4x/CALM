@@ -20,7 +20,7 @@ import ai.context.feed.surgical.FXModuloFeed;
 import ai.context.feed.synchronised.ISynchFeed;
 import ai.context.feed.synchronised.MinMaxAggregatorDiscretiser;
 import ai.context.feed.synchronised.SynchronisedFeed;
-import ai.context.feed.transformer.compound.AmplitudeWavelengthTransformer;
+import ai.context.feed.transformer.compound.AbsoluteAmplitudeWavelengthTransformer;
 import ai.context.feed.transformer.compound.SubstractTransformer;
 import ai.context.feed.transformer.series.online.*;
 import ai.context.feed.transformer.single.TimeVariablesAppenderFeed;
@@ -293,39 +293,41 @@ public class MainNeural {
         calendarSchedule.setStitchableFeed(liveFXCalendaScheduler);
 
         FeedWrapper calendarWrapper = new FeedWrapper(feedCalendar);
-        Manipulator manipulator1 = new TimeDecaySingleSentimentManipulator("Germany", "Markit Manufacturing PMI", scheduler);
-        Manipulator manipulator2 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Markit Manufacturing PMI", scheduler);
-        Manipulator manipulator3 = new TimeDecaySingleSentimentManipulator("United Kingdom", "Markit Manufacturing PMI", scheduler);
-        Manipulator manipulator4 = new TimeDecaySingleSentimentManipulator("Germany", "Unemployment Rate s.a.", scheduler);
-        Manipulator manipulator5 = new TimeDecaySingleSentimentManipulator("United States", "Unemployment Rate", scheduler);
-        Manipulator manipulator6 = new TimeDecaySingleSentimentManipulator("United States", "Producer Price Index (MoM)", scheduler);
-        Manipulator manipulator7 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Producer Price Index (MoM)", scheduler);
-        Manipulator manipulator8 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Unemployment Rate", scheduler);
-        Manipulator manipulator9 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Retail Sales (MoM)", scheduler);
-        Manipulator manipulator10 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Gross Domestic Product s.a. (QoQ)", scheduler);
-        Manipulator manipulator11 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "ECB Interest Rate Decision", scheduler);
-        Manipulator manipulator12 = new TimeDecaySingleSentimentManipulator("European Monetary Union", "Economic Sentiment", scheduler);
-        Manipulator manipulator13 = new TimeDecaySingleSentimentManipulator("Japan", "BoJ Interest Rate Decision", scheduler);
-        Manipulator manipulator14 = new TimeDecaySingleSentimentManipulator("United States", "Gross Domestic Product (QoQ)", scheduler);
-        Manipulator manipulator15 = new TimeDecaySingleSentimentManipulator("United Kingdom", "Gross Domestic Product (QoQ)", scheduler);
-        Manipulator manipulator16 = new TimeDecaySingleSentimentManipulator("United States", "Nonfarm Payrolls", scheduler);
 
-        calendarWrapper.putManipulator("1", manipulator1);
-        calendarWrapper.putManipulator("2", manipulator2);
-        calendarWrapper.putManipulator("3", manipulator3);
-        calendarWrapper.putManipulator("4", manipulator4);
-        calendarWrapper.putManipulator("5", manipulator5);
-        calendarWrapper.putManipulator("6", manipulator6);
-        calendarWrapper.putManipulator("7", manipulator7);
-        calendarWrapper.putManipulator("8", manipulator8);
-        calendarWrapper.putManipulator("9", manipulator9);
-        calendarWrapper.putManipulator("10", manipulator10);
-        calendarWrapper.putManipulator("11", manipulator11);
-        calendarWrapper.putManipulator("12", manipulator12);
-        calendarWrapper.putManipulator("13", manipulator13);
-        calendarWrapper.putManipulator("14", manipulator14);
-        calendarWrapper.putManipulator("15", manipulator15);
-        calendarWrapper.putManipulator("16", manipulator16);
+        //addManipulator("Germany", "Markit Manufacturing PMI", calendarWrapper, scheduler);
+        addManipulator("Germany", "Unemployment Rate s.a.", calendarWrapper, scheduler);
+
+        //addManipulator("European Monetary Union", "Consumer Confidence", calendarWrapper, scheduler);
+        addManipulator("European Monetary Union", "ECB Interest Rate Decision", calendarWrapper, scheduler);
+        //addManipulator("European Monetary Union", "Economic Sentiment", calendarWrapper, scheduler);
+        addManipulator("European Monetary Union", "Gross Domestic Product s.a. (QoQ)", calendarWrapper, scheduler);
+        addManipulator("European Monetary Union", "Markit Manufacturing PMI", calendarWrapper, scheduler);
+        addManipulator("European Monetary Union", "Producer Price Index (MoM)", calendarWrapper, scheduler);
+        //addManipulator("European Monetary Union", "Retail Sales (MoM)", calendarWrapper, scheduler);
+        addManipulator("European Monetary Union", "Unemployment Rate", calendarWrapper, scheduler);
+
+        addManipulator("Japan", "BoJ Interest Rate Decision", calendarWrapper, scheduler);
+        //addManipulator("Japan", "Consumer Confidence Index", calendarWrapper, scheduler);
+        addManipulator("Japan", "Leading Economic Index", calendarWrapper, scheduler);
+        addManipulator("Japan", "Unemployment Rate", calendarWrapper, scheduler);
+
+        //addManipulator("United Kingdom", "CB Leading Economic Index", calendarWrapper, scheduler);
+        addManipulator("United Kingdom", "Consumer Price Index (MoM)", calendarWrapper, scheduler);
+        addManipulator("United Kingdom", "Gross Domestic Product (QoQ)", calendarWrapper, scheduler);
+        addManipulator("United Kingdom", "Industrial Production (MoM)", calendarWrapper, scheduler);
+        addManipulator("United Kingdom", "Markit Manufacturing PMI", calendarWrapper, scheduler);
+        //addManipulator("United Kingdom", "Retail Price Index (MoM)", calendarWrapper, scheduler);
+
+        //addManipulator("United States", "Average Hourly Earnings (MoM)", calendarWrapper, scheduler);
+        //addManipulator("United States", "Consumer Confidence", calendarWrapper, scheduler);
+        //addManipulator("United States", "Consumer Price Index (MoM)", calendarWrapper, scheduler);
+        addManipulator("United States", "Fed Interest Rate Decision", calendarWrapper, scheduler);
+        addManipulator("United States", "Gross Domestic Product (QoQ)", calendarWrapper, scheduler);
+        addManipulator("United States", "Nonfarm Payrolls", calendarWrapper, scheduler);
+        addManipulator("United States", "Producer Price Index (MoM)", calendarWrapper, scheduler);
+        //addManipulator("United States", "Trade Balance", calendarWrapper, scheduler);
+        addManipulator("United States", "Unemployment Rate", calendarWrapper, scheduler);
+
 
         cluster.addFeedWrapper(calendarWrapper);
 
@@ -436,8 +438,8 @@ public class MainNeural {
             LogarithmicDiscretiser stdLH1 = new LogarithmicDiscretiser(res, 0, stdFeedH, -1);
             LogarithmicDiscretiser stdLL1 = new LogarithmicDiscretiser(res, 0, stdFeedL, -1);
 
-            AmplitudeWavelengthTransformer awFeedH = new AmplitudeWavelengthTransformer(feedH, stdFeedH, 2, 0.5);
-            AmplitudeWavelengthTransformer awFeedL = new AmplitudeWavelengthTransformer(feedL, stdFeedL, 2, 0.5);
+            AbsoluteAmplitudeWavelengthTransformer awFeedH = new AbsoluteAmplitudeWavelengthTransformer(feedH, 10, 0.125, res);
+            AbsoluteAmplitudeWavelengthTransformer awFeedL = new AbsoluteAmplitudeWavelengthTransformer(feedL, 10, 0.125, res);
 
             StandardDeviationOnlineTransformer stdFeedH2 = new StandardDeviationOnlineTransformer(50, feedH);
             StandardDeviationOnlineTransformer stdFeedL2 = new StandardDeviationOnlineTransformer(50, feedL);
@@ -451,8 +453,8 @@ public class MainNeural {
             LogarithmicDiscretiser stdLH3 = new LogarithmicDiscretiser(res, 0, stdFeedH3, -1);
             LogarithmicDiscretiser stdLL3 = new LogarithmicDiscretiser(res, 0, stdFeedL3, -1);
 
-            RSIOnlineTransformer rsiH = new RSIOnlineTransformer(feedH, 5, 5, 0.5);
-            RSIOnlineTransformer rsiL = new RSIOnlineTransformer(feedL, 5, 5, 0.5);
+            RSIOnlineTransformer rsiH = new RSIOnlineTransformer(feedH, 5, 25, 0.5);
+            RSIOnlineTransformer rsiL = new RSIOnlineTransformer(feedL, 5, 25, 0.5);
 
             ExtractOneFromListFeed kRSIH1 = new ExtractOneFromListFeed(rsiH, 1);
             synch.addRawFeed(kRSIH1);
@@ -480,43 +482,47 @@ public class MainNeural {
             SubstractTransformer crossLD = new SubstractTransformer(dRSIL1, dRSIL2);
             SubstractTransformer crossLK = new SubstractTransformer(kRSIH1, kRSIH2);
 
-            MinMaxDistanceTransformer mmdT1 = new MinMaxDistanceTransformer(10, feedL, feedH, feedC);
-            MinMaxDistanceTransformer mmdT2 = new MinMaxDistanceTransformer(50, feedL, feedH, feedC);
-            MinMaxDistanceTransformer mmdT3 = new MinMaxDistanceTransformer(100, feedL, feedH, feedC);
-            MinMaxDistanceTransformer mmdT4 = new MinMaxDistanceTransformer(200, feedL, feedH, feedC);
-            MinMaxDistanceTransformer mmdT5 = new MinMaxDistanceTransformer(400, feedL, feedH, feedC);
+            MinMaxDistanceTransformer mmdT1 = new MinMaxDistanceTransformer(10, feedL, feedH, feedC, res);
+            MinMaxDistanceTransformer mmdT2 = new MinMaxDistanceTransformer(20, feedL, feedH, feedC, res);
+            //MinMaxDistanceTransformer mmdT3 = new MinMaxDistanceTransformer(30, feedL, feedH, feedC);
+            //MinMaxDistanceTransformer mmdT4 = new MinMaxDistanceTransformer(40, feedL, feedH, feedC);
+            MinMaxDistanceTransformer mmdT5 = new MinMaxDistanceTransformer(50, feedL, feedH, feedC, res);
+            MinMaxDistanceTransformer mmdT6 = new MinMaxDistanceTransformer(100, feedL, feedH, feedC, res);
 
             synch.addRawFeed(mmdT1);
             synch.addRawFeed(mmdT2);
-            synch.addRawFeed(mmdT3);
-            synch.addRawFeed(mmdT4);
+            //synch.addRawFeed(mmdT3);
+            //synch.addRawFeed(mmdT4);
             synch.addRawFeed(mmdT5);
+            synch.addRawFeed(mmdT6);
 
-            RadarOnlineTransformer r1 = new RadarOnlineTransformer(50, feedL, feedH, feedC, res);
-            RadarOnlineTransformer r2 = new RadarOnlineTransformer(100, feedL, feedH, feedC, res);
-            RadarOnlineTransformer r3 = new RadarOnlineTransformer(200, feedL, feedH, feedC, res);
+            RadarOnlineTransformer r0 = new RadarOnlineTransformer(10, feedL, feedH, feedC, res);
+            RadarOnlineTransformer r1 = new RadarOnlineTransformer(20, feedL, feedH, feedC, res);
+            RadarOnlineTransformer r2 = new RadarOnlineTransformer(50, feedL, feedH, feedC, res);
+            RadarOnlineTransformer r3 = new RadarOnlineTransformer(100, feedL, feedH, feedC, res);
 
+            GradientOnlineTransformer g5 = new GradientOnlineTransformer(5, feedL, feedH, feedC, res);
             GradientOnlineTransformer g10 = new GradientOnlineTransformer(10, feedL, feedH, feedC, res);
             GradientOnlineTransformer g20 = new GradientOnlineTransformer(20, feedL, feedH, feedC, res);
             GradientOnlineTransformer g40 = new GradientOnlineTransformer(40, feedL, feedH, feedC, res);
             GradientOnlineTransformer g100 = new GradientOnlineTransformer(100, feedL, feedH, feedC, res);
-            GradientOnlineTransformer g200 = new GradientOnlineTransformer(200, feedL, feedH, feedC, res);
 
+            synch.addRawFeed(r0);
             synch.addRawFeed(r1);
             synch.addRawFeed(r2);
             synch.addRawFeed(r3);
 
+            synch.addRawFeed(g5);
             synch.addRawFeed(g10);
             synch.addRawFeed(g20);
             synch.addRawFeed(g40);
             synch.addRawFeed(g100);
-            synch.addRawFeed(g200);
 
             synch.addRawFeed(stdLH1);
             synch.addRawFeed(stdLL1);
 
             synch.addRawFeed(stdLH2);
-            synch.addRawFeed(stdLL2);;
+            synch.addRawFeed(stdLL2);
 
             synch.addRawFeed(stdLH3);
             synch.addRawFeed(stdLL3);
@@ -530,5 +536,13 @@ public class MainNeural {
             synch.addRawFeed(crossLD);
         }
         return synch;
+    }
+
+    int iManipulator = 1;
+    private void addManipulator(String country, String description, FeedWrapper calendarWrapper, LookAheadScheduler scheduler){
+        Manipulator manipulator = new TimeDecaySingleSentimentManipulator(country, description, scheduler);
+        calendarWrapper.putManipulator("" + iManipulator, manipulator);
+
+        iManipulator++;
     }
 }

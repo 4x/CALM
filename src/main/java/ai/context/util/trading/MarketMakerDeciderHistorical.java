@@ -58,7 +58,7 @@ public class MarketMakerDeciderHistorical implements OnTickDecider{
                         if(change <= 0){
                             state = "L";
                         }
-                        System.out.println(format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + advice.getOpen() + " CLOSE: " + ask + "  NET: " + Operations.round(pnl, 5) + " SHORT TIMEOUT " + advice.getTimeSpan());
+                        System.out.println(format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + advice.getOpen() + " CLOSE: " + ask + " NET: " + Operations.round(pnl, 5) + " SHORT TIMEOUT " + advice.getTimeSpan());
                         advice.setClosed(true);
                     }
                 }
@@ -86,7 +86,8 @@ public class MarketMakerDeciderHistorical implements OnTickDecider{
                     else if(advice.containsFlag("A")
                             && bid > advice.getTargetHigh()
                             && bid - PropertiesHolder.marketMakerBeyond/2 < advice.getTargetHigh()
-                            && advice.getTargetLow() > avgLow){
+                            && advice.getTargetLow() > avgLow
+                            && avgHigh - bid < (bid - advice.getTargetLow())/2){
                         advice.setHasOpenedWithShort(true, bid);
                         //System.out.println(format.format(new Date(time)) + " Selling @ " + bid);
                     }
@@ -96,7 +97,8 @@ public class MarketMakerDeciderHistorical implements OnTickDecider{
                     else if(advice.containsFlag("B")
                             && ask < advice.getTargetLow()
                             && ask + PropertiesHolder.marketMakerBeyond/2 > advice.getTargetLow()
-                            && advice.getTargetHigh() < avgHigh){
+                            && advice.getTargetHigh() < avgHigh
+                            && ask - avgLow < (advice.getTargetHigh() - ask)/2){
                         advice.setHasOpenedWithLong(true, ask);
                         //System.out.println(format.format(new Date(time)) + " Buying @ " + ask);
                     }
