@@ -33,6 +33,7 @@ public class MarketMakerAnalyser {
     public void load() {
         BufferedReader br = null;
         SimpleDateFormat format = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss.SSS");
+        SimpleDateFormat formatOutput = new SimpleDateFormat("yyyy.MM");
 
         try {
             String file = "/opt/dev/tmp/nohup.out";
@@ -43,7 +44,7 @@ public class MarketMakerAnalyser {
                 try{
                     //2010.04.28 20:30:03.467 P: 0.00194 OPEN: 1.32022 CLOSE: 1.31828  NET: 14.19567 SHORT TIMEOUT
 
-                    if (sCurrentLine.contains("OPEN") && !sCurrentLine.contains("Mean")) {
+                    if (sCurrentLine.contains("OPEN") && !sCurrentLine.contains("Mean")  && !sCurrentLine.contains("SP")) {
                         String[] parts = sCurrentLine.split(" ");
 
                         Date date = format.parse(sCurrentLine.substring(0, 23));
@@ -79,7 +80,7 @@ public class MarketMakerAnalyser {
                         }
 
                         if (
-                            //lifeSpan/1800000 > 4 &&
+                            //lifeSpan/1800000 > 17 &&
                             //cred >= credRange[0] &&
                             //cred <= credRange[1] &&
                             //targetPnL >= 0.0015 &&
@@ -90,7 +91,7 @@ public class MarketMakerAnalyser {
                             //aggregate(lifeSpan/1800000, change);
                             //aggregate(participants, change);
                             //aggregate((int)(100*cred/participants), change);
-                            aggregate(nMonth, change);
+                            aggregate(formatOutput.format(date), change);
                             //aggregate(date.getHours(), change);
                             //aggregate(changeClass, change);
                             //aggregate(date.getHours(), change);

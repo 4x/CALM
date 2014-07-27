@@ -12,10 +12,7 @@ import ai.context.feed.transformer.series.learning.MATransformer;
 import ai.context.feed.transformer.series.learning.RSITransformer;
 import ai.context.feed.transformer.series.learning.StandardDeviationTransformer;
 import ai.context.feed.transformer.series.learning.VarianceTransformer;
-import ai.context.feed.transformer.series.online.GradientOnlineTransformer;
-import ai.context.feed.transformer.series.online.MinMaxDistanceTransformer;
-import ai.context.feed.transformer.series.online.RSIOnlineTransformer;
-import ai.context.feed.transformer.series.online.RadarOnlineTransformer;
+import ai.context.feed.transformer.series.online.*;
 import ai.context.feed.transformer.single.unpadded.LinearDiscretiser;
 import ai.context.feed.transformer.single.unpadded.LogarithmicDiscretiser;
 import ai.context.util.DataSetUtils;
@@ -240,6 +237,33 @@ public class TestTransformer {
         AbsoluteAmplitudeWavelengthTransformer transformer = new AbsoluteAmplitudeWavelengthTransformer(feedH, 10, 0.125, 0.0001);
 
         for (int i = 0; i < 2000; i++) {
+            FeedObject data = transformer.readNext(this);
+            List<Double>  out = new ArrayList<>();
+            DataSetUtils.add(data.getData(), out);
+            System.out.println(data.getTimeStamp() + " " + out);
+        }
+    }
+
+    @Test
+    public void testTrend(){
+        DataType[] typesPrice = new DataType[]{
+                DataType.DOUBLE,
+                DataType.DOUBLE,
+                DataType.DOUBLE,
+                DataType.DOUBLE,
+                DataType.DOUBLE};
+
+        String dateFP = PropertiesHolder.startDateTime;
+
+        CSVFeed feed = new CSVFeed("/opt/dev/data/feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
+        feed.setSkipWeekends(true);
+        ExtractOneFromListFeed feedH = new ExtractOneFromListFeed(feed, 1);
+        ExtractOneFromListFeed feedL = new ExtractOneFromListFeed(feed, 2);
+        ExtractOneFromListFeed feedC = new ExtractOneFromListFeed(feed, 3);
+
+        SimpleTrendOnlineTransformer transformer = new SimpleTrendOnlineTransformer(0.5, feedL, feedH, feedC, 0.0001);
+
+        for (int i = 0; i < 20000; i++) {
             FeedObject data = transformer.readNext(this);
             List<Double>  out = new ArrayList<>();
             DataSetUtils.add(data.getData(), out);

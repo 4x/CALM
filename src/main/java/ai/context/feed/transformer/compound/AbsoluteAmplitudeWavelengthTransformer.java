@@ -108,7 +108,7 @@ public class AbsoluteAmplitudeWavelengthTransformer extends CompoundedTransforme
             }
 
             for (int i = 0; i < mark; i++) {
-                history.poll();
+                history.pollFirst();
             }
         }
 

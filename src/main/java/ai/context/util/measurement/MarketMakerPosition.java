@@ -1,10 +1,12 @@
 package ai.context.util.measurement;
 
 import ai.context.util.mathematics.Operations;
+import ai.context.util.trading.OrderIntelligenceEngine;
 
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class MarketMakerPosition {
     private long time;
@@ -13,6 +15,7 @@ public class MarketMakerPosition {
     private final double high1;
     private final double low1;
     private long goodTill;
+    private long lastTime = 0;
 
     private double high = 0;
     private double low = Double.MAX_VALUE;
@@ -27,6 +30,8 @@ public class MarketMakerPosition {
 
     private Set<String> flags = new HashSet<>();
 
+    public TreeMap<String, Object> attributes = new TreeMap<>();
+
     public MarketMakerPosition(long time, double targetHigh, double targetLow, double high1, double low1, long goodTill) {
         this.time = time;
         this.targetHigh = targetHigh;
@@ -34,9 +39,12 @@ public class MarketMakerPosition {
         this.goodTill = goodTill;
         this.high1 = high1;
         this.low1 = low1;
+
+        this.attributes.put("timeSpan", (goodTill - time));
     }
 
     public boolean notify(double high, double low, double close, long time){
+        this.lastTime = time;
         if(time <= goodTill){
             this.high = Math.max(this.high, high);
             this.low = Math.min(this.low, low);
@@ -56,6 +64,8 @@ public class MarketMakerPosition {
     public void setHasOpenedWithLong(boolean hasOpenedWithLong, double open) {
         this.hasOpenedWithLong = hasOpenedWithLong;
         this.open = open;
+
+        this.attributes.put("dir", hasOpenedWithLong ? 1 : 0);
     }
 
     public boolean isHasOpenedWithShort() {
@@ -65,6 +75,8 @@ public class MarketMakerPosition {
     public void setHasOpenedWithShort(boolean hasOpenedWithShort, double open) {
         this.hasOpenedWithShort = hasOpenedWithShort;
         this.open = open;
+
+        this.attributes.put("dir", hasOpenedWithShort ? -1 : 0);
     }
 
     public boolean isOpen(){
@@ -77,6 +89,7 @@ public class MarketMakerPosition {
 
     public void setClosed(boolean closed) {
         this.closed = closed;
+        OrderIntelligenceEngine.getInstance().feed(this);
     }
 
     public double getOpen() {
@@ -164,6 +177,14 @@ public class MarketMakerPosition {
 
     public boolean containsFlag(String flag){
         return flags.contains(flag);
+    }
+
+    public double getHigh() {
+        return high;
+    }
+
+    public double getLow() {
+        return low;
     }
 }
 

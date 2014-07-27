@@ -60,7 +60,11 @@ public class DecisionAggregator {
             return;
         }
 
-        double[] results = PositionFactory.getDecision(data.getTimeStamp(), pivot, histogram, timeSpan, null, null, null, PropertiesHolder.marketMakerConfidence);
+        Double minProbFraction = null;
+        if(!PropertiesHolder.tradeNormal){
+            minProbFraction = 0D;
+        }
+        double[] results = PositionFactory.getDecision(data.getTimeStamp(), pivot, histogram, timeSpan, minProbFraction, null, null, PropertiesHolder.marketMakerConfidence);
         if(results[4] + results[5] < PositionFactory.cost * PropertiesHolder.marketMakerAmplitude){
             return;
         }
@@ -121,6 +125,16 @@ public class DecisionAggregator {
                     else if(marketMakerDeciderHistorical != null){
                         MarketMakerPosition advice = new MarketMakerPosition(time, latestC + results[4],  latestC - results[5], latestC + results[6],  latestC - results[7], time + entry.getKey());
                         advice.adjustTimes(DecisionAggregator.getTimeQuantum());
+                        advice.attributes.put("cred", results[0]);
+
+                        for(int i = 0; i < DecisionUtil.getDecilesU().length; i++){
+                            advice.attributes.put("dU_" + i, DecisionUtil.getDecilesU()[i]);
+                        }
+
+                        for(int i = 0; i < DecisionUtil.getDecilesD().length; i++){
+                            advice.attributes.put("dD_" + i, DecisionUtil.getDecilesD()[i]);
+                        }
+
                         marketMakerDeciderHistorical.addAdvice(advice);
                     }
                     else {

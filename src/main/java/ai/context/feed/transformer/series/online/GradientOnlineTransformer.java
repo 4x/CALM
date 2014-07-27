@@ -70,7 +70,7 @@ public class GradientOnlineTransformer extends OnlineTransformer {
             xMean = (bufferSize - 1)/2.0;
             x2MeanMinusXMean2 = x2Mean - (xMean * xMean);
         }
-        return new Double[]{(double) getLinearDiscretisation(grad, 0, res), (double)getLogarithmicDiscretisation(diff, 0, res)};
+        return new Double[]{(double) getLinearDiscretisation(grad, 0, res/10), (double)getLogarithmicDiscretisation(diff, 0, res)};
     }
 
 
