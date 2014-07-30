@@ -58,7 +58,7 @@ public class MainNeural {
     private Set<RowFeed> rowFeeds = new HashSet<>();
 
     private StitchableFeed liveFXCalendar;
-    private StitchableFeed liveFXCalendaScheduler;
+    private StitchableFeed liveFXCalendarScheduler;
     private StitchableFeed liveFXRateEUR;
     private StitchableFeed liveFXRateGBP;
     private StitchableFeed liveFXRateJPY;
@@ -227,7 +227,7 @@ public class MainNeural {
     }
 
     public void setLiveFXCalendarSchedule(final StitchableFeed liveFXCalendarSchedule) {
-        this.liveFXCalendaScheduler = liveFXCalendarSchedule;
+        this.liveFXCalendarScheduler = liveFXCalendarSchedule;
     }
 
     public boolean isCalibrating() {
@@ -264,73 +264,76 @@ public class MainNeural {
         if (PropertiesHolder.liveTrading && !calibrating) {
             initFXAPI();
 
-            setLiveFXCalendar(new StitchableFXStreetCalendarRSS(path + "tmp/FXCalendar.csv", new FXStreetCalendarRSSFeed()));
-            setLiveFXCalendarSchedule(new StitchableFXStreetCalendarSchedule(path + "tmp/FXCalendarSchedule.csv", new FXStreetCalendarScheduleFeed()));
+            if(PropertiesHolder.addtionalStimuliPerNeuron > 0){
+                setLiveFXCalendar(new StitchableFXStreetCalendarRSS(path + "tmp/FXCalendar.csv", new FXStreetCalendarRSSFeed()));
+                setLiveFXCalendarSchedule(new StitchableFXStreetCalendarSchedule(path + "tmp/FXCalendarSchedule.csv", new FXStreetCalendarScheduleFeed()));
+            }
 
             setLiveFXRates(path);
         }
 
-        DataType[] typesCalendar = new DataType[]{
-                DataType.OTHER,
-                DataType.OTHER,
-                DataType.INTEGER,
-                DataType.EXTRACTABLE_DOUBLE,
-                DataType.EXTRACTABLE_DOUBLE,
-                DataType.EXTRACTABLE_DOUBLE};
+        if(PropertiesHolder.addtionalStimuliPerNeuron > 0){
+            DataType[] typesCalendar = new DataType[]{
+                    DataType.OTHER,
+                    DataType.OTHER,
+                    DataType.INTEGER,
+                    DataType.EXTRACTABLE_DOUBLE,
+                    DataType.EXTRACTABLE_DOUBLE,
+                    DataType.EXTRACTABLE_DOUBLE};
 
-        String dateFC = "20060101 00:00:00";
-        long interval = 1*60000L;
-        CSVFeed feedCalendar = new CSVFeed(path + "feeds/Calendar.csv", "yyyyMMdd HH:mm:ss", typesCalendar, dateFC);
+            String dateFC = "20060101 00:00:00";
+            long interval = 1*60000L;
+            CSVFeed feedCalendar = new CSVFeed(path + "feeds/Calendar.csv", "yyyyMMdd HH:mm:ss", typesCalendar, dateFC);
 
-        DataType[] typesCalendarSchedule  = new DataType[]{
-                DataType.OTHER,
-                DataType.OTHER};
-        CSVFeed calendarSchedule = new CSVFeed(path + "feeds/Calendar_Schedule.csv", "yyyyMMdd HH:mm:ss", typesCalendarSchedule, dateFC);
-        LookAheadScheduler scheduler = new LookAheadScheduler(calendarSchedule, 0, 1);
-        rowFeeds.add(feedCalendar);
-        rowFeeds.add(calendarSchedule);
-        feedCalendar.setStitchableFeed(liveFXCalendar);
-        calendarSchedule.setStitchableFeed(liveFXCalendaScheduler);
+            DataType[] typesCalendarSchedule  = new DataType[]{
+                    DataType.OTHER,
+                    DataType.OTHER};
+            CSVFeed calendarSchedule = new CSVFeed(path + "feeds/Calendar_Schedule.csv", "yyyyMMdd HH:mm:ss", typesCalendarSchedule, dateFC);
+            LookAheadScheduler scheduler = new LookAheadScheduler(calendarSchedule, 0, 1);
+            rowFeeds.add(feedCalendar);
+            rowFeeds.add(calendarSchedule);
+            feedCalendar.setStitchableFeed(liveFXCalendar);
+            calendarSchedule.setStitchableFeed(liveFXCalendarScheduler);
 
-        FeedWrapper calendarWrapper = new FeedWrapper(feedCalendar);
+            FeedWrapper calendarWrapper = new FeedWrapper(feedCalendar);
 
-        //addManipulator("Germany", "Markit Manufacturing PMI", calendarWrapper, scheduler);
-        addManipulator("Germany", "Unemployment Rate s.a.", calendarWrapper, scheduler);
+            //addManipulator("Germany", "Markit Manufacturing PMI", calendarWrapper, scheduler);
+            addManipulator("Germany", "Unemployment Rate s.a.", calendarWrapper, scheduler);
 
-        //addManipulator("European Monetary Union", "Consumer Confidence", calendarWrapper, scheduler);
-        addManipulator("European Monetary Union", "ECB Interest Rate Decision", calendarWrapper, scheduler);
-        //addManipulator("European Monetary Union", "Economic Sentiment", calendarWrapper, scheduler);
-        addManipulator("European Monetary Union", "Gross Domestic Product s.a. (QoQ)", calendarWrapper, scheduler);
-        addManipulator("European Monetary Union", "Markit Manufacturing PMI", calendarWrapper, scheduler);
-        addManipulator("European Monetary Union", "Producer Price Index (MoM)", calendarWrapper, scheduler);
-        //addManipulator("European Monetary Union", "Retail Sales (MoM)", calendarWrapper, scheduler);
-        addManipulator("European Monetary Union", "Unemployment Rate", calendarWrapper, scheduler);
+            //addManipulator("European Monetary Union", "Consumer Confidence", calendarWrapper, scheduler);
+            addManipulator("European Monetary Union", "ECB Interest Rate Decision", calendarWrapper, scheduler);
+            //addManipulator("European Monetary Union", "Economic Sentiment", calendarWrapper, scheduler);
+            addManipulator("European Monetary Union", "Gross Domestic Product s.a. (QoQ)", calendarWrapper, scheduler);
+            addManipulator("European Monetary Union", "Markit Manufacturing PMI", calendarWrapper, scheduler);
+            addManipulator("European Monetary Union", "Producer Price Index (MoM)", calendarWrapper, scheduler);
+            //addManipulator("European Monetary Union", "Retail Sales (MoM)", calendarWrapper, scheduler);
+            addManipulator("European Monetary Union", "Unemployment Rate", calendarWrapper, scheduler);
 
-        addManipulator("Japan", "BoJ Interest Rate Decision", calendarWrapper, scheduler);
-        //addManipulator("Japan", "Consumer Confidence Index", calendarWrapper, scheduler);
-        addManipulator("Japan", "Leading Economic Index", calendarWrapper, scheduler);
-        addManipulator("Japan", "Unemployment Rate", calendarWrapper, scheduler);
+            addManipulator("Japan", "BoJ Interest Rate Decision", calendarWrapper, scheduler);
+            //addManipulator("Japan", "Consumer Confidence Index", calendarWrapper, scheduler);
+            addManipulator("Japan", "Leading Economic Index", calendarWrapper, scheduler);
+            addManipulator("Japan", "Unemployment Rate", calendarWrapper, scheduler);
 
-        //addManipulator("United Kingdom", "CB Leading Economic Index", calendarWrapper, scheduler);
-        addManipulator("United Kingdom", "Consumer Price Index (MoM)", calendarWrapper, scheduler);
-        addManipulator("United Kingdom", "Gross Domestic Product (QoQ)", calendarWrapper, scheduler);
-        addManipulator("United Kingdom", "Industrial Production (MoM)", calendarWrapper, scheduler);
-        addManipulator("United Kingdom", "Markit Manufacturing PMI", calendarWrapper, scheduler);
-        //addManipulator("United Kingdom", "Retail Price Index (MoM)", calendarWrapper, scheduler);
+            //addManipulator("United Kingdom", "CB Leading Economic Index", calendarWrapper, scheduler);
+            addManipulator("United Kingdom", "Consumer Price Index (MoM)", calendarWrapper, scheduler);
+            addManipulator("United Kingdom", "Gross Domestic Product (QoQ)", calendarWrapper, scheduler);
+            addManipulator("United Kingdom", "Industrial Production (MoM)", calendarWrapper, scheduler);
+            addManipulator("United Kingdom", "Markit Manufacturing PMI", calendarWrapper, scheduler);
+            //addManipulator("United Kingdom", "Retail Price Index (MoM)", calendarWrapper, scheduler);
 
-        //addManipulator("United States", "Average Hourly Earnings (MoM)", calendarWrapper, scheduler);
-        //addManipulator("United States", "Consumer Confidence", calendarWrapper, scheduler);
-        //addManipulator("United States", "Consumer Price Index (MoM)", calendarWrapper, scheduler);
-        addManipulator("United States", "Fed Interest Rate Decision", calendarWrapper, scheduler);
-        addManipulator("United States", "Gross Domestic Product (QoQ)", calendarWrapper, scheduler);
-        addManipulator("United States", "Nonfarm Payrolls", calendarWrapper, scheduler);
-        addManipulator("United States", "Producer Price Index (MoM)", calendarWrapper, scheduler);
-        //addManipulator("United States", "Trade Balance", calendarWrapper, scheduler);
-        addManipulator("United States", "Unemployment Rate", calendarWrapper, scheduler);
+            //addManipulator("United States", "Average Hourly Earnings (MoM)", calendarWrapper, scheduler);
+            //addManipulator("United States", "Consumer Confidence", calendarWrapper, scheduler);
+            //addManipulator("United States", "Consumer Price Index (MoM)", calendarWrapper, scheduler);
+            addManipulator("United States", "Fed Interest Rate Decision", calendarWrapper, scheduler);
+            addManipulator("United States", "Gross Domestic Product (QoQ)", calendarWrapper, scheduler);
+            addManipulator("United States", "Nonfarm Payrolls", calendarWrapper, scheduler);
+            addManipulator("United States", "Producer Price Index (MoM)", calendarWrapper, scheduler);
+            //addManipulator("United States", "Trade Balance", calendarWrapper, scheduler);
+            addManipulator("United States", "Unemployment Rate", calendarWrapper, scheduler);
 
 
-        cluster.addFeedWrapper(calendarWrapper);
-
+            cluster.addFeedWrapper(calendarWrapper);
+        }
 
         DataType[] typesPrice = new DataType[]{
                 DataType.DOUBLE,

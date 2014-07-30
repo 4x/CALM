@@ -110,6 +110,11 @@ public abstract class SynchronisableFeed implements ISynchFeed {
     public void checkLeader() {
         if (current == null) {
             current = readNext(this);
+
+            if(current == null){
+                System.err.println("Stopping run as end of data");
+                System.exit(0);
+            }
         }
         if (timeStamp.getValue() < 0) {
             timeStamp.setValue(current.getTimeStamp());

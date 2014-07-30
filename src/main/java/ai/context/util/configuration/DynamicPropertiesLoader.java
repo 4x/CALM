@@ -133,6 +133,10 @@ public class DynamicPropertiesLoader {
                         PropertiesHolder.startDateTime = line.substring(parts[0].length() + 1);
                     } else if (parts[0].equals("liveTrading")) {
                         PropertiesHolder.liveTrading = Boolean.valueOf(parts[1]);
+                    } else if (parts[0].equals("tradeSpecial")) {
+                        PropertiesHolder.tradeSpecial = Boolean.valueOf(parts[1]);
+                    } else if (parts[0].equals("tradeToCreditRatio")) {
+                        PropertiesHolder.tradeToCreditRatio = Double.parseDouble(parts[1]);
                     }
                 }
                 System.out.println("Global configuration changed: " + PropertiesHolder.getInfo());

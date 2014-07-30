@@ -21,7 +21,6 @@ public class MarketMakerDecider implements OnTickDecider, IStrategy{
     private IEngine engine = null;
     private TreeMap<String, IOrder> positions = new TreeMap<>();
 
-    private double tradeToCreditRatio = 0.025;
     private double available = 10000;
 
     public MarketMakerDecider(IClient client) {
@@ -60,7 +59,7 @@ public class MarketMakerDecider implements OnTickDecider, IStrategy{
 
             for(MarketMakerPosition advice : advices){
                 if(!advice.isOpen()){
-                    double amount = Operations.round((available * tradeToCreditRatio) / 1000000, 4);
+                    double amount = Operations.round((available * PropertiesHolder.tradeToCreditRatio) / 1000000, 4);
                     if (amount > 0) {
                         long tNow = System.currentTimeMillis();
                         IOrder out = null;
@@ -73,7 +72,8 @@ public class MarketMakerDecider implements OnTickDecider, IStrategy{
                                 && bid > advice.getTargetHigh()
                                 && bid - PropertiesHolder.marketMakerBeyond/2 < advice.getTargetHigh()
                                 && advice.getTargetLow() > avgLow
-                                && avgHigh - bid < (bid - advice.getTargetLow())/2){
+                                && avgHigh - bid < (bid - advice.getTargetLow())/2
+                                && PropertiesHolder.filterFunction.pass(advice)){
                             direction = "SHORT";
 
                             out = engine.submitOrder("EUR_" + tNow, Instrument.EURUSD, IEngine.OrderCommand.SELLLIMIT, amount,
@@ -90,7 +90,8 @@ public class MarketMakerDecider implements OnTickDecider, IStrategy{
                                 && ask < advice.getTargetLow()
                                 && ask + PropertiesHolder.marketMakerBeyond/2 > advice.getTargetLow()
                                 && advice.getTargetHigh() < avgHigh
-                                && ask - avgLow < (advice.getTargetHigh() - ask)/2){
+                                && ask - avgLow < (advice.getTargetHigh() - ask)/2
+                                && PropertiesHolder.filterFunction.pass(advice)){
                             direction = "LONG";
 
                             out = engine.submitOrder("EUR_" + tNow, Instrument.EURUSD, IEngine.OrderCommand.BUYLIMIT, amount,

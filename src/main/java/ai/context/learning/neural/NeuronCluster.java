@@ -12,6 +12,7 @@ import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.Operations;
 import ai.context.util.server.JettyServer;
 import ai.context.util.server.servlets.NeuralClusterInformationServlet;
+import ai.context.util.server.servlets.ScriptingServlet;
 import ai.context.util.trading.DecisionAggregator;
 import ai.context.util.trading.PositionFactory;
 
@@ -49,6 +50,7 @@ public class NeuronCluster implements TimedContainer{
 
     private NeuronCluster() {
         server.addServlet(NeuralClusterInformationServlet.class, "info");
+        server.addServlet(ScriptingServlet.class, "scripting");
     }
 
     public void start() {

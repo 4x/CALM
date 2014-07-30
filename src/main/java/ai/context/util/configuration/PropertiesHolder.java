@@ -1,5 +1,7 @@
 package ai.context.util.configuration;
 
+import ai.context.util.common.JavaScriptBooleanFilterFunction;
+
 public class PropertiesHolder {
     public static double recencyBias = 2;
     public static double tolerance = 0.01;
@@ -30,6 +32,9 @@ public class PropertiesHolder {
     public static boolean tradeMarketMarker = true;
     public static boolean liveTrading = true;
     public static String startDateTime = "2006.01.01 00:00:00";
+    public static boolean tradeSpecial = false;
+    public static double tradeToCreditRatio = 0.005;
+    public static JavaScriptBooleanFilterFunction filterFunction = new JavaScriptBooleanFilterFunction();
 
     public static String getInfo() {
         return "PropertiesHolder{" +
@@ -62,6 +67,8 @@ public class PropertiesHolder {
                 ",\ntradeMarketMarker=" + tradeMarketMarker +
                 ",\nstartDateTime=" + startDateTime +
                 ",\nliveTrading=" + liveTrading +
+                ",\ntradeSpecial=" + tradeSpecial +
+                ",\ntradeToCreditRatio=" + tradeToCreditRatio +
                 '}';
     }
 }
