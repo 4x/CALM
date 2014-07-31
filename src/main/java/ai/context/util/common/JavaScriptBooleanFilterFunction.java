@@ -1,32 +1,37 @@
 package ai.context.util.common;
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Function;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
+
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
 
 public class JavaScriptBooleanFilterFunction implements Filter{
 
-    private Function fct;
-    private Context context = Context.enter();
-    private ScriptableObject scope = context.initStandardObjects();
-    private Scriptable that = context.newObject(scope);
+    private ScriptEngineManager manager = new ScriptEngineManager();
+    private ScriptEngine engine = manager.getEngineByName("JavaScript");
+    private Invocable inv = (Invocable) engine;
+    private String functionName;
 
     @Override
     public boolean pass(Object o) {
-        if(fct == null){
+        if(functionName == null){
             return true;
         }
         try{
-            Object result = fct.call(context, scope, that, new Object[] {o});
-            return (boolean) Context.jsToJava(result, boolean.class);
+            return (boolean) Context.jsToJava(inv.invokeFunction(functionName, o), boolean.class);
         }catch (Exception e){
             e.printStackTrace();
+            functionName = null;
             return false;
         }
     }
 
-    public void setScript(String script){
-        fct = context.compileFunction(scope, script, "script", 1, null);
+    public void setFunction(String functionName){
+        this.functionName = functionName;
+    }
+
+    public ScriptEngine getEngine() {
+        return engine;
     }
 }

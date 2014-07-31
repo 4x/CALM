@@ -361,7 +361,7 @@ public class MainNeural {
         feed = buildSynchFeed(feed, 0.0001,feedPriceGBP, false);
         feed = buildSynchFeed(feed, 0.01, feedPriceJPY, false);
 
-        MinMaxAggregatorDiscretiser sFeed = new MinMaxAggregatorDiscretiser(feed, PropertiesHolder.initialSeriesOffset, 16);
+        MinMaxAggregatorDiscretiser sFeed = new MinMaxAggregatorDiscretiser(feed, PropertiesHolder.initialSeriesOffset, 12);
         sFeed.lock();
 
         TimeVariablesAppenderFeed tFeed = new TimeVariablesAppenderFeed(sFeed);
@@ -471,6 +471,42 @@ public class MainNeural {
         synch.addRawFeed(awFeedH);
         synch.addRawFeed(awFeedL);
 
+        AbsoluteAmplitudeWavelengthTransformer awFeedC10 = new AbsoluteAmplitudeWavelengthTransformer(feedC, 10, 0.125, res);
+        synch.addRawFeed(awFeedC10);
+        AbsoluteAmplitudeWavelengthTransformer awFeedC20 = new AbsoluteAmplitudeWavelengthTransformer(feedC, 20, 0.125, res);
+        synch.addRawFeed(awFeedC20);
+
+
+        MinMaxDistanceTransformer mmdT1 = new MinMaxDistanceTransformer(10, feedL, feedH, feedC, res);
+        MinMaxDistanceTransformer mmdT2 = new MinMaxDistanceTransformer(20, feedL, feedH, feedC, res);
+        MinMaxDistanceTransformer mmdT5 = new MinMaxDistanceTransformer(50, feedL, feedH, feedC, res);
+        MinMaxDistanceTransformer mmdT7 = new MinMaxDistanceTransformer(100, feedL, feedH, feedC, res);
+        MinMaxDistanceTransformer mmdT8 = new MinMaxDistanceTransformer(400, feedL, feedH, feedC, res);
+        MinMaxDistanceTransformer mmdT9 = new MinMaxDistanceTransformer(1000, feedL, feedH, feedC, res);
+        MinMaxDistanceTransformer mmdT10 = new MinMaxDistanceTransformer(4000, feedL, feedH, feedC, res);
+
+        synch.addRawFeed(mmdT1);
+        synch.addRawFeed(mmdT2);
+        synch.addRawFeed(mmdT5);
+        synch.addRawFeed(mmdT7);
+        synch.addRawFeed(mmdT8);
+        synch.addRawFeed(mmdT9);
+        synch.addRawFeed(mmdT10);
+
+        GradientOnlineTransformer g5 = new GradientOnlineTransformer(5, feedL, feedH, feedC, res);
+        GradientOnlineTransformer g10 = new GradientOnlineTransformer(10, feedL, feedH, feedC, res);
+        GradientOnlineTransformer g20 = new GradientOnlineTransformer(20, feedL, feedH, feedC, res);
+        GradientOnlineTransformer g50 = new GradientOnlineTransformer(50, feedL, feedH, feedC, res);
+        GradientOnlineTransformer g100 = new GradientOnlineTransformer(100, feedL, feedH, feedC, res);
+        GradientOnlineTransformer g200 = new GradientOnlineTransformer(200, feedL, feedH, feedC, res);
+
+        synch.addRawFeed(g5);
+        synch.addRawFeed(g10);
+        synch.addRawFeed(g20);
+        synch.addRawFeed(g50);
+        synch.addRawFeed(g100);
+        synch.addRawFeed(g200);
+
         if(main){
             RSIOnlineTransformer rsiH = new RSIOnlineTransformer(feedH, 5, 25, 0.5);
             RSIOnlineTransformer rsiL = new RSIOnlineTransformer(feedL, 5, 25, 0.5);
@@ -505,54 +541,42 @@ public class MainNeural {
             synch.addRawFeed(crossLK);
             synch.addRawFeed(crossHD);
             synch.addRawFeed(crossLD);
-        }
 
-        MinMaxDistanceTransformer mmdT1 = new MinMaxDistanceTransformer(10, feedL, feedH, feedC, res);
-        MinMaxDistanceTransformer mmdT2 = new MinMaxDistanceTransformer(20, feedL, feedH, feedC, res);
-        MinMaxDistanceTransformer mmdT5 = new MinMaxDistanceTransformer(50, feedL, feedH, feedC, res);
-        MinMaxDistanceTransformer mmdT7 = new MinMaxDistanceTransformer(100, feedL, feedH, feedC, res);
-        MinMaxDistanceTransformer mmdT8 = new MinMaxDistanceTransformer(400, feedL, feedH, feedC, res);
-        MinMaxDistanceTransformer mmdT9 = new MinMaxDistanceTransformer(1000, feedL, feedH, feedC, res);
-        MinMaxDistanceTransformer mmdT10 = new MinMaxDistanceTransformer(4000, feedL, feedH, feedC, res);
-
-        synch.addRawFeed(mmdT1);
-        synch.addRawFeed(mmdT2);
-        synch.addRawFeed(mmdT5);
-        synch.addRawFeed(mmdT7);
-        synch.addRawFeed(mmdT8);
-        synch.addRawFeed(mmdT9);
-        synch.addRawFeed(mmdT10);
-
-        if(main){
             RadarOnlineTransformer r0 = new RadarOnlineTransformer(10, feedL, feedH, feedC, res);
             RadarOnlineTransformer r1 = new RadarOnlineTransformer(20, feedL, feedH, feedC, res);
             RadarOnlineTransformer r2 = new RadarOnlineTransformer(50, feedL, feedH, feedC, res);
             synch.addRawFeed(r0);
             synch.addRawFeed(r1);
             synch.addRawFeed(r2);
+
+            SimpleTrendOnlineTransformer t005 = new SimpleTrendOnlineTransformer(0.005, feedL, feedH, feedC, res);
+            SimpleTrendOnlineTransformer t0125 = new SimpleTrendOnlineTransformer(0.125, feedL, feedH, feedC, res);
+            SimpleTrendOnlineTransformer t025 = new SimpleTrendOnlineTransformer(0.25, feedL, feedH, feedC, res);
+            SimpleTrendOnlineTransformer t05 = new SimpleTrendOnlineTransformer(0.5, feedL, feedH, feedC, res);
+            SimpleTrendOnlineTransformer t075 = new SimpleTrendOnlineTransformer(0.75, feedL, feedH, feedC, res);
+
+            synch.addRawFeed(t005);
+            synch.addRawFeed(t0125);
+            synch.addRawFeed(t025);
+            synch.addRawFeed(t05);
+            synch.addRawFeed(t075);
+
+            SuddenShiftsOnlineTransformer ss10 = new SuddenShiftsOnlineTransformer(10, feedL, feedH, res, 10);
+            SuddenShiftsOnlineTransformer ss20 = new SuddenShiftsOnlineTransformer(20, feedL, feedH, res, 15);
+            SuddenShiftsOnlineTransformer ss50 = new SuddenShiftsOnlineTransformer(50, feedL, feedH, res, 20);
+            SuddenShiftsOnlineTransformer ss100 = new SuddenShiftsOnlineTransformer(100, feedL, feedH, res, 25);
+            SuddenShiftsOnlineTransformer ss200 = new SuddenShiftsOnlineTransformer(200, feedL, feedH, res, 30);
+            SuddenShiftsOnlineTransformer ss400 = new SuddenShiftsOnlineTransformer(400, feedL, feedH, res, 35);
+            SuddenShiftsOnlineTransformer ss800 = new SuddenShiftsOnlineTransformer(800, feedL, feedH, res, 40);
+
+            synch.addRawFeed(ss10);
+            synch.addRawFeed(ss20);
+            synch.addRawFeed(ss50);
+            synch.addRawFeed(ss100);
+            synch.addRawFeed(ss200);
+            synch.addRawFeed(ss400);
+            synch.addRawFeed(ss800);
         }
-
-        GradientOnlineTransformer g5 = new GradientOnlineTransformer(5, feedL, feedH, feedC, res);
-        GradientOnlineTransformer g10 = new GradientOnlineTransformer(10, feedL, feedH, feedC, res);
-        GradientOnlineTransformer g20 = new GradientOnlineTransformer(20, feedL, feedH, feedC, res);
-        GradientOnlineTransformer g50 = new GradientOnlineTransformer(50, feedL, feedH, feedC, res);
-
-        synch.addRawFeed(g5);
-        synch.addRawFeed(g10);
-        synch.addRawFeed(g20);
-        synch.addRawFeed(g50);
-
-        SimpleTrendOnlineTransformer t005 = new SimpleTrendOnlineTransformer(0.005, feedL, feedH, feedC, res);
-        SimpleTrendOnlineTransformer t0125 = new SimpleTrendOnlineTransformer(0.125, feedL, feedH, feedC, res);
-        SimpleTrendOnlineTransformer t025 = new SimpleTrendOnlineTransformer(0.25, feedL, feedH, feedC, res);
-        SimpleTrendOnlineTransformer t05 = new SimpleTrendOnlineTransformer(0.5, feedL, feedH, feedC, res);
-        SimpleTrendOnlineTransformer t075 = new SimpleTrendOnlineTransformer(0.75, feedL, feedH, feedC, res);
-
-        synch.addRawFeed(t005);
-        synch.addRawFeed(t0125);
-        synch.addRawFeed(t025);
-        synch.addRawFeed(t05);
-        synch.addRawFeed(t075);
 
         return synch;
     }

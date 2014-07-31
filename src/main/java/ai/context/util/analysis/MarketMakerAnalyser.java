@@ -20,7 +20,7 @@ public class MarketMakerAnalyser {
     int lastMonth = -1;
     int nDay = 0;
     int nMonth = 0;
-    double tradeToCapRatio = 0.5;
+    double tradeToCapRatio = 1;
 
     double cost = 0.00007;
     double costPerMillion = 0;
@@ -84,18 +84,22 @@ public class MarketMakerAnalyser {
                         }
 
                         if (
-                            //lifeSpan/1800000 > 10 &&
+                            //lifeSpan/1800000 > 9 &&
                             //cred >= credRange[0] &&
                             //cred <= credRange[1] &&
                             //targetPnL >= 0.0015 &&
                             //targetPnL < 0.002 &&
                             //hours.contains(startHour) &&
+                            //nMonth > 47 &&
+                            //nMonth < 60 &&
                                 true) {
 
-                            aggregate(lifeSpan/1800000, change);
+                            //aggregate(lifeSpan/1800000, change);
                             //aggregate(participants, change);
                             //aggregate((int)(100*cred/participants), change);
+                            //aggregate(nMonth, change);
                             //aggregate(formatOutput.format(date), change);
+                            aggregate(date.getYear(), change);
                             //aggregate(date.getHours(), change);
                             //aggregate(changeClass, change);
                             //aggregate(date.getHours(), change);

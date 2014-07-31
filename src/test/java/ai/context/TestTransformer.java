@@ -272,6 +272,32 @@ public class TestTransformer {
     }
 
     @Test
+    public void testSuddenShifts(){
+        DataType[] typesPrice = new DataType[]{
+                DataType.DOUBLE,
+                DataType.DOUBLE,
+                DataType.DOUBLE,
+                DataType.DOUBLE,
+                DataType.DOUBLE};
+
+        String dateFP = PropertiesHolder.startDateTime;
+
+        CSVFeed feed = new CSVFeed("/opt/dev/data/feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
+        feed.setSkipWeekends(true);
+        ExtractOneFromListFeed feedH = new ExtractOneFromListFeed(feed, 1);
+        ExtractOneFromListFeed feedL = new ExtractOneFromListFeed(feed, 2);
+
+        SuddenShiftsOnlineTransformer transformer = new SuddenShiftsOnlineTransformer(400, feedL, feedH, 0.0001, 30);
+
+        for (int i = 0; i < 20000; i++) {
+            FeedObject data = transformer.readNext(this);
+            List<Double>  out = new ArrayList<>();
+            DataSetUtils.add(data.getData(), out);
+            System.out.println(data.getTimeStamp() + " " + out);
+        }
+    }
+
+    @Test
     public void testRadar1(){
         DataType[] typesPrice = new DataType[]{
                 DataType.DOUBLE,

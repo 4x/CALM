@@ -4,7 +4,6 @@ import ai.context.learning.neural.NeuronCluster;
 import ai.context.util.configuration.PropertiesHolder;
 
 import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -19,7 +18,6 @@ import java.util.Map;
 public class ScriptingServlet extends HttpServlet {
 
     private NeuronCluster cluster = NeuronCluster.getInstance();
-    private ScriptEngineManager factory;
     private ScriptEngine jsEngine;
     private ByteArrayOutputStream baos = new ByteArrayOutputStream();
     private PrintStream ps = new PrintStream(baos);
@@ -31,8 +29,7 @@ public class ScriptingServlet extends HttpServlet {
         System.setOut(ps);
         System.setErr(ps);
 
-        factory = new ScriptEngineManager();
-        jsEngine = factory.getEngineByName("javascript");
+        jsEngine = PropertiesHolder.filterFunction.getEngine();
         jsEngine.put("out", System.out);
         jsEngine.put("cluster", cluster);
         jsEngine.put("filterFunction", PropertiesHolder.filterFunction);
@@ -61,7 +58,7 @@ public class ScriptingServlet extends HttpServlet {
                 ps.flush();
                 out.print(baos.toString());
                 baos.reset();
-            } catch (ScriptException e) {
+            } catch (Exception e) {
                 jsEngine.put("error", e);
                 out.print("Error! Check 'error'");
             }
