@@ -99,6 +99,8 @@ public class DynamicPropertiesLoader {
                         PropertiesHolder.coreStimuliPerNeuron = Integer.parseInt(parts[1]);
                     } else if (parts[0].equals("totalNeurons")) {
                         PropertiesHolder.totalNeurons = Integer.parseInt(parts[1]);
+                    } else if (parts[0].equals("generationNeurons")) {
+                        PropertiesHolder.generationNeurons = Integer.parseInt(parts[1]);
                     } else if (parts[0].equals("httpPort")) {
                         PropertiesHolder.httpPort = Integer.parseInt(parts[1]);
                     } else if (parts[0].equals("normalisationOfSuggestion")) {
@@ -137,6 +139,8 @@ public class DynamicPropertiesLoader {
                         PropertiesHolder.tradeSpecial = Boolean.valueOf(parts[1]);
                     } else if (parts[0].equals("tradeToCreditRatio")) {
                         PropertiesHolder.tradeToCreditRatio = Double.parseDouble(parts[1]);
+                    } else if (parts[0].equals("maxLeewayAmplitude")) {
+                        PropertiesHolder.maxLeewayAmplitude = Double.parseDouble(parts[1]);
                     }
                 }
                 System.out.println("Global configuration changed: " + PropertiesHolder.getInfo());

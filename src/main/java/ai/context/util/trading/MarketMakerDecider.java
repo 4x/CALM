@@ -73,6 +73,7 @@ public class MarketMakerDecider implements OnTickDecider, IStrategy{
                                 && bid - PropertiesHolder.marketMakerBeyond/2 < advice.getTargetHigh()
                                 && advice.getTargetLow() > avgLow
                                 && avgHigh - bid < (bid - advice.getTargetLow())/2
+                                && avgHigh - bid < PropertiesHolder.maxLeewayAmplitude
                                 && PropertiesHolder.filterFunction.pass(advice)){
                             direction = "SHORT";
 
@@ -91,6 +92,7 @@ public class MarketMakerDecider implements OnTickDecider, IStrategy{
                                 && ask + PropertiesHolder.marketMakerBeyond/2 > advice.getTargetLow()
                                 && advice.getTargetHigh() < avgHigh
                                 && ask - avgLow < (advice.getTargetHigh() - ask)/2
+                                && ask - avgLow < PropertiesHolder.maxLeewayAmplitude
                                 && PropertiesHolder.filterFunction.pass(advice)){
                             direction = "LONG";
 

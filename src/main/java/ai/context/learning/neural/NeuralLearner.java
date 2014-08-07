@@ -14,7 +14,7 @@ import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.discretisation.AbsoluteMovementDiscretiser;
 import ai.context.util.measurement.OpenPosition;
 import ai.context.util.trading.BlackBox;
-import ai.context.util.trading.DecisionAggregator;
+import ai.context.util.trading.DecisionAggregatorA;
 
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -30,6 +30,9 @@ public class NeuralLearner implements Feed, Runnable {
     private ISynchFeed motherFeed;
     private SelectLearnerFeed learnerFeed;
     private Map<NeuralLearner, Integer> parentFeeds = new HashMap<>();
+
+    boolean oneCore = true;
+    private LearnerService core;
 
     private LearnerService coreUpA;
     private LearnerService coreDownA;
@@ -85,15 +88,21 @@ public class NeuralLearner implements Feed, Runnable {
         this.motherFeed = motherFeed;
         this.horizonRange = horizonRange;
         double horizon = (Math.random() * (horizonRange[1] - horizonRange[0]) + horizonRange[0]);
-        this.horizon = (long) Math.ceil(horizon / DecisionAggregator.getTimeQuantum()) * DecisionAggregator.getTimeQuantum();
+        this.horizon = (long) Math.ceil(horizon / DecisionAggregatorA.getTimeQuantum()) * DecisionAggregatorA.getTimeQuantum();
         this.outputFutureOffset = outputFutureOffset;
         this.actionElements = actionElements;
         this.sigElements = sigElements;
         this.resolution = resolution;
-        coreUpA = new LearnerService();
-        coreUpA.setActionResolution(resolution);
-        coreDownA = new LearnerService();
-        coreDownA.setActionResolution(resolution);
+
+        if(oneCore){
+            core = new LearnerService();
+        }
+        else {
+            coreUpA = new LearnerService();
+            coreUpA.setActionResolution(resolution);
+            coreDownA = new LearnerService();
+            coreDownA.setActionResolution(resolution);
+        }
 
         countForFlip = (long) (Math.random() * PropertiesHolder.generationLifespan);
 
@@ -182,7 +191,7 @@ public class NeuralLearner implements Feed, Runnable {
 
                 if (day != 0 && day != 6){
                     String inputDates = new Date(data.getTimeStamp()) + " ";
-                    int[] signal = new int[data.getSignal().length + getParents().size() + numberOfWrapperOutputs + 2];
+                    int[] signal = new int[data.getSignal().length + getParents().size() + numberOfWrapperOutputs + 1];
                     int index = 0;
                     for (int sig : data.getSignal()) {
                         signal[index] = sig;
@@ -200,15 +209,8 @@ public class NeuralLearner implements Feed, Runnable {
                         index++;
                     }
 
-                    signal[index] = (int) ((time % (86400000))/(3 * 3600000));
-                    index++;
-
-                    int pred = 0;
-                    if (pointsConsumed > 200) {
-                        pred = getSignalForDistribution(getDistribution(signal), 0)[0];
-                    }
-                    signal[index] = pred;
-                    index++;
+                    /*signal[index] = (int) ((time % (86400000))/(3 * 3600000));
+                    index++;*/
 
                     for(WrapperManipulatorPair pair : wrapperManipulatorPairs){
                         FeedObject<Integer[]> sigObject = cluster.getFromFeedWrapper(pair, time + outputFutureOffset);
@@ -218,39 +220,52 @@ public class NeuralLearner implements Feed, Runnable {
                         }
                     }
 
+                    int pred = 0;
+                    if (pointsConsumed > 200) {
+                        pred = getSignalForDistribution(getDistribution(signal), 0)[0];
+                    }
+                    signal[index] = pred;
+                    index++;
+
                     tStart = System.currentTimeMillis();
                     double result = 0 ;
                     while (!trackers.isEmpty() && trackers.get(0).getTimeStamp() < (time - horizon)) {
                         StateActionInformationTracker tracker = trackers.remove(0);
-                        coreUpA.addStateAction(tracker.getState(), tracker.getMaxUp());
-                        coreDownA.addStateAction(tracker.getState(), tracker.getMaxDown());
-                        countA++;
+                        if(oneCore){
+                            core.addStateAction(tracker.getState(), tracker.getMaxUp());
+                            core.addStateAction(tracker.getState(), tracker.getMaxDown());
+                        }
+                        else{
+                            coreUpA.addStateAction(tracker.getState(), tracker.getMaxUp());
+                            coreDownA.addStateAction(tracker.getState(), tracker.getMaxDown());
 
-                        if(PropertiesHolder.neuronReplacement){
-                            if(coreUpB != null){
-                                coreUpB.addStateAction(tracker.getState(), tracker.getMaxUp());
-                                coreDownB.addStateAction(tracker.getState(), tracker.getMaxDown());
-                                countB++;
+                            countA++;
+                            if(PropertiesHolder.neuronReplacement){
+                                if(coreUpB != null){
+                                    coreUpB.addStateAction(tracker.getState(), tracker.getMaxUp());
+                                    coreDownB.addStateAction(tracker.getState(), tracker.getMaxDown());
+                                    countB++;
 
-                                if(countB == PropertiesHolder.generationLifespan){
-                                    countA = countB;
-                                    countB = 0;
-                                    coreUpA = coreUpB;
-                                    coreDownA = coreDownB;
+                                    if(countB == PropertiesHolder.generationLifespan){
+                                        countA = countB;
+                                        countB = 0;
+                                        coreUpA = coreUpB;
+                                        coreDownA = coreDownB;
 
+                                        coreUpB = new LearnerService();
+                                        coreUpB.setActionResolution(resolution);
+                                        coreDownB = new LearnerService();
+                                        coreDownB.setActionResolution(resolution);
+                                        System.out.println("Neuron [" + id + "]: Cores regenerated");
+                                    }
+                                }
+                                else if(countA == countForFlip){
                                     coreUpB = new LearnerService();
                                     coreUpB.setActionResolution(resolution);
                                     coreDownB = new LearnerService();
                                     coreDownB.setActionResolution(resolution);
-                                    System.out.println("Neuron [" + id + "]: Cores regenerated");
+                                    System.out.println("Neuron [" + id + "]: Initial coreB creation");
                                 }
-                            }
-                            else if(countA == countForFlip){
-                                coreUpB = new LearnerService();
-                                coreUpB.setActionResolution(resolution);
-                                coreDownB = new LearnerService();
-                                coreDownB.setActionResolution(resolution);
-                                System.out.println("Neuron [" + id + "]: Initial coreB creation");
                             }
                         }
 
@@ -259,8 +274,7 @@ public class NeuralLearner implements Feed, Runnable {
                     }
 
                     for (StateActionInformationTracker tracker : trackers) {
-                        tracker.processHigh(data.getValue()[1], time);
-                        tracker.processLow(data.getValue()[2], time);
+                        tracker.processHighAndLow(data.getValue()[1], data.getValue()[2], time);
                     }
 
                     int[] outputSignal = new int[getNumberOfOutputs()];
@@ -270,7 +284,7 @@ public class NeuralLearner implements Feed, Runnable {
                         outputSignal = getSignalForDistribution(predictionRaw, result);
                     }
 
-                    StateActionInformationTracker tracker = new StateActionInformationTracker(time, signal, data.getValue()[0], 10 * resolution, outputSignal[0]);
+                    StateActionInformationTracker tracker = new StateActionInformationTracker(time, signal, data.getValue()[0], 20 * resolution, outputSignal[0]);
                     tracker.setDiscretisation(discretiser);
                     trackers.add(tracker);
 
@@ -292,6 +306,10 @@ public class NeuralLearner implements Feed, Runnable {
     }
 
     private TreeMap<Integer, Double> getDistribution(int[] signal){
+        if(oneCore){
+            return core.getActionDistribution(signal);
+        }
+
         TreeMap<Integer, Double> dA = getDistribution(signal, false);
         TreeMap<Integer, Double> dB = getDistribution(signal, true);
 
@@ -319,7 +337,6 @@ public class NeuralLearner implements Feed, Runnable {
     }
 
     private TreeMap<Integer, Double> getDistribution(int[] signal, boolean useBackUp){
-
         LearnerService coreUp = coreUpA;
         LearnerService coreDown = coreDownA;
 
@@ -387,7 +404,7 @@ public class NeuralLearner implements Feed, Runnable {
                 for (Map.Entry<Integer, Double> entry : predictionRaw.entrySet()) {
                     prediction.put(data.getValue()[0] + entry.getKey() * resolution, entry.getValue());
                 }
-                DecisionAggregator.aggregateDecision(data, data.getValue()[0], prediction, horizon, false);
+                DecisionAggregatorA.aggregateDecision(data, data.getValue()[0], prediction, horizon, false);
             }
 
         }
@@ -418,6 +435,20 @@ public class NeuralLearner implements Feed, Runnable {
         if (paused) {
             return;
         }
+
+        if(oneCore){
+            double score = 0;
+            double n = 0;
+            Map<Double, StateActionPair> alphas = coreUpA.getAlphaStates();
+            for (Map.Entry<Double, StateActionPair> entry : alphas.entrySet()) {
+                score += Math.pow(entry.getKey(), 2) * Math.log(entry.getValue().getTotalWeight());
+            }
+            n += alphas.size();
+            score /= n;
+            neuronRankings.update(this, score);
+            return;
+        }
+
         double score = 0;
         double n = 0;
         Map<Double, StateActionPair> alphas = coreUpA.getAlphaStates();

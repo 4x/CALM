@@ -7,7 +7,9 @@ import ai.context.util.mathematics.CorrelationCalculator;
 import ai.context.util.mathematics.Operations;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import static ai.context.util.mathematics.Operations.sum;
 
@@ -36,6 +38,7 @@ public class LearnerService {
     private LearnerService thisService = this;
 
     private boolean correlating = false;
+    private boolean useSkewInSimilarity = true;
 
     public boolean isMerging() {
         return merging;
@@ -171,13 +174,17 @@ public class LearnerService {
     private Map<StateActionPair, Double> getSimilarStates(int[] state) {
         updateAndGetCorrelationWeights(state);
 
-        TreeMap<Double, StateActionPair> top = new TreeMap<Double, StateActionPair>();
+        TreeMap<Double, StateActionPair> top = new TreeMap<>();
         for (StateActionPair pair : population.values()) {
             double deviation = getDeviation(state, pair);
             top.put(deviation, pair);
         }
 
+        double meanSkew = 0;
+        HashMap<StateActionPair, Double> skews = new HashMap<>();
+
         int cutOff = (int) (top.size() * PropertiesHolder.tolerance * 5);
+        int skewCutOff = cutOff/3;
         if (doubleCheckMerge) {
             int i = 0;
             TreeMap<Double, StateActionPair> top2 = new TreeMap<Double, StateActionPair>();
@@ -185,9 +192,31 @@ public class LearnerService {
                 updateAndGetCorrelationWeights(pair.getValue().getAmalgamate());
                 double deviation = Math.sqrt(getDeviation(pair.getValue().getAmalgamate(), state, correlationWeights) * pair.getKey());
                 top2.put(deviation, pair.getValue());
+                double skew = getSkewness(pair.getValue());
+                skews.put(pair.getValue(), skew);
+                if(i < skewCutOff){
+                    meanSkew += skew;
+                }
                 if(i++ > cutOff){
                     break;
                 }
+            }
+            top = top2;
+        }
+        meanSkew /= skewCutOff;
+        boolean meanSkewUnset = false;
+        if("NaN".equals("" + meanSkew)){
+            meanSkewUnset = true;
+        }
+
+        if(useSkewInSimilarity){
+            TreeMap<Double, StateActionPair> top2 = new TreeMap<Double, StateActionPair>();
+            for (Map.Entry<Double, StateActionPair> pair : top.entrySet()) {
+                double skewDiff = 1;
+                if(!meanSkewUnset){
+                    skewDiff = Math.log10(Math.pow(skews.get(pair.getValue()) - meanSkew, 2) + 1);
+                }
+                top2.put(pair.getKey() * skewDiff, pair.getValue());
             }
             top = top2;
         }
@@ -301,6 +330,7 @@ public class LearnerService {
                 minDevForMerge *= ((double) population.size() / (getMaxPopulation() / 2)) * 1.01;
                 System.err.println("MinDevForMerge pushed to: " + minDevForMerge);
                 if(runs % 4 == 0){
+                    System.err.println("Refreshing for similar states");
                     for (StateActionPair pair : population.values()) {
                         getSimilarStates(pair.getAmalgamate());
                     }
@@ -372,6 +402,14 @@ public class LearnerService {
             alpha.put(score, pair);
         }
         return alpha;
+    }
+
+    public double getSkewness(StateActionPair pair){
+        double skew = 0;
+        for(Map.Entry<Integer, Double> entry : pair.getActionDistribution().entrySet()){
+            skew += entry.getKey() * entry.getValue();
+        }
+        return skew;
     }
 
     public double[] getCorrelationWeightsForState(StateActionPair sap) {

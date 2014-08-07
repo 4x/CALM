@@ -210,7 +210,7 @@ public class OrderIntelligenceEngine {
                 stimuli.put(entry.getKey(), (int)((Double)entry.getValue() / resolution * 10));
             }
             else if(entry.getValue() instanceof Long){
-                stimuli.put(entry.getKey(), (int)((Long)entry.getValue()/ DecisionAggregator.getTimeQuantum()));
+                stimuli.put(entry.getKey(), (int)((Long)entry.getValue()/ DecisionAggregatorA.getTimeQuantum()));
             }
             else if(entry.getValue() instanceof Double){
                 stimuli.put(entry.getKey(), getLogarithmicDiscretisation((Double)entry.getValue(), 0, resolution));

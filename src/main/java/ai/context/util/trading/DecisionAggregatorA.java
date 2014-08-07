@@ -14,7 +14,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class DecisionAggregator {
+public class DecisionAggregatorA {
 
     private static HashSet<OpenPosition> positions = new HashSet<>();
     private static HashSet<MarketMakerPosition> marketMakerPositions = new HashSet<>();
@@ -42,8 +42,8 @@ public class DecisionAggregator {
         latestL = data.getValue()[2];
         latestC = data.getValue()[0];
 
-        if(time > DecisionAggregator.time){
-            DecisionAggregator.time = time;
+        if(time > DecisionAggregatorA.time){
+            DecisionAggregatorA.time = time;
             timeBasedHistograms.clear();
             decisionsCollected = 0;
         }
@@ -65,8 +65,14 @@ public class DecisionAggregator {
             minProbFraction = 0D;
         }
         double[] results = PositionFactory.getDecision(data.getTimeStamp(), pivot, histogram, timeSpan, minProbFraction, null, null, PropertiesHolder.marketMakerConfidence);
-        if(results[4] + results[5] < PositionFactory.cost * PropertiesHolder.marketMakerAmplitude){
+        /*if(results[4] + results[5] < PositionFactory.cost * PropertiesHolder.marketMakerAmplitude){
             return;
+        }*/
+
+        if(PropertiesHolder.tradeNormal){
+            if(results[0] == 0){
+                return;
+            }
         }
 
         participants++;
@@ -90,7 +96,7 @@ public class DecisionAggregator {
         }
     }
 
-    public static  void decide(){
+    public static void decide(){
         for(Map.Entry<Long, TreeMap<Double, Double>> entry : timeBasedHistograms.entrySet()){
 
             double[] results = PositionFactory.getDecision(time, latestC, entry.getValue(), entry.getKey(),null, null, null, PropertiesHolder.marketMakerConfidence);
@@ -119,12 +125,12 @@ public class DecisionAggregator {
                 if(results[4] + results[5] > PositionFactory.cost * PropertiesHolder.marketMakerAmplitude){
                     if(inLiveTrading && marketMakerDecider != null){
                         MarketMakerPosition advice = new MarketMakerPosition(time, latestC + results[4],  latestC - results[5], latestC + results[6],  latestC - results[7], time + entry.getKey());
-                        advice.adjustTimes(DecisionAggregator.getTimeQuantum());
+                        advice.adjustTimes(DecisionAggregatorA.getTimeQuantum());
                         marketMakerDecider.addAdvice(advice);
                     }
                     else if(marketMakerDeciderHistorical != null){
                         MarketMakerPosition advice = new MarketMakerPosition(time, latestC + results[4],  latestC - results[5], latestC + results[6],  latestC - results[7], time + entry.getKey());
-                        advice.adjustTimes(DecisionAggregator.getTimeQuantum());
+                        advice.adjustTimes(DecisionAggregatorA.getTimeQuantum());
                         advice.attributes.put("cred", results[0]);
 
                         for(int i = 0; i < DecisionUtil.getDecilesU().length; i++){
@@ -184,19 +190,19 @@ public class DecisionAggregator {
     }
 
     public static void setBlackBox(BlackBox blackBox) {
-        DecisionAggregator.blackBox = blackBox;
+        DecisionAggregatorA.blackBox = blackBox;
     }
 
     public static void setMarketMakerDecider(MarketMakerDecider marketMakerDecider) {
-        DecisionAggregator.marketMakerDecider = marketMakerDecider;
+        DecisionAggregatorA.marketMakerDecider = marketMakerDecider;
     }
 
     public static void setMarketMakerDeciderHistorical(MarketMakerDeciderHistorical marketMakerDeciderHistorical) {
-        DecisionAggregator.marketMakerDeciderHistorical = marketMakerDeciderHistorical;
+        DecisionAggregatorA.marketMakerDeciderHistorical = marketMakerDeciderHistorical;
     }
 
     public static void setInLiveTrading(boolean inLiveTrading) {
-        DecisionAggregator.inLiveTrading = inLiveTrading;
+        DecisionAggregatorA.inLiveTrading = inLiveTrading;
         System.out.println("Going into LIVE TRADING");
     }
 
@@ -206,5 +212,9 @@ public class DecisionAggregator {
 
     public static long getTimeQuantum() {
         return timeQuantum;
+    }
+
+    public static HashSet<MarketMakerPosition> getMarketMakerPositions() {
+        return marketMakerPositions;
     }
 }

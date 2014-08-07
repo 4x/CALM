@@ -72,29 +72,15 @@ public class DecisionUtil {
             if (    probFraction > minProbFraction
                     && amplitude > cost
                     && ratio > rewardRiskRatio
-                    && amplitude > PositionFactory.cost * PropertiesHolder.marketMakerAmplitude/2) {
+                    && amplitude > PositionFactory.cost * PropertiesHolder.marketMakerAmplitude) {
 
-                double thisPayoff = amplitude * Math.abs(probL - probS);
-                double initialMult = Math.signum(target);
-                if(thisPayoff > payoff){
-                    int multiplier = 1;
-                    if (probL < probS) {
-                        multiplier = -1;
-                    }
-                    target = multiplier * amplitude;
-                    payoff = thisPayoff;
-
-                    if(target * initialMult < 0){
-                        flip++;
-                    }
+                int multiplier = 1;
+                if (probL < probS) {
+                    multiplier = -1;
                 }
+                target = multiplier * amplitude;
             }
         }
-
-        if(flip > 1){
-            target = 0;
-        }
-
         return new double[]{target, ratio, probFraction, high, low, high1, low1};
     }
 

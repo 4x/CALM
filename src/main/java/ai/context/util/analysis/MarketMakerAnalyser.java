@@ -20,10 +20,12 @@ public class MarketMakerAnalyser {
     int lastMonth = -1;
     int nDay = 0;
     int nMonth = 0;
-    double tradeToCapRatio = 1;
+    double tradeToCapRatio = 5;
 
     double cost = 0.00007;
     double costPerMillion = 0;
+
+    double stopLoss = 0.00075;
 
     public static void main(String[] args){
         MarketMakerAnalyser analyser = new MarketMakerAnalyser();
@@ -55,7 +57,11 @@ public class MarketMakerAnalyser {
                         int changePart = 3;
                         int dirPart = 10;
                         int lifeSpanPart = 12;
-                        Double change = Double.parseDouble(parts[changePart]) - cost;
+                        Double change = Double.parseDouble(parts[changePart]);
+
+                        /*change = Math.max(-stopLoss, change) - cost;*/
+                        change -= cost;
+
                         String dir = parts[dirPart];
                         if(!(dir.equals("SHORT") || dir.equals("LONG"))){
                             dir = parts[11];
@@ -84,7 +90,7 @@ public class MarketMakerAnalyser {
                         }
 
                         if (
-                            //lifeSpan/1800000 > 9 &&
+                            lifeSpan/1800000 > 9 &&
                             //cred >= credRange[0] &&
                             //cred <= credRange[1] &&
                             //targetPnL >= 0.0015 &&
@@ -98,8 +104,8 @@ public class MarketMakerAnalyser {
                             //aggregate(participants, change);
                             //aggregate((int)(100*cred/participants), change);
                             //aggregate(nMonth, change);
-                            //aggregate(formatOutput.format(date), change);
-                            aggregate(date.getYear(), change);
+                            aggregate(formatOutput.format(date), change);
+                            //aggregate(date.getYear(), change);
                             //aggregate(date.getHours(), change);
                             //aggregate(changeClass, change);
                             //aggregate(date.getHours(), change);

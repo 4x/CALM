@@ -24,6 +24,7 @@ import org.junit.Test;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -226,21 +227,20 @@ public class TestTransformer {
                 DataType.DOUBLE,
                 DataType.DOUBLE};
 
-        String dateFP = PropertiesHolder.startDateTime;
+        String dateFP = "2012.05.01 00:00:00";
 
         CSVFeed feed = new CSVFeed("/opt/dev/data/feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feed.setSkipWeekends(true);
-        ExtractOneFromListFeed feedH = new ExtractOneFromListFeed(feed, 1);
-        ExtractOneFromListFeed feedL = new ExtractOneFromListFeed(feed, 2);
         ExtractOneFromListFeed feedC = new ExtractOneFromListFeed(feed, 3);
 
-        AbsoluteAmplitudeWavelengthTransformer transformer = new AbsoluteAmplitudeWavelengthTransformer(feedH, 10, 0.125, 0.0001);
+        AbsoluteAmplitudeWavelengthTransformer transformer = new AbsoluteAmplitudeWavelengthTransformer(feedC, 30, 0.5, 0.0001);
 
+        SimpleDateFormat format = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss");
         for (int i = 0; i < 2000; i++) {
             FeedObject data = transformer.readNext(this);
             List<Double>  out = new ArrayList<>();
             DataSetUtils.add(data.getData(), out);
-            System.out.println(data.getTimeStamp() + " " + out);
+            System.out.println(format.format(data.getTimeStamp()) + " " + out);
         }
     }
 
@@ -253,7 +253,7 @@ public class TestTransformer {
                 DataType.DOUBLE,
                 DataType.DOUBLE};
 
-        String dateFP = PropertiesHolder.startDateTime;
+        String dateFP = "2012.05.01 00:00:00";
 
         CSVFeed feed = new CSVFeed("/opt/dev/data/feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feed.setSkipWeekends(true);
@@ -261,13 +261,12 @@ public class TestTransformer {
         ExtractOneFromListFeed feedL = new ExtractOneFromListFeed(feed, 2);
         ExtractOneFromListFeed feedC = new ExtractOneFromListFeed(feed, 3);
 
-        SimpleTrendOnlineTransformer transformer = new SimpleTrendOnlineTransformer(0.5, feedL, feedH, feedC, 0.0001);
+        SimpleTrendOnlineTransformer transformer = new SimpleTrendOnlineTransformer(0.05, feedL, feedH, feedC, 0.0001);
 
-        for (int i = 0; i < 20000; i++) {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss");
+        for (int i = 0; i < 700; i++) {
             FeedObject data = transformer.readNext(this);
-            List<Double>  out = new ArrayList<>();
-            DataSetUtils.add(data.getData(), out);
-            System.out.println(data.getTimeStamp() + " " + out);
+            System.out.println(format.format(data.getTimeStamp()) + "," + data.getData());
         }
     }
 
@@ -280,20 +279,20 @@ public class TestTransformer {
                 DataType.DOUBLE,
                 DataType.DOUBLE};
 
-        String dateFP = PropertiesHolder.startDateTime;
+        String dateFP = "2012.05.01 00:00:00";
 
         CSVFeed feed = new CSVFeed("/opt/dev/data/feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feed.setSkipWeekends(true);
         ExtractOneFromListFeed feedH = new ExtractOneFromListFeed(feed, 1);
         ExtractOneFromListFeed feedL = new ExtractOneFromListFeed(feed, 2);
+        double res = 0.0001;
 
-        SuddenShiftsOnlineTransformer transformer = new SuddenShiftsOnlineTransformer(400, feedL, feedH, 0.0001, 30);
+        SuddenShiftsOnlineTransformer transformer = new SuddenShiftsOnlineTransformer(50, feedL, feedH, res, 20);
 
-        for (int i = 0; i < 20000; i++) {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss");
+        for (int i = 0; i < 700; i++) {
             FeedObject data = transformer.readNext(this);
-            List<Double>  out = new ArrayList<>();
-            DataSetUtils.add(data.getData(), out);
-            System.out.println(data.getTimeStamp() + " " + out);
+            System.out.println(format.format(data.getTimeStamp()) + "," + data.getData());
         }
     }
 

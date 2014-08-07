@@ -5,8 +5,6 @@ import ai.context.feed.Feed;
 import java.util.ArrayList;
 import java.util.List;
 
-import static ai.context.util.mathematics.Discretiser.getLogarithmicDiscretisation;
-
 public class SimpleTrendOnlineTransformer extends OnlineTransformer {
 
     private final Feed feedMin;
@@ -35,8 +33,8 @@ public class SimpleTrendOnlineTransformer extends OnlineTransformer {
         if (init) {
             double move1 = (maxA - lastClose) - (lastClose - minA);
             double move2 = (maxA - close) - (close - minA);
-            double move = getLogarithmicDiscretisation((move1 - move2) * (maxA - minA)/res, 0, res);
-            trend = trend * (1 - lambda) + move * lambda;
+            double moveRaw = (move1 - move2) * Math.sqrt(maxA - minA)/res;
+            trend = trend * (1 - lambda) + moveRaw * lambda;
         } else {
             buffer.clear();
             while (buffer.size() < bufferSize) {

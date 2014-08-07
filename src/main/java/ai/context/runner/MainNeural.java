@@ -32,7 +32,7 @@ import ai.context.trading.DukascopyConnection;
 import ai.context.util.analysis.LookAheadScheduler;
 import ai.context.util.configuration.DynamicPropertiesLoader;
 import ai.context.util.configuration.PropertiesHolder;
-import ai.context.util.trading.DecisionAggregator;
+import ai.context.util.trading.DecisionAggregatorA;
 import ai.context.util.trading.MarketMakerDecider;
 import ai.context.util.trading.MarketMakerDeciderHistorical;
 import com.dukascopy.api.Instrument;
@@ -96,7 +96,7 @@ public class MainNeural {
         this.path = path;
         ISynchFeed motherFeed = initFeed(path);
         NeuronCluster.getInstance().setMotherFeed(motherFeed);
-        DecisionAggregator.setMarketMakerDeciderHistorical(new MarketMakerDeciderHistorical(path + "feeds/EURUSD_Ticks.csv", null));
+        DecisionAggregatorA.setMarketMakerDeciderHistorical(new MarketMakerDeciderHistorical(path + "feeds/EURUSD_Ticks.csv", null));
 
         long[] horizonRange = new long[]{PropertiesHolder.horizonLowerBound, PropertiesHolder.horizonUpperBound};
         Integer[] actionElements = new Integer[]{3, 1, 2, 0};
@@ -215,8 +215,8 @@ public class MainNeural {
     public void initFXAPI() {
         try {
             client = new DukascopyConnection(dukascopyUsername, dukascopyPassword).getClient();
-            //DecisionAggregator.setBlackBox(new BlackBox(client));
-            DecisionAggregator.setMarketMakerDecider(new MarketMakerDecider(client));
+            //DecisionAggregatorA.setBlackBox(new BlackBox(client));
+            DecisionAggregatorA.setMarketMakerDecider(new MarketMakerDecider(client));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -466,32 +466,12 @@ public class MainNeural {
         LogarithmicDiscretiser stdLC800 = new LogarithmicDiscretiser(res, 0, stdFeedC800, -1);
         synch.addRawFeed(stdLC800);
 
-        AbsoluteAmplitudeWavelengthTransformer awFeedH = new AbsoluteAmplitudeWavelengthTransformer(feedH, 40, 0.25, res);
-        AbsoluteAmplitudeWavelengthTransformer awFeedL = new AbsoluteAmplitudeWavelengthTransformer(feedL, 40, 0.25, res);
-        synch.addRawFeed(awFeedH);
-        synch.addRawFeed(awFeedL);
-
-        AbsoluteAmplitudeWavelengthTransformer awFeedC10 = new AbsoluteAmplitudeWavelengthTransformer(feedC, 10, 0.125, res);
+        AbsoluteAmplitudeWavelengthTransformer awFeedC10 = new AbsoluteAmplitudeWavelengthTransformer(feedC, 10, 0.5, res);
         synch.addRawFeed(awFeedC10);
-        AbsoluteAmplitudeWavelengthTransformer awFeedC20 = new AbsoluteAmplitudeWavelengthTransformer(feedC, 20, 0.125, res);
+        AbsoluteAmplitudeWavelengthTransformer awFeedC20 = new AbsoluteAmplitudeWavelengthTransformer(feedC, 20, 0.5, res);
         synch.addRawFeed(awFeedC20);
-
-
-        MinMaxDistanceTransformer mmdT1 = new MinMaxDistanceTransformer(10, feedL, feedH, feedC, res);
-        MinMaxDistanceTransformer mmdT2 = new MinMaxDistanceTransformer(20, feedL, feedH, feedC, res);
-        MinMaxDistanceTransformer mmdT5 = new MinMaxDistanceTransformer(50, feedL, feedH, feedC, res);
-        MinMaxDistanceTransformer mmdT7 = new MinMaxDistanceTransformer(100, feedL, feedH, feedC, res);
-        MinMaxDistanceTransformer mmdT8 = new MinMaxDistanceTransformer(400, feedL, feedH, feedC, res);
-        MinMaxDistanceTransformer mmdT9 = new MinMaxDistanceTransformer(1000, feedL, feedH, feedC, res);
-        MinMaxDistanceTransformer mmdT10 = new MinMaxDistanceTransformer(4000, feedL, feedH, feedC, res);
-
-        synch.addRawFeed(mmdT1);
-        synch.addRawFeed(mmdT2);
-        synch.addRawFeed(mmdT5);
-        synch.addRawFeed(mmdT7);
-        synch.addRawFeed(mmdT8);
-        synch.addRawFeed(mmdT9);
-        synch.addRawFeed(mmdT10);
+        AbsoluteAmplitudeWavelengthTransformer awFeedC30 = new AbsoluteAmplitudeWavelengthTransformer(feedC, 30, 0.5, res);
+        synch.addRawFeed(awFeedC30);
 
         GradientOnlineTransformer g5 = new GradientOnlineTransformer(5, feedL, feedH, feedC, res);
         GradientOnlineTransformer g10 = new GradientOnlineTransformer(10, feedL, feedH, feedC, res);
@@ -508,6 +488,20 @@ public class MainNeural {
         synch.addRawFeed(g200);
 
         if(main){
+            MinMaxDistanceTransformer mmdT1 = new MinMaxDistanceTransformer(10, feedL, feedH, feedC, res);
+            MinMaxDistanceTransformer mmdT2 = new MinMaxDistanceTransformer(20, feedL, feedH, feedC, res);
+            MinMaxDistanceTransformer mmdT5 = new MinMaxDistanceTransformer(50, feedL, feedH, feedC, res);
+            MinMaxDistanceTransformer mmdT7 = new MinMaxDistanceTransformer(100, feedL, feedH, feedC, res);
+            MinMaxDistanceTransformer mmdT8 = new MinMaxDistanceTransformer(400, feedL, feedH, feedC, res);
+            MinMaxDistanceTransformer mmdT10 = new MinMaxDistanceTransformer(4000, feedL, feedH, feedC, res);
+
+            synch.addRawFeed(mmdT1);
+            synch.addRawFeed(mmdT2);
+            synch.addRawFeed(mmdT5);
+            synch.addRawFeed(mmdT7);
+            synch.addRawFeed(mmdT8);
+            synch.addRawFeed(mmdT10);
+
             RSIOnlineTransformer rsiH = new RSIOnlineTransformer(feedH, 5, 25, 0.5);
             RSIOnlineTransformer rsiL = new RSIOnlineTransformer(feedL, 5, 25, 0.5);
 

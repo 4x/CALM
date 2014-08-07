@@ -136,6 +136,7 @@ public class MarketMakerDeciderHistorical implements OnTickDecider{
                             && bid - PropertiesHolder.marketMakerBeyond/2 < advice.getTargetHigh()
                             && advice.getTargetLow() > avgLow
                             && avgHigh - bid < (bid - advice.getTargetLow())/2
+                            && avgHigh - bid < PropertiesHolder.maxLeewayAmplitude
                             && PropertiesHolder.filterFunction.pass(advice)){
                         advice.setHasOpenedWithShort(true, bid);
                     }
@@ -147,6 +148,7 @@ public class MarketMakerDeciderHistorical implements OnTickDecider{
                             && ask + PropertiesHolder.marketMakerBeyond/2 > advice.getTargetLow()
                             && advice.getTargetHigh() < avgHigh
                             && ask - avgLow < (advice.getTargetHigh() - ask)/2
+                            && ask - avgLow < PropertiesHolder.maxLeewayAmplitude
                             && PropertiesHolder.filterFunction.pass(advice)){
                         advice.setHasOpenedWithLong(true, ask);
                     }
@@ -287,17 +289,17 @@ public class MarketMakerDeciderHistorical implements OnTickDecider{
             lastBid = (double) ((Object[])data.getData())[1];
             lastAsk = (double) ((Object[])data.getData())[0];
         }
-        else if(lastTime <= time + DecisionAggregator.getTimeQuantum()){
+        else if(lastTime <= time + DecisionAggregatorA.getTimeQuantum()){
             onTick(lastTime, lastBid, lastAsk);
         }
 
-        while(lastTime <= time + DecisionAggregator.getTimeQuantum()){
+        while(lastTime <= time + DecisionAggregatorA.getTimeQuantum()){
             data = priceFeed.readNext(this);
             if(data != null){
                 lastTime = data.getTimeStamp();
                 lastBid = (double) ((Object[])data.getData())[1];
                 lastAsk = (double) ((Object[])data.getData())[0];
-                if(lastTime > time + DecisionAggregator.getTimeQuantum()){
+                if(lastTime > time + DecisionAggregatorA.getTimeQuantum()){
                     break;
                 }
 

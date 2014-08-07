@@ -10,10 +10,11 @@ import ai.context.runner.MainNeural;
 import ai.context.util.common.MapUtils;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.Operations;
+import ai.context.util.measurement.MarketMakerPosition;
 import ai.context.util.server.JettyServer;
 import ai.context.util.server.servlets.NeuralClusterInformationServlet;
 import ai.context.util.server.servlets.ScriptingServlet;
-import ai.context.util.trading.DecisionAggregator;
+import ai.context.util.trading.DecisionAggregatorA;
 import ai.context.util.trading.PositionFactory;
 
 import java.util.*;
@@ -138,84 +139,93 @@ public class NeuronCluster implements TimedContainer{
     }
 
     public double getDangerLevel() {
-        return dangerLevel/* * (0.5 + 0.5 * Math.sin(check))*/;
+        return dangerLevel;
     }
 
     private Runnable stepper = new Runnable() {
         @Override
         public void run() {
-            while (true) {
-                for (NeuralLearner neuron : neurons) {
-                    try {
+        while (true) {
+            for (NeuralLearner neuron : neurons) {
+                try {
+                    neuron.step();
+                    while (parentsHaveNext(neuron)) {
                         neuron.step();
-                        while (parentsHaveNext(neuron)) {
-                            neuron.step();
-                        }
-                    } catch (LearningException e) {
-                        e.printStackTrace();
-                        neuron.cleanup();
                     }
-                }
-
-                if (neurons.isEmpty()) {
-                    try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                } catch (LearningException e) {
+                    e.printStackTrace();
+                    neuron.cleanup();
                 }
             }
+            if (neurons.isEmpty()) {
+                try {
+                    Thread.sleep(30000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            tryAndCreateNewGeneration();
+        }
         }
     };
 
     private Runnable environmentCheck = new Runnable() {
         @Override
         public void run() {
-            while (true) {
-                try {
-                    Thread.sleep(600000);
-                    if(!neurons.isEmpty()){
-                        totalPointsConsumed = 0;
-                        double latency = 0;
-                        long meanT = 0;
-                        Set<NeuralLearner> toRemove = new HashSet<>();
-                        for (NeuralLearner neuron : neurons) {
-                            if (!neuron.isAlive()) {
-                                toRemove.add(neuron);
-                            } else {
-                                latency += neuron.getLatency();
-                                totalPointsConsumed += neuron.getPointsConsumed();
-                                meanT += neuron.getLatestTime();
-                            }
-                        }
-
-                        for (NeuralLearner removed : toRemove) {
-                            neurons.remove(removed);
-                            removed.cleanup();
-                        }
-                        for (NeuralLearner neuron : neurons) {
-                            neuron.updateRankings();
-                        }
-
-                        meanTime = meanT / neurons.size();
-                        latency /= neurons.size();
-                        System.err.println("Mean Latency: " + Operations.round(latency, 3) + ", Points Consumed: " + totalPointsConsumed + ", Overall Score: " + Operations.round(rankings.getOverallMarking(), 4) + " as of " + new Date(meanTime));
-                        dangerLevel = latency / minLatency;
-
-                        if(container.isCalibrating() && totalPointsConsumed/neurons.size() > calibrationPoints){
-                            container.nextCalibrationRound();
-                        }
-                        else if(!DecisionAggregator.isInLiveTrading() && meanTime > (System.currentTimeMillis() - 120 * 60000L)){
-                            DecisionAggregator.setInLiveTrading(true);
+        while (true) {
+            try {
+                Thread.sleep(600000);
+                if(!neurons.isEmpty()){
+                    totalPointsConsumed = 0;
+                    double latency = 0;
+                    long meanT = 0;
+                    Set<NeuralLearner> toRemove = new HashSet<>();
+                    for (NeuralLearner neuron : neurons) {
+                        if (!neuron.isAlive()) {
+                            toRemove.add(neuron);
+                        } else {
+                            latency += neuron.getLatency();
+                            totalPointsConsumed += neuron.getPointsConsumed();
+                            meanT += neuron.getLatestTime();
                         }
                     }
 
-                } catch (Exception e) {
-                    e.printStackTrace();
+                    for (NeuralLearner removed : toRemove) {
+                        neurons.remove(removed);
+                        removed.cleanup();
+                    }
+                    for (NeuralLearner neuron : neurons) {
+                        neuron.updateRankings();
+                    }
+
+                    meanTime = meanT / neurons.size();
+                    latency /= neurons.size();
+                    System.err.println("Mean Latency: " + Operations.round(latency, 3) + ", Points Consumed: " + totalPointsConsumed + ", Overall Score: " + Operations.round(rankings.getOverallMarking(), 4) + " as of " + new Date(meanTime));
+                    dangerLevel = latency / minLatency;
+
+                    if(container.isCalibrating() && totalPointsConsumed/neurons.size() > calibrationPoints){
+                        container.nextCalibrationRound();
+                    }
+                    else if(!DecisionAggregatorA.isInLiveTrading() && meanTime > (System.currentTimeMillis() - 120 * 60000L)){
+                        DecisionAggregatorA.setInLiveTrading(true);
+                    }
                 }
+
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
+        }
     };
+
+    int year = 0;
+    public void tryAndCreateNewGeneration(){
+        int year = new Date(meanTime).getYear();
+        if(year > this.year){
+            this.year = year;
+            generateNeurons();
+        }
+    }
 
     public int size() {
         return neurons.size();
@@ -308,6 +318,34 @@ public class NeuronCluster implements TimedContainer{
         return "{" + nodes + "," + links + "}";
     }
 
+    public void generateNeurons(){
+        long[] horizonRange = new long[]{PropertiesHolder.horizonLowerBound, PropertiesHolder.horizonUpperBound};
+        Integer[] actionElements = new Integer[]{3, 1, 2, 0};
+        long outputFutureOffset = 30 * 60 * 1000L;
+        double resolution = 0.0001;
+        Set<Integer> availableStimuli = new HashSet<>();
+        for (int i = 0; i < motherFeed.getNumberOfOutputs(); i++) {
+            availableStimuli.add(i);
+        }
+        availableStimuli.removeAll(Arrays.asList(actionElements));
+        for (int i = 0; i < PropertiesHolder.generationNeurons; i++) {
+            Integer[] sigElements = new Integer[PropertiesHolder.coreStimuliPerNeuron];
+            for (int sig = 0; sig < sigElements.length; sig++) {
+                if (availableStimuli.isEmpty()) {
+                    for (int index = 0; index < motherFeed.getNumberOfOutputs(); index++) {
+                        availableStimuli.add(index);
+                    }
+                    availableStimuli.removeAll(Arrays.asList(actionElements));
+                }
+                List<Integer> available = new ArrayList<>(availableStimuli);
+                int chosenSig = available.get((int) (Math.random() * available.size()));
+                availableStimuli.remove(chosenSig);
+                sigElements[sig] = chosenSig;
+            }
+            NeuronCluster.getInstance().start(new NeuralLearner(horizonRange, motherFeed, actionElements, sigElements, null, null, outputFutureOffset, resolution));
+        }
+    }
+
     public NeuralLearner getNeuronForOutput(int sig) {
         return outputToNeuron.get(sig);
     }
@@ -371,5 +409,9 @@ public class NeuronCluster implements TimedContainer{
 
     public NeuralLearner getNeuronForId(int id) {
         return idToNeuron.get(id);
+    }
+
+    public HashSet<MarketMakerPosition> getMarketMakerPositions() {
+        return DecisionAggregatorA.getMarketMakerPositions();
     }
 }

@@ -7,6 +7,9 @@ public class Latcher {
 
     private double maxUp = 0;
     private double maxDown = 0;
+
+    private double high = Double.MIN_VALUE;
+    private double low = Double.MAX_VALUE;
     private long end;
 
     private long lockedTime = Long.MAX_VALUE;
@@ -16,6 +19,40 @@ public class Latcher {
         this.start = start;
         this.quantum = quantum;
     }
+
+    public void registerBounds(double high, double low, long time){
+        if(time < lockedTime){
+            double deltaUp = high - open;
+            double deltaDown = open - low;
+
+            double tmpMaxUp = maxUp;
+            double tmpMaxDown = maxDown;
+
+            if(deltaUp > maxUp && this.high - low < quantum){
+                tmpMaxUp = deltaUp;
+                end = time;
+            }
+            else if(maxUp > quantum && this.high - low >= quantum){
+                lockedTime = time;
+                return;
+            }
+
+            if(deltaDown > maxDown && high - this.low < quantum){
+                tmpMaxDown = deltaDown;
+                end = time;
+            }
+            else if(maxDown > quantum && high - this.low >= quantum){
+                lockedTime = time;
+                return;
+            }
+
+            maxUp = tmpMaxUp;
+            maxDown = tmpMaxDown;
+            this.high = Math.max(this.high, high);
+            this.low = Math.min(this.low, low);
+        }
+    }
+
 
     public void registerHigh(double val, long time){
         if(time <= lockedTime){

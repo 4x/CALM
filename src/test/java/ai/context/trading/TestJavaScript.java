@@ -13,6 +13,7 @@ public class TestJavaScript {
 
         final JavaScriptBooleanFilterFunction filterFunction = new JavaScriptBooleanFilterFunction();
         ScriptEngine engine = filterFunction.getEngine();
+        engine.put("out", System.out);
         engine.put("filter", filterFunction);
 
         Runnable r = new Runnable() {
