@@ -6,7 +6,7 @@ public class PropertiesHolder {
     public static double recencyBias = 2;
     public static double tolerance = 0.01;
     public static int initialSeriesOffset = 2000;
-    public static int maxPopulation = 2000;
+    public static int maxPopulation = 1000;
     public static double copulaToUniversal = 20;
     public static int toleranceSearch = 2;
     public static String dukascopyLogin = "DEMO10037ZtUmzEU";
@@ -28,11 +28,11 @@ public class PropertiesHolder {
     public static double marketMakerAmplitude = 2;
     public static double marketMakerBeyond = 0.0005;
     public static double marketMakerStopLoss = 0.005;
-    public static boolean neuronReplacement = true;
+    public static boolean neuronReplacement = false;
     public static boolean tradeNormal = true;
-    public static boolean tradeMarketMarker = true;
-    public static boolean liveTrading = true;
-    public static String startDateTime = "2006.01.01 00:00:00";
+    public static boolean tradeMarketMarker = false;
+    public static boolean liveTrading = false;
+    public static String startDateTime = "2008.01.01 00:00:00";
     public static boolean tradeSpecial = false;
     public static double tradeToCreditRatio = 0.005;
     public static double maxLeewayAmplitude = 0.00075;

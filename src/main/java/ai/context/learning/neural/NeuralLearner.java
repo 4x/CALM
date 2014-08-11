@@ -96,6 +96,7 @@ public class NeuralLearner implements Feed, Runnable {
 
         if(oneCore){
             core = new LearnerService();
+            core.setActionResolution(resolution);
         }
         else {
             coreUpA = new LearnerService();
@@ -438,14 +439,15 @@ public class NeuralLearner implements Feed, Runnable {
 
         if(oneCore){
             double score = 0;
-            double n = 0;
-            Map<Double, StateActionPair> alphas = coreUpA.getAlphaStates();
+            Map<Double, StateActionPair> alphas = core.getAlphaStates();
             for (Map.Entry<Double, StateActionPair> entry : alphas.entrySet()) {
-                score += Math.pow(entry.getKey(), 2) * Math.log(entry.getValue().getTotalWeight());
+                score += Math.pow(entry.getKey(), 2);
             }
-            n += alphas.size();
-            score /= n;
-            neuronRankings.update(this, score);
+            double n = alphas.size();
+            score = Math.sqrt(score)/n;
+            if(!"NaN".equals("" + score)){
+                neuronRankings.update(this, score);
+            }
             return;
         }
 

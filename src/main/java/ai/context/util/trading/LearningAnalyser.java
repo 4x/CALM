@@ -26,7 +26,7 @@ public class LearningAnalyser extends JPanel{
         new LearningAnalyser();
     }
 
-    private int neurons = 250;
+    private int neurons = 500;
     private String address = "http://hyophorbe-associates.com:8056";
 
     private TreeMap<Integer, TreeMap<Integer, Double>> dists;

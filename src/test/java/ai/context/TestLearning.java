@@ -105,40 +105,40 @@ public class TestLearning {
             }
 
             /*if(index == 2 && val > 5){
-                movement =  Math.cos(movement);
+                movement =  movement * Math.cos(movement);
             }
             else {
-                movement =  Math.sin(movement);
+                movement =  movement * Math.sin(movement);
             }
 
             if(index == 3 && val > 5){
                 movement =  Math.sqrt(Math.abs(movement));
             }*/
 
-            /*if(index == 4 && val > 5){
+            if(index == 4 && val > 5){
                 neg = true;
             }
 
-            if(index == 5 && movement < 0){
+            /*if(index == 5 && movement < 0){
                 movement = Math.pow(Math.sin(movement), 2);
             }
             else {
                 movement =  Math.pow(Math.cos(movement), 3);
-            }
-
-            if(index == 7 && val > 2 && neg){
-                neg = false;
             }*/
+
+            if(index == 3 && val > 5){
+                neg = !neg;
+            }
 
             index++;
         }
 
-        /*if(neg == true){
+        if(neg == true){
             movement = -Math.abs(movement);
         }
         else {
             movement = +Math.abs(movement);
-        }*/
+        }
 
         movement = movement * (0.9 + (0.2) * Math.random());
         movement = movement * 100;

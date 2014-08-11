@@ -39,6 +39,9 @@ public class LearnerService {
 
     private boolean correlating = false;
     private boolean useSkewInSimilarity = true;
+    private boolean useSkewInSimilarityWhenQuerying = true;
+    private double sumSkewDiff = 0;
+    private long skewDiffsCount = 0;
 
     public boolean isMerging() {
         return merging;
@@ -128,7 +131,7 @@ public class LearnerService {
             StateActionPair counterpart = null;
             double currentDev = -1;
 
-            Set<Map.Entry<StateActionPair, Double>> entries = getSimilarStates(state).entrySet();
+            Set<Map.Entry<StateActionPair, Double>> entries = getSimilarStates(state, true).entrySet();
             for (Map.Entry<StateActionPair, Double> entry : entries) {
                 double weight = getWeightForDeviation(entry.getValue());
                 entry.getKey().newMovement(movement, weight);
@@ -171,7 +174,7 @@ public class LearnerService {
         return correlationWeights;
     }
 
-    private Map<StateActionPair, Double> getSimilarStates(int[] state) {
+    private Map<StateActionPair, Double> getSimilarStates(int[] state, boolean useSkewInSimilarity) {
         updateAndGetCorrelationWeights(state);
 
         TreeMap<Double, StateActionPair> top = new TreeMap<>();
@@ -185,6 +188,7 @@ public class LearnerService {
 
         int cutOff = (int) (top.size() * PropertiesHolder.tolerance * 5);
         int skewCutOff = cutOff/3;
+        double skewW = 0;
         if (doubleCheckMerge) {
             int i = 0;
             TreeMap<Double, StateActionPair> top2 = new TreeMap<Double, StateActionPair>();
@@ -195,7 +199,8 @@ public class LearnerService {
                 double skew = getSkewness(pair.getValue());
                 skews.put(pair.getValue(), skew);
                 if(i < skewCutOff){
-                    meanSkew += skew;
+                    meanSkew += skew * pair.getKey();
+                    skewW += pair.getKey();
                 }
                 if(i++ > cutOff){
                     break;
@@ -203,20 +208,34 @@ public class LearnerService {
             }
             top = top2;
         }
-        meanSkew /= skewCutOff;
+        meanSkew /= skewW;
         boolean meanSkewUnset = false;
         if("NaN".equals("" + meanSkew)){
             meanSkewUnset = true;
         }
 
-        if(useSkewInSimilarity){
+        if(this.useSkewInSimilarity && useSkewInSimilarity){
             TreeMap<Double, StateActionPair> top2 = new TreeMap<Double, StateActionPair>();
             for (Map.Entry<Double, StateActionPair> pair : top.entrySet()) {
                 double skewDiff = 1;
                 if(!meanSkewUnset){
-                    skewDiff = Math.log10(Math.pow(skews.get(pair.getValue()) - meanSkew, 2) + 1);
+                    skewDiff = Math.abs(skews.get(pair.getValue()) - meanSkew);
+
+                    sumSkewDiff += skewDiff;
+                    skewDiffsCount++;
                 }
-                top2.put(pair.getKey() * skewDiff, pair.getValue());
+
+                double dev = pair.getKey();
+                if(dev == 0){
+                    dev = 0.0001;
+                }
+                //dev = Math.log(pair.getKey()*skewDiff * Math.log(skewDiff/dev + 1) + 1);
+                //dev = Math.sqrt(pair.getKey()*skewDiff * Math.log(skewDiff/dev + 1));
+                //dev = pair.getKey() * skewDiff * Math.log(skewDiff/dev + 1);
+                dev = pair.getKey() * skewDiff * Math.log(Math.pow(skewDiff, 2)/dev + 1);
+                //dev = pair.getKey() * skewDiff * Math.pow(Math.log(skewDiff/dev + 1), 2);
+
+                top2.put(dev, pair.getValue());
             }
             top = top2;
         }
@@ -287,6 +306,7 @@ public class LearnerService {
             HashSet<StateActionPair> pairs = new HashSet<>();
             pairs.addAll(population.values());
 
+            double meanWeight = 0;
             int x = 0;
             int y = 0;
             int z = 0;
@@ -302,8 +322,8 @@ public class LearnerService {
                         y++;
                         if (pair != counterpart && population.containsKey(counterpart.getId())) {
                             z++;
-                            if (entry.getKey() <= minDevForMerge) {
-                                merge(pair, counterpart);
+                            if (entry.getKey() <= minDevForMerge && merge(pair, counterpart)) {
+                                meanWeight += (pair.getTotalWeight() + counterpart.getTotalWeight())/2;
                                 sinceLastMerge = 0;
                                 runsSinceLastMerge = 0;
                                 a++;
@@ -320,8 +340,8 @@ public class LearnerService {
                 }
             }
 
-            System.err.println("Run: " + runs + " x: " + x + " y: " + y + " z: " + z + " Check: " + check.size() + " a: " + a);
-            if(!initialMerge && runsSinceLastMerge > 2){
+            System.err.println("Run: " + runs + " x: " + x + " y: " + y + " z: " + z + " Check: " + check.size() + " a: " + a + " MW: " + (meanWeight/a));
+            if(runsSinceLastMerge > 2){
                 minDevForMerge /= ((double) population.size() / (getMaxPopulation() / 2)) * 1.01;
                 System.err.println("MinDevForMerge reverted to: " + minDevForMerge);
                 break;
@@ -332,7 +352,7 @@ public class LearnerService {
                 if(runs % 4 == 0){
                     System.err.println("Refreshing for similar states");
                     for (StateActionPair pair : population.values()) {
-                        getSimilarStates(pair.getAmalgamate());
+                        getSimilarStates(pair.getAmalgamate(), true);
                     }
                 }
             } else if (targetReached) {
@@ -344,15 +364,23 @@ public class LearnerService {
         merging = false;
     }
 
-    private void merge(StateActionPair sap1, StateActionPair sap2) {
+    public double getSkewDiff(StateActionPair sap1, StateActionPair sap2){
+        return Math.abs(getSkewness(sap1) - getSkewness(sap2));
+    }
 
+    private boolean merge(StateActionPair sap1, StateActionPair sap2) {
+        if(sap1.getTotalWeight() > 2 && sap2.getTotalWeight() > 2){
+            return false;
+        }
         if (population.containsKey(sap1.getId()) && population.containsKey(sap2.getId())) {
             StateActionPair newState = sap1.merge(sap2);
             removeState(sap1);
             removeState(sap2);
 
             addState(newState);
+            return true;
         }
+        return false;
     }
 
     private synchronized void removeState(StateActionPair pair) {
@@ -369,7 +397,7 @@ public class LearnerService {
 
     public TreeMap<Integer, Double> getActionDistribution(int[] state) {
         TreeMap<Integer, Double> distribution = new TreeMap<Integer, Double>();
-        for (Map.Entry<StateActionPair, Double> entry : getSimilarStates(state).entrySet()) {
+        for (Map.Entry<StateActionPair, Double> entry : getSimilarStates(state, useSkewInSimilarityWhenQuerying).entrySet()) {
             double weight = getWeightForDeviation(entry.getValue());
             StateActionPair pair = entry.getKey();
 
@@ -451,11 +479,14 @@ public class LearnerService {
     public double getDeviation(int[] state, int[] counterpart, double[] correlationWeights) {
         double deviation = 0;
 
+        int dimensions = 0;
         for (int i = 0; i < state.length || i < counterpart.length; i++) {
             if (correlationWeights[i] >= 0) {
                 deviation += (Math.abs(state[i] - counterpart[i]) * correlationWeights[i]);
+                dimensions++;
             }
         }
+        deviation = deviation/dimensions;
         return deviation;
     }
 

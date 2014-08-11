@@ -47,6 +47,10 @@ public class CSVFeed extends RowFeed {
 
     private HashMap<Feed, LinkedList<FeedObject>> buffers = new HashMap<>();
 
+    public CSVFeed(String fileName, String timeStampRegex, DataType[] types, long startDateTime) {
+        this(fileName, timeStampRegex,types, new SimpleDateFormat(timeStampRegex).format(new Date(startDateTime)));
+    }
+
     public CSVFeed(String fileName, String timeStampRegex, DataType[] types, String startDateTime) {
         this.format = new SimpleDateFormat(timeStampRegex);
         this.fileName = fileName;

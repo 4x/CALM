@@ -70,7 +70,7 @@ public class DecisionAggregatorA {
         }*/
 
         if(PropertiesHolder.tradeNormal){
-            if(results[0] == 0){
+            if(results[1] == 0){
                 return;
             }
         }
