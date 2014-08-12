@@ -1,4 +1,4 @@
-package ai.context.util.trading;
+package ai.context.util.trading.version_1;
 
 import ai.context.util.configuration.PropertiesHolder;
 

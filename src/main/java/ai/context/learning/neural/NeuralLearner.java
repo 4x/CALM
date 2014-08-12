@@ -12,9 +12,9 @@ import ai.context.learning.SelectLearnerFeed;
 import ai.context.util.common.StateActionInformationTracker;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.discretisation.AbsoluteMovementDiscretiser;
-import ai.context.util.measurement.OpenPosition;
-import ai.context.util.trading.BlackBox;
-import ai.context.util.trading.DecisionAggregatorA;
+import ai.context.util.trading.version_1.OpenPosition;
+import ai.context.util.trading.version_1.BlackBox;
+import ai.context.util.trading.version_1.DecisionAggregatorA;
 
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;

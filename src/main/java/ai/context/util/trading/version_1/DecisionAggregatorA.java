@@ -1,12 +1,10 @@
-package ai.context.util.trading;
+package ai.context.util.trading.version_1;
 
 import ai.context.learning.DataObject;
 import ai.context.learning.neural.NeuronCluster;
 import ai.context.util.analysis.StatsHolder;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.Operations;
-import ai.context.util.measurement.MarketMakerPosition;
-import ai.context.util.measurement.OpenPosition;
 import com.dukascopy.api.JFException;
 
 import java.util.Date;

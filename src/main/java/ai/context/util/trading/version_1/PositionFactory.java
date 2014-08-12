@@ -1,6 +1,4 @@
-package ai.context.util.trading;
-
-import ai.context.util.measurement.OpenPosition;
+package ai.context.util.trading.version_1;
 
 import java.util.*;
 

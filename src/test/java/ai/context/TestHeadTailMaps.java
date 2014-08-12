@@ -1,6 +1,6 @@
 package ai.context;
 
-import ai.context.util.trading.PositionFactory;
+import ai.context.util.trading.version_1.PositionFactory;
 import org.junit.Test;
 
 import java.util.TreeMap;

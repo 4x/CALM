@@ -1,7 +1,6 @@
-package ai.context.util.trading;
+package ai.context.util.trading.version_1;
 
 import ai.context.util.mathematics.Operations;
-import ai.context.util.measurement.OpenPosition;
 import com.dukascopy.api.*;
 import com.dukascopy.api.system.IClient;
 import org.slf4j.Logger;

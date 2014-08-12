@@ -39,7 +39,10 @@ public class NeuralLearner2 {
     }
 
     public void feed(StateToAction stateToAction){
-        double movement = stateToAction.horizonActions.get(horizon);
+        double movement = 0;
+        if(stateToAction.horizonActions.containsKey(horizon)){
+            movement = stateToAction.horizonActions.get(horizon);
+        }
         int[] signal = getSignalState(stateToAction.signal);
 
         if(pointsLearned > 200){
@@ -62,14 +65,14 @@ public class NeuralLearner2 {
         int[] signal = new int[signalComponents.length + parents.length + 1];
 
         int index = 0;
-        for(int i = 0; i < signal.length; i++){
-            index++;
+        for(int i = 0; i < signalComponents.length; i++){
             signal[index] = rawSignal[signalComponents[index]];
+            index++;
         }
 
         for(int i = 0; i < parents.length; i++){
-            index++;
             signal[index] = parents[i].getSignal();
+            index++;
         }
         return signal;
     }
@@ -83,7 +86,7 @@ public class NeuralLearner2 {
             weight += entry.getValue();
         }
         mean /= weight;
-        state[state.length] = currentSignal = getLogarithmicDiscretisation(mean, 0, 1, 2);
+        state[state.length - 1] = currentSignal = getLogarithmicDiscretisation(mean, 0, 1, 2);
 
         //Going again
         dist = core.getActionDistribution(state);

@@ -1,7 +1,7 @@
 package ai.context.util.configuration;
 
-import ai.context.util.trading.PositionEngine;
-import ai.context.util.trading.PositionFactory;
+import ai.context.util.trading.version_1.PositionEngine;
+import ai.context.util.trading.version_1.PositionFactory;
 
 import java.io.*;
 import java.util.Timer;

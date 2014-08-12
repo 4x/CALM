@@ -43,6 +43,8 @@ public class LearnerService {
     private double sumSkewDiff = 0;
     private long skewDiffsCount = 0;
 
+    private long pointsConsumed = 0;
+
     public boolean isMerging() {
         return merging;
     }
@@ -108,6 +110,7 @@ public class LearnerService {
 
     public synchronized void addStateAction(int[] state, double movement) throws LearningException {
 
+        pointsConsumed++;
         int actionClass = (int) Operations.round(movement / actionResolution, 0);
         if (!distribution.containsKey(actionClass)) {
             distribution.put(actionClass, 0L);
@@ -342,7 +345,7 @@ public class LearnerService {
 
             System.err.println("Run: " + runs + " x: " + x + " y: " + y + " z: " + z + " Check: " + check.size() + " a: " + a + " MW: " + (meanWeight/a));
             if(runsSinceLastMerge > 2){
-                minDevForMerge /= ((double) population.size() / (getMaxPopulation() / 2)) * 1.01;
+                minDevForMerge /= Math.pow(((double) population.size() / (getMaxPopulation() / 2)) * 1.01, 3);
                 System.err.println("MinDevForMerge reverted to: " + minDevForMerge);
                 break;
             }
@@ -359,7 +362,7 @@ public class LearnerService {
                 break;
             }
         }
-        System.err.println("Ending merge: " + (System.currentTimeMillis() - t) + "ms  (" + minDevForMerge + ")");
+        System.err.println("Ending merge: " + (System.currentTimeMillis() - t) + "ms  (" + minDevForMerge + ") Points consumed: " + pointsConsumed);
         initialMerge = false;
         merging = false;
     }
@@ -369,7 +372,8 @@ public class LearnerService {
     }
 
     private boolean merge(StateActionPair sap1, StateActionPair sap2) {
-        if(sap1.getTotalWeight() > 2 && sap2.getTotalWeight() > 2){
+        double w = Math.exp(-((double)pointsConsumed / 4*PropertiesHolder.maxPopulation)) + 1;
+        if(sap1.getTotalWeight() > w && sap2.getTotalWeight() > w){
             return false;
         }
         if (population.containsKey(sap1.getId()) && population.containsKey(sap2.getId())) {

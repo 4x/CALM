@@ -1,7 +1,7 @@
 package ai.context;
 
-import ai.context.util.measurement.MarketMakerPosition;
-import ai.context.util.trading.MarketMakerDeciderHistorical;
+import ai.context.util.trading.version_1.MarketMakerPosition;
+import ai.context.util.trading.version_1.MarketMakerDeciderHistorical;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

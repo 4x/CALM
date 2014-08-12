@@ -7,9 +7,9 @@ import ai.context.core.ai.StateActionPair;
 import ai.context.util.learning.ClusteredCopulae;
 import ai.context.util.mathematics.CorrelationCalculator;
 import ai.context.util.mathematics.MinMaxAggregator;
-import ai.context.util.measurement.OpenPosition;
-import ai.context.util.trading.BlackBox;
-import ai.context.util.trading.PositionFactory;
+import ai.context.util.trading.version_1.OpenPosition;
+import ai.context.util.trading.version_1.BlackBox;
+import ai.context.util.trading.version_1.PositionFactory;
 import com.dukascopy.api.JFException;
 
 import java.io.*;

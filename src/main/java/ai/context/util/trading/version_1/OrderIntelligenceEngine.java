@@ -1,10 +1,9 @@
-package ai.context.util.trading;
+package ai.context.util.trading.version_1;
 
 import ai.context.core.ai.LearnerService;
 import ai.context.core.ai.LearningException;
 import ai.context.learning.neural.NeuronRankings;
 import ai.context.util.common.Count;
-import ai.context.util.measurement.MarketMakerPosition;
 
 import java.util.*;
 

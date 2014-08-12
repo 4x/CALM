@@ -6,7 +6,7 @@ import ai.context.feed.FeedObject;
 import ai.context.feed.row.CSVFeed;
 import ai.context.feed.synchronised.ISynchFeed;
 import ai.context.util.DataSetUtils;
-import ai.context.util.trading.DecisionAggregatorA;
+import ai.context.util.trading.version_1.DecisionAggregatorA;
 
 import java.util.*;
 
@@ -58,7 +58,7 @@ public class StateToActionSeriesCreator {
                     }
                     signal[i] = num;
                 }
-                System.out.println("Reached: " + new Date(tStart) + ": " + sig);
+                //System.out.println("Reached: " + new Date(tStart) + ": " + sig);
                 StateToAction stateToAction = new StateToAction(tStart, signal);
                 stateToActions.add(stateToAction);
                 for(int i = 0; i < preferredMoves.length; i++){

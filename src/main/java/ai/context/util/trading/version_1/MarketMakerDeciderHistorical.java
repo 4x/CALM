@@ -1,16 +1,16 @@
-package ai.context.util.trading;
+package ai.context.util.trading.version_1;
 
 import ai.context.feed.DataType;
 import ai.context.feed.FeedObject;
 import ai.context.feed.row.CSVFeed;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.Operations;
-import ai.context.util.measurement.MarketMakerPosition;
+import ai.context.util.trading.OnTickDecider;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class MarketMakerDeciderHistorical implements OnTickDecider{
+public class MarketMakerDeciderHistorical implements OnTickDecider {
 
     private TreeMap<Long, Set<MarketMakerPosition>> adviceByGoodTillTime = new TreeMap<>();
     private TreeMap<Long, Set<MarketMakerPosition>> specialPositions = new TreeMap<>();

@@ -10,8 +10,8 @@ import ai.context.runner.feeding.StateToActionSeriesCreator;
 import ai.context.util.DataSetUtils;
 import ai.context.util.configuration.DynamicPropertiesLoader;
 import ai.context.util.configuration.PropertiesHolder;
-import ai.context.util.trading.DecisionAggregatorA;
-import ai.context.util.trading.DecisionAggregatorB;
+import ai.context.util.trading.version_1.DecisionAggregatorA;
+import ai.context.util.trading.version_2.DecisionAggregatorB;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -34,12 +34,12 @@ public class MainNeural2 {
 
         String initialDate = "2007.01.01";
         if (!(args == null && args.length > 1)) {
-            path = args[1];
+            initialDate = args[1];
         }
 
         String finalDate = "2013.01.01";
         if (!(args == null && args.length > 2)) {
-            path = args[2];
+            finalDate = args[2];
         }
 
         MainNeural2 process = new MainNeural2();
@@ -64,7 +64,7 @@ public class MainNeural2 {
             long start = format.parse(initialDate).getTime();
             long end = format.parse(finalDate).getTime();
             double[] preferredMoves = new double[]{0.0005, 0.00075, 0.001, 0.00125, 0.0015, 0.00175, 0.002};
-            series = StateToActionSeriesCreator.createSeries(path, start, end, preferredMoves);
+            series = StateToActionSeriesCreator.createSeries(motherFeed, path, start, end, preferredMoves);
             priceFeed = StateToActionSeriesCreator.priceFeed;
             System.out.println(series.size());
         } catch (ParseException e) {
@@ -107,24 +107,35 @@ public class MainNeural2 {
             NeuralLearner2 neuron = new NeuralLearner2(i, sigElements, parents.toArray(parentsArray), horizon, res);
             neurons.add(neuron);
 
-            System.out.println("Created Neuron " + i + " with signal components: " + Arrays.asList(sigElements) + " and Parents: " + parents + " and horizon: " + horizon);
+            System.out.println("Created Neuron " + i + " with signal components: " + Arrays.toString(sigElements) + " and Parents: " + parents + " and horizon: " + horizon);
             ask = StateToActionSeriesCreator.ask;
             bid = StateToActionSeriesCreator.bid;
         }
     }
 
     public void startLearning(){
+        System.out.println("Learning started");
         while (series.size() > 0){
             int index = (int) (Math.random() * series.size());
             StateToAction stateToAction = series.remove(index);
+            if(stateToAction != null && stateToAction.horizonActions != null){
+                for(NeuralLearner2 neuron : neurons){
+                    neuron.feed(stateToAction);
+                }
+            }
 
-            for(NeuralLearner2 neuron : neurons){
-                neuron.feed(stateToAction);
+            if(series.size() % 1000 == 0){
+                System.out.println("Points remaining to learn: " + series.size());
+                if((Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory()) + Runtime.getRuntime().freeMemory() < 1024 * 1024 * 1024){
+                    System.out.println("Skipping learning further as memory running low");
+                    break;
+                }
             }
         }
     }
 
     public void startTrading(){
+        System.out.println("Learning trading");
         DecisionAggregatorB.setPriceFeed(priceFeed);
         while(true){
             FeedObject data = motherFeed.getNextComposite(null);
@@ -150,7 +161,7 @@ public class MainNeural2 {
             for(NeuralLearner2 neuron : neurons){
                 DecisionAggregatorB.aggregateDecision(tStart, neuron.getOpinionOnContext(signal), res, close, neuron.horizon);
             }
-            DecisionAggregatorB.step(tStart, tEnd);
+            DecisionAggregatorB.act(tStart, tEnd);
         }
     }
 }

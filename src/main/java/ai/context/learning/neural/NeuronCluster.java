@@ -10,12 +10,12 @@ import ai.context.runner.MainNeural;
 import ai.context.util.common.MapUtils;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.Operations;
-import ai.context.util.measurement.MarketMakerPosition;
+import ai.context.util.trading.version_1.MarketMakerPosition;
 import ai.context.util.server.JettyServer;
 import ai.context.util.server.servlets.NeuralClusterInformationServlet;
 import ai.context.util.server.servlets.ScriptingServlet;
-import ai.context.util.trading.DecisionAggregatorA;
-import ai.context.util.trading.PositionFactory;
+import ai.context.util.trading.version_1.DecisionAggregatorA;
+import ai.context.util.trading.version_1.PositionFactory;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
