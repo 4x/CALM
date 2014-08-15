@@ -28,17 +28,17 @@ public class MainNeural2 {
             e.printStackTrace();
         }
         String path = "/opt/dev/data/";
-        if (!(args == null && args.length > 0)) {
+        if (args != null && args.length > 0) {
             path = args[0];
         }
 
-        String initialDate = "2007.01.01";
-        if (!(args == null && args.length > 1)) {
+        String initialDate = "2006.04.01";
+        if (args != null && args.length > 1) {
             initialDate = args[1];
         }
 
-        String finalDate = "2013.01.01";
-        if (!(args == null && args.length > 2)) {
+        String finalDate = "2006.08.01";
+        if (args != null && args.length > 2) {
             finalDate = args[2];
         }
 
@@ -72,7 +72,7 @@ public class MainNeural2 {
         }
 
         long[] possibleHorizons = new long[6];
-        for(int i = 0; i < 6; i++){
+        for(int i = 0; i < possibleHorizons.length; i++){
             possibleHorizons[i] = (i + 1) * DecisionAggregatorA.getTimeQuantum();
         }
 
@@ -80,22 +80,45 @@ public class MainNeural2 {
         for (int i = 0; i < motherFeed.getNumberOfOutputs(); i++) {
             availableStimuli.add(i);
         }
-        for (int i = 0; i < PropertiesHolder.totalNeurons; i++) {
-            int[] sigElements = new int[PropertiesHolder.coreStimuliPerNeuron];
-            for (int sig = 0; sig < sigElements.length; sig++) {
-                if (availableStimuli.isEmpty()) {
-                    for (int index = 0; index < motherFeed.getNumberOfOutputs(); index++) {
-                        availableStimuli.add(index);
+
+        int i = 1;
+        for(int s = 2; s < 7; s++){
+            int n = 3000/s;
+            for(int iS = 0; iS < n; iS++){
+                int[] sigElements = new int[s];
+                for (int sig = 0; sig < sigElements.length; sig++) {
+                    if (availableStimuli.isEmpty()) {
+                        for (int index = 0; index < motherFeed.getNumberOfOutputs(); index++) {
+                            availableStimuli.add(index);
+                        }
+                    }
+                    List<Integer> available = new ArrayList<>(availableStimuli);
+                    int chosenSig = available.get((int) (Math.random() * available.size()));
+                    availableStimuli.remove(chosenSig);
+                    sigElements[sig] = chosenSig;
+                }
+
+                ArrayList<NeuralLearner2> parents = new ArrayList<>();
+                while(parents.size() < PropertiesHolder.parentsPerNeuron && parents.size() != neurons.size()){
+                    int parentId = (int)(neurons.size() * Math.random());
+                    if(parentId < neurons.size()){
+                        parents.add(neurons.get(parentId));
                     }
                 }
-                List<Integer> available = new ArrayList<>(availableStimuli);
-                int chosenSig = available.get((int) (Math.random() * available.size()));
-                availableStimuli.remove(chosenSig);
-                sigElements[sig] = chosenSig;
-            }
+                NeuralLearner2[] parentsArray = new NeuralLearner2[parents.size()];
 
+                long horizon = possibleHorizons[((int) (Math.random() * possibleHorizons.length))];
+                NeuralLearner2 neuron = new NeuralLearner2(i, sigElements, parents.toArray(parentsArray), horizon, res);
+                neurons.add(neuron);
+                System.out.println("Created Neuron " + i + " with signal components: " + Arrays.toString(sigElements) + " and Parents: " + parents + " and horizon: " + horizon);
+                i++;
+            }
+        }
+
+        for(int iP = 0; iP < 200; iP++){
+            int[] sigElements = new int[0];
             ArrayList<NeuralLearner2> parents = new ArrayList<>();
-            while(parents.size() < PropertiesHolder.parentsPerNeuron && parents.size() != neurons.size()){
+            while(parents.size() < 6 && parents.size() != neurons.size()){
                 int parentId = (int)(neurons.size() * Math.random());
                 if(parentId < neurons.size()){
                     parents.add(neurons.get(parentId));
@@ -106,18 +129,21 @@ public class MainNeural2 {
             long horizon = possibleHorizons[((int) (Math.random() * possibleHorizons.length))];
             NeuralLearner2 neuron = new NeuralLearner2(i, sigElements, parents.toArray(parentsArray), horizon, res);
             neurons.add(neuron);
-
             System.out.println("Created Neuron " + i + " with signal components: " + Arrays.toString(sigElements) + " and Parents: " + parents + " and horizon: " + horizon);
-            ask = StateToActionSeriesCreator.ask;
-            bid = StateToActionSeriesCreator.bid;
+            i++;
         }
+        ask = StateToActionSeriesCreator.ask;
+        bid = StateToActionSeriesCreator.bid;
     }
 
     public void startLearning(){
         System.out.println("Learning started");
+        long pointsLearned = 0;
         while (series.size() > 0){
             int index = (int) (Math.random() * series.size());
             StateToAction stateToAction = series.remove(index);
+            //System.out.println(index + ": " + new Date(stateToAction.timeStamp));
+
             if(stateToAction != null && stateToAction.horizonActions != null){
                 for(NeuralLearner2 neuron : neurons){
                     neuron.feed(stateToAction);
@@ -126,16 +152,17 @@ public class MainNeural2 {
 
             if(series.size() % 1000 == 0){
                 System.out.println("Points remaining to learn: " + series.size());
-                if((Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory()) + Runtime.getRuntime().freeMemory() < 1024 * 1024 * 1024){
-                    System.out.println("Skipping learning further as memory running low");
-                    break;
-                }
             }
+            if(pointsLearned > PropertiesHolder.pointsToLearn){
+                System.out.println("Skipping learning further as reached learning limit");
+                break;
+            }
+            pointsLearned++;
         }
     }
 
     public void startTrading(){
-        System.out.println("Learning trading");
+        System.out.println("Starting trading");
         DecisionAggregatorB.setPriceFeed(priceFeed);
         while(true){
             FeedObject data = motherFeed.getNextComposite(null);

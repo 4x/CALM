@@ -12,14 +12,13 @@ import java.util.*;
 public class DecisionAggregatorB {
     private static long timeQuantum = 30*60*1000L;
     private static long time = 0;
-    private static TreeMap<Long, TreeMap<Double, Double>> timeBasedHistograms = new TreeMap<>();
+    private static TreeMap<Long, HorizonStats> timeBasedHistograms = new TreeMap<>();
 
     private static HashSet<Position> positions = new HashSet<>();
 
     private static boolean inLiveTrading = false;
 
     private static Feed priceFeed;
-    private static int decisionsCollected = 0;
     private static FeedObject pricePoint;
 
     private static double close;
@@ -41,12 +40,11 @@ public class DecisionAggregatorB {
         if(time > DecisionAggregatorB.time){
             DecisionAggregatorB.time = time;
             timeBasedHistograms.clear();
-            decisionsCollected = 0;
         }
 
         long tExit = time + horizon;
         if(!timeBasedHistograms.containsKey(tExit)){
-            timeBasedHistograms.put(tExit, new TreeMap<Double, Double>());
+            timeBasedHistograms.put(tExit, new HorizonStats());
         }
 
         double cred = 0;
@@ -54,7 +52,20 @@ public class DecisionAggregatorB {
             cred += w;
         }
 
-        TreeMap<Double, Double> hist = timeBasedHistograms.get(tExit);
+        TreeMap<Double, Double> deNormalised = new TreeMap<>();
+        for(Map.Entry<Integer, Double> entry : pred.entrySet()){
+
+            double level = Operations.round((entry.getKey() * res), 4);
+            deNormalised.put(level, entry.getValue());
+        }
+        double decision = getDecision(deNormalised, PositionFactory.minProbFraction, PositionFactory.rewardRiskRatio);
+        if(Math.abs(decision) < 5 * PositionFactory.cost){
+            return;
+        }
+
+        HorizonStats horizonStats = timeBasedHistograms.get(tExit);
+        horizonStats.decisionList.add(decision);
+        TreeMap<Double, Double> hist = horizonStats.hist;
         for(Map.Entry<Integer, Double> entry : pred.entrySet()){
 
             double level = Operations.round((entry.getKey() * res), 4);
@@ -71,15 +82,45 @@ public class DecisionAggregatorB {
     }
 
     private static void newOrders() {
-        for(Map.Entry<Long, TreeMap<Double, Double>> horizonEntry : timeBasedHistograms.entrySet()){
+        for(Map.Entry<Long, HorizonStats> horizonEntry : timeBasedHistograms.entrySet()){
             long expiry = horizonEntry.getKey();
-            double decision = getDecision(horizonEntry.getValue(), 0.5, 2);
+            double count = horizonEntry.getValue().decisionList.size();
+            double countL = 0;
+            double countS = 0;
+            double avg = 0;
+
+            for(double decision : horizonEntry.getValue().decisionList){
+                if(decision > 0){
+                    countL++;
+                }
+                else{
+                    countS++;
+                }
+                avg += decision;
+            }
+            avg /= count;
+
+            double decision = getDecision(horizonEntry.getValue().hist, PositionFactory.minProbFraction, PositionFactory.rewardRiskRatio);
             if(Math.abs(decision) > 5 * PositionFactory.cost){
                 int dir = 1;
                 if(decision < 0){
                     dir = -1;
                 }
-                positions.add(new Position(expiry, time, close, dir, close + decision, close - decision));
+
+                if(dir * avg < 0){
+                    return;
+                }
+
+                if(dir > 0 && (countS == 0 || countL/countS < PositionFactory.rewardRiskRatio)){
+                    return;
+                }
+
+                if(dir < 0 && (countL == 0 || countS/countL < PositionFactory.rewardRiskRatio)){
+                    return;
+                }
+
+                double amplitude = Math.abs(decision);
+                positions.add(new Position(expiry, time, close, dir, amplitude/2, amplitude, new Object[]{count, countS, countL, avg}));
             }
         }
     }
@@ -97,8 +138,22 @@ public class DecisionAggregatorB {
                 else {
                     report += "LOSS ";
                 }
-                report += "CHANGE: " + position.getPnL() + " ACC: " + pnl;
-                System.out.print(report);
+                report += "CHANGE: " + Operations.round(position.getPnL(), 5) + ", ("+Operations.round(position.getAmplitude(), 5)+")" + " ACC: " + Operations.round(pnl, 5);
+                if(position.isTimeOut()){
+                    report += " TIME_OUT";
+                }
+                else {
+                    report += " NORMAL";
+                }
+
+                if(position.direction > 0){
+                    report += " LONG";
+                }
+                else {
+                    report += " SHORT";
+                }
+                report += " " + position.getInfo();
+                System.out.println(report);
 
                 toRemove.add(position);
             }
@@ -141,12 +196,19 @@ public class DecisionAggregatorB {
         SortedMap<Double, Double> sMap = pred.headMap(0.00001);
         SortedMap<Double, Double> lMap = pred.tailMap(-0.00001);
 
+        if(sMap.containsKey(0D)){
+            sMap.put(0D, sMap.get(0D)/4);
+        }
+        if(lMap.containsKey(0D)){
+            lMap.put(0D, lMap.get(0D)/4);
+        }
+
         TreeSet<Double> ticks = new TreeSet<>();
         for(Double v : sMap.keySet()){
-            ticks.add(-v);
+            ticks.add(Math.abs(v));
         }
         for(Double v : lMap.keySet()){
-            ticks.add(v);
+            ticks.add(Math.abs(v));
         }
 
         TreeMap<Double, Double[]> cum = new TreeMap<>();
@@ -176,7 +238,11 @@ public class DecisionAggregatorB {
             double pS = entry.getValue()[0]/max;
             double pL = entry.getValue()[1]/max;
             double prob = Math.max(pS, pL);
-            double ratio = Math.max(pL, pS) / Math.min(pL, pS);
+            double min = Math.min(pL, pS);
+            double ratio = 10;
+            if(min > 0){
+                ratio = prob / min;
+            }
 
             if(prob >= minProb && ratio > rewardToRiskRatio){
                 double mult = 1;
@@ -190,33 +256,34 @@ public class DecisionAggregatorB {
             }
         }
 
-        SortedMap<Double, Double[]> inspectionMap = cum.headMap(Math.abs(decision)).tailMap(2*decision/3);
-        char dir = 'X';
-        for(Map.Entry<Double, Double[]> entry : inspectionMap.entrySet()){
-            double pS = entry.getValue()[0]/max;
-            double pL = entry.getValue()[1]/max;
-            if(dir == 'X'){
-                if(pS > pL){
-                    dir = 'S';
+        if(Math.abs(decision) > 0){
+            SortedMap<Double, Double[]> inspectionMap = cum.headMap(Math.abs(decision)).tailMap(Math.abs(2*decision/3));
+            char dir = 'X';
+            for(Map.Entry<Double, Double[]> entry : inspectionMap.entrySet()){
+                double pS = entry.getValue()[0]/max;
+                double pL = entry.getValue()[1]/max;
+                if(dir == 'X'){
+                    if(pS > pL){
+                        dir = 'S';
+                    }
+                    else if(pL > pS){
+                        dir = 'L';
+                    }
                 }
-                else if(pL > pS){
-                    dir = 'L';
+                else if(dir == 'S'){
+                    if(pS <= pL){
+                        dir = 'O';
+                    }
+                }
+                else if(dir == 'L'){
+                    if(pL <= pS){
+                        dir = 'O';
+                    }
                 }
             }
-            else if(dir == 'S'){
-                if(pS <= pL){
-                    dir = 'O';
-                }
+            if(!((decision < 0 && dir == 'S') || (decision > 0 && dir == 'L'))){
+                decision = 0;
             }
-            else if(dir == 'L'){
-                if(pL <= pS){
-                    dir = 'O';
-                }
-            }
-        }
-
-        if(!((decision < 0 && dir == 'S') || (decision > 0 && dir == 'L'))){
-            decision = 0;
         }
         return decision;
     }

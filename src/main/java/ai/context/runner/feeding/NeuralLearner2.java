@@ -50,7 +50,9 @@ public class NeuralLearner2 {
         }
 
         try {
-            core.addStateAction(signal, discretiser.process(movement));
+            movement = discretiser.process(movement);
+            core.addStateAction(signal, movement);
+            //System.out.println("[" + id + "] " + Arrays.asList(signal) + " -> " + movement);
             pointsLearned++;
         } catch (LearningException e) {
             e.printStackTrace();
@@ -86,6 +88,7 @@ public class NeuralLearner2 {
             weight += entry.getValue();
         }
         mean /= weight;
+        mean = Math.pow(mean, 3);
         state[state.length - 1] = currentSignal = getLogarithmicDiscretisation(mean, 0, 1, 2);
 
         //Going again
@@ -97,6 +100,7 @@ public class NeuralLearner2 {
             weight += entry.getValue();
         }
         mean /= weight;
+        mean = Math.pow(mean, 3);
         currentSignal = getLogarithmicDiscretisation(mean, 0, 1, 2);
 
         return dist;

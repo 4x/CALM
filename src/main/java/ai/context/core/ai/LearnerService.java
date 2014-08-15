@@ -1,5 +1,6 @@
 package ai.context.core.ai;
 
+import ai.context.util.common.Count;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.learning.AmalgamateUtils;
 import ai.context.util.learning.ClusteredCopulae;
@@ -288,7 +289,7 @@ public class LearnerService {
     }
 
     private boolean initialMerge = true;
-    private synchronized void mergeStates() throws LearningException {
+    /*private synchronized void mergeStates() throws LearningException {
         merging = true;
         if (minDevForMerge == -1) {
             minDevForMerge = 10 * (minDev + maxDev) / getMaxPopulation();
@@ -365,6 +366,113 @@ public class LearnerService {
         System.err.println("Ending merge: " + (System.currentTimeMillis() - t) + "ms  (" + minDevForMerge + ") Points consumed: " + pointsConsumed);
         initialMerge = false;
         merging = false;
+    }*/
+    private synchronized void mergeStates(){
+        merging = true;
+        double m = getMinDevToMerge((double)(population.size() - PropertiesHolder.maxPopulation/2)/(double)(population.size()));
+        if(m > minDevForMerge){
+            minDevForMerge = m;
+        }
+
+        long t = System.currentTimeMillis();
+        System.err.println("Starting merge process (" + minDevForMerge + ")");
+
+        boolean targetReached = false;
+
+        int runsSinceLastMerge = 0;
+        int runs = 0;
+        while (true) {
+            runs++;
+            runsSinceLastMerge++;
+            HashSet<StateActionPair> pairs = new HashSet<>();
+            pairs.addAll(population.values());
+
+            double meanWeight = 0;
+            int x = 0;
+            int y = 0;
+            int z = 0;
+            int a = 0;
+            int sinceLastMerge = 0;
+            HashSet<StateActionPair> check = new HashSet<>();
+            for (StateActionPair pair : pairs) {
+                if (population.containsKey(pair.getId())) {
+                    x++;
+                    for (Map.Entry<Double, StateActionPair> entry : pair.getClosestNeighbours().entrySet()) {
+                        StateActionPair counterpart = entry.getValue();
+                        check.addAll(pair.getClosestNeighbours().values());
+                        y++;
+                        if (pair != counterpart && population.containsKey(counterpart.getId())) {
+                            z++;
+                            if (entry.getKey() <= minDevForMerge && merge(pair, counterpart)) {
+                                meanWeight += (pair.getTotalWeight() + counterpart.getTotalWeight())/2;
+                                sinceLastMerge = 0;
+                                runsSinceLastMerge = 0;
+                                a++;
+                                if (population.size() < getMaxPopulation() / 2) {
+                                    targetReached = true;
+                                }
+                            }
+                        }
+                    }
+                    if (targetReached) {
+                        break;
+                    }
+                    sinceLastMerge++;
+                }
+            }
+
+            System.err.println("Run: " + runs + " x: " + x + " y: " + y + " z: " + z + " Check: " + check.size() + " a: " + a + " MW: " + (meanWeight/a));
+
+            if(runsSinceLastMerge > 0){
+                minDevForMerge *= 1.25;
+                m = getMinDevToMerge((double)(population.size() - PropertiesHolder.maxPopulation/2)/(double)(population.size()));
+                if(m > minDevForMerge){
+                    minDevForMerge = m;
+                }
+            }
+            System.err.println("Using minDevForMerge: " + minDevForMerge);
+            if(runsSinceLastMerge > 2){
+                System.err.println("Skipping merging for now");
+
+                break;
+            }
+
+            if (targetReached) {
+                break;
+            }
+        }
+        System.err.println("Ending merge: " + (System.currentTimeMillis() - t) + "ms  (" + minDevForMerge + ") Points consumed: " + pointsConsumed);
+        initialMerge = false;
+        merging = false;
+    }
+
+    private double getMinDevToMerge(double fractionToMerge){
+        for (StateActionPair pair : population.values()) {
+            getSimilarStates(pair.getAmalgamate(), true);
+        }
+
+        double max = 0;
+        TreeMap<Double, Count> dist = new TreeMap<>();
+        for (StateActionPair pair : population.values()) {
+            for (Map.Entry<Double, StateActionPair> entry : pair.getClosestNeighbours().entrySet()) {
+                if(!dist.containsKey(entry.getKey())){
+                    dist.put(entry.getKey(), new Count());
+                }
+                dist.get(entry.getKey()).val += 1;
+                max++;
+            }
+        }
+
+        double cum = 0;
+        for(Map.Entry<Double, Count> entry: dist.entrySet()){
+            if(entry.getKey() > 0){
+                cum += entry.getValue().val;
+                if(cum/max > fractionToMerge){
+                    return entry.getKey();
+                }
+            }
+        }
+        return -1;
     }
 
     public double getSkewDiff(StateActionPair sap1, StateActionPair sap2){

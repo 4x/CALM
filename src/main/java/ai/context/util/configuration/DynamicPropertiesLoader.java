@@ -141,6 +141,8 @@ public class DynamicPropertiesLoader {
                         PropertiesHolder.tradeToCreditRatio = Double.parseDouble(parts[1]);
                     } else if (parts[0].equals("maxLeewayAmplitude")) {
                         PropertiesHolder.maxLeewayAmplitude = Double.parseDouble(parts[1]);
+                    } else if (parts[0].equals("pointsToLearn")) {
+                        PropertiesHolder.pointsToLearn = Long.parseLong(parts[1]);
                     }
                 }
                 System.out.println("Global configuration changed: " + PropertiesHolder.getInfo());

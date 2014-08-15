@@ -14,7 +14,7 @@ public class PropertiesHolder {
     public static int parentsPerNeuron = 3;
     public static int addtionalStimuliPerNeuron = 0;
     public static int coreStimuliPerNeuron = 7;
-    public static int totalNeurons = 150;
+    public static int totalNeurons = 10;
     public static int generationNeurons = 50;
     public static int httpPort = 8055;
     public static boolean normalisationOfSuggestion = true;
@@ -36,6 +36,7 @@ public class PropertiesHolder {
     public static boolean tradeSpecial = false;
     public static double tradeToCreditRatio = 0.005;
     public static double maxLeewayAmplitude = 0.00075;
+    public static long pointsToLearn = 1000;
     public static JavaScriptBooleanFilterFunction filterFunction = new JavaScriptBooleanFilterFunction();
 
     public static String getInfo() {
@@ -73,6 +74,7 @@ public class PropertiesHolder {
                 ",\ntradeSpecial=" + tradeSpecial +
                 ",\ntradeToCreditRatio=" + tradeToCreditRatio +
                 ",\nmaxLeewayAmplitude=" + maxLeewayAmplitude +
+                ",\npointsToLearn=" + pointsToLearn +
                 '}';
     }
 }

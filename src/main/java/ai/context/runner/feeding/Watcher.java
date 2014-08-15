@@ -26,21 +26,26 @@ public class Watcher {
         this.low = initialAsk;
     }
 
-    public boolean addPoint(double timeStamp, double ask, double bid){
-        if(timeStamp > tEnd){
-            if(high - initialAsk > movement){
-                listener.horizonActions.put(horizon, high - initialAsk);
-            }
-            else if(initialBid - low > movement){
-                listener.horizonActions.put(horizon, low - initialBid);
-            }
-            else {
-                listener.horizonActions.put(horizon, 0.0);
-            }
+    public boolean addPoint(long timeStamp, double ask, double bid){
+
+        if(closed){
             return true;
         }
 
-        if(closed){
+        if(timeStamp > tEnd){
+            if(dir == 1){
+                listener.horizonActions.put(horizon, high - initialAsk);
+                //System.out.println(new Date(timeStamp) + " " +horizon + " -> " + (high - initialAsk));
+            }
+            else if(dir == -1){
+                listener.horizonActions.put(horizon, low - initialBid);
+                //System.out.println(new Date(timeStamp) + " " +horizon + " -> " + (low - initialBid));
+            }
+            else {
+                listener.horizonActions.put(horizon, 0.0);
+                //System.out.println(new Date(timeStamp) + " " +horizon + " -> " + (0));
+            }
+            closed = true;
             return true;
         }
 
@@ -64,11 +69,13 @@ public class Watcher {
         else {
             if(dir == 1 && initialBid - low > movement){
                 listener.horizonActions.put(horizon, high - initialAsk);
+                //System.out.println(new Date(timeStamp) + " " +horizon + " -> " + (high - initialAsk) + " N");
                 closed = true;
                 return true;
             }
-            else if(high - initialAsk > movement){
+            else if(dir == -1 && high - initialAsk > movement){
                 listener.horizonActions.put(horizon, low - initialBid);
+                //System.out.println(new Date(timeStamp) + " " +horizon + " -> " + (low - initialBid) + " N");
                 closed = true;
                 return true;
             }

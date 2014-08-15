@@ -8,7 +8,7 @@ public class PositionFactory {
     private static double leverage = 1;
     private static double amount = 0;
     public static double cost = 0.0002;
-    public static double rewardRiskRatio = 1.5;
+    public static double rewardRiskRatio = 2;
     private static double minTakeProfit = 0.001;
     private static double minTakeProfitVertical = 0.001;
 

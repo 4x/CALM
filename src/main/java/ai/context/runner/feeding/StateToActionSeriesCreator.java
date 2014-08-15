@@ -8,7 +8,10 @@ import ai.context.feed.synchronised.ISynchFeed;
 import ai.context.util.DataSetUtils;
 import ai.context.util.trading.version_1.DecisionAggregatorA;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class StateToActionSeriesCreator {
 
@@ -59,13 +62,15 @@ public class StateToActionSeriesCreator {
                     signal[i] = num;
                 }
                 //System.out.println("Reached: " + new Date(tStart) + ": " + sig);
-                StateToAction stateToAction = new StateToAction(tStart, signal);
-                stateToActions.add(stateToAction);
-                for(int i = 0; i < preferredMoves.length; i++){
-                    long horizon = (i + 1)*DecisionAggregatorA.getTimeQuantum();
-                    long tStop = tStart + horizon;
-                    Watcher watcher = new Watcher(horizon, tStop, stateToAction, preferredMoves[i], ask, bid);
-                    watchers.add(watcher);
+                if(ask != 0 && bid != 0){
+                    StateToAction stateToAction = new StateToAction(tStart, signal);
+                    stateToActions.add(stateToAction);
+                    for(int i = 0; i < preferredMoves.length; i++){
+                        long horizon = (i + 1)*DecisionAggregatorA.getTimeQuantum();
+                        long tStop = tStart + horizon;
+                        Watcher watcher = new Watcher(horizon, tStop, stateToAction, preferredMoves[i], ask, bid);
+                        watchers.add(watcher);
+                    }
                 }
                 while(true){
                     if(pricePoint != null){
