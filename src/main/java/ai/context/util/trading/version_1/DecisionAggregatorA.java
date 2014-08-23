@@ -17,9 +17,9 @@ public class DecisionAggregatorA {
     private static HashSet<OpenPosition> positions = new HashSet<>();
     private static HashSet<MarketMakerPosition> marketMakerPositions = new HashSet<>();
 
-    private static long timeQuantum = 30*60*1000L;
     private static long time = 0;
-    private static TreeMap<Long, TreeMap<Double, Double>> timeBasedHistograms = new TreeMap<>();
+    private static TreeMap<Long, TreeMap<Double, Double>> timeBasedHistogramsPositional = new TreeMap<>();
+    private static TreeMap<Long, TreeMap<Double, Double>> timeBasedHistogramsMarketMaker = new TreeMap<>();
 
     private static double latestH;
     private static double latestL;
@@ -31,7 +31,8 @@ public class DecisionAggregatorA {
     private static MarketMakerDeciderHistorical marketMakerDeciderHistorical;
 
     private static int decisionsCollected = 0;
-    private static int participants = 0;
+    private static int participantsMM = 0;
+    private static int participantsP = 0;
 
     public static void aggregateDecision(DataObject data, double pivot, TreeMap<Double, Double> histogram, long timeSpan, boolean goodTillClosed){
 
@@ -42,7 +43,8 @@ public class DecisionAggregatorA {
 
         if(time > DecisionAggregatorA.time){
             DecisionAggregatorA.time = time;
-            timeBasedHistograms.clear();
+            timeBasedHistogramsPositional.clear();
+            timeBasedHistogramsMarketMaker.clear();
             decisionsCollected = 0;
         }
 
@@ -58,55 +60,65 @@ public class DecisionAggregatorA {
             return;
         }
 
-        Double minProbFraction = null;
-        if(!PropertiesHolder.tradeNormal){
-            minProbFraction = 0D;
+        double[] results = PositionFactory.getDecision(data.getTimeStamp(), pivot, histogram, timeSpan, null, null, null, PropertiesHolder.marketMakerConfidence);
+        if(results[4] + results[5] > PositionFactory.cost * PropertiesHolder.marketMakerAmplitude){
+            participantsMM++;
+            double cred = 1;
+            if(PropertiesHolder.normalisationOfSuggestion){
+                cred = results[0];
+            }
+
+            long tExit = (long) Math.ceil((double) timeSpan / (double) PropertiesHolder.timeQuantum) * PropertiesHolder.timeQuantum;
+            if(!timeBasedHistogramsMarketMaker.containsKey(tExit)){
+                timeBasedHistogramsMarketMaker.put(tExit, new TreeMap<Double, Double>());
+            }
+
+            TreeMap<Double, Double> hist = timeBasedHistogramsMarketMaker.get(tExit);
+            for(Map.Entry<Double, Double> entry : histogram.entrySet()){
+                if(!hist.containsKey(entry.getKey())){
+                    hist.put(entry.getKey(), 0.0);
+                }
+                hist.put(entry.getKey(), hist.get(entry.getKey()) + entry.getValue()/cred);
+            }
         }
-        double[] results = PositionFactory.getDecision(data.getTimeStamp(), pivot, histogram, timeSpan, minProbFraction, null, null, PropertiesHolder.marketMakerConfidence);
-        /*if(results[4] + results[5] < PositionFactory.cost * PropertiesHolder.marketMakerAmplitude){
-            return;
-        }*/
 
         if(PropertiesHolder.tradeNormal){
-            if(results[1] == 0){
-                return;
+            if(results[1] > 0){
+                participantsP++;
+                double cred = 1;
+                if(PropertiesHolder.normalisationOfSuggestion){
+                    cred = results[0];
+                }
+
+                long tExit = (long) Math.ceil((double) timeSpan / (double) PropertiesHolder.timeQuantum) * PropertiesHolder.timeQuantum;
+                if(!timeBasedHistogramsPositional.containsKey(tExit)){
+                    timeBasedHistogramsPositional.put(tExit, new TreeMap<Double, Double>());
+                }
+
+                TreeMap<Double, Double> hist = timeBasedHistogramsPositional.get(tExit);
+                for(Map.Entry<Double, Double> entry : histogram.entrySet()){
+                    if(!hist.containsKey(entry.getKey())){
+                        hist.put(entry.getKey(), 0.0);
+                    }
+                    hist.put(entry.getKey(), hist.get(entry.getKey()) + entry.getValue()/cred);
+                }
             }
-        }
-
-        participants++;
-        double cred = 1;
-        if(PropertiesHolder.normalisationOfSuggestion){
-            //cred = Math.sqrt(results[0]);
-            cred = results[0];
-        }
-
-        long tExit = (long) Math.ceil((double) timeSpan / (double) timeQuantum) * timeQuantum;
-        if(!timeBasedHistograms.containsKey(tExit)){
-            timeBasedHistograms.put(tExit, new TreeMap<Double, Double>());
-        }
-
-        TreeMap<Double, Double> hist = timeBasedHistograms.get(tExit);
-        for(Map.Entry<Double, Double> entry : histogram.entrySet()){
-            if(!hist.containsKey(entry.getKey())){
-                hist.put(entry.getKey(), 0.0);
-            }
-            hist.put(entry.getKey(), hist.get(entry.getKey()) + entry.getValue()/cred);
         }
     }
 
-    public static void decide(){
-        for(Map.Entry<Long, TreeMap<Double, Double>> entry : timeBasedHistograms.entrySet()){
+    public static void decide() {
 
-            double[] results = PositionFactory.getDecision(time, latestC, entry.getValue(), entry.getKey(),null, null, null, PropertiesHolder.marketMakerConfidence);
+        if (PropertiesHolder.tradeNormal) {
+            for (Map.Entry<Long, TreeMap<Double, Double>> entry : timeBasedHistogramsPositional.entrySet()) {
 
-            if(PropertiesHolder.tradeNormal){
+                double[] results = PositionFactory.getDecision(time, latestC, entry.getValue(), entry.getKey(), null, null, null, PropertiesHolder.marketMakerConfidence);
                 OpenPosition position = PositionFactory.getPosition(time, latestC, results, entry.getKey(), false);
                 if (position != null) {
                     if (inLiveTrading) {
                         int startHour = new Date().getHours();
-                        if(position.getCredibility() > PositionFactory.getCredThreshold()){
+                        if (position.getCredibility() > PositionFactory.getCredThreshold()) {
                             try {
-                                if(blackBox != null){
+                                if (blackBox != null) {
                                     blackBox.onDecision(position);
                                 }
                             } catch (JFException e) {
@@ -114,43 +126,48 @@ public class DecisionAggregatorA {
                             }
                         }
                     }
-                    position.setParticipants(participants);
+                    position.setParticipants(participantsP);
                     positions.add(position);
                 }
             }
+            participantsP = 0;
+        }
 
-            if(PropertiesHolder.tradeMarketMarker){
-                if(results[4] + results[5] > PositionFactory.cost * PropertiesHolder.marketMakerAmplitude){
-                    if(inLiveTrading && marketMakerDecider != null){
-                        MarketMakerPosition advice = new MarketMakerPosition(time, latestC + results[4],  latestC - results[5], latestC + results[6],  latestC - results[7], time + entry.getKey());
-                        advice.adjustTimes(DecisionAggregatorA.getTimeQuantum());
+        if (PropertiesHolder.tradeMarketMarker) {
+
+            for (Map.Entry<Long, TreeMap<Double, Double>> entry : timeBasedHistogramsMarketMaker.entrySet()) {
+
+                double[] results = PositionFactory.getDecision(time, latestC, entry.getValue(), entry.getKey(), null, null, null, PropertiesHolder.marketMakerConfidence);
+
+                if (results[4] + results[5] > PositionFactory.cost * PropertiesHolder.marketMakerAmplitude) {
+                    if (inLiveTrading && marketMakerDecider != null) {
+                        MarketMakerPosition advice = new MarketMakerPosition(time, latestC + results[4], latestC - results[5], latestC + results[6], latestC - results[7], time + entry.getKey());
+                        advice.adjustTimes(PropertiesHolder.timeQuantum);
                         marketMakerDecider.addAdvice(advice);
-                    }
-                    else if(marketMakerDeciderHistorical != null){
-                        MarketMakerPosition advice = new MarketMakerPosition(time, latestC + results[4],  latestC - results[5], latestC + results[6],  latestC - results[7], time + entry.getKey());
-                        advice.adjustTimes(DecisionAggregatorA.getTimeQuantum());
+                    } else if (marketMakerDeciderHistorical != null) {
+                        MarketMakerPosition advice = new MarketMakerPosition(time, latestC + results[4], latestC - results[5], latestC + results[6], latestC - results[7], time + entry.getKey());
+                        advice.adjustTimes(PropertiesHolder.timeQuantum);
                         advice.attributes.put("cred", results[0]);
 
-                        for(int i = 0; i < DecisionUtil.getDecilesU().length; i++){
+                        for (int i = 0; i < DecisionUtil.getDecilesU().length; i++) {
                             advice.attributes.put("dU_" + i, DecisionUtil.getDecilesU()[i]);
                         }
 
-                        for(int i = 0; i < DecisionUtil.getDecilesD().length; i++){
+                        for (int i = 0; i < DecisionUtil.getDecilesD().length; i++) {
                             advice.attributes.put("dD_" + i, DecisionUtil.getDecilesD()[i]);
                         }
 
                         marketMakerDeciderHistorical.addAdvice(advice);
-                    }
-                    else {
-                        marketMakerPositions.add(new MarketMakerPosition(time, latestC + results[4],  latestC - results[5], latestC + results[6],  latestC - results[7], time + entry.getKey()));
+                    } else {
+                        marketMakerPositions.add(new MarketMakerPosition(time, latestC + results[4], latestC - results[5], latestC + results[6], latestC - results[7], time + entry.getKey()));
                     }
                 }
             }
-        }
-        participants = 0;
-        if(marketMakerDeciderHistorical != null){
-            marketMakerDeciderHistorical.setTime(time);
-            marketMakerDeciderHistorical.step();
+            participantsMM = 0;
+            if (marketMakerDeciderHistorical != null) {
+                marketMakerDeciderHistorical.setTime(time);
+                marketMakerDeciderHistorical.step();
+            }
         }
     }
 
@@ -206,10 +223,6 @@ public class DecisionAggregatorA {
 
     public static boolean isInLiveTrading() {
         return inLiveTrading;
-    }
-
-    public static long getTimeQuantum() {
-        return timeQuantum;
     }
 
     public static HashSet<MarketMakerPosition> getMarketMakerPositions() {

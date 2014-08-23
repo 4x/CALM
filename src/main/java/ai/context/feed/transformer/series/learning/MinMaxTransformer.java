@@ -32,7 +32,7 @@ public class MinMaxTransformer extends BufferedTransformer {
             inputArray[i] = ((Double) value).floatValue();
         }
 
-        taLib.minMax(0, input.length - 1, inputArray, (int) span, new MInteger(), new MInteger(), outputArray[0], outputArray[1]);
+        taLib.minMax(0, input.length - 1, inputArray, Math.round(span), new MInteger(), new MInteger(), outputArray[0], outputArray[1]);
 
         for (int i = 0; i < input.length; i++) {
             output[i] = new FeedObject(input[i].getTimeStamp(), new double[]{outputArray[0][i], outputArray[1][i]});
@@ -42,7 +42,7 @@ public class MinMaxTransformer extends BufferedTransformer {
 
     @Override
     public Feed getCopy() {
-        return new MinMaxTransformer((int) span, feed.getCopy());
+        return new MinMaxTransformer(Math.round(span), feed.getCopy());
     }
 
     public void goLive() {

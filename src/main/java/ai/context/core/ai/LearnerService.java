@@ -5,19 +5,15 @@ import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.learning.AmalgamateUtils;
 import ai.context.util.learning.ClusteredCopulae;
 import ai.context.util.mathematics.CorrelationCalculator;
-import ai.context.util.mathematics.Operations;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 import static ai.context.util.mathematics.Operations.sum;
 
 public class LearnerService {
 
     private ConcurrentHashMap<String, StateActionPair> population = new ConcurrentHashMap<String, StateActionPair>();
-    private ConcurrentSkipListMap<Integer, ConcurrentSkipListMap<Integer, CopyOnWriteArraySet<StateActionPair>>> indices = new ConcurrentSkipListMap<>();
 
     private double[] correlationWeights;
 
@@ -39,8 +35,8 @@ public class LearnerService {
     private LearnerService thisService = this;
 
     private boolean correlating = false;
-    private boolean useSkewInSimilarity = true;
-    private boolean useSkewInSimilarityWhenQuerying = true;
+    private boolean useSkewInSimilarity = false;
+    private boolean useSkewInSimilarityWhenQuerying = false;
     private double sumSkewDiff = 0;
     private long skewDiffsCount = 0;
 
@@ -52,9 +48,8 @@ public class LearnerService {
 
     public LearnerService(){}
 
-    public LearnerService(ConcurrentHashMap<String, StateActionPair> population, ConcurrentSkipListMap<Integer, ConcurrentSkipListMap<Integer, CopyOnWriteArraySet<StateActionPair>>> indices, double[] correlationWeights, TreeMap<Integer, CorrelationCalculator> correlationCalculators, double[] correlations, ClusteredCopulae copulae, double actionResolution, int maxPopulation, double tolerance, double copulaToUniversal, double minDev, double maxDev, double minDevForMerge, TreeMap<Integer, Long> distribution) {
+    public LearnerService(ConcurrentHashMap<String, StateActionPair> population, double[] correlationWeights, TreeMap<Integer, CorrelationCalculator> correlationCalculators, double[] correlations, ClusteredCopulae copulae, double actionResolution, int maxPopulation, double tolerance, double copulaToUniversal, double minDev, double maxDev, double minDevForMerge, TreeMap<Integer, Long> distribution) {
         this.population = population;
-        this.indices = indices;
         this.correlationWeights = correlationWeights;
         this.correlationCalculators = correlationCalculators;
         this.correlations = correlations;
@@ -112,7 +107,7 @@ public class LearnerService {
     public synchronized void addStateAction(int[] state, double movement) throws LearningException {
 
         pointsConsumed++;
-        int actionClass = (int) Operations.round(movement / actionResolution, 0);
+        int actionClass = (int) Math.round(movement / actionResolution);
         if (!distribution.containsKey(actionClass)) {
             distribution.put(actionClass, 0L);
         }
@@ -236,8 +231,10 @@ public class LearnerService {
                 //dev = Math.log(pair.getKey()*skewDiff * Math.log(skewDiff/dev + 1) + 1);
                 //dev = Math.sqrt(pair.getKey()*skewDiff * Math.log(skewDiff/dev + 1));
                 //dev = pair.getKey() * skewDiff * Math.log(skewDiff/dev + 1);
-                dev = pair.getKey() * skewDiff * Math.log(Math.pow(skewDiff, 2)/dev + 1);
+                //dev = pair.getKey() * skewDiff * Math.log(Math.pow(skewDiff, 2)/dev + 1);
                 //dev = pair.getKey() * skewDiff * Math.pow(Math.log(skewDiff/dev + 1), 2);
+                dev = pair.getKey() * 2 * Math.log(skewDiff + 1);
+                //dev = pair.getKey() * 1 * Math.log(skewDiff + 1);
 
                 top2.put(dev, pair.getValue());
             }
@@ -556,10 +553,6 @@ public class LearnerService {
         return copulae.getCorrelationWeights(sap.getAmalgamate());
     }
 
-    public ConcurrentSkipListMap<Integer, CopyOnWriteArraySet<StateActionPair>> getIndexForVariable(int variable) {
-        return indices.get(variable);
-    }
-
     public ConcurrentHashMap<String, StateActionPair> getPopulation() {
         return population;
     }
@@ -605,7 +598,6 @@ public class LearnerService {
     @Override
     public String toString() {
         return "population=" + AmalgamateUtils.getMapString(population) +
-                ", indices=" + AmalgamateUtils.getMapString(indices) +
                 ", correlationWeights=" + AmalgamateUtils.getArrayString(correlationWeights) +
                 ", correlationCalculators=" + AmalgamateUtils.getMapString(correlationCalculators) +
                 ", correlations=" + AmalgamateUtils.getArrayString(correlations) +

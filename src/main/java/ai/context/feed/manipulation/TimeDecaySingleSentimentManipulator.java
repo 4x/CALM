@@ -57,12 +57,12 @@ public class TimeDecaySingleSentimentManipulator implements Manipulator{
 
         int comingUp = 0;
         try{
-            comingUp = (int) (6 * Math.exp(-(double) schedule.getTimeToNext(t, new String[]{type, location}) / (double) (1 * 86400 * 1000L)));
+            comingUp = (int) Math.round(12 * Math.exp(-(double) schedule.getTimeToNext(t, new String[]{type, location}) / (double) (1 * 86400 * 1000L)));
         }catch (Exception e){
             e.printStackTrace();
         }
 
-        int decay = (int) (6 * Math.exp((double) (lastSeen - t) / (double) (1 * 86400 * 1000L))) - comingUp;
+        int decay = (int) Math.round(12 * Math.exp((double) (lastSeen - t) / (double) (1 * 86400 * 1000L))) - comingUp;
         int index = Discretiser.getLogarithmicDiscretisation(
                 (lastSatisfaction - satisfaction) / Math.pow(satisfaction, 2) + lastSatisfaction,
                 0, 0.01, 10.0);

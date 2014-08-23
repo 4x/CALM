@@ -24,6 +24,7 @@ public class NeuralClusterInformationServlet extends HttpServlet {
     public static String GET_ALL_INFO = "ALL";
     public static String GET_STATS_INFO = "STATS";
     public static String GET_CURRENT_PRED = "PRED";
+    public static String GET_REACHED = "REACHED";
 
     private void processRequestAndWriteResponse(HttpServletRequest req, PrintWriter out) {
         Map<String, String[]> pMap = req.getParameterMap();
@@ -36,6 +37,8 @@ public class NeuralClusterInformationServlet extends HttpServlet {
                 out.print(cluster.getStats());
             } else if (reqType.startsWith(GET_CURRENT_PRED)) {
                 out.print(cluster.getPred(Integer.parseInt(reqType.split(":")[1])));
+            } else if (reqType.startsWith(GET_REACHED)) {
+                out.print(cluster.getConsumed());
             }
         }
     }

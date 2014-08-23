@@ -60,22 +60,24 @@ public class MarketMakerPosition {
         return hasOpenedWithLong;
     }
 
-    public void setHasOpenedWithLong(boolean hasOpenedWithLong, double open) {
+    public void setHasOpenedWithLong(boolean hasOpenedWithLong, double open, long time) {
         this.hasOpenedWithLong = hasOpenedWithLong;
         this.open = open;
 
         this.attributes.put("dir", hasOpenedWithLong ? 1 : 0);
+        this.attributes.put("advisedToOpenTime", (time - this.time));
     }
 
     public boolean isHasOpenedWithShort() {
         return hasOpenedWithShort;
     }
 
-    public void setHasOpenedWithShort(boolean hasOpenedWithShort, double open) {
+    public void setHasOpenedWithShort(boolean hasOpenedWithShort, double open, long time) {
         this.hasOpenedWithShort = hasOpenedWithShort;
         this.open = open;
 
         this.attributes.put("dir", hasOpenedWithShort ? -1 : 0);
+        this.attributes.put("advisedToOpenTime", (time - this.time));
     }
 
     public boolean isOpen(){

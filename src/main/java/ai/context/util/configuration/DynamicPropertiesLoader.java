@@ -143,6 +143,10 @@ public class DynamicPropertiesLoader {
                         PropertiesHolder.maxLeewayAmplitude = Double.parseDouble(parts[1]);
                     } else if (parts[0].equals("pointsToLearn")) {
                         PropertiesHolder.pointsToLearn = Long.parseLong(parts[1]);
+                    } else if (parts[0].equals("timeQuantum")) {
+                        PropertiesHolder.timeQuantum = Long.parseLong(parts[1]);
+                    } else if (parts[0].equals("fxFolder")) {
+                        PropertiesHolder.fxFolder = parts[1];
                     }
                 }
                 System.out.println("Global configuration changed: " + PropertiesHolder.getInfo());

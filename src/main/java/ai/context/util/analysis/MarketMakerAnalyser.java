@@ -38,7 +38,8 @@ public class MarketMakerAnalyser {
         SimpleDateFormat formatOutput = new SimpleDateFormat("yyyy.MM");
 
         try {
-            String file = "/opt/dev/tmp/nohup.out";
+            String file = "/opt/dev/tmp/nohup.out_2b";
+            file = "/opt/dev/tmp/nohup.out";
 
             br = new BufferedReader(new FileReader(file));
             String sCurrentLine;
@@ -68,16 +69,22 @@ public class MarketMakerAnalyser {
                         }
                         long lifeSpan = 0;
                         if(parts[lifeSpanPart].equals("TIMEOUT")){
-                            lifeSpan = Long.parseLong(parts[lifeSpanPart + 1]);
+                            lifeSpanPart = lifeSpanPart + 1;
                         }
-                        else {
-                            lifeSpan = Long.parseLong(parts[lifeSpanPart]);
-                        }
+                        lifeSpan = Long.parseLong(parts[lifeSpanPart]);
 
                         String state = "NORMAL";
 
-
                         String closing = parts[parts.length - 1];
+
+                        TreeMap<String, Double> attr = new TreeMap<>();
+                        for(int i = lifeSpanPart + 1; i < parts.length; i++){
+                            String[] e = parts[i].split("=");
+                            String p = e[0];
+                            Double v = Double.valueOf(e[1].substring(0, e[1].length() - 1));
+
+                            attr.put(p, v);
+                        }
 
                         if (date.getDay() != lastDay) {
                             lastDay = date.getDay();
@@ -90,21 +97,27 @@ public class MarketMakerAnalyser {
                         }
 
                         if (
-                            lifeSpan/1800000 > 9 &&
+                            (20 * attr.get("wait").longValue())/lifeSpan < 4 &&
+                            //attr.get("cred").intValue() > 10 &&
+                            //lifeSpan/1800000 == 10 &&
                             //cred >= credRange[0] &&
                             //cred <= credRange[1] &&
                             //targetPnL >= 0.0015 &&
                             //targetPnL < 0.002 &&
                             //hours.contains(startHour) &&
-                            //nMonth > 47 &&
+                            //nMonth > 5 &&
                             //nMonth < 60 &&
                                 true) {
 
+                            //aggregate((lifeSpan/1800000)+"," +formatOutput.format(date), change);
+                            //aggregate(attr.get("cred").intValue(), change);
                             //aggregate(lifeSpan/1800000, change);
                             //aggregate(participants, change);
                             //aggregate((int)(100*cred/participants), change);
+                            //aggregate((20 * attr.get("wait").longValue())/lifeSpan, change);
                             //aggregate(nMonth, change);
                             aggregate(formatOutput.format(date), change);
+                            //aggregate(date.getTime() / (7 * 86400000), change);
                             //aggregate(date.getYear(), change);
                             //aggregate(date.getHours(), change);
                             //aggregate(changeClass, change);

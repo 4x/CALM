@@ -75,7 +75,7 @@ public class RadarOnlineTransformer extends OnlineTransformer {
                 double angle = (Math.PI / divisions) * a;
                 TreeMap<Integer, Double> histogram = new TreeMap<>();
                 for (Double[] point : points) {
-                    int pointClass = (int) (point[1] * Math.sin(point[0] + angle)) / 1;
+                    int pointClass = (int) Math.round(point[1] * Math.sin(point[0] + angle));
 
                     if (!histogram.containsKey(pointClass)) {
                         histogram.put(pointClass, 0D);

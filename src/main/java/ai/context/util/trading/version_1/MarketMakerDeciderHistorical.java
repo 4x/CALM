@@ -60,7 +60,7 @@ public class MarketMakerDeciderHistorical implements OnTickDecider {
                         if(change <= 0){
                             state = "L";
                         }
-                        System.out.println(format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + advice.getOpen() + " CLOSE: " + bid + " NET: " + Operations.round(pnl, 5) + " LONG TIMEOUT " + advice.getTimeSpan());
+                        System.out.println(format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + advice.getOpen() + " CLOSE: " + bid + " NET: " + Operations.round(pnl, 5) + " LONG TIMEOUT " + advice.getTimeSpan() + " " + advice.attributes);
                         advice.setClosed(true);
                     }
                     else {
@@ -70,7 +70,7 @@ public class MarketMakerDeciderHistorical implements OnTickDecider {
                         if(change <= 0){
                             state = "L";
                         }
-                        System.out.println(format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + advice.getOpen() + " CLOSE: " + ask + " NET: " + Operations.round(pnl, 5) + " SHORT TIMEOUT " + advice.getTimeSpan());
+                        System.out.println(format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + advice.getOpen() + " CLOSE: " + ask + " NET: " + Operations.round(pnl, 5) + " SHORT TIMEOUT " + advice.getTimeSpan() + " " + advice.attributes);
                         advice.setClosed(true);
                     }
                 }
@@ -90,7 +90,7 @@ public class MarketMakerDeciderHistorical implements OnTickDecider {
                             if(change <= 0){
                                 state = "L";
                             }
-                            System.out.println("SPECIAL " + format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + position.getOpen() + " CLOSE: " + bid + " NET: " + Operations.round(pnlSpecial, 5) + " LONG TIMEOUT " + position.getTimeSpan());
+                            System.out.println("SPECIAL " + format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + position.getOpen() + " CLOSE: " + bid + " NET: " + Operations.round(pnlSpecial, 5) + " LONG TIMEOUT " + position.getTimeSpan() + " " + position.attributes);
                             position.setClosed(true);
                         }
                         else {
@@ -100,7 +100,7 @@ public class MarketMakerDeciderHistorical implements OnTickDecider {
                             if(change <= 0){
                                 state = "L";
                             }
-                            System.out.println("SPECIAL " + format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + position.getOpen() + " CLOSE: " + ask + " NET: " + Operations.round(pnlSpecial, 5) + " SHORT TIMEOUT " + position.getTimeSpan());
+                            System.out.println("SPECIAL " + format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + position.getOpen() + " CLOSE: " + ask + " NET: " + Operations.round(pnlSpecial, 5) + " SHORT TIMEOUT " + position.getTimeSpan() + " " + position.attributes);
                             position.setClosed(true);
                         }
                     }
@@ -138,7 +138,7 @@ public class MarketMakerDeciderHistorical implements OnTickDecider {
                             && avgHigh - bid < (bid - advice.getTargetLow())/2
                             && avgHigh - bid < PropertiesHolder.maxLeewayAmplitude
                             && PropertiesHolder.filterFunction.pass(advice)){
-                        advice.setHasOpenedWithShort(true, bid);
+                        advice.setHasOpenedWithShort(true, bid, time);
                     }
                     else if(ask + PropertiesHolder.marketMakerBeyond < advice.getTargetLow()){
                         advice.addFlag("B");
@@ -150,7 +150,7 @@ public class MarketMakerDeciderHistorical implements OnTickDecider {
                             && ask - avgLow < (advice.getTargetHigh() - ask)/2
                             && ask - avgLow < PropertiesHolder.maxLeewayAmplitude
                             && PropertiesHolder.filterFunction.pass(advice)){
-                        advice.setHasOpenedWithLong(true, ask);
+                        advice.setHasOpenedWithLong(true, ask, time);
                     }
 
                     if(advice.isOpen()){
@@ -185,9 +185,9 @@ public class MarketMakerDeciderHistorical implements OnTickDecider {
                                         advice.getLow1(),
                                         advice.getGoodTillTime());
                                 if(advice.isHasOpenedWithShort()){
-                                    position.setHasOpenedWithShort(true, advice.getOpen());
+                                    position.setHasOpenedWithShort(true, advice.getOpen(), time);
                                 } else{
-                                    position.setHasOpenedWithLong(true, advice.getOpen());
+                                    position.setHasOpenedWithLong(true, advice.getOpen(), time);
                                 }
 
                                 if(!specialPositions.containsKey(position.getGoodTillTime())){
@@ -208,7 +208,7 @@ public class MarketMakerDeciderHistorical implements OnTickDecider {
                             if(change <= 0){
                                 state = "L";
                             }
-                            System.out.println(format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + advice.getOpen() + " CLOSE: " + bid + " NET: " + Operations.round(pnl, 5) + " LONG NORMAL " + advice.getTimeSpan() );
+                            System.out.println(format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + advice.getOpen() + " CLOSE: " + bid + " NET: " + Operations.round(pnl, 5) + " LONG NORMAL " + advice.getTimeSpan() + " " + advice.attributes);
                             advice.setClosed(true);
                         }
                     }
@@ -221,7 +221,7 @@ public class MarketMakerDeciderHistorical implements OnTickDecider {
                             if(change <= 0){
                                 state = "L";
                             }
-                            System.out.println(format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + advice.getOpen() + " CLOSE: " + ask + " NET: " + Operations.round(pnl, 5) + " SHORT NORMAL " + advice.getTimeSpan());
+                            System.out.println(format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + advice.getOpen() + " CLOSE: " + ask + " NET: " + Operations.round(pnl, 5) + " SHORT NORMAL " + advice.getTimeSpan() + " " + advice.attributes);
                             advice.setClosed(true);
                         }
                     }
@@ -242,7 +242,7 @@ public class MarketMakerDeciderHistorical implements OnTickDecider {
                                 if(change <= 0){
                                     state = "L";
                                 }
-                                System.out.println("SPECIAL: " + format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + position.getOpen() + " CLOSE: " + bid + " NET: " + Operations.round(pnlSpecial, 5) + " LONG NORMAL " + position.getTimeSpan() );
+                                System.out.println("SPECIAL: " + format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + position.getOpen() + " CLOSE: " + bid + " NET: " + Operations.round(pnlSpecial, 5) + " LONG NORMAL " + position.getTimeSpan() + " " + position.attributes);
                                 position.setClosed(true);
                             }
                         }
@@ -255,7 +255,7 @@ public class MarketMakerDeciderHistorical implements OnTickDecider {
                                 if(change <= 0){
                                     state = "L";
                                 }
-                                System.out.println("SPECIAL: " + format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + position.getOpen() + " CLOSE: " + ask + " NET: " + Operations.round(pnlSpecial, 5) + " SHORT NORMAL " + position.getTimeSpan());
+                                System.out.println("SPECIAL: " + format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + position.getOpen() + " CLOSE: " + ask + " NET: " + Operations.round(pnlSpecial, 5) + " SHORT NORMAL " + position.getTimeSpan() + " " + position.attributes);
                                 position.setClosed(true);
                             }
                         }
@@ -289,17 +289,17 @@ public class MarketMakerDeciderHistorical implements OnTickDecider {
             lastBid = (double) ((Object[])data.getData())[1];
             lastAsk = (double) ((Object[])data.getData())[0];
         }
-        else if(lastTime <= time + DecisionAggregatorA.getTimeQuantum()){
+        else if(lastTime <= time + PropertiesHolder.timeQuantum){
             onTick(lastTime, lastBid, lastAsk);
         }
 
-        while(lastTime <= time + DecisionAggregatorA.getTimeQuantum()){
+        while(lastTime <= time + PropertiesHolder.timeQuantum){
             data = priceFeed.readNext(this);
             if(data != null){
                 lastTime = data.getTimeStamp();
                 lastBid = (double) ((Object[])data.getData())[1];
                 lastAsk = (double) ((Object[])data.getData())[0];
-                if(lastTime > time + DecisionAggregatorA.getTimeQuantum()){
+                if(lastTime > time + PropertiesHolder.timeQuantum){
                     break;
                 }
 

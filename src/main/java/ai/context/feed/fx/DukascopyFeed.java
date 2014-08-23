@@ -8,9 +8,13 @@ import com.dukascopy.api.system.IClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 public class DukascopyFeed implements IStrategy, Feed {
 
@@ -20,18 +24,76 @@ public class DukascopyFeed implements IStrategy, Feed {
     private Channel<FeedObject> channel = new Channel(10000);
     private Period interval;
     private long timeStamp;
+    private String flatFile;
 
     private Instrument instrument;
 
-    public DukascopyFeed(IClient client, Period interval, Instrument instrument) {
+    public DukascopyFeed(IClient client, Period interval, Instrument instrument, String flatFile) {
         this.client = client;
         this.interval = interval;
         this.instrument = instrument;
+        this.flatFile = flatFile;
         client.startStrategy(this);
     }
 
     @Override
     public void onStart(IContext context) throws JFException {
+        if(flatFile != null){
+            IHistory history = context.getHistory();
+            try {
+                BufferedReader br = new BufferedReader(new FileReader(flatFile));
+                String line = null;
+                String sCurrentLine;
+                while ((sCurrentLine = br.readLine()) != null) {
+                    line = sCurrentLine;
+                }
+
+                String parts[] = line.split(",");
+                SimpleDateFormat format = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss");
+                format.setTimeZone(TimeZone.getTimeZone("GMT"));
+
+                long start = format.parse(parts[0]).getTime() + interval.getInterval();
+                br.close();
+
+                //long prevBarTime = history.getPreviousBarStart(interval, history.getLastTick(instrument).getTime());
+                long prevBarTime = (System.currentTimeMillis() / interval.getInterval() - 1) * interval.getInterval();
+
+                List<IBar> bars = new ArrayList<>();
+                while(true) {
+                    try {
+                        System.out.println("Trying to synch " + flatFile + " from " + new Date(start) + " to " + new Date(prevBarTime));
+                        bars = history.getBars(instrument, interval, OfferSide.BID, start, prevBarTime);
+                        break;
+                    } catch (Exception e){
+                        prevBarTime = prevBarTime - interval.getInterval();
+                        if(prevBarTime <= start){
+                            System.err.println("Error: Aborting synching of flatFile");
+                            break;
+                        }
+                        System.err.println("Error: " + e.getMessage() + " -> Moving endTime to " + new Date(prevBarTime));
+                    }
+                }
+
+                FileWriter fileWritter = new FileWriter(flatFile,true);
+                BufferedWriter bufferWritter = new BufferedWriter(fileWritter);
+                for(IBar bar : bars){
+                    String timeStamp = format.format(new Date(bar.getTime()));
+                    double open = bar.getOpen();
+                    double high = bar.getHigh();
+                    double low = bar.getLow();
+                    double close = bar.getClose();
+                    double volume = bar.getVolume();
+
+                    bufferWritter.write(timeStamp + "," + open + "," + high + "," + low + "," + close + "," + volume + "\n");
+                }
+                bufferWritter.close();
+                System.out.println("Finished synching " + flatFile);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override

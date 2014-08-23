@@ -31,7 +31,7 @@ public class NeuralLearner implements Feed, Runnable {
     private SelectLearnerFeed learnerFeed;
     private Map<NeuralLearner, Integer> parentFeeds = new HashMap<>();
 
-    boolean oneCore = true;
+    boolean oneCore = false;
     private LearnerService core;
 
     private LearnerService coreUpA;
@@ -42,6 +42,7 @@ public class NeuralLearner implements Feed, Runnable {
     private long countA = 0;
     private long countB = 0;
     private long countForFlip = PropertiesHolder.generationLifespan;
+    private int generation = 0;
 
     private HashMap<Feed, LinkedList<FeedObject>> buffers = new HashMap<>();
     private LinkedBlockingQueue<FeedObject> queue = new LinkedBlockingQueue<>();
@@ -88,7 +89,7 @@ public class NeuralLearner implements Feed, Runnable {
         this.motherFeed = motherFeed;
         this.horizonRange = horizonRange;
         double horizon = (Math.random() * (horizonRange[1] - horizonRange[0]) + horizonRange[0]);
-        this.horizon = (long) Math.ceil(horizon / DecisionAggregatorA.getTimeQuantum()) * DecisionAggregatorA.getTimeQuantum();
+        this.horizon = (long) Math.ceil(horizon / PropertiesHolder.timeQuantum) * PropertiesHolder.timeQuantum;
         this.outputFutureOffset = outputFutureOffset;
         this.actionElements = actionElements;
         this.sigElements = sigElements;
@@ -144,10 +145,9 @@ public class NeuralLearner implements Feed, Runnable {
         }
         numberOfWrapperOutputs = cluster.getNumberOfOutputsFor(wrapperManipulatorPairs);
         this.learnerFeed = new SelectLearnerFeed(motherFeed, actionElements, sigElements);
-        discretiser = new AbsoluteMovementDiscretiser(0.01);
-        discretiser.addLayer(0.003, 0.0001);
+        discretiser = new AbsoluteMovementDiscretiser(0.005);
+        discretiser.addLayer(0.002, 0.0001);
         discretiser.addLayer(0.005, 0.0005);
-        discretiser.addLayer(0.01, 0.001);
         System.out.println("New Neuron: " + getDescription(0, ""));
     }
 
@@ -192,7 +192,7 @@ public class NeuralLearner implements Feed, Runnable {
 
                 if (day != 0 && day != 6){
                     String inputDates = new Date(data.getTimeStamp()) + " ";
-                    int[] signal = new int[data.getSignal().length + getParents().size() + numberOfWrapperOutputs + 1];
+                    int[] signal = new int[data.getSignal().length + getParents().size() + numberOfWrapperOutputs + 2];
                     int index = 0;
                     for (int sig : data.getSignal()) {
                         signal[index] = sig;
@@ -210,8 +210,8 @@ public class NeuralLearner implements Feed, Runnable {
                         index++;
                     }
 
-                    /*signal[index] = (int) ((time % (86400000))/(3 * 3600000));
-                    index++;*/
+                    signal[index] = (int) ((time % (86400000))/(2 * 3600000));
+                    index++;
 
                     for(WrapperManipulatorPair pair : wrapperManipulatorPairs){
                         FeedObject<Integer[]> sigObject = cluster.getFromFeedWrapper(pair, time + outputFutureOffset);
@@ -257,7 +257,8 @@ public class NeuralLearner implements Feed, Runnable {
                                         coreUpB.setActionResolution(resolution);
                                         coreDownB = new LearnerService();
                                         coreDownB.setActionResolution(resolution);
-                                        System.out.println("Neuron [" + id + "]: Cores regenerated");
+                                        generation++;
+                                        System.out.println("Neuron [" + id + "]: Cores regenerated, Generation: " + generation);
                                     }
                                 }
                                 else if(countA == countForFlip){
@@ -280,7 +281,7 @@ public class NeuralLearner implements Feed, Runnable {
 
                     int[] outputSignal = new int[getNumberOfOutputs()];
 
-                    if (pointsConsumed > 200) {
+                    if (pointsConsumed > 50) {
                         predictionRaw = getDistribution(signal);
                         outputSignal = getSignalForDistribution(predictionRaw, result);
                     }

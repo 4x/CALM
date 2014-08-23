@@ -59,6 +59,7 @@ public class DecisionAggregatorB {
             deNormalised.put(level, entry.getValue());
         }
         double decision = getDecision(deNormalised, PositionFactory.minProbFraction, PositionFactory.rewardRiskRatio);
+        //System.out.println(decision);
         if(Math.abs(decision) < 5 * PositionFactory.cost){
             return;
         }
@@ -108,19 +109,32 @@ public class DecisionAggregatorB {
                 }
 
                 if(dir * avg < 0){
+                    System.out.println("Skipping position: AVG <> DIR");
                     return;
                 }
 
-                if(dir > 0 && (countS == 0 || countL/countS < PositionFactory.rewardRiskRatio)){
+                if(count < 5){
+                    System.out.println("Skipping position: Votes unsufficient: " + count);
                     return;
                 }
 
-                if(dir < 0 && (countL == 0 || countS/countL < PositionFactory.rewardRiskRatio)){
+                if(dir > 0 && !(countS == 0 || countL/countS > Math.sqrt(PositionFactory.rewardRiskRatio))){
+                    System.out.println("Skipping position: Votes unsufficient: " + countL + ", " + countS);
+                    return;
+                }
+
+                if(dir < 0 && !(countL == 0 || countS/countL > Math.sqrt(PositionFactory.rewardRiskRatio))){
+                    System.out.println("Skipping position: Votes unsufficient: " + countL + ", " + countS);
                     return;
                 }
 
                 double amplitude = Math.abs(decision);
-                positions.add(new Position(expiry, time, close, dir, amplitude/2, amplitude, new Object[]{count, countS, countL, avg}));
+                Position position = new Position(expiry, time, close, dir, amplitude - PositionFactory.cost, amplitude, new Object[]{count, countS, countL, avg});
+                System.out.println("Creating position: " + dir + " " + amplitude + " " + position.getInfo());
+                positions.add(position);
+            }
+            else {
+                System.out.println("Skipping position: not decisive");
             }
         }
     }
@@ -257,7 +271,7 @@ public class DecisionAggregatorB {
         }
 
         if(Math.abs(decision) > 0){
-            SortedMap<Double, Double[]> inspectionMap = cum.headMap(Math.abs(decision)).tailMap(Math.abs(2*decision/3));
+            SortedMap<Double, Double[]> inspectionMap = cum.headMap(Math.abs(decision)).tailMap(Math.abs(4*decision/5));
             char dir = 'X';
             for(Map.Entry<Double, Double[]> entry : inspectionMap.entrySet()){
                 double pS = entry.getValue()[0]/max;

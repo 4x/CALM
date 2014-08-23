@@ -2,6 +2,8 @@ package ai.context.util.trading.version_1;
 
 import ai.context.util.configuration.PropertiesHolder;
 
+import java.util.Map;
+import java.util.SortedMap;
 import java.util.TreeMap;
 
 public class DecisionUtil {
@@ -39,6 +41,7 @@ public class DecisionUtil {
 
         int flip = 0;
 
+        TreeMap<Double, Double[]> cum = new TreeMap<>();
         for (double amplitude : sFreq.keySet()) {
 
             double freqS = sFreq.get(amplitude);
@@ -46,6 +49,9 @@ public class DecisionUtil {
 
             double probS = freqS / max;
             double probL = freqL / max;
+
+            Double[] comparison = new Double[]{probS, probL};
+            cum.put(amplitude, comparison);
 
             if(probS > marketMakerConfidence){
                 low = amplitude;
@@ -79,6 +85,36 @@ public class DecisionUtil {
                     multiplier = -1;
                 }
                 target = multiplier * amplitude;
+            }
+        }
+
+        if(Math.abs(target) > 0){
+            SortedMap<Double, Double[]> inspectionMap = cum.headMap(Math.abs(target)).tailMap(Math.abs(4*target/5));
+            char dir = 'X';
+            for(Map.Entry<Double, Double[]> entry : inspectionMap.entrySet()){
+                double pS = entry.getValue()[0]/max;
+                double pL = entry.getValue()[1]/max;
+                if(dir == 'X'){
+                    if(pS > pL){
+                        dir = 'S';
+                    }
+                    else if(pL > pS){
+                        dir = 'L';
+                    }
+                }
+                else if(dir == 'S'){
+                    if(pS <= pL){
+                        dir = 'O';
+                    }
+                }
+                else if(dir == 'L'){
+                    if(pL <= pS){
+                        dir = 'O';
+                    }
+                }
+            }
+            if(!((target < 0 && dir == 'S') || (target > 0 && dir == 'L'))){
+                target = 0;
             }
         }
         return new double[]{target, ratio, probFraction, high, low, high1, low1};

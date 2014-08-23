@@ -9,8 +9,8 @@ public class PropertiesHolder {
     public static int maxPopulation = 1000;
     public static double copulaToUniversal = 20;
     public static int toleranceSearch = 2;
-    public static String dukascopyLogin = "DEMO10037ZtUmzEU";
-    public static String dukascopyPass = "ZtUmz";
+    public static String dukascopyLogin = "DEMO10037rcNpzEU";
+    public static String dukascopyPass = "rcNpz";
     public static int parentsPerNeuron = 3;
     public static int addtionalStimuliPerNeuron = 0;
     public static int coreStimuliPerNeuron = 7;
@@ -32,12 +32,14 @@ public class PropertiesHolder {
     public static boolean tradeNormal = true;
     public static boolean tradeMarketMarker = false;
     public static boolean liveTrading = false;
-    public static String startDateTime = "2008.01.01 00:00:00";
+    public static String startDateTime = "2006.01.01 00:00:00";
     public static boolean tradeSpecial = false;
     public static double tradeToCreditRatio = 0.005;
     public static double maxLeewayAmplitude = 0.00075;
     public static long pointsToLearn = 1000;
+    public static long timeQuantum = 30 * 60 * 1000L;
     public static JavaScriptBooleanFilterFunction filterFunction = new JavaScriptBooleanFilterFunction();
+    public static String fxFolder = "";
 
     public static String getInfo() {
         return "PropertiesHolder{" +
@@ -75,6 +77,8 @@ public class PropertiesHolder {
                 ",\ntradeToCreditRatio=" + tradeToCreditRatio +
                 ",\nmaxLeewayAmplitude=" + maxLeewayAmplitude +
                 ",\npointsToLearn=" + pointsToLearn +
+                ",\ntimeQuantum=" + timeQuantum +
+                ",\nfxFolder=" + fxFolder +
                 '}';
     }
 }

@@ -128,13 +128,13 @@ public class MotherFeedCreator {
 
         String dateFP = null;
 
-        CSVFeed feedPriceEUR = new CSVFeed(path + "feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
+        CSVFeed feedPriceEUR = new CSVFeed(path + "feeds/" + PropertiesHolder.fxFolder + "EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feedPriceEUR.setStitchableFeed(liveFXRateEUR);
         feedPriceEUR.setSkipWeekends(true);
-        CSVFeed feedPriceGBP = new CSVFeed(path + "feeds/GBPUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
+        CSVFeed feedPriceGBP = new CSVFeed(path + "feeds/" + PropertiesHolder.fxFolder + "GBPUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feedPriceGBP.setStitchableFeed(liveFXRateGBP);
         feedPriceGBP.setSkipWeekends(true);
-        CSVFeed feedPriceJPY = new CSVFeed(path + "feeds/USDJPY.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
+        CSVFeed feedPriceJPY = new CSVFeed(path + "feeds/" + PropertiesHolder.fxFolder + "USDJPY.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feedPriceJPY.setStitchableFeed(liveFXRateJPY);
         feedPriceJPY.setSkipWeekends(true);
 
@@ -176,9 +176,9 @@ public class MotherFeedCreator {
     }
 
     public static void setLiveFXRates(String path) {
-        MotherFeedCreator.liveFXRateEUR = new StitchableFXRate(path + "tmp/FX1Rate.csv", new DukascopyFeed(client, Period.THIRTY_MINS, Instrument.EURUSD));
-        MotherFeedCreator.liveFXRateGBP = new StitchableFXRate(path + "tmp/FX2Rate.csv", new DukascopyFeed(client, Period.THIRTY_MINS, Instrument.GBPUSD));
-        MotherFeedCreator.liveFXRateJPY = new StitchableFXRate(path + "tmp/FX3Rate.csv", new DukascopyFeed(client, Period.THIRTY_MINS, Instrument.USDJPY));
+        MotherFeedCreator.liveFXRateEUR = new StitchableFXRate(path + "tmp/FX1Rate.csv", new DukascopyFeed(client, Period.THIRTY_MINS, Instrument.EURUSD, path + "feeds/" + PropertiesHolder.fxFolder + "EURUSD.csv"));
+        MotherFeedCreator.liveFXRateGBP = new StitchableFXRate(path + "tmp/FX2Rate.csv", new DukascopyFeed(client, Period.THIRTY_MINS, Instrument.GBPUSD, path + "feeds/" + PropertiesHolder.fxFolder + "GBPUSD.csv"));
+        MotherFeedCreator.liveFXRateJPY = new StitchableFXRate(path + "tmp/FX3Rate.csv", new DukascopyFeed(client, Period.THIRTY_MINS, Instrument.USDJPY, path + "feeds/" + PropertiesHolder.fxFolder + "USDJPY.csv"));
     }
 
     public static void setLiveFXCalendar(final StitchableFeed liveFXCalendar) {

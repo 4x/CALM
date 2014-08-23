@@ -3,6 +3,7 @@ package ai.context.runner;
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
 import ai.context.feed.synchronised.ISynchFeed;
+import ai.context.learning.neural.NeuronCluster;
 import ai.context.runner.feeding.MotherFeedCreator;
 import ai.context.runner.feeding.NeuralLearner2;
 import ai.context.runner.feeding.StateToAction;
@@ -10,7 +11,6 @@ import ai.context.runner.feeding.StateToActionSeriesCreator;
 import ai.context.util.DataSetUtils;
 import ai.context.util.configuration.DynamicPropertiesLoader;
 import ai.context.util.configuration.PropertiesHolder;
-import ai.context.util.trading.version_1.DecisionAggregatorA;
 import ai.context.util.trading.version_2.DecisionAggregatorB;
 
 import java.text.ParseException;
@@ -43,12 +43,13 @@ public class MainNeural2 {
         }
 
         MainNeural2 process = new MainNeural2();
+        NeuronCluster.getInstance().container2 = process;
         process.setup(path, initialDate, finalDate);
         process.startLearning();
         process.startTrading();
     }
 
-    private List<NeuralLearner2> neurons = new ArrayList<>();
+    public List<NeuralLearner2> neurons = new ArrayList<>();
     private List<StateToAction> series;
     private ISynchFeed motherFeed;
     private Feed priceFeed;
@@ -60,10 +61,11 @@ public class MainNeural2 {
     public void setup(String path, String initialDate, String finalDate){
         motherFeed = MotherFeedCreator.getMotherFeed(path);
         SimpleDateFormat format = new SimpleDateFormat("yyyy.MM.dd");
+        double[] preferredMoves = new double[]{0.001, 0.00125, 0.0015, 0.00175, 0.002, 0.00225, 0.0025};
+
         try {
             long start = format.parse(initialDate).getTime();
             long end = format.parse(finalDate).getTime();
-            double[] preferredMoves = new double[]{0.0005, 0.00075, 0.001, 0.00125, 0.0015, 0.00175, 0.002};
             series = StateToActionSeriesCreator.createSeries(motherFeed, path, start, end, preferredMoves);
             priceFeed = StateToActionSeriesCreator.priceFeed;
             System.out.println(series.size());
@@ -71,9 +73,9 @@ public class MainNeural2 {
             e.printStackTrace();
         }
 
-        long[] possibleHorizons = new long[6];
+        long[] possibleHorizons = new long[preferredMoves.length];
         for(int i = 0; i < possibleHorizons.length; i++){
-            possibleHorizons[i] = (i + 1) * DecisionAggregatorA.getTimeQuantum();
+            possibleHorizons[i] = (i + 1) * PropertiesHolder.timeQuantum;
         }
 
         Set<Integer> availableStimuli = new HashSet<>();
@@ -82,9 +84,11 @@ public class MainNeural2 {
         }
 
         int i = 1;
-        for(int s = 2; s < 7; s++){
-            int n = 3000/s;
-            for(int iS = 0; iS < n; iS++){
+        int[] sigSizes = new int[]{PropertiesHolder.coreStimuliPerNeuron};
+        int nNeurons = 3500;
+        for(int s : sigSizes){
+            int n = nNeurons/s;
+            for(int iS = 0; iS < PropertiesHolder.totalNeurons; iS++){
                 int[] sigElements = new int[s];
                 for (int sig = 0; sig < sigElements.length; sig++) {
                     if (availableStimuli.isEmpty()) {
@@ -115,7 +119,7 @@ public class MainNeural2 {
             }
         }
 
-        for(int iP = 0; iP < 200; iP++){
+        /*for(int iP = 0; iP < 200; iP++){
             int[] sigElements = new int[0];
             ArrayList<NeuralLearner2> parents = new ArrayList<>();
             while(parents.size() < 6 && parents.size() != neurons.size()){
@@ -131,7 +135,7 @@ public class MainNeural2 {
             neurons.add(neuron);
             System.out.println("Created Neuron " + i + " with signal components: " + Arrays.toString(sigElements) + " and Parents: " + parents + " and horizon: " + horizon);
             i++;
-        }
+        }*/
         ask = StateToActionSeriesCreator.ask;
         bid = StateToActionSeriesCreator.bid;
     }
@@ -166,8 +170,8 @@ public class MainNeural2 {
         DecisionAggregatorB.setPriceFeed(priceFeed);
         while(true){
             FeedObject data = motherFeed.getNextComposite(null);
-            long tStart = data.getTimeStamp() + DecisionAggregatorA.getTimeQuantum();
-            long tEnd = tStart + DecisionAggregatorA.getTimeQuantum();
+            long tStart = data.getTimeStamp() + PropertiesHolder.timeQuantum;
+            long tEnd = tStart + PropertiesHolder.timeQuantum;
 
             List<Object> sig = new ArrayList<>();
             DataSetUtils.add(data.getData(), sig);
@@ -186,7 +190,7 @@ public class MainNeural2 {
                 close = (ask + bid)/2;
             }
             for(NeuralLearner2 neuron : neurons){
-                DecisionAggregatorB.aggregateDecision(tStart, neuron.getOpinionOnContext(signal), res, close, neuron.horizon);
+                DecisionAggregatorB.aggregateDecision(tStart, neuron.getOpinionOnContext(tStart, signal), res, close, neuron.horizon);
             }
             DecisionAggregatorB.act(tStart, tEnd);
         }

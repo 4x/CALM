@@ -18,6 +18,7 @@ public class NeuralLearner2 {
     public final long horizon;
     private final double resolution;
     private final AbsoluteMovementDiscretiser discretiser;
+    private TreeMap<Integer, Double> predictionRaw;
 
     private int currentSignal = 0;
     private long pointsLearned = 0;
@@ -32,10 +33,10 @@ public class NeuralLearner2 {
         this.core = new LearnerService();
         core.setActionResolution(resolution);
 
-        discretiser = new AbsoluteMovementDiscretiser(0.01);
-        discretiser.addLayer(0.003, 0.0001);
+        discretiser = new AbsoluteMovementDiscretiser(0.005);
+        discretiser.addLayer(0.001, 0.0001);
+        discretiser.addLayer(0.002, 0.0002);
         discretiser.addLayer(0.005, 0.0005);
-        discretiser.addLayer(0.01, 0.001);
     }
 
     public void feed(StateToAction stateToAction){
@@ -43,7 +44,7 @@ public class NeuralLearner2 {
         if(stateToAction.horizonActions.containsKey(horizon)){
             movement = stateToAction.horizonActions.get(horizon);
         }
-        int[] signal = getSignalState(stateToAction.signal);
+        int[] signal = getSignalState(stateToAction.timeStamp, stateToAction.signal);
 
         if(pointsLearned > 200){
             getDistributionFor(signal);
@@ -59,12 +60,12 @@ public class NeuralLearner2 {
         }
     }
 
-    public TreeMap<Integer, Double> getOpinionOnContext(int[] rawSignal){
-        return getDistributionFor(getSignalState(rawSignal));
+    public TreeMap<Integer, Double> getOpinionOnContext(long timeStamp, int[] rawSignal){
+        return getDistributionFor(getSignalState(timeStamp, rawSignal));
     }
 
-    private int[] getSignalState(int[] rawSignal){
-        int[] signal = new int[signalComponents.length + parents.length + 1];
+    private int[] getSignalState(long timeStamp, int[] rawSignal){
+        int[] signal = new int[signalComponents.length + parents.length + 2];
 
         int index = 0;
         for(int i = 0; i < signalComponents.length; i++){
@@ -76,6 +77,10 @@ public class NeuralLearner2 {
             signal[index] = parents[i].getSignal();
             index++;
         }
+
+        signal[index] = (int) ((timeStamp % (86400000))/(2 * 3600000));
+        index++;
+
         return signal;
     }
 
@@ -102,12 +107,16 @@ public class NeuralLearner2 {
         mean /= weight;
         mean = Math.pow(mean, 3);
         currentSignal = getLogarithmicDiscretisation(mean, 0, 1, 2);
-
+        predictionRaw = dist;
         return dist;
     }
 
     public int getSignal(){
         return currentSignal;
+    }
+
+    public TreeMap<Integer, Double> getPredictionRaw() {
+        return predictionRaw;
     }
 
     @Override

@@ -21,7 +21,7 @@ public class TestStitchDukascopy {
     public void testStitch() {
         StitchableFXRate feed = null;
         try {
-            feed = new StitchableFXRate("src/test/resources/TestRate.csv", new DukascopyFeed(new DukascopyConnection(PropertiesHolder.dukascopyLogin, PropertiesHolder.dukascopyPass).getClient(), Period.TEN_SECS, Instrument.EURUSD));
+            feed = new StitchableFXRate("src/test/resources/TestRate.csv", new DukascopyFeed(new DukascopyConnection(PropertiesHolder.dukascopyLogin, PropertiesHolder.dukascopyPass).getClient(), Period.TEN_SECS, Instrument.EURUSD, "src/test/resources/TestRateHist.csv"));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -34,7 +34,7 @@ public class TestStitchDukascopy {
                 DataType.DOUBLE};
 
         CSVFeed feedPriceEUR = new CSVFeed("src/test/resources/TestRateHist.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, null);
-        feedPriceEUR.setSkipWeekends(true);
+        feedPriceEUR.setSkipWeekends(false);
         feedPriceEUR.setStitchableFeed(feed);
         for (int i = 0; i < 2000; i++) {
             FeedObject data = feedPriceEUR.readNext(this);

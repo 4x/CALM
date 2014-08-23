@@ -53,11 +53,13 @@ public class StateActionInformationTracker {
 
     public void processHighAndLow(double high, double low, long timeStamp){
         latcher.registerBounds(high, low, timeStamp);
+        aggregator.addValue(low - initialLevel);
+        aggregator.addValue(high - initialLevel);
     }
 
     public double getMaxUp(){
-        //double val = aggregator.getMax();
-        double val = latcher.getMaxUp();
+        double val = aggregator.getMax();
+        //double val = latcher.getMaxUp();
         if(discretisation != null){
             return discretisation.process(val);
         }
@@ -65,8 +67,8 @@ public class StateActionInformationTracker {
     }
 
     public double getMaxDown(){
-        //double val = aggregator.getMin();
-        double val = latcher.getMaxDown();
+        double val = aggregator.getMin();
+        //double val = latcher.getMaxDown();
         if(discretisation != null){
             return discretisation.process(val);
         }

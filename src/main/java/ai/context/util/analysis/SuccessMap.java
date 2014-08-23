@@ -2,6 +2,7 @@ package ai.context.util.analysis;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Date;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -27,6 +28,7 @@ public class SuccessMap extends JPanel {
 
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
+
 
         g2d = (Graphics2D) g;
         g2d.setColor(Color.blue);
@@ -55,6 +57,10 @@ public class SuccessMap extends JPanel {
 
         g2d.setColor(Color.black);
         g2d.fillRect(0, 0, w, h);
+
+        g2d.setColor(Color.RED);
+        g2d.setFont(new Font("Monospace", 1, 8));
+        g2d.drawString("" + new Date(), 20, 20);
 
         for (int x : successMap.keySet()) {
             TreeMap<Integer, Double> subMap = successMap.get(x);

@@ -21,15 +21,15 @@ public class PnLAnalyser {
     int nMonth = 0;
     double tradeToCapRatio = 5;
     double[] credRange = new double[]{1, 2};
-    Integer[] hoursToTrade = new Integer[]{0,1,2,3,4,5,6,7,23};
-    double rebate = 0.0000;
+    Integer[] hoursToTrade = new Integer[]{0,1,2,3,4,5,6,7,8};
+    double rebate = 0.0001;
 
     SimpleDateFormat format = new SimpleDateFormat("yyyy-MMM-dd HH:mm");
 
-    boolean marketMakerAnalysis = true;
+    boolean marketMakerAnalysis = false;
 
     public static void main(String[] args){
-        MarketMakerAnalyser analyser = new MarketMakerAnalyser();
+        PnLAnalyser analyser = new PnLAnalyser();
         analyser.load();
     }
 
@@ -88,7 +88,7 @@ public class PnLAnalyser {
                         String day = parts[dateIndex];
                         String month = parts[dateIndex + 1];
                         long date = Long.parseLong(parts[dateIndex + 2]);
-                        long year = Long.parseLong(parts[dateIndex + 5]);
+                        long year = Long.parseLong(parts[dateIndex + 5].split(":")[0]);
                         long hour = Long.parseLong(parts[dateIndex + 3].split(":")[0]);
                         long min = Long.parseLong(parts[dateIndex + 3].split(":")[1]);
                         long t = format.parse(year + "-" + month + "-" + parts[dateIndex + 2] + " " + parts[dateIndex + 3]).getTime();
@@ -119,16 +119,20 @@ public class PnLAnalyser {
                             change += rebate;
 
                             if (
-                                    //lifeSpan/1800000 > 4 &&
+                                    //cred > 1 &&
+                                    day.equals("Wed") &&
+                                    //participants > 20 &&
+                                    //lifeSpan/1800000 > 8 &&
+                                    //lifeSpan/1800000 < 12 &&
                                     //cred >= credRange[0] &&
                                     //cred <= credRange[1] &&
-                                    //targetPnL >= 0.0015 &&
+                                    //targetPnL > 0.002 &&
                                     //targetPnL < 0.002 &&
                                     //hours.contains(startHour) &&
                                     true) {
 
                                 //aggregate(lifeSpan/1800000, change);
-                                //aggregate(participants, change);
+                                //aggregate(participants/5, change);
                                 //aggregate((int)(100*cred/participants), change);
                                 aggregate(nMonth, change);
                                 //aggregate(startHour, change);

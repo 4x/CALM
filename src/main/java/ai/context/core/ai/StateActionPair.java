@@ -80,7 +80,7 @@ public class StateActionPair {
         double netWeight = totalWeight + counterpartWeight;
 
         for (int i = 0; i < amalgamate.length; i++) {
-            mergedAmalgamate[i] = (int) (((amalgamate[i] * totalWeight) + (counterpart.getAmalgamate()[i] * counterpartWeight)) / netWeight);
+            mergedAmalgamate[i] = (int) Math.round(((amalgamate[i] * totalWeight) + (counterpart.getAmalgamate()[i] * counterpartWeight)) / netWeight);
         }
 
         StateActionPair merged = new StateActionPair(AmalgamateUtils.getAmalgamateString(mergedAmalgamate), mergedAmalgamate, actionResolution);

@@ -15,9 +15,9 @@ public class TestLearning {
 
     private LearnerService learner = new LearnerService();
 
-    private int numInputs = 6;
-    private int degreesOfFreedom = 10;
-    private int numPoints = 10000;
+    private int numInputs = 16;
+    private int degreesOfFreedom = 12;
+    private int numPoints = 20000;
 
     private int numPredict = 1000;
 
@@ -104,16 +104,16 @@ public class TestLearning {
                 movement -= val;
             }
 
-            /*if(index == 2 && val > 5){
+            if(index == 12 && val > 5){
                 movement =  movement * Math.cos(movement);
             }
             else {
                 movement =  movement * Math.sin(movement);
             }
 
-            if(index == 3 && val > 5){
+            if(index == 10 && val > 5){
                 movement =  Math.sqrt(Math.abs(movement));
-            }*/
+            }
 
             if(index == 4 && val > 5){
                 neg = true;

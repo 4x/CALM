@@ -4,6 +4,7 @@ import ai.context.core.ai.LearnerService;
 import ai.context.core.ai.LearningException;
 import ai.context.learning.neural.NeuronRankings;
 import ai.context.util.common.Count;
+import ai.context.util.configuration.PropertiesHolder;
 
 import java.util.*;
 
@@ -209,7 +210,7 @@ public class OrderIntelligenceEngine {
                 stimuli.put(entry.getKey(), (int)((Double)entry.getValue() / resolution * 10));
             }
             else if(entry.getValue() instanceof Long){
-                stimuli.put(entry.getKey(), (int)((Long)entry.getValue()/ DecisionAggregatorA.getTimeQuantum()));
+                stimuli.put(entry.getKey(), (int)((Long)entry.getValue()/ PropertiesHolder.timeQuantum));
             }
             else if(entry.getValue() instanceof Double){
                 stimuli.put(entry.getKey(), getLogarithmicDiscretisation((Double)entry.getValue(), 0, resolution));

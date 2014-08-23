@@ -58,7 +58,7 @@ public class MarketMakerDecider implements OnTickDecider, IStrategy{
             avgLow /= advices.size();
 
             for(MarketMakerPosition advice : advices){
-                if(!advice.isOpen()){
+                if(!advice.isOpen() && (double)(time - advice.getTimeAdvised())/advice.getTimeSpan() < 4){
                     double amount = Operations.round((available * PropertiesHolder.tradeToCreditRatio) / 1000000, 4);
                     if (amount > 0) {
                         long tNow = System.currentTimeMillis();
@@ -82,7 +82,7 @@ public class MarketMakerDecider implements OnTickDecider, IStrategy{
                                     Operations.round(bid + PropertiesHolder.marketMakerStopLoss, 5),
                                     Operations.round(advice.getTargetLow(), 5),
                                     advice.getGoodTillTime());
-                            advice.setHasOpenedWithShort(true, bid);
+                            advice.setHasOpenedWithShort(true, bid, time);
                         }
                         else if(ask + PropertiesHolder.marketMakerBeyond < advice.getTargetLow()){
                             advice.addFlag("B");
@@ -101,7 +101,7 @@ public class MarketMakerDecider implements OnTickDecider, IStrategy{
                                     Operations.round(ask - PropertiesHolder.marketMakerStopLoss, 5),
                                     Operations.round(advice.getTargetHigh(), 5),
                                     advice.getGoodTillTime());
-                            advice.setHasOpenedWithLong(true, ask);
+                            advice.setHasOpenedWithLong(true, ask, time);
                         }
 
                         if(out != null){

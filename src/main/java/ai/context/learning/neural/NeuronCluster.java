@@ -7,14 +7,16 @@ import ai.context.feed.manipulation.FeedWrapper;
 import ai.context.feed.manipulation.WrapperManipulatorPair;
 import ai.context.feed.synchronised.ISynchFeed;
 import ai.context.runner.MainNeural;
+import ai.context.runner.MainNeural2;
 import ai.context.util.common.MapUtils;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.Operations;
-import ai.context.util.trading.version_1.MarketMakerPosition;
 import ai.context.util.server.JettyServer;
 import ai.context.util.server.servlets.NeuralClusterInformationServlet;
 import ai.context.util.server.servlets.ScriptingServlet;
 import ai.context.util.trading.version_1.DecisionAggregatorA;
+import ai.context.util.trading.version_1.DecisionAggregatorC;
+import ai.context.util.trading.version_1.MarketMakerPosition;
 import ai.context.util.trading.version_1.PositionFactory;
 
 import java.util.*;
@@ -41,13 +43,15 @@ public class NeuronCluster implements TimedContainer{
     private long calibrationPoints = 20000;
     private long meanTime = 0;
     private long totalPointsConsumed = 0;
+    private int consumed = 0;
     private long minLatency = 50L;
     private double dangerLevel = 1;
     private ExecutorService service = Executors.newCachedThreadPool();
     private List<NeuralLearner> neurons = new CopyOnWriteArrayList<>();
     private List<FeedWrapper> feedWrappers = new ArrayList<>();
 
-    private MainNeural container;
+    public MainNeural container;
+    public MainNeural2 container2;
 
     private NeuronCluster() {
         server.addServlet(NeuralClusterInformationServlet.class, "info");
@@ -145,27 +149,32 @@ public class NeuronCluster implements TimedContainer{
     private Runnable stepper = new Runnable() {
         @Override
         public void run() {
-        while (true) {
-            for (NeuralLearner neuron : neurons) {
-                try {
-                    neuron.step();
-                    while (parentsHaveNext(neuron)) {
+            while (true) {
+                boolean fed = false;
+                for (NeuralLearner neuron : neurons) {
+                    try {
                         neuron.step();
+                        while (parentsHaveNext(neuron)) {
+                            neuron.step();
+                        }
+                        fed = true;
+                    } catch (LearningException e) {
+                        e.printStackTrace();
+                        neuron.cleanup();
                     }
-                } catch (LearningException e) {
-                    e.printStackTrace();
-                    neuron.cleanup();
+                }
+                if (neurons.isEmpty()) {
+                    try {
+                        Thread.sleep(30000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                //tryAndCreateNewGeneration();
+                if(fed){
+                    consumed++;
                 }
             }
-            if (neurons.isEmpty()) {
-                try {
-                    Thread.sleep(30000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            tryAndCreateNewGeneration();
-        }
         }
     };
 
@@ -208,6 +217,7 @@ public class NeuronCluster implements TimedContainer{
                     }
                     else if(!DecisionAggregatorA.isInLiveTrading() && meanTime > (System.currentTimeMillis() - 120 * 60000L)){
                         DecisionAggregatorA.setInLiveTrading(true);
+                        DecisionAggregatorC.setInLiveTrading(true);
                     }
                 }
 
@@ -394,6 +404,15 @@ public class NeuronCluster implements TimedContainer{
     }
 
     public String getPred(int neuronId){
+        if(container2 != null){
+            TreeMap<Integer, Double> predRaw = container2.neurons.get(neuronId - 1).getPredictionRaw();
+            String toReturn = "";
+            for(Map.Entry<Integer, Double> entry : predRaw.entrySet()){
+                toReturn += entry.getKey() + "," + entry.getValue() + "\n";
+            }
+            return toReturn;
+        }
+
         TreeMap<Integer, Double> predRaw = idToNeuron.get(neuronId).getPredictionRaw();
         String toReturn = "";
         for(Map.Entry<Integer, Double> entry : predRaw.entrySet()){
@@ -413,5 +432,9 @@ public class NeuronCluster implements TimedContainer{
 
     public HashSet<MarketMakerPosition> getMarketMakerPositions() {
         return DecisionAggregatorA.getMarketMakerPositions();
+    }
+
+    public int getConsumed() {
+        return consumed;
     }
 }

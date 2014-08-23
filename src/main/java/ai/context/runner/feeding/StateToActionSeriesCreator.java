@@ -6,7 +6,7 @@ import ai.context.feed.FeedObject;
 import ai.context.feed.row.CSVFeed;
 import ai.context.feed.synchronised.ISynchFeed;
 import ai.context.util.DataSetUtils;
-import ai.context.util.trading.version_1.DecisionAggregatorA;
+import ai.context.util.configuration.PropertiesHolder;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -37,13 +37,13 @@ public class StateToActionSeriesCreator {
                 DataType.DOUBLE,
                 DataType.DOUBLE};
 
-        priceFeed = new CSVFeed(path + "feeds/EURUSD_Ticks.csv", "yyyy.MM.dd HH:mm:ss.SSS", typesPrice, start - DecisionAggregatorA.getTimeQuantum());
+        priceFeed = new CSVFeed(path + "feeds/EURUSD_Ticks.csv", "yyyy.MM.dd HH:mm:ss.SSS", typesPrice, start - PropertiesHolder.timeQuantum);
         FeedObject pricePoint = null;
 
         while (true){
             FeedObject data = motherFeed.getNextComposite(null);
-            long tStart = data.getTimeStamp() + DecisionAggregatorA.getTimeQuantum();
-            long tEnd = tStart + DecisionAggregatorA.getTimeQuantum();
+            long tStart = data.getTimeStamp() + PropertiesHolder.timeQuantum;
+            long tEnd = tStart + PropertiesHolder.timeQuantum;
 
             if(tStart > end){
                 break;
@@ -66,7 +66,7 @@ public class StateToActionSeriesCreator {
                     StateToAction stateToAction = new StateToAction(tStart, signal);
                     stateToActions.add(stateToAction);
                     for(int i = 0; i < preferredMoves.length; i++){
-                        long horizon = (i + 1)*DecisionAggregatorA.getTimeQuantum();
+                        long horizon = (i + 1)*PropertiesHolder.timeQuantum;
                         long tStop = tStart + horizon;
                         Watcher watcher = new Watcher(horizon, tStop, stateToAction, preferredMoves[i], ask, bid);
                         watchers.add(watcher);

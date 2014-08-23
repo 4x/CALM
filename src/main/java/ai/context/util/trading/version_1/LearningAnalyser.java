@@ -17,6 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class LearningAnalyser extends JPanel{
+
     public static void main(String[] args){
 
         try {
@@ -26,10 +27,16 @@ public class LearningAnalyser extends JPanel{
         new LearningAnalyser();
     }
 
-    private int neurons = 500;
+    private boolean single = true;
+    private boolean normalise = true;
+
+    private int startIndex = 0;
+    private int neurons = 1000;
     private String address = "http://hyophorbe-associates.com:8056";
 
     private TreeMap<Integer, TreeMap<Integer, Double>> dists;
+    private TreeMap<Integer, Double> distAll;
+
     private int minX = Integer.MAX_VALUE;
     private int maxX = Integer.MIN_VALUE;
 
@@ -72,12 +79,21 @@ public class LearningAnalyser extends JPanel{
 
         g2d.setColor(new Color(255, 0, 0 , 30));
         //g2d.setColor(Color.RED);
-        for(Map.Entry<Integer, TreeMap<Integer, Double>> entry : dists.entrySet()){
+
+        if(single){
+            g2d.setColor(Color.RED);
+
+
             int lastXPos = -1;
             int lastYPos = -1;
-            double maxY = this.maxY;
-            maxY = maxYMap.get(entry.getKey());
-            for(Map.Entry<Integer, Double> p : entry.getValue().entrySet()){
+            double maxY = 0;
+            for(Map.Entry<Integer, Double> p : distAll.entrySet()){
+                if(p.getValue() > maxY){
+                    maxY = p.getValue();
+                }
+            }
+
+            for(Map.Entry<Integer, Double> p : distAll.entrySet()){
                 int x = p.getKey();
                 int xPos = (x * w/2)/aX + w/2;
 
@@ -92,7 +108,30 @@ public class LearningAnalyser extends JPanel{
                 lastYPos = yPos;
             }
         }
+        else {
+            for (Map.Entry<Integer, TreeMap<Integer, Double>> entry : dists.entrySet()) {
+                int lastXPos = -1;
+                int lastYPos = -1;
+                double maxY = this.maxY;
+                if(normalise) {
+                    maxY = maxYMap.get(entry.getKey());
+                }
+                for (Map.Entry<Integer, Double> p : entry.getValue().entrySet()) {
+                    int x = p.getKey();
+                    int xPos = (x * w / 2) / aX + w / 2;
 
+                    double y = p.getValue();
+                    int yPos = (int) ((h - 25) - ((h - 30) * y) / maxY);
+
+                    if (lastXPos != -1) {
+                        g2d.drawLine(lastXPos, lastYPos, xPos, yPos);
+                        //g2d.fillRect(xPos, yPos, 1, 1);
+                    }
+                    lastXPos = xPos;
+                    lastYPos = yPos;
+                }
+            }
+        }
         g2d.setFont(new Font("Monospace", 0, 8));
         for(int x = -aX; x <= aX; x += 10){
             g2d.setColor(Color.WHITE);
@@ -111,11 +150,12 @@ public class LearningAnalyser extends JPanel{
 
     public void reload(){
 
+        final TreeMap<Integer, Double> distAll = new TreeMap<>();
         final TreeMap<Integer, TreeMap<Integer, Double>> dists = new TreeMap<>();
 
         final int threads = 8;
         final CountDownLatch latch = new CountDownLatch(threads);
-        final AtomicInteger workId = new AtomicInteger(0);
+        final AtomicInteger workId = new AtomicInteger(startIndex);
         final ExecutorService pool = Executors.newFixedThreadPool(threads);
 
         long t = System.currentTimeMillis();
@@ -126,7 +166,7 @@ public class LearningAnalyser extends JPanel{
                 public void run() {
                     try {
                         int i;
-                        while((i = workId.incrementAndGet()) <= neurons){
+                        while((i = workId.incrementAndGet()) <= neurons + startIndex){
                             TreeMap<Integer, Double> s = new TreeMap<>();
 
                             URL url  = new URL(address + "/info?REQ_TYPE=PRED:" + i);
@@ -135,7 +175,16 @@ public class LearningAnalyser extends JPanel{
                             String inputLine;
                             while ((inputLine = in.readLine()) != null){
                                 String[] parts = inputLine.split(",");
-                                s.put(Integer.valueOf(parts[0]), Double.valueOf(parts[1]));
+                                int x = Integer.valueOf(parts[0]);
+                                double y = Double.valueOf(parts[1]);
+                                s.put(x, y);
+
+                                synchronized (distAll) {
+                                    if (!distAll.containsKey(x)) {
+                                        distAll.put(x, 0.0);
+                                    }
+                                    distAll.put(x, distAll.get(x) + y);
+                                }
                             }
 
                             TreeMap<Integer, Double> d = new TreeMap<>();
@@ -172,6 +221,19 @@ public class LearningAnalyser extends JPanel{
         System.out.println(dists.size());
         System.out.println(System.currentTimeMillis() - t);
         this.dists = dists;
+
+        TreeMap<Integer, Double> d = new TreeMap<>();
+        double cum = 0;
+        for(Map.Entry<Integer, Double> entry : distAll.headMap(0).entrySet()){
+            cum += entry.getValue();
+            d.put(entry.getKey(), cum);
+        }
+        cum = 0;
+        for(Map.Entry<Integer, Double> entry : distAll.descendingMap().headMap(0).entrySet()){
+            cum += entry.getValue();
+            d.put(entry.getKey(), cum);
+        }
+        this.distAll = d;
 
         refresh();
         repaint();
