@@ -140,24 +140,22 @@ public class DecisionAggregatorA {
                 double[] results = PositionFactory.getDecision(time, latestC, entry.getValue(), entry.getKey(), null, null, null, PropertiesHolder.marketMakerConfidence);
 
                 if (results[4] + results[5] > PositionFactory.cost * PropertiesHolder.marketMakerAmplitude) {
+
+                    MarketMakerPosition advice = new MarketMakerPosition(time, latestC + results[4], latestC - results[5], latestC + results[6], latestC - results[7], time + entry.getKey());
+                    advice.adjustTimes(PropertiesHolder.timeQuantum);
+                    advice.attributes.put("cred", results[0]);
+                    for (int i = 0; i < DecisionUtil.getDecilesU().length; i++) {
+                        advice.attributes.put("dU_" + i, DecisionUtil.getDecilesU()[i]);
+                    }
+
+                    for (int i = 0; i < DecisionUtil.getDecilesD().length; i++) {
+                        advice.attributes.put("dD_" + i, DecisionUtil.getDecilesD()[i]);
+                    }
+
                     if (inLiveTrading && marketMakerDecider != null) {
-                        MarketMakerPosition advice = new MarketMakerPosition(time, latestC + results[4], latestC - results[5], latestC + results[6], latestC - results[7], time + entry.getKey());
-                        advice.adjustTimes(PropertiesHolder.timeQuantum);
                         marketMakerDecider.addAdvice(advice);
                     } else if (marketMakerDeciderHistorical != null) {
-                        MarketMakerPosition advice = new MarketMakerPosition(time, latestC + results[4], latestC - results[5], latestC + results[6], latestC - results[7], time + entry.getKey());
-                        advice.adjustTimes(PropertiesHolder.timeQuantum);
-                        advice.attributes.put("cred", results[0]);
-
-                        for (int i = 0; i < DecisionUtil.getDecilesU().length; i++) {
-                            advice.attributes.put("dU_" + i, DecisionUtil.getDecilesU()[i]);
-                        }
-
-                        for (int i = 0; i < DecisionUtil.getDecilesD().length; i++) {
-                            advice.attributes.put("dD_" + i, DecisionUtil.getDecilesD()[i]);
-                        }
-
-                        marketMakerDeciderHistorical.addAdvice(advice);
+                       marketMakerDeciderHistorical.addAdvice(advice);
                     } else {
                         marketMakerPositions.add(new MarketMakerPosition(time, latestC + results[4], latestC - results[5], latestC + results[6], latestC - results[7], time + entry.getKey()));
                     }

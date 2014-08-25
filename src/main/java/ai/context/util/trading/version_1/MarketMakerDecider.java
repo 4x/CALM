@@ -58,12 +58,14 @@ public class MarketMakerDecider implements OnTickDecider, IStrategy{
             avgLow /= advices.size();
 
             for(MarketMakerPosition advice : advices){
-                if(!advice.isOpen() && (double)(time - advice.getTimeAdvised())/advice.getTimeSpan() < 4){
+                if(!advice.isOpen()){
                     double amount = Operations.round((available * PropertiesHolder.tradeToCreditRatio) / 1000000, 4);
                     if (amount > 0) {
                         long tNow = System.currentTimeMillis();
                         IOrder out = null;
                         String direction = null;
+
+                        advice.attributes.put("tNow", tNow);
 
                         if(bid - PropertiesHolder.marketMakerBeyond > advice.getTargetHigh()){
                             advice.addFlag("A");

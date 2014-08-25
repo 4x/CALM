@@ -34,7 +34,6 @@ import ai.context.util.analysis.LookAheadScheduler;
 import ai.context.util.configuration.DynamicPropertiesLoader;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.trading.version_1.DecisionAggregatorA;
-import ai.context.util.trading.version_1.DecisionAggregatorC;
 import ai.context.util.trading.version_1.MarketMakerDecider;
 import ai.context.util.trading.version_1.MarketMakerDeciderHistorical;
 import com.dukascopy.api.Instrument;
@@ -102,7 +101,7 @@ public class MainNeural {
         NeuronCluster.getInstance().setMotherFeed(motherFeed);
         if(PropertiesHolder.tradeMarketMarker){
             DecisionAggregatorA.setMarketMakerDeciderHistorical(new MarketMakerDeciderHistorical(path + "feeds/EURUSD_Ticks.csv", null));
-            DecisionAggregatorC.setMarketMakerDeciderHistorical(new MarketMakerDeciderHistorical(path + "feeds/EURUSD_Ticks.csv", null));
+            //DecisionAggregatorC.setMarketMakerDeciderHistorical(new MarketMakerDeciderHistorical(path + "feeds/EURUSD_Ticks.csv", null));
         }
 
         long[] horizonRange = new long[]{PropertiesHolder.horizonLowerBound, PropertiesHolder.horizonUpperBound};
@@ -224,7 +223,7 @@ public class MainNeural {
             client = new DukascopyConnection(dukascopyUsername, dukascopyPassword).getClient();
             //DecisionAggregatorA.setBlackBox(new BlackBox(client));
             DecisionAggregatorA.setMarketMakerDecider(new MarketMakerDecider(client));
-            DecisionAggregatorC.setMarketMakerDecider(new MarketMakerDecider(client));
+            //DecisionAggregatorC.setMarketMakerDecider(new MarketMakerDecider(client));
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -98,7 +98,7 @@ public class MarketMakerAnalyser {
 
                         if (
                             (20 * attr.get("wait").longValue())/lifeSpan < 4 &&
-                            //attr.get("cred").intValue() > 10 &&
+                            attr.get("cred").intValue() > 5 &&
                             //lifeSpan/1800000 == 10 &&
                             //cred >= credRange[0] &&
                             //cred <= credRange[1] &&
