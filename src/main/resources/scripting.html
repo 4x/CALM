@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Scripting Control</title>
+    <script>
+        function exec(command){
+            xmlhttp = new XMLHttpRequest();
+            xmlhttp.onreadystatechange = function() {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    console.log(xmlhttp.responseText);
+                }
+            }
+            xmlhttp.open("GET", "/scripting?CMD=" + command, true);
+            xmlhttp.send();
+        }
+
+        function execTest(command){
+            console.log(command + "\n" + command);
+            return "";
+        }
+    </script>
+</head>
+<body>
+
+</body>
+</html>

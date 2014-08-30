@@ -85,6 +85,16 @@ public class NeuralLearner implements Feed, Runnable {
 
     private double confidence = 0;
 
+
+    private double lambda = 0.05;
+    private double lastMean = 0;
+    private int lastDecision = 0;
+    private int lastConfidence = 0;
+
+    private double ampU = 0;
+    private double ampD = 0;
+    private double pCutOff = 0.75;
+
     public NeuralLearner(long[] horizonRange, ISynchFeed motherFeed, Integer[] actionElements, Integer[] sigElements, String parentConfig, String wrapperConfig, long outputFutureOffset, double resolution) {
         this.motherFeed = motherFeed;
         this.horizonRange = horizonRange;
@@ -222,7 +232,7 @@ public class NeuralLearner implements Feed, Runnable {
                     }
 
                     int pred = 0;
-                    if (pointsConsumed > 200) {
+                    if (pointsConsumed > 50) {
                         pred = getSignalForDistribution(getDistribution(signal), 0)[0];
                     }
                     signal[index] = pred;
@@ -368,6 +378,7 @@ public class NeuralLearner implements Feed, Runnable {
         double upMult = netWeight/weightUp;
         double downMult = netWeight/weightDown;
 
+        double cumU = 0;
         for (Map.Entry<Integer, Double> entry : distUp.entrySet()) {
             int key = entry.getKey();
             double val = entry.getValue() * upMult;
@@ -378,9 +389,16 @@ public class NeuralLearner implements Feed, Runnable {
                 val += distribution.get(key);
             }
 
+            cumU += val;
+            if(cumU/weightUp < pCutOff){
+                ampU = key;
+            }
+
             distribution.put(key, val);
         }
 
+        boolean ampDFound = false;
+        double cumD = 0;
         for (Map.Entry<Integer, Double> entry : distDown.entrySet()) {
             int key = entry.getKey();
             double val = entry.getValue() * downMult;
@@ -389,6 +407,12 @@ public class NeuralLearner implements Feed, Runnable {
             }
             else if(key == -1 && distribution.containsKey(key)){
                 val += distribution.get(key);
+            }
+
+            cumD += val;
+            if(cumU/weightUp > pCutOff && !ampDFound){
+                ampD = key;
+                ampDFound = true;
             }
 
             distribution.put(key, val);
@@ -504,11 +528,6 @@ public class NeuralLearner implements Feed, Runnable {
         return pointsConsumed;
     }
 
-    double lambda = 0.05;
-    double lastMean = 0;
-    int lastDecision = 0;
-    int lastConfidence = 0;
-
     public int[] getSignalForDistribution(TreeMap<Integer, Double> distribution, double confidence) {
         int[] signal = new int[getNumberOfOutputs()];
 
@@ -529,6 +548,10 @@ public class NeuralLearner implements Feed, Runnable {
         lastMean = (1 - lambda) * lastMean + lambda * mean;
         this.confidence = (1 - lambda) * this.confidence + lambda * confidence;
         lastDecision = signal[0] = getLogarithmicDiscretisation(mean, 0, 1, 2);
+        if(signal.length == 3) {
+            signal[1] = getLogarithmicDiscretisation(-ampD, 0, 1, 2);
+            signal[2] = getLogarithmicDiscretisation(ampU, 0, 1, 2);
+        }
         lastConfidence = getLogarithmicDiscretisation(this.confidence, 0, resolution*10, 2);
         return signal;
     }

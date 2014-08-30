@@ -7,10 +7,7 @@ import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.Operations;
 import com.dukascopy.api.JFException;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class DecisionAggregatorA {
 
@@ -223,7 +220,12 @@ public class DecisionAggregatorA {
         return inLiveTrading;
     }
 
-    public static HashSet<MarketMakerPosition> getMarketMakerPositions() {
+    public static Collection<MarketMakerPosition> getMarketMakerPositions() {
+        if (inLiveTrading && marketMakerDecider != null) {
+            return marketMakerDecider.getAdvices();
+        } else if (marketMakerDeciderHistorical != null) {
+            return marketMakerDeciderHistorical.getAdvices();
+        }
         return marketMakerPositions;
     }
 }

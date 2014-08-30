@@ -15,7 +15,6 @@ import ai.context.util.server.JettyServer;
 import ai.context.util.server.servlets.NeuralClusterInformationServlet;
 import ai.context.util.server.servlets.ScriptingServlet;
 import ai.context.util.trading.version_1.DecisionAggregatorA;
-import ai.context.util.trading.version_1.DecisionAggregatorC;
 import ai.context.util.trading.version_1.MarketMakerPosition;
 import ai.context.util.trading.version_1.PositionFactory;
 
@@ -217,7 +216,7 @@ public class NeuronCluster implements TimedContainer{
                     }
                     else if(!DecisionAggregatorA.isInLiveTrading() && meanTime > (System.currentTimeMillis() - 120 * 60000L)){
                         DecisionAggregatorA.setInLiveTrading(true);
-                        DecisionAggregatorC.setInLiveTrading(true);
+                        //DecisionAggregatorC.setInLiveTrading(true);
                     }
                 }
 
@@ -430,7 +429,7 @@ public class NeuronCluster implements TimedContainer{
         return idToNeuron.get(id);
     }
 
-    public HashSet<MarketMakerPosition> getMarketMakerPositions() {
+    public Collection<MarketMakerPosition> getMarketMakerPositions() {
         return DecisionAggregatorA.getMarketMakerPositions();
     }
 

@@ -1,10 +1,10 @@
 package ai.context.util.server.servlets;
 
 import ai.context.learning.neural.NeuronCluster;
+import ai.context.util.analysis.ReflectionHelper;
 import ai.context.util.configuration.PropertiesHolder;
 
 import javax.script.ScriptEngine;
-import javax.script.ScriptException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -33,6 +33,7 @@ public class ScriptingServlet extends HttpServlet {
         jsEngine.put("out", System.out);
         jsEngine.put("cluster", cluster);
         jsEngine.put("filterFunction", PropertiesHolder.filterFunction);
+        jsEngine.put("reflectionHelper", new ReflectionHelper());
 
         System.setOut(oldOut);
         System.setErr(oldErr);

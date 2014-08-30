@@ -31,7 +31,7 @@ public class LearningAnalyser extends JPanel{
     private boolean normalise = true;
 
     private int startIndex = 0;
-    private int neurons = 1000;
+    private int neurons = 750;
     private String address = "http://hyophorbe-associates.com:8056";
 
     private TreeMap<Integer, TreeMap<Integer, Double>> dists;

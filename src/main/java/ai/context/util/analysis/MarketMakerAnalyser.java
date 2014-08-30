@@ -38,7 +38,7 @@ public class MarketMakerAnalyser {
         SimpleDateFormat formatOutput = new SimpleDateFormat("yyyy.MM");
 
         try {
-            String file = "/opt/dev/tmp/nohup.out_2b";
+            String file = "/opt/dev/tmp/nohup.out_4000";
             file = "/opt/dev/tmp/nohup.out";
 
             br = new BufferedReader(new FileReader(file));
@@ -47,7 +47,7 @@ public class MarketMakerAnalyser {
                 try{
                     //2010.04.28 20:30:03.467 P: 0.00194 OPEN: 1.32022 CLOSE: 1.31828  NET: 14.19567 SHORT TIMEOUT
 
-                    if (sCurrentLine.contains("OPEN") && !sCurrentLine.contains("Mean")  && !sCurrentLine.contains("SP")) {
+                    if (sCurrentLine.contains("OPEN") && !sCurrentLine.contains("Mean")  && !sCurrentLine.contains("INFO")  && !sCurrentLine.contains("SP")) {
 
                         if(sCurrentLine.contains("SP")){
                             sCurrentLine = sCurrentLine.substring(9, sCurrentLine.length());
@@ -97,15 +97,15 @@ public class MarketMakerAnalyser {
                         }
 
                         if (
-                            (20 * attr.get("wait").longValue())/lifeSpan < 4 &&
-                            attr.get("cred").intValue() > 5 &&
+                            (20 * attr.get("wait").longValue())/lifeSpan < 5 &&
+                            //attr.get("cred").intValue() > 5 &&
                             //lifeSpan/1800000 == 10 &&
                             //cred >= credRange[0] &&
                             //cred <= credRange[1] &&
                             //targetPnL >= 0.0015 &&
                             //targetPnL < 0.002 &&
                             //hours.contains(startHour) &&
-                            //nMonth > 5 &&
+                            //nMonth > 6 &&
                             //nMonth < 60 &&
                                 true) {
 

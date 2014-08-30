@@ -8,10 +8,7 @@ import com.dukascopy.api.system.IClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 public class MarketMakerDecider implements OnTickDecider, IStrategy{
 
@@ -173,5 +170,13 @@ public class MarketMakerDecider implements OnTickDecider, IStrategy{
     @Override
     public void onStop() throws JFException {
 
+    }
+
+    public List<MarketMakerPosition> getAdvices(){
+        ArrayList<MarketMakerPosition> list = new ArrayList<>();
+        for(Set<MarketMakerPosition> set : adviceByGoodTillTime.values()){
+            list.addAll(set);
+        }
+        return list;
     }
 }

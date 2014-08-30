@@ -148,6 +148,7 @@ public class MotherFeedCreator {
         TimeVariablesAppenderFeed tFeed = new TimeVariablesAppenderFeed(sFeed);
 
         ISynchFeed synchFeed = new SynchronisedFeed();
+        synchFeed.addRawFeed(feedPriceEUR);
         synchFeed.addRawFeed(tFeed);
 
         int i = 0;
