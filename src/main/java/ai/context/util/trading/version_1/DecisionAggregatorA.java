@@ -160,7 +160,6 @@ public class DecisionAggregatorA {
             }
             participantsMM = 0;
             if (marketMakerDeciderHistorical != null) {
-                marketMakerDeciderHistorical.setTime(time);
                 marketMakerDeciderHistorical.step();
             }
         }

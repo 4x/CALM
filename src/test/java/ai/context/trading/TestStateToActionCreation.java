@@ -14,8 +14,7 @@ public class TestStateToActionCreation {
         try {
             long start = format.parse("2007.01.01").getTime();
             long end = format.parse("2007.03.01").getTime();
-            double[] preferredMoves = new double[]{0.0005, 0.00075, 0.001, 0.00125, 0.0015, 0.00175, 0.002};
-            List<StateToAction> series = StateToActionSeriesCreator.createSeries("/opt/dev/data/", start, end, preferredMoves);
+            List<StateToAction> series = StateToActionSeriesCreator.createSeries("/opt/dev/data/", start, end, 10);
 
             System.out.println(series.size());
         } catch (ParseException e) {

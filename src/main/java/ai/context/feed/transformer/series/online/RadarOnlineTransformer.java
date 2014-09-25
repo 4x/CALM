@@ -2,6 +2,7 @@ package ai.context.feed.transformer.series.online;
 
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
+import ai.context.util.common.Count;
 
 import java.util.*;
 
@@ -57,7 +58,6 @@ public class RadarOnlineTransformer extends OnlineTransformer {
                 points.add(new Double[]{angle1, distance1});
                 points.add(new Double[]{angle2, distance2});
                 points.add(new Double[]{angle3, distance3});
-
                 i--;
             }
 
@@ -73,15 +73,35 @@ public class RadarOnlineTransformer extends OnlineTransformer {
             int divisions = tightness * 10;
             for (int a = -10; a < 10; a++) {
                 double angle = (Math.PI / divisions) * a;
-                TreeMap<Integer, Double> histogram = new TreeMap<>();
-                for (Double[] point : points) {
-                    int pointClass = (int) Math.round(point[1] * Math.sin(point[0] + angle));
+                double divisor = 10;
 
-                    if (!histogram.containsKey(pointClass)) {
-                        histogram.put(pointClass, 0D);
+                int tries = 0;
+                TreeMap<Integer, Count> hist = new TreeMap<>();
+                while(true) {
+                    hist.clear();
+                    for (Double[] p : points) {
+                        double c = p[1] * Math.sin(p[0] - angle);
+
+                        int cClass = (int) Math.round(c / divisor);
+                        if (!hist.containsKey(cClass)) {
+                            hist.put(cClass, new Count());
+                        }
+                        hist.get(cClass).val++;
                     }
 
-                    histogram.put(pointClass, histogram.get(pointClass) + 1);
+                    if(tries > 10){
+                        break;
+                    }
+                    if(hist.size() > 20){
+                        divisor *= 1.25;
+                    }
+                    else if(hist.size() < 16){
+                        divisor /= 1.25;
+                    }
+                    else {
+                        break;
+                    }
+                    tries++;
                 }
 
                 List<Double[]> changes = new ArrayList<Double[]>();
@@ -89,8 +109,8 @@ public class RadarOnlineTransformer extends OnlineTransformer {
                 int inspect = 10;
                 int c = 1;
                 double sum = 0;
-                for (Map.Entry<Integer, Double> entry : histogram.entrySet()) {
-                    sum += entry.getValue();
+                for (Map.Entry<Integer, Count> entry : hist.entrySet()) {
+                    sum += entry.getValue().val;
                     double rise = sum / c;
                     if (c > inspect && rise > maxTop) {
                         maxTop = rise;
@@ -102,11 +122,11 @@ public class RadarOnlineTransformer extends OnlineTransformer {
                     c++;
                 }
 
-                SortedMap<Integer, Double> desc = histogram.descendingMap();
+                SortedMap<Integer, Count> desc = hist.descendingMap();
                 sum = 0;
                 c = 1;
-                for (Map.Entry<Integer, Double> entry : desc.entrySet()) {
-                    sum += entry.getValue();
+                for (Map.Entry<Integer, Count> entry : desc.entrySet()) {
+                    sum += entry.getValue().val;
                     double fall = sum / c;
                     if (c > inspect && fall > maxBottom) {
                         maxBottom = fall;
@@ -117,18 +137,6 @@ public class RadarOnlineTransformer extends OnlineTransformer {
                     changes.get(c - 1)[1] = fall;
                     c++;
                 }
-
-                /*if(last.getTimeStamp() == 180){
-                    *//*for(Map.Entry<Integer, Double> entry : histogram.entrySet()){
-                        System.out.println(a + "," + entry.getKey() + "," + entry.getValue());
-                    }*//*
-
-                    //System.out.println(">> " + a + " " + maxTop + " " + maxBottom + " " + top + " " + bottom);
-
-                    for(Double[] val : changes){
-                        System.out.println(a + "," +val[0] + "," + val[1]);
-                    }
-                }*/
             }
             double lambda = 1;
             lastTop = (1 - lambda) * lastTop + lambda * top;

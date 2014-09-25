@@ -42,7 +42,11 @@ public class NeuralLearner2 {
     public void feed(StateToAction stateToAction){
         double movement = 0;
         if(stateToAction.horizonActions.containsKey(horizon)){
-            movement = stateToAction.horizonActions.get(horizon);
+            Double[] movements = stateToAction.horizonActions.get(horizon);
+            movement = movements[0];
+            if(movements[1] > movements[0]){
+                movement = -movements[1];
+            }
         }
         int[] signal = getSignalState(stateToAction.timeStamp, stateToAction.signal);
 

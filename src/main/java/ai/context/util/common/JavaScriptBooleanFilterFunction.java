@@ -16,14 +16,14 @@ public class JavaScriptBooleanFilterFunction implements Filter{
 
     public JavaScriptBooleanFilterFunction() {
         String defaultFunction =
-                "defaultFilter = function(advice){" +
-                    "if((20*(advice.attributes.get(\"tNow\") - advice.getTimeAdvised()))/advice.getTimeSpan() > 3){" +
-                        "return false;" +
-                    "}" +
-                    "if(advice.attributes.get(\"cred\") < 6){" +
-                        "return false;" +
-                    "}" +
-                    "return true;" +
+                "defaultFilter = function(advice){\n" +
+                    "if((20*(advice.attributes.get(\"tNow\") - advice.getTimeAdvised()))/advice.getTimeSpan() > 4){\n" +
+                        "return false;\n" +
+                    "}\n" +
+                    "if(advice.getTimeSpan()/1800000 < 10){\n" +
+                        "return false;\n" +
+                    "}\n" +
+                    "return true;\n" +
                 "}";
 
         try {

@@ -133,7 +133,7 @@ public class TestTransformer {
 
         try {
             BufferedWriter out = new BufferedWriter(new FileWriter("RADAR.csv"));
-            for (int i = 0; i < 600; i++) {
+            for (int i = 0; i < 2000; i++) {
                 FeedObject data = feed.getNextComposite(this);
                 appendToFile(AmalgamateUtils.getCSVString(data.getData()), out);
             }
@@ -315,8 +315,11 @@ public class TestTransformer {
 
         RadarOnlineTransformer transformer = new RadarOnlineTransformer(100, feedL, feedH, feedC, 0.0001);
 
+        SynchronisedFeed s = new SynchronisedFeed(feed, null);
+        s.addRawFeed(transformer);
+
         for (int i = 0; i < 2000; i++) {
-            FeedObject data = transformer.readNext(this);
+            FeedObject data = s.getNextComposite(this);
             List<Double>  out = new ArrayList<>();
             DataSetUtils.add(data.getData(), out);
             System.out.println(data.getTimeStamp() + " " + out);

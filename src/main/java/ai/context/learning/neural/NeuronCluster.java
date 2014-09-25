@@ -84,7 +84,6 @@ public class NeuronCluster implements TimedContainer{
                 if (instance == null) {
                     instance = new NeuronCluster();
                     instance.startServer();
-                    instance.start();
                 }
             }
         }
@@ -211,10 +210,7 @@ public class NeuronCluster implements TimedContainer{
                     System.err.println("Mean Latency: " + Operations.round(latency, 3) + ", Points Consumed: " + totalPointsConsumed + ", Overall Score: " + Operations.round(rankings.getOverallMarking(), 4) + " as of " + new Date(meanTime));
                     dangerLevel = latency / minLatency;
 
-                    if(container.isCalibrating() && totalPointsConsumed/neurons.size() > calibrationPoints){
-                        container.nextCalibrationRound();
-                    }
-                    else if(!DecisionAggregatorA.isInLiveTrading() && meanTime > (System.currentTimeMillis() - 120 * 60000L)){
+                    if(!DecisionAggregatorA.isInLiveTrading() && meanTime > (System.currentTimeMillis() - 120 * 60000L)){
                         DecisionAggregatorA.setInLiveTrading(true);
                         //DecisionAggregatorC.setInLiveTrading(true);
                     }

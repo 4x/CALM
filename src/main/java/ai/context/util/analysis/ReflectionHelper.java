@@ -1,7 +1,5 @@
 package ai.context.util.analysis;
 
-import ai.context.runner.feeding.Watcher;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -35,10 +33,5 @@ public class ReflectionHelper {
             //System.out.println(field.getName() + " : " + field.getType() + " " + field.getModifiers());
         }
         return fields;
-    }
-
-    public static void main(String[] args){
-        System.out.println(new ReflectionHelper().getMethods(new Watcher(0, 0, null, 0, 0, 0)));
-        System.out.println(new ReflectionHelper().getFields(new Watcher(0, 0, null, 0, 0, 0)));
     }
 }

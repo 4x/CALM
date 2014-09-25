@@ -40,6 +40,7 @@ public class PropertiesHolder {
     public static long timeQuantum = 30 * 60 * 1000L;
     public static JavaScriptBooleanFilterFunction filterFunction = new JavaScriptBooleanFilterFunction();
     public static String fxFolder = "";
+    public static String ticksFile = "EURUSD_Ticks.csv";
 
     public static String getInfo() {
         return "PropertiesHolder{" +
@@ -79,6 +80,7 @@ public class PropertiesHolder {
                 ",\npointsToLearn=" + pointsToLearn +
                 ",\ntimeQuantum=" + timeQuantum +
                 ",\nfxFolder=" + fxFolder +
+                ",\nticksFile=" + ticksFile +
                 '}';
     }
 }

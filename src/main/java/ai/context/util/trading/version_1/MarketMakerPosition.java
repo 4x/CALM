@@ -1,5 +1,6 @@
 package ai.context.util.trading.version_1;
 
+import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.Operations;
 
 import java.util.Date;
@@ -90,7 +91,9 @@ public class MarketMakerPosition {
 
     public void setClosed(boolean closed) {
         this.closed = closed;
-        OrderIntelligenceEngine.getInstance().feed(this);
+        if(PropertiesHolder.tradeSpecial) {
+            OrderIntelligenceEngine.getInstance().feed(this);
+        }
     }
 
     public double getOpen() {
@@ -158,6 +161,8 @@ public class MarketMakerPosition {
     public void adjustTimes(long timeQuantum) {
         time += timeQuantum;
         goodTill += timeQuantum;
+        attributes.put("advised", time);
+        attributes.put("goodTill", goodTill);
     }
 
     public long getTimeAdvised() {

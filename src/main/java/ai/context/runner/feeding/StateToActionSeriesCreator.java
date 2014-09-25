@@ -8,10 +8,7 @@ import ai.context.feed.synchronised.ISynchFeed;
 import ai.context.util.DataSetUtils;
 import ai.context.util.configuration.PropertiesHolder;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class StateToActionSeriesCreator {
 
@@ -19,11 +16,13 @@ public class StateToActionSeriesCreator {
     public static double ask;
     public static double bid;
 
-    public static List<StateToAction> createSeries(String path, long start, long end, double[] preferredMoves){
-        return StateToActionSeriesCreator.createSeries(null, path, start, end, preferredMoves);
+    public static Long[] horizons;
+
+    public static List<StateToAction> createSeries(String path, long start, long end, int timeFrames){
+        return StateToActionSeriesCreator.createSeries(null, path, start, end, timeFrames);
     }
 
-    public static List<StateToAction> createSeries(ISynchFeed motherFeed, String path, long start, long end, double[] preferredMoves){
+    public static List<StateToAction> createSeries(ISynchFeed motherFeed, String path, long start, long end, int timeFrames){
         ArrayList<StateToAction> stateToActions = new ArrayList<>();
         Set<Watcher> watchers = new HashSet<>();
 
@@ -37,8 +36,10 @@ public class StateToActionSeriesCreator {
                 DataType.DOUBLE,
                 DataType.DOUBLE};
 
-        priceFeed = new CSVFeed(path + "feeds/EURUSD_Ticks.csv", "yyyy.MM.dd HH:mm:ss.SSS", typesPrice, start - PropertiesHolder.timeQuantum);
+        priceFeed = new CSVFeed(path + "feeds/" + PropertiesHolder.ticksFile, "yyyy.MM.dd HH:mm:ss.SSS", typesPrice, start - PropertiesHolder.timeQuantum);
         FeedObject pricePoint = null;
+
+        TreeSet<Long> horizons = new TreeSet<>();
 
         while (true){
             FeedObject data = motherFeed.getNextComposite(null);
@@ -65,10 +66,11 @@ public class StateToActionSeriesCreator {
                 if(ask != 0 && bid != 0){
                     StateToAction stateToAction = new StateToAction(tStart, signal);
                     stateToActions.add(stateToAction);
-                    for(int i = 0; i < preferredMoves.length; i++){
+                    for(int i = 0; i < timeFrames; i++){
                         long horizon = (i + 1)*PropertiesHolder.timeQuantum;
+                        horizons.add(horizon);
                         long tStop = tStart + horizon;
-                        Watcher watcher = new Watcher(horizon, tStop, stateToAction, preferredMoves[i], ask, bid);
+                        Watcher watcher = new Watcher(horizon, tStop, stateToAction, ask, bid);
                         watchers.add(watcher);
                     }
                 }
@@ -95,6 +97,8 @@ public class StateToActionSeriesCreator {
                 }
             }
         }
+        StateToActionSeriesCreator.horizons = new Long[horizons.size()];
+        horizons.toArray(StateToActionSeriesCreator.horizons);
         return stateToActions;
     }
 }

@@ -189,6 +189,7 @@ public class TimeSeriesChart extends JPanel {
         try {
             CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(file)), ',', '"', 0);
             String[] line;
+            reader.readNext();
             while ((line = reader.readNext()) != null) {
                 for (int i = 0; i < names.length; i++) {
                     String name = names[i];

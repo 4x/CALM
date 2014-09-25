@@ -34,12 +34,16 @@ public class Operations {
             return Math.atan(y / x);
         }
 
+        if (x > 0 && y < 0) {
+            return 2*Math.PI - Math.atan(Math.abs(y / x));
+        }
+
         if (y > 0 && x < 0) {
-            return Math.PI - Math.atan(y / x);
+            return Math.PI - Math.atan(Math.abs(y / x));
         }
 
         if (y < 0 && x < 0) {
-            return Math.PI + Math.atan(y / x);
+            return Math.PI + Math.atan(Math.abs(y / x));
         }
 
         if (x == 0 && y > 0) {
@@ -48,6 +52,10 @@ public class Operations {
 
         if (x == 0 && y < 0) {
             return 3 * Math.PI / 2;
+        }
+
+        if (y == 0 && x < 0) {
+            return Math.PI;
         }
 
         if (y == 0 && x >= 0) {

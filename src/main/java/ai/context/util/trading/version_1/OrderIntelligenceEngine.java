@@ -36,11 +36,11 @@ public class OrderIntelligenceEngine {
     private Map<Integer, LearnerService> neuronsDown = new HashMap<>();
 
     private void setUpNeurons(Set<String> stimuli){
-        for(int i = 0; i < 25; i++){
+        for(int i = 0; i < 50; i++){
             List<String> list = new ArrayList<>(stimuli);
             HashSet<String> set = new HashSet();
             neuronsUpConf.put(i, set);
-            for(int sN = 0; sN < 5; sN++){
+            for(int sN = 0; sN < 10; sN++){
                 int s = (int) Math.min(list.size(), list.size() * Math.random());
                 set.add(list.remove(s));
             }
@@ -50,11 +50,11 @@ public class OrderIntelligenceEngine {
             neuronsUp.put(i, service);
         }
 
-        for(int i = 0; i < 25; i++){
+        for(int i = 0; i < 50; i++){
             List<String> list = new ArrayList<>(stimuli);
             HashSet<String> set = new HashSet();
             neuronsDownConf.put(i, set);
-            for(int sN = 0; sN < 5; sN++){
+            for(int sN = 0; sN < 10; sN++){
                 int s = (int) Math.min(list.size(), list.size() * Math.random());
                 set.add(list.remove(s));
             }
@@ -188,11 +188,11 @@ public class OrderIntelligenceEngine {
 
         //System.out.println(stimuli + ", mD: " + maxDown + ", mU: " + maxUp + ", cumD: " + cumD + ", cumU: " + cumU);
         if(advice.attributes.get("dir") == 1){
-            if(maxUp > 10 && maxUp > maxDown * PositionFactory.rewardRiskRatio){
+            if(maxUp > PropertiesHolder.marketMakerAmplitude * PositionFactory.cost && maxUp > maxDown * PositionFactory.rewardRiskRatio){
                 return maxUp * resolution;
             }
         } else if(advice.attributes.get("dir") == -1){
-            if(maxDown > 10 && maxDown > maxUp * PositionFactory.rewardRiskRatio){
+            if(maxDown > PropertiesHolder.marketMakerAmplitude * PositionFactory.cost && maxDown > maxUp * PositionFactory.rewardRiskRatio){
                 return maxDown * resolution;
             }
         }
@@ -204,10 +204,10 @@ public class OrderIntelligenceEngine {
         Map<String, Integer> stimuli = new HashMap<>();
         for(Map.Entry<String, Object> entry : advice.attributes.entrySet()){
             if(entry.getKey().equals("cred")){
-                stimuli.put(entry.getKey(), getLogarithmicDiscretisation((Double)entry.getValue(), 0, 0.5));
+                stimuli.put(entry.getKey(), getLogarithmicDiscretisation((Double)entry.getValue(), 0, 1));
             }
             else if(entry.getKey().startsWith("dU_") || entry.getKey().startsWith("dD_") ){
-                stimuli.put(entry.getKey(), (int)((Double)entry.getValue() / resolution * 10));
+                stimuli.put(entry.getKey(), (int)((Double)entry.getValue() / (resolution * 10)));
             }
             else if(entry.getValue() instanceof Long){
                 stimuli.put(entry.getKey(), (int)((Long)entry.getValue()/ PropertiesHolder.timeQuantum));

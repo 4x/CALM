@@ -61,19 +61,18 @@ public class MainNeural2 {
     public void setup(String path, String initialDate, String finalDate){
         motherFeed = MotherFeedCreator.getMotherFeed(path);
         SimpleDateFormat format = new SimpleDateFormat("yyyy.MM.dd");
-        double[] preferredMoves = new double[]{0.001, 0.00125, 0.0015, 0.00175, 0.002, 0.00225, 0.0025};
-
+        int timeFrames = 10;
         try {
             long start = format.parse(initialDate).getTime();
             long end = format.parse(finalDate).getTime();
-            series = StateToActionSeriesCreator.createSeries(motherFeed, path, start, end, preferredMoves);
+            series = StateToActionSeriesCreator.createSeries(motherFeed, path, start, end, timeFrames);
             priceFeed = StateToActionSeriesCreator.priceFeed;
             System.out.println(series.size());
         } catch (ParseException e) {
             e.printStackTrace();
         }
 
-        long[] possibleHorizons = new long[preferredMoves.length];
+        long[] possibleHorizons = new long[timeFrames];
         for(int i = 0; i < possibleHorizons.length; i++){
             possibleHorizons[i] = (i + 1) * PropertiesHolder.timeQuantum;
         }
@@ -85,9 +84,7 @@ public class MainNeural2 {
 
         int i = 1;
         int[] sigSizes = new int[]{PropertiesHolder.coreStimuliPerNeuron};
-        int nNeurons = 3500;
         for(int s : sigSizes){
-            int n = nNeurons/s;
             for(int iS = 0; iS < PropertiesHolder.totalNeurons; iS++){
                 int[] sigElements = new int[s];
                 for (int sig = 0; sig < sigElements.length; sig++) {
@@ -119,23 +116,6 @@ public class MainNeural2 {
             }
         }
 
-        /*for(int iP = 0; iP < 200; iP++){
-            int[] sigElements = new int[0];
-            ArrayList<NeuralLearner2> parents = new ArrayList<>();
-            while(parents.size() < 6 && parents.size() != neurons.size()){
-                int parentId = (int)(neurons.size() * Math.random());
-                if(parentId < neurons.size()){
-                    parents.add(neurons.get(parentId));
-                }
-            }
-            NeuralLearner2[] parentsArray = new NeuralLearner2[parents.size()];
-
-            long horizon = possibleHorizons[((int) (Math.random() * possibleHorizons.length))];
-            NeuralLearner2 neuron = new NeuralLearner2(i, sigElements, parents.toArray(parentsArray), horizon, res);
-            neurons.add(neuron);
-            System.out.println("Created Neuron " + i + " with signal components: " + Arrays.toString(sigElements) + " and Parents: " + parents + " and horizon: " + horizon);
-            i++;
-        }*/
         ask = StateToActionSeriesCreator.ask;
         bid = StateToActionSeriesCreator.bid;
     }

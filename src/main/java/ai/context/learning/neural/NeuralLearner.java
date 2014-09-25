@@ -55,7 +55,7 @@ public class NeuralLearner implements Feed, Runnable {
 
     private AbsoluteMovementDiscretiser discretiser;
 
-    private final long horizon;
+    private long horizon;
     private long oneHour = 60 * 60 * 1000L;
     private long outputFutureOffset = 5 * 60 * 1000L;
     private boolean alive = true;
@@ -95,11 +95,10 @@ public class NeuralLearner implements Feed, Runnable {
     private double ampD = 0;
     private double pCutOff = 0.75;
 
-    public NeuralLearner(long[] horizonRange, ISynchFeed motherFeed, Integer[] actionElements, Integer[] sigElements, String parentConfig, String wrapperConfig, long outputFutureOffset, double resolution) {
+    public NeuralLearner(long horizon, ISynchFeed motherFeed, Integer[] actionElements, Integer[] sigElements, String parentConfig, String wrapperConfig, long outputFutureOffset, double resolution) {
+        this.horizon = horizon;
         this.motherFeed = motherFeed;
         this.horizonRange = horizonRange;
-        double horizon = (Math.random() * (horizonRange[1] - horizonRange[0]) + horizonRange[0]);
-        this.horizon = (long) Math.ceil(horizon / PropertiesHolder.timeQuantum) * PropertiesHolder.timeQuantum;
         this.outputFutureOffset = outputFutureOffset;
         this.actionElements = actionElements;
         this.sigElements = sigElements;
@@ -159,6 +158,12 @@ public class NeuralLearner implements Feed, Runnable {
         discretiser.addLayer(0.002, 0.0001);
         discretiser.addLayer(0.005, 0.0005);
         System.out.println("New Neuron: " + getDescription(0, ""));
+    }
+
+    public NeuralLearner(long[] horizonRange, ISynchFeed motherFeed, Integer[] actionElements, Integer[] sigElements, String parentConfig, String wrapperConfig, long outputFutureOffset, double resolution) {
+        this(0, motherFeed, actionElements, sigElements, parentConfig, wrapperConfig, outputFutureOffset, resolution);
+        double horizon = (Math.random() * (horizonRange[1] - horizonRange[0]) + horizonRange[0]);
+        this.horizon = (long) Math.ceil(horizon / PropertiesHolder.timeQuantum) * PropertiesHolder.timeQuantum;
     }
 
     private long tStart = System.currentTimeMillis();
@@ -247,7 +252,17 @@ public class NeuralLearner implements Feed, Runnable {
                             core.addStateAction(tracker.getState(), tracker.getMaxDown());
                         }
                         else{
+
+                            if(coreUpA.getMinDevIncrements() > 20){
+                                coreUpA = new LearnerService();
+                                coreUpA.setActionResolution(resolution);
+                            }
                             coreUpA.addStateAction(tracker.getState(), tracker.getMaxUp());
+
+                            if(coreDownA.getMinDevIncrements() > 20){
+                                coreDownA = new LearnerService();
+                                coreDownA.setActionResolution(resolution);
+                            }
                             coreDownA.addStateAction(tracker.getState(), tracker.getMaxDown());
 
                             countA++;

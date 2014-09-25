@@ -41,6 +41,7 @@ public class LearnerService {
     private long skewDiffsCount = 0;
 
     private long pointsConsumed = 0;
+    private int minDevIncrements = 0;
 
     public boolean isMerging() {
         return merging;
@@ -233,7 +234,7 @@ public class LearnerService {
                 //dev = pair.getKey() * skewDiff * Math.log(skewDiff/dev + 1);
                 //dev = pair.getKey() * skewDiff * Math.log(Math.pow(skewDiff, 2)/dev + 1);
                 //dev = pair.getKey() * skewDiff * Math.pow(Math.log(skewDiff/dev + 1), 2);
-                dev = pair.getKey() * 2 * Math.log(skewDiff + 1);
+                dev = pair.getKey() * Math.log(skewDiff + 1);
                 //dev = pair.getKey() * 1 * Math.log(skewDiff + 1);
 
                 top2.put(dev, pair.getValue());
@@ -286,84 +287,7 @@ public class LearnerService {
     }
 
     private boolean initialMerge = true;
-    /*private synchronized void mergeStates() throws LearningException {
-        merging = true;
-        if (minDevForMerge == -1) {
-            minDevForMerge = 10 * (minDev + maxDev) / getMaxPopulation();
-        } else if (minDevForMerge < 0) {
-            throw new LearningException("Negative Deviation For Merge");
-        }
 
-        long t = System.currentTimeMillis();
-        System.err.println("Starting merge process (" + minDevForMerge + ")");
-
-        boolean targetReached = false;
-
-        int runsSinceLastMerge = 0;
-        int runs = 0;
-        while (true) {
-            runs++;
-            runsSinceLastMerge++;
-            HashSet<StateActionPair> pairs = new HashSet<>();
-            pairs.addAll(population.values());
-
-            double meanWeight = 0;
-            int x = 0;
-            int y = 0;
-            int z = 0;
-            int a = 0;
-            int sinceLastMerge = 0;
-            HashSet<StateActionPair> check = new HashSet<>();
-            for (StateActionPair pair : pairs) {
-                if (population.containsKey(pair.getId())) {
-                    x++;
-                    for (Map.Entry<Double, StateActionPair> entry : pair.getClosestNeighbours().entrySet()) {
-                        StateActionPair counterpart = entry.getValue();
-                        check.addAll(pair.getClosestNeighbours().values());
-                        y++;
-                        if (pair != counterpart && population.containsKey(counterpart.getId())) {
-                            z++;
-                            if (entry.getKey() <= minDevForMerge && merge(pair, counterpart)) {
-                                meanWeight += (pair.getTotalWeight() + counterpart.getTotalWeight())/2;
-                                sinceLastMerge = 0;
-                                runsSinceLastMerge = 0;
-                                a++;
-                                if (population.size() < getMaxPopulation() / 2) {
-                                    targetReached = true;
-                                }
-                            }
-                        }
-                    }
-                    if (targetReached) {
-                        break;
-                    }
-                    sinceLastMerge++;
-                }
-            }
-
-            System.err.println("Run: " + runs + " x: " + x + " y: " + y + " z: " + z + " Check: " + check.size() + " a: " + a + " MW: " + (meanWeight/a));
-            if(runsSinceLastMerge > 2){
-                minDevForMerge /= Math.pow(((double) population.size() / (getMaxPopulation() / 2)) * 1.01, 3);
-                System.err.println("MinDevForMerge reverted to: " + minDevForMerge);
-                break;
-            }
-            if (!targetReached && (runs % 4 == 0 || a < (double) population.size() / 20)) {
-                minDevForMerge *= ((double) population.size() / (getMaxPopulation() / 2)) * 1.01;
-                System.err.println("MinDevForMerge pushed to: " + minDevForMerge);
-                if(runs % 4 == 0){
-                    System.err.println("Refreshing for similar states");
-                    for (StateActionPair pair : population.values()) {
-                        getSimilarStates(pair.getAmalgamate(), true);
-                    }
-                }
-            } else if (targetReached) {
-                break;
-            }
-        }
-        System.err.println("Ending merge: " + (System.currentTimeMillis() - t) + "ms  (" + minDevForMerge + ") Points consumed: " + pointsConsumed);
-        initialMerge = false;
-        merging = false;
-    }*/
     private synchronized void mergeStates(){
         merging = true;
         double m = getMinDevToMerge((double)(population.size() - PropertiesHolder.maxPopulation/2)/(double)(population.size()));
@@ -378,6 +302,7 @@ public class LearnerService {
 
         int runsSinceLastMerge = 0;
         int runs = 0;
+        int totalMerged = 0;
         while (true) {
             runs++;
             runsSinceLastMerge++;
@@ -405,6 +330,7 @@ public class LearnerService {
                                 sinceLastMerge = 0;
                                 runsSinceLastMerge = 0;
                                 a++;
+                                totalMerged++;
                                 if (population.size() < getMaxPopulation() / 2) {
                                     targetReached = true;
                                 }
@@ -426,11 +352,11 @@ public class LearnerService {
                 if(m > minDevForMerge){
                     minDevForMerge = m;
                 }
+                minDevIncrements++;
             }
             System.err.println("Using minDevForMerge: " + minDevForMerge);
             if(runsSinceLastMerge > 2){
                 System.err.println("Skipping merging for now");
-
                 break;
             }
 
@@ -476,7 +402,17 @@ public class LearnerService {
         return Math.abs(getSkewness(sap1) - getSkewness(sap2));
     }
 
+    int lastUpwardsCorrection = 0;
     private boolean merge(StateActionPair sap1, StateActionPair sap2) {
+        lastUpwardsCorrection++;
+        if(population.size() < PropertiesHolder.maxPopulation/3){
+            if(lastUpwardsCorrection > 25) {
+                minDevForMerge /= 1.1;
+                int lastUpwardsCorrection = 0;
+            }
+            return false;
+        }
+
         double w = Math.exp(-((double)pointsConsumed / 4*PropertiesHolder.maxPopulation)) + 1;
         if(sap1.getTotalWeight() > w && sap2.getTotalWeight() > w){
             return false;
@@ -579,6 +515,10 @@ public class LearnerService {
 
     public void setCorrelating(boolean correlating) {
         this.correlating = correlating;
+    }
+
+    public int getMinDevIncrements() {
+        return minDevIncrements;
     }
 
     public double getDeviation(int[] state, int[] counterpart, double[] correlationWeights) {

@@ -21,7 +21,7 @@ public class TestLearning {
 
     private int numPredict = 1000;
 
-    private double tolerance = 0.01;
+    private double tolerance = 0.005;
     private double actionResolution = 1.0;
     private int maxPopulation = 1000;
 

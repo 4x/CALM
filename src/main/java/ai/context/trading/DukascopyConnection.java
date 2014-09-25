@@ -85,6 +85,8 @@ public class DukascopyConnection {
         instruments.add(Instrument.EURUSD);
         instruments.add(Instrument.GBPUSD);
         instruments.add(Instrument.USDJPY);
+        instruments.add(Instrument.AUDUSD);
+        instruments.add(Instrument.USDCHF);
         LOGGER.info("Subscribing instruments...");
         client.setSubscribedInstruments(instruments);
 

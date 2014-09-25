@@ -30,6 +30,7 @@ public class MarketMakerDeciderHistorical implements OnTickDecider {
                 DataType.DOUBLE,
                 DataType.DOUBLE};
 
+        format.setTimeZone(TimeZone.getTimeZone("GMT"));
         priceFeed = new CSVFeed(priceFeedFile, "yyyy.MM.dd HH:mm:ss.SSS", typesPrice, startDate);
     }
 
@@ -110,48 +111,41 @@ public class MarketMakerDeciderHistorical implements OnTickDecider {
 
 
         for(Set<MarketMakerPosition> advices : adviceByGoodTillTime.values()){
-            double avgHigh = 0;
-            double avgLow = 0;
-
-            Map<Long, Double> mU = new TreeMap<>();
-            Map<Long, Double> mD = new TreeMap<>();
-            for(MarketMakerPosition advice : advices){
-                avgHigh += advice.getHigh1();
-                avgLow += advice.getLow1();
-
-                mU.put(advice.getTimeSpan(), advice.getHigh1());
-                mD.put(advice.getTimeSpan(), advice.getLow1());
-            }
-            avgHigh /= advices.size();
-            avgLow /= advices.size();
 
             for(MarketMakerPosition advice : advices){
                 if(!advice.isOpen() && advice.getTimeAdvised() <= time){
 
-                    if(bid - PropertiesHolder.marketMakerBeyond > advice.getTargetHigh()){
-                        advice.addFlag("A");
+                    if(bid > advice.getTargetHigh() + PropertiesHolder.marketMakerBeyond && !advice.containsFlag("S")){
+                        advice.addFlag("S");
                     }
-                    else if(advice.containsFlag("A")
-                            && bid > advice.getTargetHigh()
-                            && bid - PropertiesHolder.marketMakerBeyond/2 < advice.getTargetHigh()
-                            && advice.getTargetLow() > avgLow
-                            && avgHigh - bid < (bid - advice.getTargetLow())/2
-                            && avgHigh - bid < PropertiesHolder.maxLeewayAmplitude){
+                    else if(advice.containsFlag("S")
+                            && bid < advice.getTargetHigh() +  PropertiesHolder.marketMakerBeyond/2
+                            && avgLow.containsKey(advice.getGoodTillTime())
+                            && advice.getTargetLow() > avgLow.get(advice.getGoodTillTime())
+                            && avgHigh.containsKey(advice.getGoodTillTime())
+                            && avgHigh.get(advice.getGoodTillTime()) - bid < PropertiesHolder.maxLeewayAmplitude
+                            ){
                         advice.setHasOpenedWithShort(true, bid, time);
                     }
-                    else if(ask + PropertiesHolder.marketMakerBeyond < advice.getTargetLow()){
-                        advice.addFlag("B");
+                    else if(ask < advice.getTargetLow() - PropertiesHolder.marketMakerBeyond && !advice.containsFlag("L")){
+                        advice.addFlag("L");
                     }
-                    else if(advice.containsFlag("B")
-                            && ask < advice.getTargetLow()
-                            && ask + PropertiesHolder.marketMakerBeyond/2 > advice.getTargetLow()
-                            && advice.getTargetHigh() < avgHigh
-                            && ask - avgLow < (advice.getTargetHigh() - ask)/2
-                            && ask - avgLow < PropertiesHolder.maxLeewayAmplitude){
+                    else if(advice.containsFlag("L")
+                            && ask > advice.getTargetLow() - PropertiesHolder.marketMakerBeyond/2
+                            && avgHigh.containsKey(advice.getGoodTillTime())
+                            && advice.getTargetHigh() < avgHigh.get(advice.getGoodTillTime())
+                            && avgLow.containsKey(advice.getGoodTillTime())
+                            && ask - avgLow.get(advice.getGoodTillTime()) < PropertiesHolder.maxLeewayAmplitude
+                            ){
                         advice.setHasOpenedWithLong(true, ask, time);
                     }
 
                     if(advice.isOpen()){
+                        advice.attributes.put("wait", time - advice.getTimeAdvised());
+
+                        advice.attributes.put("targetHigh", advice.getTargetHigh() - advice.getOpen());
+                        advice.attributes.put("targetLow", advice.getOpen() - advice.getTargetLow());
+
                         advice.attributes.put("d1", d1);
                         advice.attributes.put("d5", d5);
                         advice.attributes.put("d10", d10);
@@ -160,18 +154,6 @@ public class MarketMakerDeciderHistorical implements OnTickDecider {
                         advice.attributes.put("d100", d100);
                         advice.attributes.put("d199", d199);
 
-                        advice.attributes.put("wait", time - advice.getTimeAdvised());
-
-                        for(Map.Entry<Long, Double> entry : mU.entrySet()){
-                            advice.attributes.put("u_" + entry.getKey(), entry.getValue() - advice.getOpen());
-                        }
-
-                        for(Map.Entry<Long, Double> entry : mD.entrySet()){
-                            advice.attributes.put("d_" + entry.getKey(), advice.getOpen() - entry.getValue());
-                        }
-
-                        advice.attributes.put("targetHigh", advice.getTargetHigh() - advice.getOpen());
-                        advice.attributes.put("targetLow", advice.getOpen() - advice.getTargetLow());
 
                         if(PropertiesHolder.tradeSpecial){
                             double confirmation = OrderIntelligenceEngine.getInstance().getConfirmationFor(advice);
@@ -209,6 +191,16 @@ public class MarketMakerDeciderHistorical implements OnTickDecider {
                             System.out.println(format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + advice.getOpen() + " CLOSE: " + bid + " NET: " + Operations.round(pnl, 5) + " LONG NORMAL " + advice.getTimeSpan() + " " + advice.attributes);
                             advice.setClosed(true);
                         }
+                        else if(avgHigh.containsKey(advice.getGoodTillTime()) && avgHigh.get(advice.getGoodTillTime()) <= bid){
+                            double change = (bid - advice.getOpen());
+                            pnl += change;
+                            String state = "P";
+                            if(change <= 0){
+                                state = "L";
+                            }
+                            System.out.println(format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + advice.getOpen() + " CLOSE: " + bid + " NET: " + Operations.round(pnl, 5) + " LONG RECALC " + advice.getTimeSpan() + " " + advice.attributes);
+                            advice.setClosed(true);
+                        }
                     }
                     else if(advice.isHasOpenedWithShort()){
                         advice.notify(ask, ask, ask, time);
@@ -220,6 +212,16 @@ public class MarketMakerDeciderHistorical implements OnTickDecider {
                                 state = "L";
                             }
                             System.out.println(format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + advice.getOpen() + " CLOSE: " + ask + " NET: " + Operations.round(pnl, 5) + " SHORT NORMAL " + advice.getTimeSpan() + " " + advice.attributes);
+                            advice.setClosed(true);
+                        }
+                        else if(avgLow.containsKey(advice.getGoodTillTime()) && avgLow.get(advice.getGoodTillTime()) >= ask){
+                            double change = (advice.getOpen() - ask);
+                            pnl += change;
+                            String state = "P";
+                            if(change <= 0){
+                                state = "L";
+                            }
+                            System.out.println(format.format(new Date(time)) + " " + state + ": " + Operations.round(change, 5) + " OPEN: " + advice.getOpen() + " CLOSE: " + ask + " NET: " + Operations.round(pnl, 5) + " SHORT RECALC " + advice.getTimeSpan() + " " + advice.attributes);
                             advice.setClosed(true);
                         }
                     }
@@ -274,6 +276,38 @@ public class MarketMakerDeciderHistorical implements OnTickDecider {
             adviceByGoodTillTime.put(advice.getGoodTillTime(), new HashSet<MarketMakerPosition>());
         }
         adviceByGoodTillTime.get(advice.getGoodTillTime()).add(advice);
+        refreshAverages();
+    }
+
+    private TreeMap<Long, Double> avgHigh = new TreeMap<>();
+    private TreeMap<Long, Double> avgLow = new TreeMap<>();
+    private void refreshAverages(){
+        avgHigh.clear();
+        avgLow.clear();
+
+        for(long t = time + PropertiesHolder.timeQuantum; t <= time + PropertiesHolder.horizonUpperBound; t += PropertiesHolder.timeQuantum){
+            double avgHigh = 0;
+            double avgLow = 0;
+
+            double sumW = 0;
+
+            for(Set<MarketMakerPosition> set : adviceByGoodTillTime.values()){
+                for(MarketMakerPosition advice : set){
+                    double tA = advice.getTimeAdvised();
+                    double tE = advice.getGoodTillTime();
+                    double tS = tE - tA;
+
+                    double w = Math.sqrt(Math.exp(-Math.pow((t - tA)/tS, 2)) * Math.exp(-Math.pow((t - tE)/PropertiesHolder.horizonUpperBound, 2)));
+                    sumW += w;
+
+                    avgHigh += w * advice.getHigh1();
+                    avgLow += w * advice.getLow1();
+                }
+            }
+
+            this.avgHigh.put(t, avgHigh/sumW);
+            this.avgLow.put(t, avgLow/sumW);
+        }
     }
 
     private long lastTime = 0;

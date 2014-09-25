@@ -147,6 +147,8 @@ public class DynamicPropertiesLoader {
                         PropertiesHolder.timeQuantum = Long.parseLong(parts[1]);
                     } else if (parts[0].equals("fxFolder")) {
                         PropertiesHolder.fxFolder = parts[1];
+                    } else if (parts[0].equals("ticksFile")) {
+                        PropertiesHolder.ticksFile = parts[1];
                     }
                 }
                 System.out.println("Global configuration changed: " + PropertiesHolder.getInfo());
