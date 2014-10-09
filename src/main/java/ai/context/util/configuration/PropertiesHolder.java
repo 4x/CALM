@@ -41,6 +41,7 @@ public class PropertiesHolder {
     public static JavaScriptBooleanFilterFunction filterFunction = new JavaScriptBooleanFilterFunction();
     public static String fxFolder = "";
     public static String ticksFile = "EURUSD_Ticks.csv";
+    public static long maxOpenTime = 3600000L;
 
     public static String getInfo() {
         return "PropertiesHolder{" +
@@ -81,6 +82,7 @@ public class PropertiesHolder {
                 ",\ntimeQuantum=" + timeQuantum +
                 ",\nfxFolder=" + fxFolder +
                 ",\nticksFile=" + ticksFile +
+                ",\nmaxOpenTime=" + maxOpenTime +
                 '}';
     }
 }

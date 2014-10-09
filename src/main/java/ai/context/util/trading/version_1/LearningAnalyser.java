@@ -28,7 +28,7 @@ public class LearningAnalyser extends JPanel{
     }
 
     private boolean single = false;
-    private boolean normalise = true;
+    private boolean normalise = false;
 
     private int startIndex = 500;
     private int neurons = 500;

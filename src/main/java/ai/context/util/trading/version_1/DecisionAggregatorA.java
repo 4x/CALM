@@ -24,8 +24,8 @@ public class DecisionAggregatorA {
 
     private static boolean inLiveTrading = false;
     private static BlackBox blackBox;
-    private static MarketMakerDecider marketMakerDecider;
-    private static MarketMakerDeciderHistorical marketMakerDeciderHistorical;
+    private static MarketMakerDeciderTrader marketMakerDeciderLive;
+    private static MarketMakerDeciderTrader marketMakerDeciderTest;
 
     private static int decisionsCollected = 0;
     private static int participantsMM = 0;
@@ -149,18 +149,18 @@ public class DecisionAggregatorA {
                         advice.attributes.put("dD_" + i, DecisionUtil.getDecilesD()[i]);
                     }
 
-                    if (inLiveTrading && marketMakerDecider != null) {
-                        marketMakerDecider.addAdvice(advice);
-                    } else if (marketMakerDeciderHistorical != null) {
-                       marketMakerDeciderHistorical.addAdvice(advice);
+                    if (inLiveTrading && marketMakerDeciderLive != null) {
+                        marketMakerDeciderLive.addAdvice(advice);
+                    } else if (marketMakerDeciderTest != null) {
+                       marketMakerDeciderTest.addAdvice(advice);
                     } else {
                         marketMakerPositions.add(new MarketMakerPosition(time, latestC + results[4], latestC - results[5], latestC + results[6], latestC - results[7], time + entry.getKey()));
                     }
                 }
             }
             participantsMM = 0;
-            if (marketMakerDeciderHistorical != null) {
-                marketMakerDeciderHistorical.step();
+            if (!inLiveTrading && marketMakerDeciderTest != null) {
+                marketMakerDeciderTest.step();
             }
         }
     }
@@ -202,12 +202,12 @@ public class DecisionAggregatorA {
         DecisionAggregatorA.blackBox = blackBox;
     }
 
-    public static void setMarketMakerDecider(MarketMakerDecider marketMakerDecider) {
-        DecisionAggregatorA.marketMakerDecider = marketMakerDecider;
+    public static void setMarketMakerDeciderLive(MarketMakerDeciderTrader marketMakerDeciderLive) {
+        DecisionAggregatorA.marketMakerDeciderLive = marketMakerDeciderLive;
     }
 
-    public static void setMarketMakerDeciderHistorical(MarketMakerDeciderHistorical marketMakerDeciderHistorical) {
-        DecisionAggregatorA.marketMakerDeciderHistorical = marketMakerDeciderHistorical;
+    public static void setMarketMakerDeciderTest(MarketMakerDeciderTrader marketMakerDeciderTest) {
+        DecisionAggregatorA.marketMakerDeciderTest = marketMakerDeciderTest;
     }
 
     public static void setInLiveTrading(boolean inLiveTrading) {
@@ -220,10 +220,10 @@ public class DecisionAggregatorA {
     }
 
     public static Collection<MarketMakerPosition> getMarketMakerPositions() {
-        if (inLiveTrading && marketMakerDecider != null) {
-            return marketMakerDecider.getAdvices();
-        } else if (marketMakerDeciderHistorical != null) {
-            return marketMakerDeciderHistorical.getAdvices();
+        if (inLiveTrading && marketMakerDeciderLive != null) {
+            return marketMakerDeciderLive.getAdvices();
+        } else if (marketMakerDeciderTest != null) {
+            return marketMakerDeciderTest.getAdvices();
         }
         return marketMakerPositions;
     }

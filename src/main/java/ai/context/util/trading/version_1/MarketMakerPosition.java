@@ -16,6 +16,7 @@ public class MarketMakerPosition {
     private final double low1;
     private long goodTill;
     private long lastTime = 0;
+    private long openTime;
 
     private double high = 0;
     private double low = Double.MAX_VALUE;
@@ -64,6 +65,7 @@ public class MarketMakerPosition {
     public void setHasOpenedWithLong(boolean hasOpenedWithLong, double open, long time) {
         this.hasOpenedWithLong = hasOpenedWithLong;
         this.open = open;
+        this.openTime = time;
 
         this.attributes.put("dir", hasOpenedWithLong ? 1 : 0);
         this.attributes.put("advisedToOpenTime", (time - this.time));
@@ -76,6 +78,7 @@ public class MarketMakerPosition {
     public void setHasOpenedWithShort(boolean hasOpenedWithShort, double open, long time) {
         this.hasOpenedWithShort = hasOpenedWithShort;
         this.open = open;
+        this.openTime = time;
 
         this.attributes.put("dir", hasOpenedWithShort ? -1 : 0);
         this.attributes.put("advisedToOpenTime", (time - this.time));
@@ -191,6 +194,10 @@ public class MarketMakerPosition {
 
     public double getLow() {
         return low;
+    }
+
+    public long getOpenTime() {
+        return openTime;
     }
 }
 

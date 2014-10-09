@@ -23,8 +23,8 @@ public class DecisionAggregatorC {
 
     private static boolean inLiveTrading = false;
     private static BlackBox blackBox;
-    private static MarketMakerDecider marketMakerDecider;
-    private static MarketMakerDeciderHistorical marketMakerDeciderHistorical;
+    private static MarketMakerDeciderTrader marketMakerDecider;
+    private static MarketMakerDeciderTrader marketMakerDeciderTrader;
 
     private static int decisionsCollected = 0;
     private static int participants = 0;
@@ -123,7 +123,7 @@ public class DecisionAggregatorC {
                         advice.adjustTimes(PropertiesHolder.timeQuantum);
                         marketMakerDecider.addAdvice(advice);
                     }
-                    else if(marketMakerDeciderHistorical != null){
+                    else if(marketMakerDeciderTrader != null){
                         MarketMakerPosition advice = new MarketMakerPosition(time, latestC + results[4],  latestC - results[5], latestC + results[6],  latestC - results[7], time + entry.getKey());
                         advice.adjustTimes(PropertiesHolder.timeQuantum);
                         advice.attributes.put("cred", results[0]);
@@ -136,7 +136,7 @@ public class DecisionAggregatorC {
                             advice.attributes.put("dD_" + i, DecisionUtil.getDecilesD()[i]);
                         }
 
-                        marketMakerDeciderHistorical.addAdvice(advice);
+                        marketMakerDeciderTrader.addAdvice(advice);
                     }
                     else {
                         marketMakerPositions.add(new MarketMakerPosition(time, latestC + results[4],  latestC - results[5], latestC + results[6],  latestC - results[7], time + entry.getKey()));
@@ -145,9 +145,9 @@ public class DecisionAggregatorC {
             }
         }
         participants = 0;
-        if(marketMakerDeciderHistorical != null){
-            marketMakerDeciderHistorical.setTime(time);
-            marketMakerDeciderHistorical.step();
+        if(marketMakerDeciderTrader != null){
+            marketMakerDeciderTrader.setTime(time);
+            marketMakerDeciderTrader.step();
         }
     }
 
@@ -188,12 +188,12 @@ public class DecisionAggregatorC {
         DecisionAggregatorC.blackBox = blackBox;
     }
 
-    public static void setMarketMakerDecider(MarketMakerDecider marketMakerDecider) {
+    public static void setMarketMakerDecider(MarketMakerDeciderTrader marketMakerDecider) {
         DecisionAggregatorC.marketMakerDecider = marketMakerDecider;
     }
 
-    public static void setMarketMakerDeciderHistorical(MarketMakerDeciderHistorical marketMakerDeciderHistorical) {
-        DecisionAggregatorC.marketMakerDeciderHistorical = marketMakerDeciderHistorical;
+    public static void setMarketMakerDeciderTrader(MarketMakerDeciderTrader marketMakerDeciderTrader) {
+        DecisionAggregatorC.marketMakerDeciderTrader = marketMakerDeciderTrader;
     }
 
     public static void setInLiveTrading(boolean inLiveTrading) {

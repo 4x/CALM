@@ -11,8 +11,7 @@ import ai.context.runner.feeding.stimuli.StimuliHolder;
 import ai.context.util.configuration.DynamicPropertiesLoader;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.trading.version_1.DecisionAggregatorA;
-import ai.context.util.trading.version_1.MarketMakerDecider;
-import ai.context.util.trading.version_1.MarketMakerDeciderHistorical;
+import ai.context.util.trading.version_1.MarketMakerDeciderTrader;
 import com.dukascopy.api.system.IClient;
 import scala.actors.threadpool.Arrays;
 
@@ -70,9 +69,9 @@ public class MainNeural {
 
         NeuronCluster.getInstance().setMotherFeed(motherFeed);
         if (PropertiesHolder.tradeMarketMarker) {
-            DecisionAggregatorA.setMarketMakerDeciderHistorical(new MarketMakerDeciderHistorical(path + "feeds/" + PropertiesHolder.ticksFile, null));
+            DecisionAggregatorA.setMarketMakerDeciderTest(new MarketMakerDeciderTrader(path + "feeds/" + PropertiesHolder.ticksFile, null, null));
             if(PropertiesHolder.liveTrading) {
-                DecisionAggregatorA.setMarketMakerDecider(new MarketMakerDecider(client));
+                DecisionAggregatorA.setMarketMakerDeciderLive(new MarketMakerDeciderTrader(null, null, client));
             }
         }
 
@@ -94,7 +93,7 @@ public class MainNeural {
             } catch (ParseException e) {
                 e.printStackTrace();
             }
-            long end = start + (3L*365L*86400000L);
+            long end = start + (5L*365L*86400000L);
             series = StateToActionSeriesCreator.createSeries(motherFeed, path, start, end, 20);
             System.out.println("STA series created from: " + PropertiesHolder.startDateTime + " to: " + format.format(new Date(end)));
             StimuliGenerator stimuliGenerator = new StimuliGenerator();
@@ -104,6 +103,7 @@ public class MainNeural {
             for (StimuliHolder holder : stimuliGenerator.getTop(PropertiesHolder.totalNeurons)) {
                 NeuronCluster.getInstance().start(new NeuralLearner(holder.getHorizon(), motherFeed, actionElements, holder.getSignalsSources(), null, null, outputFutureOffset, resolution));
             }
+            stimuliGenerator.reset();
         } else if (config != null) {
             try {
                 BufferedReader br = new BufferedReader(new FileReader(config));
