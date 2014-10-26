@@ -39,9 +39,10 @@ public class NeuralLearner implements Feed, Runnable {
     private LearnerService coreUpB;
     private LearnerService coreDownB;
 
+    private long generationalLifespan = (long) (Math.random() * (PropertiesHolder.generationLifespan - PropertiesHolder.minGenerationLifespan) + PropertiesHolder.minGenerationLifespan);
     private long countA = 0;
     private long countB = 0;
-    private long countForFlip = PropertiesHolder.generationLifespan;
+    private long countForFlip = generationalLifespan;
     private int generation = 0;
 
     private HashMap<Feed, LinkedList<FeedObject>> buffers = new HashMap<>();
@@ -115,7 +116,7 @@ public class NeuralLearner implements Feed, Runnable {
             coreDownA.setActionResolution(resolution);
         }
 
-        countForFlip = (long) (Math.random() * PropertiesHolder.generationLifespan);
+        countForFlip = (long) (Math.random() * generationalLifespan);
 
         if(parentConfig == null || parentConfig.length() == 0){
             NeuralLearner[] candidates = cluster.getNeurons();
@@ -272,7 +273,7 @@ public class NeuralLearner implements Feed, Runnable {
                                     coreDownB.addStateAction(tracker.getState(), tracker.getMaxDown());
                                     countB++;
 
-                                    if(countB == PropertiesHolder.generationLifespan){
+                                    if(countB == generationalLifespan){
                                         countA = countB;
                                         countB = 0;
                                         coreUpA = coreUpB;

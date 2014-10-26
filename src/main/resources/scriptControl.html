@@ -1,82 +1,81 @@
-<html>
+<html style="height: 100%">
 <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scripting Control</title>
+    <title>ALGO CONTROL</title>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
-    <link href="cssConsole.css" type="text/css" rel="stylesheet">
-    <script src="cssConsole.min.js"></script>
 
     <link rel="stylesheet" type="text/css" href="css/default.css" />
     <link rel="stylesheet" type="text/css" href="css/component.css" />
     <script src="js/modernizr.custom.js"></script>
 </head>
-<body style="margin: 0px; background-color:black">
-    <div style="margin-right: 0px; width: 135px; margin-left: auto;"><button class="md-trigger" data-modal="modal-1">Add Code</button></div>
+<body style="margin: 0px; background-color:darkred; height:100%">
+    <textarea id="console_out" style="width: 100%; height: 87%; background-color: rgb(0, 14, 14); color:wheat; border: none; padding: 15px;"></textarea>
+    <textarea id="console_in" onsubmit="handle" style="width: 100%; height: 50px;background-color: darkred;border: none;padding: 15px;"></textarea>
+    <div style="width:135px; margin-right:0; margin-left:auto"><button class="md-trigger" data-modal="modal-1">Add Code</button></div>
 
-    <div class="container" style="width: 100%;border: none; background-color:black; color: #21f838; font-size: 10; font-family:monospace">
-        <div class="console">
-            <div class="line white">[ALGO CONSOLE]</div>
-        </div>
-        <div class="bottom">
-            <div class="label">></div>
-            <div id="input" style="font-size: 10; font-family:monospace"></div>
-        </div>
-    </div>
     <script>
-        $(document).ready(function() {
-            $('#input').find('input').focus();
-        });
-
-
-        $('#input').cssConsole({
-            inputName:'console',
-            onEnter: function(){
-                addLine("> "+$('#input').find('input').val());
-                execCommand($('#input').find('input').val());
-                $('#input').cssConsole('reset');
-                $('#input').find('input').focus();
-            }
-        });
-
-        var lineLimit = 500;
-
-        $('.container').on('click', function() {
-            $('#input').find('input').focus();
-        });
-
-        function addLine(input) {
-                if($('.console div').length==lineLimit) {
-                    $('.console div').eq(0).remove();
-                }
-                $('.console').append('<div>'+input+'</div>');
-                window.scrollTo(0,document.body.scrollHeight);
-        }
+        var command_history = [];
+        var command_counter = -1;
+        var history_counter = -1;
 
         function execCommand(command){
             xmlhttp = new XMLHttpRequest();
             xmlhttp.onreadystatechange = function() {
                 if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-                    var lines = xmlhttp.responseText.split("\n");
-                    for (var i = 0; i < lines.length; i++) {
-                        addLine(lines[i]);
-                    }
+                    document.getElementById("console_out").value += xmlhttp.responseText;
+                    var textarea = document.getElementById('console_out');
+                    textarea.scrollTop = textarea.scrollHeight;
                 }
             }
             xmlhttp.open("GET", "/scripting?CMD=" + command, true);
             xmlhttp.send();
         }
+
+        function action(){
+            console.log(document.getElementById("code").value);
+            document.getElementById("console_out").value += "> Adding code: \n\n"
+            document.getElementById("console_out").value += document.getElementById("code").value;
+            document.getElementById("console_out").value += "\n"
+            var textarea = document.getElementById('console_out');
+            textarea.scrollTop = textarea.scrollHeight;
+            execCommand(encodeURIComponent(document.getElementById("code").value));
+        }
+
+        $("#console_in").bind('keyup', function(e) {
+            if(e.keyCode === 13){
+                var t = document.getElementById("console_in").value.replace(/^\s+|\s+$/g, '');
+                console.log(t);
+                document.getElementById("console_out").value += "> " + t + "\n";
+                var textarea = document.getElementById('console_out');
+                textarea.scrollTop = textarea.scrollHeight;
+                document.getElementById("console_in").value = "";
+
+                command_history[command_counter++] = t;
+                history_counter = command_counter;
+
+                execCommand(encodeURIComponent(t));
+            }else if(e.keyCode == 38){
+                if(history_counter>=0){
+                    document.getElementById("console_in").value = command_history[--history_counter];
+                }
+            }else if(e.keyCode == 40){
+                if(history_counter < command_counter){
+                    document.getElementById("console_in").value = command_history[history_counter++];
+                }
+            }
+        });
     </script>
 
     <div class="md-modal md-effect-1" id="modal-1">
         <div class="md-content">
             <h3>Add Code Here</h3>
             <div>
-                <textarea id="output" style="width: 100%; height: 400px; resize: none; background-color: rgb(11, 14, 43);border: none; color: white"></textarea>
+                <textarea id="code" style="width: 100%; height: 400px; resize: none; background-color: rgb(11, 14, 43);border: none; color: white"></textarea>
                 <table><tr>
                     <td>
-                        <button id="absorbCode">Absorb</button>
+                        <button id="absorbCode" onclick="action()">Absorb</button>
                     </td>
                     <td>
                         <button class="md-close">Close</button>

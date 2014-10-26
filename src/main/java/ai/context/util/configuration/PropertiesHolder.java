@@ -22,7 +22,8 @@ public class PropertiesHolder {
     public static long horizonLowerBound = 12 * 60 * 60 * 1000L;
     public static long horizonUpperBound = 24 * 60 * 60 * 1000L;
     public static long neuronLearningPeriod = 10000;
-    public static long generationLifespan = 100000;
+    public static long generationLifespan = 5000;
+    public static long minGenerationLifespan = 5000;
     public static double marketMakerConfidence = 0.95;
     public static double marketMakerLeeway = 0.8;
     public static double marketMakerAmplitude = 2;
@@ -40,8 +41,10 @@ public class PropertiesHolder {
     public static long timeQuantum = 30 * 60 * 1000L;
     public static JavaScriptBooleanFilterFunction filterFunction = new JavaScriptBooleanFilterFunction();
     public static String fxFolder = "";
+    public static String mainAsset = "EURUSD";
     public static String ticksFile = "EURUSD_Ticks.csv";
     public static long maxOpenTime = 3600000L;
+    public static int numberOfMergeTries = 2;
 
     public static String getInfo() {
         return "PropertiesHolder{" +
@@ -65,6 +68,7 @@ public class PropertiesHolder {
                 ",\nhorizonUpperBound=" + horizonUpperBound +
                 ",\nneuronLearningPeriod=" + neuronLearningPeriod +
                 ",\ngenerationLifespan=" + generationLifespan +
+                ",\nminGenerationLifespan=" + minGenerationLifespan +
                 ",\nmarketMakerConfidence=" + marketMakerConfidence +
                 ",\nmarketMakerLeeway=" + marketMakerLeeway +
                 ",\nmarketMakerAmplitude=" + marketMakerAmplitude +
@@ -83,6 +87,8 @@ public class PropertiesHolder {
                 ",\nfxFolder=" + fxFolder +
                 ",\nticksFile=" + ticksFile +
                 ",\nmaxOpenTime=" + maxOpenTime +
+                ",\nnumberOfMergeTries=" + numberOfMergeTries +
+                ",\nmainAsset=" + mainAsset +
                 '}';
     }
 }

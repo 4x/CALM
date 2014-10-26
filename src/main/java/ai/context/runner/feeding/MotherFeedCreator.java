@@ -237,22 +237,72 @@ public class MotherFeedCreator {
         ExtractOneFromListFeed feedC = new ExtractOneFromListFeed(feed, 3);
         ExtractOneFromListFeed feedV = new ExtractOneFromListFeed(feed, 4);
 
-        synch.addRawFeed(feedV);
+        //synch.addRawFeed(feedV);
 
+        MAOnlineTransformer maV5 = new MAOnlineTransformer(5, feedV);
+        SubstractTransformer substract_MAV5 = new SubstractTransformer(feedV, maV5);
+        synch.addRawFeed(substract_MAV5);
+        feedsForCorrelation.add(substract_MAV5);
+
+        MAOnlineTransformer maV10 = new MAOnlineTransformer(10, feedV);
+        SubstractTransformer substract_MAV10 = new SubstractTransformer(feedV, maV10);
+        synch.addRawFeed(substract_MAV10);
+        feedsForCorrelation.add(substract_MAV10);
+
+        MAOnlineTransformer maV30 = new MAOnlineTransformer(30, feedV);
+        SubstractTransformer substract_MAV30 = new SubstractTransformer(feedV, maV30);
+        synch.addRawFeed(substract_MAV30);
+        feedsForCorrelation.add(substract_MAV30);
+
+        MAOnlineTransformer maC5 = new MAOnlineTransformer(5, feedC);
         MAOnlineTransformer maC10 = new MAOnlineTransformer(10, feedC);
         MAOnlineTransformer maC50 = new MAOnlineTransformer(50, feedC);
         MAOnlineTransformer maC100 = new MAOnlineTransformer(100, feedC);
 
+        SubstractTransformer substract_MAC5 = new SubstractTransformer(feedC, maC5);
         SubstractTransformer substract_MAC10 = new SubstractTransformer(feedC, maC10);
         SubstractTransformer substract_MAC50 = new SubstractTransformer(feedC, maC50);
         SubstractTransformer substract_MAC100 = new SubstractTransformer(feedC, maC100);
 
+        synch.addRawFeed(substract_MAC5);
         synch.addRawFeed(substract_MAC10);
         synch.addRawFeed(substract_MAC50);
         synch.addRawFeed(substract_MAC100);
 
+        feedsForCorrelation.add(substract_MAC5);
         feedsForCorrelation.add(substract_MAC10);
         feedsForCorrelation.add(substract_MAC50);
+        feedsForCorrelation.add(substract_MAC100);
+
+        MAOnlineTransformer maH5 = new MAOnlineTransformer(5, feedH);
+        MAOnlineTransformer maH10 = new MAOnlineTransformer(10, feedH);
+        MAOnlineTransformer maH50 = new MAOnlineTransformer(50, feedH);
+        MAOnlineTransformer maH100 = new MAOnlineTransformer(100, feedH);
+
+        SubstractTransformer substract_MAH5 = new SubstractTransformer(feedH, maH5);
+        SubstractTransformer substract_MAH10 = new SubstractTransformer(feedH, maH10);
+        SubstractTransformer substract_MAH50 = new SubstractTransformer(feedH, maH50);
+        SubstractTransformer substract_MAH100 = new SubstractTransformer(feedH, maH100);
+
+        synch.addRawFeed(substract_MAH5);
+        synch.addRawFeed(substract_MAH10);
+        synch.addRawFeed(substract_MAH50);
+        synch.addRawFeed(substract_MAH100);
+
+        MAOnlineTransformer maL5 = new MAOnlineTransformer(5, feedL);
+        MAOnlineTransformer maL10 = new MAOnlineTransformer(10, feedL);
+        MAOnlineTransformer maL50 = new MAOnlineTransformer(50, feedL);
+        MAOnlineTransformer maL100 = new MAOnlineTransformer(100, feedL);
+
+        SubstractTransformer substract_MAL5 = new SubstractTransformer(feedL, maL5);
+        SubstractTransformer substract_MAL10 = new SubstractTransformer(feedL, maL10);
+        SubstractTransformer substract_MAL50 = new SubstractTransformer(feedL, maL50);
+        SubstractTransformer substract_MAL100 = new SubstractTransformer(feedL, maL100);
+
+        synch.addRawFeed(substract_MAL5);
+        synch.addRawFeed(substract_MAL10);
+        synch.addRawFeed(substract_MAL50);
+        synch.addRawFeed(substract_MAL100);
 
         SubstractTransformer cHDiff = new SubstractTransformer(feedH, feedC);
         LogarithmicDiscretiser cHDiffL = new LogarithmicDiscretiser(res, 0, cHDiff, -1);
@@ -261,6 +311,11 @@ public class MotherFeedCreator {
         SubstractTransformer cLDiff = new SubstractTransformer(feedC, feedL);
         LogarithmicDiscretiser cLDiffL = new LogarithmicDiscretiser(res, 0, cLDiff, -1);
         synch.addRawFeed(cLDiffL);
+
+        SubstractTransformer cHLDiff = new SubstractTransformer(cHDiff, cLDiff);
+        LogarithmicDiscretiser cHLDiffL = new LogarithmicDiscretiser(res, 0, cHLDiff, -1);
+        synch.addRawFeed(cHLDiffL);
+        feedsForCorrelation.add(cHLDiffL);
 
         FXHLDiffFeed feedDiff = new FXHLDiffFeed(feed, res);
         synch.addRawFeed(feedDiff);
@@ -273,61 +328,81 @@ public class MotherFeedCreator {
         LogarithmicDiscretiser stdLC3 = new LogarithmicDiscretiser(res, 0, stdFeedC3, -1);
         synch.addRawFeed(stdLC3);
 
-        SimpleTrendOnlineTransformer t005 = new SimpleTrendOnlineTransformer(0.005, feedL, feedH, feedC, res);
+        SimpleTrendOnlineTransformer t0005 = new SimpleTrendOnlineTransformer(0.005, feedL, feedH, feedC, res);
+        SimpleTrendOnlineTransformer t005 = new SimpleTrendOnlineTransformer(0.05, feedL, feedH, feedC, res);
         SimpleTrendOnlineTransformer t075 = new SimpleTrendOnlineTransformer(0.75, feedL, feedH, feedC, res);
+        SimpleTrendOnlineTransformer t0125 = new SimpleTrendOnlineTransformer(0.125, feedL, feedH, feedC, res);
+        SimpleTrendOnlineTransformer t025 = new SimpleTrendOnlineTransformer(0.25, feedL, feedH, feedC, res);
+        SimpleTrendOnlineTransformer t05 = new SimpleTrendOnlineTransformer(0.5, feedL, feedH, feedC, res);
+        synch.addRawFeed(t0125);
+        synch.addRawFeed(t025);
+        synch.addRawFeed(t05);
+        synch.addRawFeed(t0005);
         synch.addRawFeed(t005);
         synch.addRawFeed(t075);
+        feedsForCorrelation.add(t0005);
         feedsForCorrelation.add(t005);
         feedsForCorrelation.add(t075);
+        feedsForCorrelation.add(t05);
+        feedsForCorrelation.add(t025);
+        feedsForCorrelation.add(t0125);
 
         SuddenShiftsOnlineTransformer ss10 = new SuddenShiftsOnlineTransformer(10, feedL, feedH, res, 7.5);
         SuddenShiftsOnlineTransformer ss50 = new SuddenShiftsOnlineTransformer(50, feedL, feedH, res, 12.5);
+        SuddenShiftsOnlineTransformer ss5 = new SuddenShiftsOnlineTransformer(5, feedL, feedH, res, 7.5);
+        SuddenShiftsOnlineTransformer ss20 = new SuddenShiftsOnlineTransformer(20, feedL, feedH, res, 10);
+        SuddenShiftsOnlineTransformer ss100 = new SuddenShiftsOnlineTransformer(100, feedL, feedH, res, 15);
+        synch.addRawFeed(ss20);
+        synch.addRawFeed(ss100);
         synch.addRawFeed(ss10);
         synch.addRawFeed(ss50);
 
-        if(main){
+        AbsoluteAmplitudeWavelengthTransformer awFeedC5 = new AbsoluteAmplitudeWavelengthTransformer(feedC, 5, 0.25, res);
+        synch.addRawFeed(awFeedC5);
+        AbsoluteAmplitudeWavelengthTransformer awFeedC50 = new AbsoluteAmplitudeWavelengthTransformer(feedC, 50, 0.25, res);
+        synch.addRawFeed(awFeedC50);
+        AbsoluteAmplitudeWavelengthTransformer awFeedC10 = new AbsoluteAmplitudeWavelengthTransformer(feedC, 10, 0.125, res);
+        synch.addRawFeed(awFeedC10);
+        AbsoluteAmplitudeWavelengthTransformer awFeedC20 = new AbsoluteAmplitudeWavelengthTransformer(feedC, 20, 0.125, res);
+        synch.addRawFeed(awFeedC20);
 
-            AbsoluteAmplitudeWavelengthTransformer awFeedC10 = new AbsoluteAmplitudeWavelengthTransformer(feedC, 10, 0.125, res);
-            synch.addRawFeed(awFeedC10);
-            AbsoluteAmplitudeWavelengthTransformer awFeedC20 = new AbsoluteAmplitudeWavelengthTransformer(feedC, 20, 0.125, res);
-            synch.addRawFeed(awFeedC20);
+        MinMaxDistanceTransformer mmdT0 = new MinMaxDistanceTransformer(5, feedL, feedH, feedC, res);
+        MinMaxDistanceTransformer mmdT1 = new MinMaxDistanceTransformer(10, feedL, feedH, feedC, res);
+        MinMaxDistanceTransformer mmdT2 = new MinMaxDistanceTransformer(20, feedL, feedH, feedC, res);
+        MinMaxDistanceTransformer mmdT5 = new MinMaxDistanceTransformer(50, feedL, feedH, feedC, res);
+        MinMaxDistanceTransformer mmdT7 = new MinMaxDistanceTransformer(100, feedL, feedH, feedC, res);
 
-            SimpleTrendOnlineTransformer t0125 = new SimpleTrendOnlineTransformer(0.125, feedL, feedH, feedC, res);
-            SimpleTrendOnlineTransformer t025 = new SimpleTrendOnlineTransformer(0.25, feedL, feedH, feedC, res);
-            SimpleTrendOnlineTransformer t05 = new SimpleTrendOnlineTransformer(0.5, feedL, feedH, feedC, res);
-            synch.addRawFeed(t0125);
-            synch.addRawFeed(t025);
-            synch.addRawFeed(t05);
+        synch.addRawFeed(mmdT0);
+        synch.addRawFeed(mmdT1);
+        synch.addRawFeed(mmdT2);
+        synch.addRawFeed(mmdT5);
+        synch.addRawFeed(mmdT7);
 
-            MinMaxDistanceTransformer mmdT1 = new MinMaxDistanceTransformer(10, feedL, feedH, feedC, res);
-            MinMaxDistanceTransformer mmdT2 = new MinMaxDistanceTransformer(20, feedL, feedH, feedC, res);
-            MinMaxDistanceTransformer mmdT5 = new MinMaxDistanceTransformer(50, feedL, feedH, feedC, res);
-            MinMaxDistanceTransformer mmdT7 = new MinMaxDistanceTransformer(100, feedL, feedH, feedC, res);
+        RSIOnlineTransformer rsiC = new RSIOnlineTransformer(feedC, 5, 25, 0.5);
+        RSIOnlineTransformer rsiC2 = new RSIOnlineTransformer(feedC, 10, 50, 0.05);
+        synch.addRawFeed(rsiC);
+        synch.addRawFeed(rsiC2);
 
-            synch.addRawFeed(mmdT1);
-            synch.addRawFeed(mmdT2);
-            synch.addRawFeed(mmdT5);
-            synch.addRawFeed(mmdT7);
+        RSIOnlineTransformer rsiH = new RSIOnlineTransformer(feedH, 5, 25, 0.5);
+        RSIOnlineTransformer rsiH2 = new RSIOnlineTransformer(feedH, 10, 50, 0.05);
+        synch.addRawFeed(rsiH);
+        synch.addRawFeed(rsiH2);
 
-            RSIOnlineTransformer rsiC = new RSIOnlineTransformer(feedC, 5, 25, 0.5);
-            RSIOnlineTransformer rsiC2 = new RSIOnlineTransformer(feedC, 10, 50, 0.05);
-            synch.addRawFeed(rsiC);
-            synch.addRawFeed(rsiC2);
+        RSIOnlineTransformer rsiL = new RSIOnlineTransformer(feedL, 5, 25, 0.5);
+        RSIOnlineTransformer rsiL2 = new RSIOnlineTransformer(feedL, 10, 50, 0.05);
+        synch.addRawFeed(rsiL);
+        synch.addRawFeed(rsiL2);
 
-            RadarOnlineTransformer r1 = new RadarOnlineTransformer(20, feedL, feedH, feedC, res);
-            RadarOnlineTransformer r2 = new RadarOnlineTransformer(50, feedL, feedH, feedC, res);
-            RadarOnlineTransformer r3 = new RadarOnlineTransformer(100, feedL, feedH, feedC, res);
-            RadarOnlineTransformer r4 = new RadarOnlineTransformer(200, feedL, feedH, feedC, res);
-            synch.addRawFeed(r1);
-            synch.addRawFeed(r2);
-            synch.addRawFeed(r3);
-            synch.addRawFeed(r4);
-
-            SuddenShiftsOnlineTransformer ss20 = new SuddenShiftsOnlineTransformer(20, feedL, feedH, res, 10);
-            SuddenShiftsOnlineTransformer ss100 = new SuddenShiftsOnlineTransformer(100, feedL, feedH, res, 15);
-            synch.addRawFeed(ss20);
-            synch.addRawFeed(ss100);
-        }
+        RadarOnlineTransformer r0 = new RadarOnlineTransformer(10, feedL, feedH, feedC, res);
+        RadarOnlineTransformer r1 = new RadarOnlineTransformer(20, feedL, feedH, feedC, res);
+        RadarOnlineTransformer r2 = new RadarOnlineTransformer(50, feedL, feedH, feedC, res);
+        RadarOnlineTransformer r3 = new RadarOnlineTransformer(100, feedL, feedH, feedC, res);
+        RadarOnlineTransformer r4 = new RadarOnlineTransformer(200, feedL, feedH, feedC, res);
+        synch.addRawFeed(r0);
+        synch.addRawFeed(r1);
+        synch.addRawFeed(r2);
+        synch.addRawFeed(r3);
+        synch.addRawFeed(r4);
 
         return synch;
     }

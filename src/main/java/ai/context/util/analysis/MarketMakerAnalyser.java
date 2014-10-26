@@ -20,9 +20,10 @@ public class MarketMakerAnalyser {
     int lastMonth = -1;
     int nDay = 0;
     int nMonth = 0;
-    double tradeToCapRatio = 10;
+    double tradeToCapRatio = 5;
 
     double cost = 0.00007;
+    //double cost = 0.000035;
     double costPerMillion = 0;
     HashSet<Integer> tradeDays = new HashSet<>();
 
@@ -98,8 +99,6 @@ public class MarketMakerAnalyser {
                             attr.put(p, v);
                         }
 
-
-
                         double targetPnL = Operations.round(attr.get("targetHigh") + attr.get("targetLow"), 4);
                         double minAmp = Operations.round(Math.min(attr.get("targetHigh"), attr.get("targetLow")), 4);
                         double maxAmp = Operations.round(Math.max(attr.get("targetHigh"), attr.get("targetLow")), 4);
@@ -125,7 +124,10 @@ public class MarketMakerAnalyser {
 
                         trimOrdersWhereClosedBefore(advised - 7200000);
 
-                        double[] stats = getStatsFromOrders(-1, advised);
+                        double[] stats = getStatsFromOrders(0, advised, 1800000L);
+                        int opennedWithin = (int) stats[2];
+
+                        /*stats = getStatsFromOrders(-1, advised);
                         int nShort = (int) stats[0];
                         double shortPnl = stats[1];
 
@@ -138,12 +140,12 @@ public class MarketMakerAnalyser {
                         double pnl = stats[1];
 
                         double reversePnL = longPnl - shortPnl;
-                        int nDir = nLong - nShort;
+                        int nDir = nLong - nShort;*/
 
 
 
                         Integer[] hoursNotToTrade = new Integer[]{20, 21 , 22, 23, 0, 1};
-                        Integer[] hoursNotToExit = new Integer[]{22, 23};
+                        Integer[] hoursNotToExit = new Integer[]{0, 1, 23};
                         Integer[] hoursNotToExecute = new Integer[]{9, 10, 11, 15};
                         Set<Integer> hoursN = new HashSet<Integer>(Arrays.<Integer>asList(hoursNotToTrade));
                         Set<Integer> hoursNExit = new HashSet<Integer>(Arrays.<Integer>asList(hoursNotToExit));
@@ -166,8 +168,8 @@ public class MarketMakerAnalyser {
 
                         double moment = ddU - ddD;
                         if(dir.equals("SHORT")){
-                            reversePnL *= -1;
-                            nDir *= -1;
+                            //reversePnL *= -1;
+                            //nDir *= -1;
                             dY *= -1;
 
                             dP *= -1;
@@ -191,68 +193,76 @@ public class MarketMakerAnalyser {
                         double priceMovementParameter_6 = (int) (10000 * dP * 10000 *dP50);
 
                         if (
-                                //true ||
-                                //(100 * attr.get("wait").longValue())/lifeSpan > 3 &&
-                                //(20 * attr.get("wait").longValue())/lifeSpan > 1 &&
-                                //(20 * attr.get("wait").longValue())/lifeSpan < 12 &&
-                                attr.get("wait").longValue()/60000 > 3 &&
-                                attr.get("wait").longValue()/300000 <= 12 &&
-                                attr.get("cred").intValue() > 55 &&
-                                attr.get("cred").intValue() < 85 &&
-                                //lifeSpan/1800000 >= 3 &&
-                                //lifeSpan/1800000 <= 12 &&
-                                targetPnL > 0.0011 &&
-                                targetPnL <= 0.0020 &&
-                                minAmp >= -0.0001 &&
-                                minAmp < 0 &&
-                                //dAmp >= 0.0011 &&
-                                //hours.contains(startHour) &&
-                                //(nMonth == 13 || nMonth == 14) &&
-                                //nMonth < 9 &&
-                                //nMonth >= 9 &&
-                                //hours.contains(new Date(advised).getHours()) &&
-                                //!hoursN.contains(dAdvised.getHours()) &&
-                                //dAdvised.getHours() < 16 &&
-                                //!hoursNExit.contains(dPlannedExit.getHours()) &&
-                                //!hoursNExecute.contains(dExecuted.getHours()) &&
-                                //dPlannedExit.getHours() > 4 &&
-                                //dPlannedExit.getHours() < 21 &&
-                                //dExecuted.getHours() > 10 &&
-                                //dExecuted.getHours() < 21 &&
-                                //dAdvised.getHours() < 18 &&
-                                //startHour > 8 &&
-                                //Math.abs(pnl) > 0.001 &&
-                                //Math.abs(pnl) < 0.005 &&
-                                //nOrders == 0 &&
-                                //date.getDay() != 1 &&
-                                //dP10 > 0.0000 &&
-                                //Math.abs(dP50) < 0.0005 &&
-                                //dP20 <= 0.0002 &&
-                                //dP100 >= -0.0010 &&
-                                //dP100 < 0.0006 &&
-                                //dP <= 0.0006 &&
-                                //dP >= -0.0012 &&
-                                //dY < -0.0002 &&
-                                //slope >= 0.0009 &&
-                                slope <= 0.0025 &&
-                                //momentum >= -1 &&
-                                priceMovementParameter_1 >= -1 &&
-                                priceMovementParameter_1 <= 8 &&
-                                priceMovementParameter_2 >= -6 &&
-                                priceMovementParameter_2 <= 2 &&
-                                //Math.abs(priceMovementParameter_2) <= 10 &&
-                                priceMovementParameter_4 >= -1 &&
-                                priceMovementParameter_5 <= 3 &&
-                                priceMovementParameter_4 >= -13 &&
-                                priceMovementParameter_4 <= 6 &&
-                                //momentum != 0 &&
-                                //tOpen/600000 < 6 &&
-                                true) {
+                            //true ||
+                            //(100 * attr.get("wait").longValue())/lifeSpan > 3 &&
+                            //(20 * attr.get("wait").longValue())/lifeSpan > 1 &&
+                            //(20 * attr.get("wait").longValue())/lifeSpan <= 10 &&
+                            //attr.get("wait").longValue()/60000 > 9 &&
+                            attr.get("wait").longValue()/60000 < 40 &&
+                            //attr.get("cred").intValue() >= 5 &&
+                            attr.get("cred").intValue() < 40 &&
+                            lifeSpan/1800000 >= 4 &&
+                            //lifeSpan/1800000 <= 13 &&
+                            //targetPnL > 0.0011 &&
+                            //targetPnL <= 0.0016 &&
+                            minAmp >= -0.0001 &&
+                            minAmp < 0.0001 &&
+                            //maxAmp > 0.0012 &&
+                            //dAmp >= 0.0011 &&
+                            //hours.contains(startHour) &&
+                            //(nMonth == 13 || nMonth == 14) &&
+                            //(nMonth == 3 || nMonth == 12 || nMonth == 14 || nMonth == 17 || nMonth == 18) &&
+                            //nMonth < 9 &&
+                            //nMonth >= 7 &&
+                            //nMonth >= 21 &&
+                            //hours.contains(new Date(advised).getHours()) &&
+                            //!hoursN.contains(dAdvised.getHours()) &&
+                            //dAdvised.getHours() < 16 &&
+                            //!hoursNExit.contains(dPlannedExit.getHours()) &&
+                            //dExecuted.getHours() <= 19 &&
+                            //!hoursNExecute.contains(dExecuted.getHours()) &&
+                            //dPlannedExit.getHours() > 1 &&
+                            //dPlannedExit.getHours() < 21 &&
+                            //dExecuted.getHours() > 10 &&
+                            //dExecuted.getHours() < 21 &&
+                            //dAdvised.getHours() < 18 &&
+                            //startHour > 8 &&
+                            //Math.abs(pnl) > 0.001 &&
+                            //Math.abs(pnl) < 0.005 &&
+                            //nOrders == 0 &&
+                            //date.getDay() != 1 &&
+                            //dP10 > 0.0000 &&
+                            //Math.abs(dP50) < 0.0005 &&
+                            //dP20 <= 0.0002 &&
+                            //dP100 >= -0.0010 &&
+                            //dP100 < 0.0006 &&
+                            //dP <= 0.0005 &&
+                            //dP >= -0.0006 &&
+                            //dY == 0 &&
+                            //slope >= 0.0020 &&
+                            //slope <= 0.0031 &&
+                            //momentum >= -2 &&
+                            //momentum <= 2 &&
+                            priceMovementParameter_1 >= 0 &&
+                            //priceMovementParameter_1 <= 8 &&
+                            //priceMovementParameter_2 >= -9 &&
+                            //priceMovementParameter_2 <= 9 &&
+                            //priceMovementParameter_3 >= -6 &&
+                            //priceMovementParameter_3 <= 9 &&
+                            //Math.abs(priceMovementParameter_4) <= 1 &&
+                            //priceMovementParameter_4 <= 6 &&
+                            //priceMovementParameter_5 >= -5 &&
+                            //priceMovementParameter_6 >= -13 &&
+                            //momentum != 0 &&
+                            //tOpen/600000 < 6 &&
+                            true) {
 
                             aggregate(formatOutput.format(date), change);
+                            //aggregate(dir, change);
+                            //aggregate(formatOutput.format(date) + " " + dir, change);
                             //aggregate(formatOutput.format(date) +","+ (double)(new Date(advised).getHours())/100, change);
                             //aggregate(formatOutput.format(date) +","+ ((double)(lifeSpan/1800000)/100), change);
-
+                            //aggregate(opennedWithin, change);
                             //aggregate((int) (10000 *dY) , change);
                             //aggregate((int) (10000 *slope) , change);
                             //aggregate(slopeL , change);
@@ -276,6 +286,7 @@ public class MarketMakerAnalyser {
                             //aggregate(priceMovementParameter_4 , change);
                             //aggregate(priceMovementParameter_5 , change);
                             //aggregate(priceMovementParameter_6 , change);
+                            //aggregate((int)(priceMovementParameter_6/10) , change);
 
                             //aggregate(nOrders, change);
                             //aggregate(nDir/10, change);
@@ -283,13 +294,13 @@ public class MarketMakerAnalyser {
                             //aggregate((int) (1000 *pnl), change);
                             //aggregate((int) (1000 * reversePnL), change);
 
-                            //aggregate(attr.get("cred").intValue()/5, change);
+                            //aggregate(attr.get("cred").intValue(), change);
 
                             //aggregate(lifeSpan/1800000, change);
                             //aggregate(tOpen/600000, change);
                             //aggregate(tLive/1800000, change);
 
-                            //aggregate(attr.get("wait").longValue()/300000, change);
+                            //aggregate(attr.get("wait").longValue()/600000, change);
                             //aggregate((20 * attr.get("wait").longValue())/lifeSpan, change);
                             //aggregate(nMonth, change);
                             //aggregate(date.getTime() / (7 * 86400000), change);
@@ -309,7 +320,7 @@ public class MarketMakerAnalyser {
                             //aggregate(closing, change);
                             //aggregate(span, change);
                             //aggregate(credClass, change);
-                            //aggregate((int)(targetPnL * 10000), change);
+                            //aggregate((int)(targetPnL * 100000), change);
 
                             double commision = 2 * tradeToCapRatio * capital * costPerMillion / 1000000;
                             capital += (tradeToCapRatio * capital * change) - commision;
@@ -341,17 +352,22 @@ public class MarketMakerAnalyser {
         }
     }
 
-    public double[] getStatsFromOrders(int dir, long endTime){
-        double n = 0;
+    public double[] getStatsFromOrders(int dir, long endTime, long opennedWithin){
+        double nOpenned = 0;
+        double nClosed = 0;
         double pnl = 0;
 
         for(O_MMP order : orders){
             if(endTime > order.timeClosed && (dir == 0 || order.dir == dir)) {
                 pnl += order.change;
-                n++;
+                nClosed++;
+            }
+
+            if(order.timeOpened > endTime - opennedWithin){
+                nOpenned++;
             }
         }
-        return new double[]{n, pnl};
+        return new double[]{nClosed, pnl, nOpenned};
     }
 
     public void aggregate(Object id, double change){

@@ -41,8 +41,18 @@ public class CorrelationOnlineTransformer extends OnlineTransformer {
         double y_2_sum = 0;
 
         for (FeedObject element : buffer) {
-            Double x = (Double) ((List) element.getData()).get(0);
-            Double y = (Double) ((List) element.getData()).get(1);
+            Number xN = (Number) ((List) element.getData()).get(0);
+            Number yN = (Number) ((List) element.getData()).get(1);
+
+            double x  = 0;
+            if(xN != null){
+                x = xN.doubleValue();
+            }
+
+            double y = 0;
+            if(yN != null){
+                y = yN.doubleValue();
+            }
 
             nPoints++;
 

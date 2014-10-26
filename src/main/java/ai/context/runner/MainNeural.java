@@ -93,8 +93,8 @@ public class MainNeural {
             } catch (ParseException e) {
                 e.printStackTrace();
             }
-            long end = start + (5L*365L*86400000L);
-            series = StateToActionSeriesCreator.createSeries(motherFeed, path, start, end, 20);
+            long end = start + (7L*365L*86400000L);
+            series = StateToActionSeriesCreator.createSeries(motherFeed, path, start, end, 16);
             System.out.println("STA series created from: " + PropertiesHolder.startDateTime + " to: " + format.format(new Date(end)));
             StimuliGenerator stimuliGenerator = new StimuliGenerator();
             stimuliGenerator.process(series, motherFeed, StateToActionSeriesCreator.horizons);

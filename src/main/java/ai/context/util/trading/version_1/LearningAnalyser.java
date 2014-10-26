@@ -30,7 +30,7 @@ public class LearningAnalyser extends JPanel{
     private boolean single = false;
     private boolean normalise = false;
 
-    private int startIndex = 500;
+    private int startIndex = 1000;
     private int neurons = 500;
     private String address = "http://hyophorbe-associates.com:8056";
 

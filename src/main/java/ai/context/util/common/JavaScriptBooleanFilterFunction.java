@@ -36,7 +36,7 @@ public class JavaScriptBooleanFilterFunction implements Filter{
     @Override
     public boolean pass(Object o) {
         if(functionName == null){
-            return true;
+            return false;
         }
         try{
             return (boolean) Context.jsToJava(inv.invokeFunction(functionName, o), boolean.class);
@@ -49,6 +49,10 @@ public class JavaScriptBooleanFilterFunction implements Filter{
 
     public void setFunction(String functionName){
         this.functionName = functionName;
+    }
+
+    public String getFunctionName() {
+        return functionName;
     }
 
     public ScriptEngine getEngine() {

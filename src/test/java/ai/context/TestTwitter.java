@@ -1,5 +1,6 @@
 package ai.context;
 
+import ai.context.util.analysis.ReflectionHelper;
 import com.google.common.collect.Lists;
 import com.twitter.hbc.ClientBuilder;
 import com.twitter.hbc.core.Client;
@@ -7,7 +8,6 @@ import com.twitter.hbc.core.Constants;
 import com.twitter.hbc.core.Hosts;
 import com.twitter.hbc.core.HttpHosts;
 import com.twitter.hbc.core.endpoint.StatusesFilterEndpoint;
-import com.twitter.hbc.core.endpoint.StreamingEndpoint;
 import com.twitter.hbc.core.event.Event;
 import com.twitter.hbc.core.processor.StringDelimitedProcessor;
 import com.twitter.hbc.httpclient.auth.Authentication;
@@ -52,11 +52,12 @@ public class TestTwitter {
         // Attempts to establish a connection.
         hosebirdClient.connect();
 
+        ReflectionHelper helper = new ReflectionHelper();
         long i = 0;
         while (!hosebirdClient.isDone()) {
             try {
-                msgQueue.take();
-                System.out.println(i++);
+                Object data = msgQueue.take();
+                System.out.println(data);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

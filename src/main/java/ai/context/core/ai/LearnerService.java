@@ -24,6 +24,8 @@ public class LearnerService {
 
     private TreeMap<Integer, Long> distribution = new TreeMap<Integer, Long>();
 
+    private int[] populationVariation = new int[200];
+
     private boolean doubleCheckMerge = true;
     private double actionResolution = 1.0;
 
@@ -42,6 +44,7 @@ public class LearnerService {
 
     private long pointsConsumed = 0;
     private int minDevIncrements = 0;
+    private int numberOfMerges = 0;
 
     public boolean isMerging() {
         return merging;
@@ -152,6 +155,14 @@ public class LearnerService {
             if (newState && population.size() > PropertiesHolder.maxPopulation) {
                 mergeStates();
             }
+        }
+
+        for(int i = populationVariation.length - 1; i > 0; i--){
+            populationVariation[i] = populationVariation[i - 1];
+        }
+        populationVariation[0] = population.size();
+        if(populationVariation[0] - populationVariation[populationVariation.length - 1] > populationVariation.length/10){
+            numberOfMerges = 0;
         }
     }
 
@@ -304,6 +315,10 @@ public class LearnerService {
         int runs = 0;
         int totalMerged = 0;
         while (true) {
+            if(numberOfMerges >= PropertiesHolder.numberOfMergeTries){
+                break;
+            }
+            numberOfMerges++;
             runs++;
             runsSinceLastMerge++;
             HashSet<StateActionPair> pairs = new HashSet<>();
@@ -345,7 +360,6 @@ public class LearnerService {
             }
 
             System.err.println("Run: " + runs + " x: " + x + " y: " + y + " z: " + z + " Check: " + check.size() + " a: " + a + " MW: " + (meanWeight/a));
-
             if(runsSinceLastMerge > 0){
                 minDevForMerge *= 1.25;
                 m = getMinDevToMerge((double)(population.size() - PropertiesHolder.maxPopulation/2)/(double)(population.size()));
