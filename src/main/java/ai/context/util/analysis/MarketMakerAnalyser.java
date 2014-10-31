@@ -41,7 +41,7 @@ public class MarketMakerAnalyser {
         formatOutput.setTimeZone(TimeZone.getTimeZone("GMT"));
 
         try {
-            String file = "/opt/dev/tmp/nohup.out_2009_2014";
+            String file = "/opt/dev/tmp/nohup.out_t1";
             file = "/opt/dev/tmp/nohup.out";
 
             br = new BufferedReader(new FileReader(file));
@@ -144,7 +144,7 @@ public class MarketMakerAnalyser {
 
 
 
-                        Integer[] hoursNotToTrade = new Integer[]{20, 21 , 22, 23, 0, 1};
+                        Integer[] hoursNotToTrade = new Integer[]{1, 2 , 3, 4, 10, 11, 21, 22, 23};
                         Integer[] hoursNotToExit = new Integer[]{0, 1, 23};
                         Integer[] hoursNotToExecute = new Integer[]{9, 10, 11, 15};
                         Set<Integer> hoursN = new HashSet<Integer>(Arrays.<Integer>asList(hoursNotToTrade));
@@ -196,24 +196,24 @@ public class MarketMakerAnalyser {
                             //true ||
                             //(100 * attr.get("wait").longValue())/lifeSpan > 3 &&
                             //(20 * attr.get("wait").longValue())/lifeSpan > 1 &&
-                            //(20 * attr.get("wait").longValue())/lifeSpan <= 10 &&
+                            //(20 * attr.get("wait").longValue())/lifeSpan < 11  &&
                             //attr.get("wait").longValue()/60000 > 9 &&
-                            attr.get("wait").longValue()/60000 < 40 &&
+                            //attr.get("wait").longValue()/60000 < 40 &&
                             //attr.get("cred").intValue() >= 5 &&
-                            attr.get("cred").intValue() < 40 &&
-                            lifeSpan/1800000 >= 4 &&
-                            //lifeSpan/1800000 <= 13 &&
+                            //attr.get("cred").intValue() > 2 &&
+                            //lifeSpan/1800000 >= 4 &&
+                            //lifeSpan/1800000 <= 12 &&
                             //targetPnL > 0.0011 &&
-                            //targetPnL <= 0.0016 &&
-                            minAmp >= -0.0001 &&
-                            minAmp < 0.0001 &&
+                            targetPnL <= 0.0016 &&
+                            minAmp == -0.0001 &&
+                            //minAmp < 0.0001 &&
                             //maxAmp > 0.0012 &&
                             //dAmp >= 0.0011 &&
                             //hours.contains(startHour) &&
-                            //(nMonth == 13 || nMonth == 14) &&
+                            //(nMonth == 10 || nMonth == 12) &&
                             //(nMonth == 3 || nMonth == 12 || nMonth == 14 || nMonth == 17 || nMonth == 18) &&
                             //nMonth < 9 &&
-                            //nMonth >= 7 &&
+                            //nMonth >= 10 &&
                             //nMonth >= 21 &&
                             //hours.contains(new Date(advised).getHours()) &&
                             //!hoursN.contains(dAdvised.getHours()) &&
@@ -243,17 +243,17 @@ public class MarketMakerAnalyser {
                             //slope <= 0.0031 &&
                             //momentum >= -2 &&
                             //momentum <= 2 &&
-                            priceMovementParameter_1 >= 0 &&
-                            //priceMovementParameter_1 <= 8 &&
-                            //priceMovementParameter_2 >= -9 &&
-                            //priceMovementParameter_2 <= 9 &&
+                            priceMovementParameter_1 >= -1 &&
+                            priceMovementParameter_1 <= 1 &&
+                            //priceMovementParameter_2 >= -8 &&
+                            //priceMovementParameter_2 <= 8 &&
                             //priceMovementParameter_3 >= -6 &&
                             //priceMovementParameter_3 <= 9 &&
                             //Math.abs(priceMovementParameter_4) <= 1 &&
                             //priceMovementParameter_4 <= 6 &&
                             //priceMovementParameter_5 >= -5 &&
                             //priceMovementParameter_6 >= -13 &&
-                            //momentum != 0 &&
+                            //momentum > -2 &&
                             //tOpen/600000 < 6 &&
                             true) {
 
@@ -320,7 +320,7 @@ public class MarketMakerAnalyser {
                             //aggregate(closing, change);
                             //aggregate(span, change);
                             //aggregate(credClass, change);
-                            //aggregate((int)(targetPnL * 100000), change);
+                            //aggregate((int)(targetPnL * 10000), change);
 
                             double commision = 2 * tradeToCapRatio * capital * costPerMillion / 1000000;
                             capital += (tradeToCapRatio * capital * change) - commision;

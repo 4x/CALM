@@ -92,9 +92,13 @@ public class NeuralLearner implements Feed, Runnable {
     private int lastDecision = 0;
     private int lastConfidence = 0;
 
-    private double ampU = 0;
-    private double ampD = 0;
-    private double pCutOff = 0.75;
+    private double ampUX = 0;
+    private double ampDX = 0;
+    private double ampUA = 0;
+    private double ampDA = 0;
+    private double ampUB = 0;
+    private double ampDB = 0;
+    private double pCutOff = 0.5;
 
     public NeuralLearner(long horizon, ISynchFeed motherFeed, Integer[] actionElements, Integer[] sigElements, String parentConfig, String wrapperConfig, long outputFutureOffset, double resolution) {
         this.horizon = horizon;
@@ -208,7 +212,7 @@ public class NeuralLearner implements Feed, Runnable {
 
                 if (day != 0 && day != 6){
                     String inputDates = new Date(data.getTimeStamp()) + " ";
-                    int[] signal = new int[data.getSignal().length + getParents().size() + numberOfWrapperOutputs + 2];
+                    int[] signal = new int[data.getSignal().length + getParents().size() + numberOfWrapperOutputs + 3];
                     int index = 0;
                     for (int sig : data.getSignal()) {
                         signal[index] = sig;
@@ -237,11 +241,12 @@ public class NeuralLearner implements Feed, Runnable {
                         }
                     }
 
-                    int pred = 0;
                     if (pointsConsumed > 50) {
-                        pred = getSignalForDistribution(getDistribution(signal), 0)[0];
+                        getSignalForDistribution(getDistribution(signal), 0);
                     }
-                    signal[index] = pred;
+                    signal[index] = getLogarithmicDiscretisation(ampDX, 0, 1, 2);
+                    index++;
+                    signal[index] = getLogarithmicDiscretisation(ampUX, 0, 1, 2);
                     index++;
 
                     tStart = System.currentTimeMillis();
@@ -341,12 +346,17 @@ public class NeuralLearner implements Feed, Runnable {
         TreeMap<Integer, Double> dA = getDistribution(signal, false);
         TreeMap<Integer, Double> dB = getDistribution(signal, true);
 
+        ampUX = ampUA;
+        ampDX = ampDA;
         if(dB == null){
             return dA;
         }
 
         double fA = (double)countA/(double)(countA + countB);
         double fB = 1 - fA;
+
+        ampUX = fA * ampUA + fB * ampUB;
+        ampDX = fA * ampDA + fB * ampDB;
 
         TreeMap<Integer, Double> dist = new TreeMap<>();
 
@@ -390,6 +400,9 @@ public class NeuralLearner implements Feed, Runnable {
             weightDown += w;
         }
 
+
+        double ampU = 0;
+        double ampD = 0;
         double netWeight = weightDown + weightUp;
         double upMult = netWeight/weightUp;
         double downMult = netWeight/weightDown;
@@ -406,7 +419,7 @@ public class NeuralLearner implements Feed, Runnable {
             }
 
             cumU += val;
-            if(cumU/weightUp < pCutOff){
+            if(cumU/netWeight < pCutOff){
                 ampU = key;
             }
 
@@ -426,12 +439,21 @@ public class NeuralLearner implements Feed, Runnable {
             }
 
             cumD += val;
-            if(cumU/weightUp > pCutOff && !ampDFound){
+            if(cumD/netWeight > (1 - pCutOff) && !ampDFound){
                 ampD = key;
                 ampDFound = true;
             }
 
             distribution.put(key, val);
+        }
+
+        if(useBackUp){
+            ampDB = ampD;
+            ampUB = ampU;
+        }
+        else {
+            ampDA = ampD;
+            ampUA = ampU;
         }
 
         return distribution;
@@ -564,10 +586,6 @@ public class NeuralLearner implements Feed, Runnable {
         lastMean = (1 - lambda) * lastMean + lambda * mean;
         this.confidence = (1 - lambda) * this.confidence + lambda * confidence;
         lastDecision = signal[0] = getLogarithmicDiscretisation(mean, 0, 1, 2);
-        if(signal.length == 3) {
-            signal[1] = getLogarithmicDiscretisation(-ampD, 0, 1, 2);
-            signal[2] = getLogarithmicDiscretisation(ampU, 0, 1, 2);
-        }
         lastConfidence = getLogarithmicDiscretisation(this.confidence, 0, resolution*10, 2);
         return signal;
     }
