@@ -15,7 +15,7 @@ public class TestLearning {
 
     private LearnerService learner = new LearnerService();
 
-    private int numInputs = 16;
+    private int numInputs = 20;
     private int degreesOfFreedom = 12;
     private int numPoints = 20000;
 
@@ -104,7 +104,7 @@ public class TestLearning {
                 movement -= val;
             }
 
-            if(index == 12 && val > 5){
+            /*if(index == 12 && val > 5){
                 movement =  movement * Math.cos(movement);
             }
             else {
@@ -119,26 +119,26 @@ public class TestLearning {
                 neg = true;
             }
 
-            /*if(index == 5 && movement < 0){
+            *//*if(index == 5 && movement < 0){
                 movement = Math.pow(Math.sin(movement), 2);
             }
             else {
                 movement =  Math.pow(Math.cos(movement), 3);
-            }*/
+            }*//*
 
             if(index == 3 && val > 5){
                 neg = !neg;
-            }
+            }*/
 
             index++;
         }
 
-        if(neg == true){
+        /*if(neg == true){
             movement = -Math.abs(movement);
         }
         else {
             movement = +Math.abs(movement);
-        }
+        }*/
 
         movement = movement * (0.9 + (0.2) * Math.random());
         movement = movement * 100;
