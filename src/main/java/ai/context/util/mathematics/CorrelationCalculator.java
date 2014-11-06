@@ -38,7 +38,7 @@ public class CorrelationCalculator {
         x_2_sum += (x * x);
         y_2_sum += (y * y);
 
-        if (nPoints < 10) {
+        if (nPoints < 5) {
             return 0;
         }
 

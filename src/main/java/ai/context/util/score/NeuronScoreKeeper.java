@@ -32,6 +32,16 @@ public class NeuronScoreKeeper {
         return weight/div;
     }
 
+    public static String getInfoFor(int neuronId) {
+        String info = neuronId + ": ";
+        for(Map.Entry<Double, HashMap<Integer, Double>> entry : scores.entrySet()){
+            if(entry.getValue().containsKey(neuronId)){
+                info += "\n\t" + entry.getKey() + " -> " + entry.getValue().get(neuronId);
+            }
+        }
+        return info;
+    }
+
     public static void scoreNeurons(double ampD, double ampU, HashMap<Integer, Double[]> opinions){
         for(Map.Entry<Integer, Double[]> opinionEntry : opinions.entrySet()){
 
