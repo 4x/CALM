@@ -2,14 +2,13 @@ package ai.context.util.trading.version_1;
 
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.Operations;
+import ai.context.util.score.NeuronScoreKeeper;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 public class MarketMakerPosition {
     private long time;
+    private final double pivot;
     private final double targetHigh;
     private final double targetLow;
     private final double high1;
@@ -33,8 +32,11 @@ public class MarketMakerPosition {
 
     public TreeMap<String, Object> attributes = new TreeMap<>();
 
-    public MarketMakerPosition(long time, double targetHigh, double targetLow, double high1, double low1, long goodTill) {
+    public HashMap<Integer, Double[]> constituentOpinions = new HashMap<>();
+
+    public MarketMakerPosition(long time, double pivot, double targetHigh, double targetLow, double high1, double low1, long goodTill) {
         this.time = time;
+        this.pivot = pivot;
         this.targetHigh = targetHigh;
         this.targetLow = targetLow;
         this.goodTill = goodTill;
@@ -97,6 +99,8 @@ public class MarketMakerPosition {
         if(PropertiesHolder.tradeSpecial) {
             OrderIntelligenceEngine.getInstance().feed(this);
         }
+
+        NeuronScoreKeeper.scoreNeurons(getMaxAmpUp(), getMaxAmpDown(), constituentOpinions);
     }
 
     public double getOpen() {
@@ -194,6 +198,14 @@ public class MarketMakerPosition {
 
     public double getLow() {
         return low;
+    }
+
+    public double getMaxAmpUp(){
+        return high - pivot;
+    }
+
+    public double getMaxAmpDown(){
+        return pivot - low;
     }
 
     public long getOpenTime() {

@@ -37,7 +37,7 @@ public class LearnerService {
     private LearnerService thisService = this;
 
     private boolean correlating = false;
-    private boolean useSkewInSimilarity = false;
+    private boolean useSkewInSimilarity = true;
     private boolean useSkewInSimilarityWhenQuerying = false;
     private double sumSkewDiff = 0;
     private long skewDiffsCount = 0;

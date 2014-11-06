@@ -3,6 +3,7 @@ package ai.context.util.server.servlets;
 import ai.context.learning.neural.NeuronCluster;
 import ai.context.util.analysis.ReflectionHelper;
 import ai.context.util.configuration.PropertiesHolder;
+import ai.context.util.score.NeuronScoreHelper;
 
 import javax.script.ScriptEngine;
 import javax.servlet.ServletException;
@@ -34,6 +35,7 @@ public class ScriptingServlet extends HttpServlet {
         jsEngine.put("cluster", cluster);
         jsEngine.put("filterFunction", PropertiesHolder.filterFunction);
         jsEngine.put("reflectionHelper", new ReflectionHelper());
+        jsEngine.put("scoreHelper", new NeuronScoreHelper());
 
         System.setOut(oldOut);
         System.setErr(oldErr);

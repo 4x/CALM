@@ -50,10 +50,7 @@ public class ClusteredCopulae {
                     double correlation = 0;
 
                     if(calc != null){
-                        double c = Math.pow(calc.getCurrentCorrelation(), 2);
-                        if (c >= 0 && c <= 2) {
-                            correlation = c;
-                        }
+                        correlation = Math.pow(calc.getCurrentCorrelation(), 2);
                     }
                     else{
                         CorrelationCalculator[] calcArr = variableClusteredCorrelations[i][j];
@@ -80,15 +77,9 @@ public class ClusteredCopulae {
                         }
 
                         if (u != null && l != null) {
-                            double c = Math.pow(((state[i] - l) * (upper - lower) / (u - l) + lower), 2);
-                            if (c >= 0 && c <= 2) {
-                                correlation = c;
-                            }
+                            correlation = Math.pow(((state[i] - l) * (upper - lower) / (u - l) + lower), 2);
                         } else {
-                            double c = Math.pow(lower + upper, 2);
-                            if (c >= 0 && c <= 2) {
-                                correlation = c;
-                            }
+                            correlation = Math.pow(lower + upper, 2);
                         }
                     }
                     weights[j] += correlation;
@@ -97,7 +88,7 @@ public class ClusteredCopulae {
         }
 
         for (int i = 0; i < state.length; i++) {
-            weights[i] = Math.pow(Math.abs(weights[i]), 0.5) / state.length;
+            weights[i] = Math.pow(Math.abs(weights[i]) / state.length, 0.5);
         }
         return weights;
     }

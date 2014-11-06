@@ -119,12 +119,12 @@ public class DecisionAggregatorC {
             if(PropertiesHolder.tradeMarketMarker){
                 if(results[4] + results[5] > PositionFactory.cost * PropertiesHolder.marketMakerAmplitude){
                     if(inLiveTrading && marketMakerDecider != null){
-                        MarketMakerPosition advice = new MarketMakerPosition(time, latestC + results[4],  latestC - results[5], latestC + results[6],  latestC - results[7], time + entry.getKey());
+                        MarketMakerPosition advice = new MarketMakerPosition(time, latestC, latestC + results[4],  latestC - results[5], latestC + results[6],  latestC - results[7], time + entry.getKey());
                         advice.adjustTimes(PropertiesHolder.timeQuantum);
                         marketMakerDecider.addAdvice(advice);
                     }
                     else if(marketMakerDeciderTrader != null){
-                        MarketMakerPosition advice = new MarketMakerPosition(time, latestC + results[4],  latestC - results[5], latestC + results[6],  latestC - results[7], time + entry.getKey());
+                        MarketMakerPosition advice = new MarketMakerPosition(time, latestC, latestC + results[4],  latestC - results[5], latestC + results[6],  latestC - results[7], time + entry.getKey());
                         advice.adjustTimes(PropertiesHolder.timeQuantum);
                         advice.attributes.put("cred", results[0]);
 
@@ -139,7 +139,7 @@ public class DecisionAggregatorC {
                         marketMakerDeciderTrader.addAdvice(advice);
                     }
                     else {
-                        marketMakerPositions.add(new MarketMakerPosition(time, latestC + results[4],  latestC - results[5], latestC + results[6],  latestC - results[7], time + entry.getKey()));
+                        marketMakerPositions.add(new MarketMakerPosition(time, latestC, latestC + results[4],  latestC - results[5], latestC + results[6],  latestC - results[7], time + entry.getKey()));
                     }
                 }
             }

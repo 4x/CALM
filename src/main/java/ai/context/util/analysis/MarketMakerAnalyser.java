@@ -41,7 +41,7 @@ public class MarketMakerAnalyser {
         formatOutput.setTimeZone(TimeZone.getTimeZone("GMT"));
 
         try {
-            String file = "/opt/dev/tmp/nohup.out_t1";
+            String file = "/opt/dev/tmp/nohup.out_t3";
             file = "/opt/dev/tmp/nohup.out";
 
             br = new BufferedReader(new FileReader(file));
@@ -112,7 +112,7 @@ public class MarketMakerAnalyser {
                         long tOpen = date.getTime() - dExecuted.getTime();
                         long tLive = date.getTime() - dAdvised.getTime();
 
-                        O_MMP order = new O_MMP();
+                        /*O_MMP order = new O_MMP();
                         order.dir = 1;
                         if(dir.equals("SHORT")){
                             order.dir = -1;
@@ -144,7 +144,7 @@ public class MarketMakerAnalyser {
 
 
 
-                        Integer[] hoursNotToTrade = new Integer[]{1, 2 , 3, 4, 10, 11, 21, 22, 23};
+                        Integer[] hoursNotToTrade = new Integer[]{0, 21, 22, 23};
                         Integer[] hoursNotToExit = new Integer[]{0, 1, 23};
                         Integer[] hoursNotToExecute = new Integer[]{9, 10, 11, 15};
                         Set<Integer> hoursN = new HashSet<Integer>(Arrays.<Integer>asList(hoursNotToTrade));
@@ -196,27 +196,27 @@ public class MarketMakerAnalyser {
                             //true ||
                             //(100 * attr.get("wait").longValue())/lifeSpan > 3 &&
                             //(20 * attr.get("wait").longValue())/lifeSpan > 1 &&
-                            //(20 * attr.get("wait").longValue())/lifeSpan < 11  &&
+                            //(20 * attr.get("wait").longValue())/lifeSpan <= 13  &&
                             //attr.get("wait").longValue()/60000 > 9 &&
-                            //attr.get("wait").longValue()/60000 < 40 &&
+                            attr.get("wait").longValue()/60000 < 110 &&
                             //attr.get("cred").intValue() >= 5 &&
-                            //attr.get("cred").intValue() > 2 &&
-                            //lifeSpan/1800000 >= 4 &&
-                            //lifeSpan/1800000 <= 12 &&
+                            //attr.get("cred").intValue() > 1 &&
+                            lifeSpan/1800000 >= 2 &&
+                            //lifeSpan/1800000 <= 15 &&
                             //targetPnL > 0.0011 &&
-                            targetPnL <= 0.0016 &&
-                            minAmp == -0.0001 &&
+                            //targetPnL <= 0.0016 &&
+                            //minAmp == -0.0001 &&
                             //minAmp < 0.0001 &&
                             //maxAmp > 0.0012 &&
                             //dAmp >= 0.0011 &&
                             //hours.contains(startHour) &&
                             //(nMonth == 10 || nMonth == 12) &&
-                            //(nMonth == 3 || nMonth == 12 || nMonth == 14 || nMonth == 17 || nMonth == 18) &&
+                            //!(nMonth == 2 || nMonth == 8 || nMonth == 10 || nMonth == 11 || nMonth == 12 || nMonth == 15) &&
                             //nMonth < 9 &&
                             //nMonth >= 10 &&
                             //nMonth >= 21 &&
                             //hours.contains(new Date(advised).getHours()) &&
-                            //!hoursN.contains(dAdvised.getHours()) &&
+                            !hoursN.contains(dAdvised.getHours()) &&
                             //dAdvised.getHours() < 16 &&
                             //!hoursNExit.contains(dPlannedExit.getHours()) &&
                             //dExecuted.getHours() <= 19 &&
@@ -241,10 +241,10 @@ public class MarketMakerAnalyser {
                             //dY == 0 &&
                             //slope >= 0.0020 &&
                             //slope <= 0.0031 &&
-                            //momentum >= -2 &&
+                            momentum >= 0 &&
                             //momentum <= 2 &&
-                            priceMovementParameter_1 >= -1 &&
-                            priceMovementParameter_1 <= 1 &&
+                            //priceMovementParameter_1 >= 0 &&
+                            //priceMovementParameter_1 <= 1 &&
                             //priceMovementParameter_2 >= -8 &&
                             //priceMovementParameter_2 <= 8 &&
                             //priceMovementParameter_3 >= -6 &&

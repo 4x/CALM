@@ -111,7 +111,7 @@ public class NeuronRankings {
         double score = 0;
         int nNeurons = 0;
         for (double subScore : neurons.values()) {
-            if (subScore > 0 && subScore < 2) {
+            if (subScore >= 0) {
                 nNeurons++;
                 score += subScore;
             }
