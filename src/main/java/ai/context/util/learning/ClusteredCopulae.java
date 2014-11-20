@@ -35,6 +35,10 @@ public class ClusteredCopulae {
     public double[] getCorrelationWeights(int[] state) {
         double[] weights = new double[state.length];
 
+        if(variableClusteredCorrelations == null){
+            return weights;
+        }
+
         for (int i = 0; i < state.length; i++) {
             int index = state[i] + base;
             if(index >= base * 2){

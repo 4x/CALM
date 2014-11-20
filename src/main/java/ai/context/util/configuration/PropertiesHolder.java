@@ -2,10 +2,12 @@ package ai.context.util.configuration;
 
 import ai.context.util.common.JavaScriptBooleanFilterFunction;
 
+import java.util.TreeMap;
+
 public class PropertiesHolder {
     public static double recencyBias = 2;
     public static double tolerance = 0.01;
-    public static int initialSeriesOffset = 2000;
+    public static int initialSeriesOffset = 500;
     public static int maxPopulation = 1000;
     public static double copulaToUniversal = 20;
     public static int toleranceSearch = 2;
@@ -40,11 +42,15 @@ public class PropertiesHolder {
     public static long pointsToLearn = 1000;
     public static long timeQuantum = 30 * 60 * 1000L;
     public static JavaScriptBooleanFilterFunction filterFunction = new JavaScriptBooleanFilterFunction();
-    public static String fxFolder = "";
+    public static String fxFolder = "30min/";
     public static String mainAsset = "EURUSD";
     public static String ticksFile = "EURUSD_Ticks.csv";
     public static long maxOpenTime = 3600000L;
     public static int numberOfMergeTries = 2;
+    public static boolean useStimuliGenerator = true;
+    public static String stimuliFile = "EURUSD_Ticks.csv";
+    public static boolean useStimuliFile = false;
+    public static TreeMap<Integer, Integer> neuronOpinions = new TreeMap<>();
 
     public static String getInfo() {
         return "PropertiesHolder{" +
@@ -89,6 +95,9 @@ public class PropertiesHolder {
                 ",\nmaxOpenTime=" + maxOpenTime +
                 ",\nnumberOfMergeTries=" + numberOfMergeTries +
                 ",\nmainAsset=" + mainAsset +
+                ",\nuseStimuliGenerator=" + useStimuliGenerator +
+                ",\nuseStimuliFile=" + useStimuliFile +
+                ",\nstimuliFile=" + stimuliFile +
                 '}';
     }
 }

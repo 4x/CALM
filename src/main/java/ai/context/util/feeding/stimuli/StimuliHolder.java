@@ -1,6 +1,6 @@
-package ai.context.runner.feeding.stimuli;
+package ai.context.util.feeding.stimuli;
 
-import ai.context.runner.feeding.StateToAction;
+import ai.context.util.feeding.StateToAction;
 import ai.context.util.learning.ClusteredCopulae;
 
 public class StimuliHolder {

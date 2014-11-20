@@ -12,10 +12,12 @@ public class NeuronAnalyser {
     private String address = "http://hyophorbe-associates.com:8056";
 
     public static void main(String[] args){
-       new NeuronAnalyser();
+       NeuronAnalyser analyser = new NeuronAnalyser();
+
+       analyser.analyseScores();
     }
 
-    public NeuronAnalyser(){
+    public void analyseScores(){
         try {
             URL url = new URL(address + "/info?REQ_TYPE=ALL");
             BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
@@ -46,6 +48,38 @@ public class NeuronAnalyser {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
+    public void analyseMerges(){
+        try {
+            URL url = new URL(address + "/info?REQ_TYPE=ALL");
+            BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+            String inputLine = in.readLine();
+
+            Pattern p = Pattern.compile("\"Neuron ([0-9]*)\", \"score\" : (0.[0-9]*)");
+            Matcher m = p.matcher(inputLine);
+
+            while(m.find()){
+                int nID = Integer.parseInt(m.group(1));
+                double score = Double.parseDouble(m.group(2));
+
+                System.out.println(nID + "," + score);
+            }
+
+            p = Pattern.compile("\"source\": ([0-9]*), \"target\": ([0-9]*)");
+            m = p.matcher(inputLine);
+
+            while(m.find()){
+                int s = Integer.parseInt(m.group(1)) + 1;
+                int t = Integer.parseInt(m.group(2)) + 1;
+
+                //System.out.println(s + " -> " + t);
+            }
+
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

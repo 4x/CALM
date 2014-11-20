@@ -3,11 +3,11 @@ package ai.context.runner;
 import ai.context.feed.synchronised.ISynchFeed;
 import ai.context.learning.neural.NeuralLearner;
 import ai.context.learning.neural.NeuronCluster;
-import ai.context.runner.feeding.MotherFeedCreator;
-import ai.context.runner.feeding.StateToAction;
-import ai.context.runner.feeding.StateToActionSeriesCreator;
-import ai.context.runner.feeding.stimuli.StimuliGenerator;
-import ai.context.runner.feeding.stimuli.StimuliHolder;
+import ai.context.util.feeding.MotherFeedCreator;
+import ai.context.util.feeding.StateToAction;
+import ai.context.util.feeding.StateToActionSeriesCreator;
+import ai.context.util.feeding.stimuli.StimuliGenerator;
+import ai.context.util.feeding.stimuli.StimuliInformation;
 import ai.context.util.configuration.DynamicPropertiesLoader;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.trading.version_1.DecisionAggregatorA;
@@ -31,8 +31,6 @@ public class MainNeural {
 
     private IClient client;
     private List<StateToAction> series;
-
-    private boolean useStimuliGenerator = true;
 
     public static void main(String[] args) {
         DynamicPropertiesLoader.start("");
@@ -85,7 +83,30 @@ public class MainNeural {
         }
         availableStimuli.removeAll(Arrays.asList(actionElements));
 
-        if(useStimuliGenerator){
+        if(PropertiesHolder.useStimuliFile){
+            try {
+                BufferedReader br = new BufferedReader(new FileReader(PropertiesHolder.stimuliFile));
+                String sCurrentLine;
+                int neuron = 0;
+                while ((sCurrentLine = br.readLine()) != null) {
+                    String[] parts = sCurrentLine.split(",");
+                    long horizon = Long.parseLong(parts[0]);
+                    Integer[] signals = new Integer[parts.length - 1];
+                    for(int i = 0; i < signals.length; i++){
+                        signals[i] = Integer.parseInt(parts[i + 1]);
+                    }
+                    NeuronCluster.getInstance().start(new NeuralLearner(horizon, motherFeed, actionElements, signals, null, null, outputFutureOffset, resolution));
+                    neuron++;
+                    if(neuron >= PropertiesHolder.totalNeurons){
+                        break;
+                    }
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else if(PropertiesHolder.useStimuliGenerator){
             SimpleDateFormat format = new SimpleDateFormat("yyyy.MM.dd");
             long start = 0;
             try {
@@ -97,10 +118,10 @@ public class MainNeural {
             series = StateToActionSeriesCreator.createSeries(motherFeed, path, start, end, 16);
             System.out.println("STA series created from: " + PropertiesHolder.startDateTime + " to: " + format.format(new Date(end)));
             StimuliGenerator stimuliGenerator = new StimuliGenerator();
-            stimuliGenerator.process(series, motherFeed, StateToActionSeriesCreator.horizons);
+            stimuliGenerator.process(series, motherFeed, StateToActionSeriesCreator.horizons, 2, PropertiesHolder.coreStimuliPerNeuron);
             System.out.println("Top stimuli generated");
 
-            for (StimuliHolder holder : stimuliGenerator.getTop(PropertiesHolder.totalNeurons)) {
+            for (StimuliInformation holder : stimuliGenerator.getTop(PropertiesHolder.totalNeurons)) {
                 NeuronCluster.getInstance().start(new NeuralLearner(holder.getHorizon(), motherFeed, actionElements, holder.getSignalsSources(), null, null, outputFutureOffset, resolution));
             }
             stimuliGenerator.reset();

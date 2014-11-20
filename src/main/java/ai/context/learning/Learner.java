@@ -257,16 +257,11 @@ public class Learner implements Runnable, TimedContainer {
         learner.setCorrelating(adapting);
     }
 
-    public TreeMap<Integer, CorrelationCalculator> getCorrelationCalculators() {
-        return learner.getCorrelationCalculators();
-    }
-
     public ClusteredCopulae getCopulae() {
         return learner.getCopulae();
     }
 
     public void setCorrelationTools(TreeMap<Integer, CorrelationCalculator> calculators, ClusteredCopulae copulae) {
         learner.setCopulae(copulae);
-        learner.setCorrelationCalculators(calculators);
     }
 }

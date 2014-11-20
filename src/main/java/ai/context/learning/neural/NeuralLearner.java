@@ -251,24 +251,14 @@ public class NeuralLearner implements Feed, Runnable {
 
                     tStart = System.currentTimeMillis();
                     double result = 0 ;
-                    while (!trackers.isEmpty() && trackers.get(0).getTimeStamp() < (time - horizon)) {
+                    while (!trackers.isEmpty() && trackers.get(0).getTimeStamp() <= (time - horizon)) {
                         StateActionInformationTracker tracker = trackers.remove(0);
                         if(oneCore){
                             core.addStateAction(tracker.getState(), tracker.getMaxUp());
                             core.addStateAction(tracker.getState(), tracker.getMaxDown());
                         }
                         else{
-
-                            if(coreUpA.getMinDevIncrements() > 20){
-                                coreUpA = new LearnerService();
-                                coreUpA.setActionResolution(resolution);
-                            }
                             coreUpA.addStateAction(tracker.getState(), tracker.getMaxUp());
-
-                            if(coreDownA.getMinDevIncrements() > 20){
-                                coreDownA = new LearnerService();
-                                coreDownA.setActionResolution(resolution);
-                            }
                             coreDownA.addStateAction(tracker.getState(), tracker.getMaxDown());
 
                             countA++;
@@ -351,6 +341,9 @@ public class NeuralLearner implements Feed, Runnable {
         if(dB == null){
             return dA;
         }
+        if(dA == null){
+            return null;
+        }
 
         double fA = (double)countA/(double)(countA + countB);
         double fB = 1 - fA;
@@ -380,7 +373,7 @@ public class NeuralLearner implements Feed, Runnable {
 
         if(useBackUp){
 
-            if(countB < 200){
+            if(countB < 50){
                 return null;
             }
             coreUp = coreUpB;
@@ -388,6 +381,9 @@ public class NeuralLearner implements Feed, Runnable {
         }
 
         TreeMap<Integer, Double> distribution = new TreeMap<>();
+        if(coreUp.getPopulation().size() < 10 || coreDown.getPopulation().size() < 10){
+            return null;
+        }
         TreeMap<Integer, Double> distUp = coreUp.getActionDistribution(signal);
         TreeMap<Integer, Double> distDown = coreDown.getActionDistribution(signal);
 
@@ -439,7 +435,7 @@ public class NeuralLearner implements Feed, Runnable {
             }
 
             cumD += val;
-            if(cumD/netWeight > (1 - pCutOff) && !ampDFound){
+            if(!ampDFound && cumD/netWeight > (1 - pCutOff)){
                 ampD = key;
                 ampDFound = true;
             }
@@ -465,8 +461,10 @@ public class NeuralLearner implements Feed, Runnable {
             if (!(executionInstant.getDay() == 0 || executionInstant.getDay() == 6)) {
 
                 TreeMap<Double, Double> prediction = new TreeMap<Double, Double>();
-                for (Map.Entry<Integer, Double> entry : predictionRaw.entrySet()) {
-                    prediction.put(data.getValue()[0] + entry.getKey() * resolution, entry.getValue());
+                if(predictionRaw != null) {
+                    for (Map.Entry<Integer, Double> entry : predictionRaw.entrySet()) {
+                        prediction.put(data.getValue()[0] + entry.getKey() * resolution, entry.getValue());
+                    }
                 }
                 DecisionAggregatorA.aggregateDecision(data, data.getValue()[0], prediction, horizon, false);
             }
@@ -518,16 +516,22 @@ public class NeuralLearner implements Feed, Runnable {
         double n = 0;
         Map<Double, StateActionPair> alphas = coreUpA.getAlphaStates();
         for (Map.Entry<Double, StateActionPair> entry : alphas.entrySet()) {
-            score += Math.pow(entry.getKey(), 2) * Math.log(entry.getValue().getTotalWeight());
+            double increment = Math.pow(entry.getKey(), 2);
+            if(!"NaN".equals(increment + "")) {
+                score += increment;
+            }
         }
         n += alphas.size();
 
         alphas = coreDownA.getAlphaStates();
         for (Map.Entry<Double, StateActionPair> entry : alphas.entrySet()) {
-            score += Math.pow(entry.getKey(), 2) * Math.log(entry.getValue().getTotalWeight());
+            double increment = Math.pow(entry.getKey(), 2);
+            if(!"NaN".equals(increment + "")) {
+                score += increment;
+            }
         }
         n += alphas.size();
-        score /= n;
+        score = Math.sqrt(score/n);
         neuronRankings.update(this, score);
     }
 
@@ -569,23 +573,27 @@ public class NeuralLearner implements Feed, Runnable {
     public int[] getSignalForDistribution(TreeMap<Integer, Double> distribution, double confidence) {
         int[] signal = new int[getNumberOfOutputs()];
 
-        double sum = 0;
-        double weight = 0;
-
-        for (Map.Entry<Integer, Double> entry : distribution.entrySet()) {
-            sum += entry.getKey() * entry.getValue();
-            weight += entry.getValue();
-        }
-
         double mean = 0;
         double stddev = 0;
-        if (weight > 0) {
-            mean = sum / weight;
+        if(distribution != null) {
+            double sum = 0;
+            double weight = 0;
+
+            for (Map.Entry<Integer, Double> entry : distribution.entrySet()) {
+                sum += entry.getKey() * entry.getValue();
+                weight += entry.getValue();
+            }
+
+
+            if (weight > 0) {
+                mean = sum / weight;
+            }
         }
 
         lastMean = (1 - lambda) * lastMean + lambda * mean;
         this.confidence = (1 - lambda) * this.confidence + lambda * confidence;
         lastDecision = signal[0] = getLogarithmicDiscretisation(mean, 0, 1, 2);
+        PropertiesHolder.neuronOpinions.put(this.getID(), lastDecision);
         lastConfidence = getLogarithmicDiscretisation(this.confidence, 0, resolution*10, 2);
         return signal;
     }

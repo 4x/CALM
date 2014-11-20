@@ -4,7 +4,7 @@ import ai.context.core.ai.LearningException;
 import ai.context.feed.FeedObject;
 import ai.context.feed.synchronised.ISynchFeed;
 import ai.context.learning.neural.NeuralLearner;
-import ai.context.runner.feeding.MotherFeedCreator;
+import ai.context.util.feeding.MotherFeedCreator;
 import ai.context.util.configuration.PropertiesHolder;
 
 public class TestNeuralLearner {

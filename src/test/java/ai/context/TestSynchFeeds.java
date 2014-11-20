@@ -106,4 +106,9 @@ class TestFeed extends SynchronisableFeed {
     public void addRawFeed(Feed feed) {
 
     }
+
+    @Override
+    public Feed getRawFeed() {
+        return null;
+    }
 }

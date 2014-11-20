@@ -1,4 +1,4 @@
-package ai.context.runner.feeding;
+package ai.context.util.feeding;
 
 public class Watcher {
     public final long horizon;

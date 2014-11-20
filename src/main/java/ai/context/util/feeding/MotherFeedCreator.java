@@ -1,4 +1,4 @@
-package ai.context.runner.feeding;
+package ai.context.util.feeding;
 
 import ai.context.feed.DataType;
 import ai.context.feed.Feed;
@@ -315,7 +315,6 @@ public class MotherFeedCreator {
         SubstractTransformer cHLDiff = new SubstractTransformer(cHDiff, cLDiff);
         LogarithmicDiscretiser cHLDiffL = new LogarithmicDiscretiser(res, 0, cHLDiff, -1);
         synch.addRawFeed(cHLDiffL);
-        feedsForCorrelation.add(cHLDiffL);
 
         FXHLDiffFeed feedDiff = new FXHLDiffFeed(feed, res);
         synch.addRawFeed(feedDiff);
@@ -416,6 +415,10 @@ public class MotherFeedCreator {
 
     public static IClient getClient(){
         return client;
+    }
+
+    public static Set<RowFeed> getRowFeeds() {
+         return rowFeeds;
     }
 }
 

@@ -96,14 +96,15 @@ public class StateActionPair {
         return merged;
     }
 
-    public double getDeviation(int[] counterpart, double[] correlationWeights) {
+    public static double getDeviation(int[] counterpart, int[] amalgamate, double[] correlationWeights) {
         double deviation = 0;
 
         for (int i = 0; i < amalgamate.length || i < counterpart.length; i++) {
             if (correlationWeights[i] >= 0) {
-                deviation += (Math.abs(amalgamate[i] - counterpart[i]) * correlationWeights[i]);
+                deviation += (Math.pow(amalgamate[i] - counterpart[i], 2) * correlationWeights[i]);
             }
         }
+        deviation = Math.sqrt(deviation);
         return deviation;
     }
 

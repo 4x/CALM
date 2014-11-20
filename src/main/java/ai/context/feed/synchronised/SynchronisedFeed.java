@@ -94,6 +94,8 @@ public class SynchronisedFeed extends SynchronisableFeed {
         return list;
     }
 
+
+
     @Override
     public int getNumberOfOutputs() {
         int number = 0;
@@ -102,4 +104,6 @@ public class SynchronisedFeed extends SynchronisableFeed {
         }
         return number;
     }
+
+
 }

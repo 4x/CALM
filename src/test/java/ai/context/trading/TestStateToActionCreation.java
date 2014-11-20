@@ -1,7 +1,7 @@
 package ai.context.trading;
 
-import ai.context.runner.feeding.StateToAction;
-import ai.context.runner.feeding.StateToActionSeriesCreator;
+import ai.context.util.feeding.StateToAction;
+import ai.context.util.feeding.StateToActionSeriesCreator;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

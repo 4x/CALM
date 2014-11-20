@@ -17,12 +17,7 @@ public class LearnerService {
 
     private double[] correlationWeights;
 
-    private TreeMap<Integer, CorrelationCalculator> correlationCalculators = new TreeMap<Integer, CorrelationCalculator>();
-    private double[] correlations;
-
     private ClusteredCopulae copulae = new ClusteredCopulae();
-
-    private TreeMap<Integer, Long> distribution = new TreeMap<Integer, Long>();
 
     private int[] populationVariation = new int[200];
 
@@ -37,7 +32,7 @@ public class LearnerService {
     private LearnerService thisService = this;
 
     private boolean correlating = false;
-    private boolean useSkewInSimilarity = true;
+    private boolean useSkewInSimilarity = false;
     private boolean useSkewInSimilarityWhenQuerying = false;
     private double sumSkewDiff = 0;
     private long skewDiffsCount = 0;
@@ -45,6 +40,8 @@ public class LearnerService {
     private long pointsConsumed = 0;
     private int minDevIncrements = 0;
     private int numberOfMerges = 0;
+    private int lastUpwardsCorrection = 0;
+    private boolean initialMerge = true;
 
     public boolean isMerging() {
         return merging;
@@ -52,24 +49,16 @@ public class LearnerService {
 
     public LearnerService(){}
 
-    public LearnerService(ConcurrentHashMap<String, StateActionPair> population, double[] correlationWeights, TreeMap<Integer, CorrelationCalculator> correlationCalculators, double[] correlations, ClusteredCopulae copulae, double actionResolution, int maxPopulation, double tolerance, double copulaToUniversal, double minDev, double maxDev, double minDevForMerge, TreeMap<Integer, Long> distribution) {
+    public LearnerService(ConcurrentHashMap<String, StateActionPair> population, double[] correlations, ClusteredCopulae copulae, double actionResolution, int maxPopulation, double tolerance, double copulaToUniversal, double minDev, double maxDev, double minDevForMerge) {
         this.population = population;
         this.correlationWeights = correlationWeights;
-        this.correlationCalculators = correlationCalculators;
-        this.correlations = correlations;
         this.copulae = copulae;
         PropertiesHolder.maxPopulation = maxPopulation;
         PropertiesHolder.tolerance = tolerance;
         PropertiesHolder.copulaToUniversal = copulaToUniversal;
-        this.distribution = distribution;
         this.maxDev = maxDev;
         this.minDev = minDev;
         this.minDevForMerge = minDevForMerge;
-    }
-
-
-    public double[] getCorrelations() {
-        return correlations;
     }
 
     public int getMaxPopulation() {
@@ -96,10 +85,6 @@ public class LearnerService {
         PropertiesHolder.tolerance = tolerance;
     }
 
-    public TreeMap<Integer, Long> getDistribution() {
-        return distribution;
-    }
-
     public double getCopulaToUniversal() {
         return PropertiesHolder.copulaToUniversal;
     }
@@ -111,12 +96,9 @@ public class LearnerService {
     public synchronized void addStateAction(int[] state, double movement) throws LearningException {
 
         pointsConsumed++;
-        int actionClass = (int) Math.round(movement / actionResolution);
-        if (!distribution.containsKey(actionClass)) {
-            distribution.put(actionClass, 0L);
-        }
+        numberOfMerges = 0;
 
-        distribution.put(actionClass, distribution.get(actionClass) + 1);
+        int actionClass = (int) Math.round(movement / actionResolution);
 
         refreshCorrelations(state, movement);
 
@@ -156,28 +138,10 @@ public class LearnerService {
                 mergeStates();
             }
         }
-
-        for(int i = populationVariation.length - 1; i > 0; i--){
-            populationVariation[i] = populationVariation[i - 1];
-        }
-        populationVariation[0] = population.size();
-        if(populationVariation[0] - populationVariation[populationVariation.length - 1] > populationVariation.length/10){
-            numberOfMerges = 0;
-        }
     }
 
     public synchronized void refreshCorrelations(int[] state, double movement) {
         copulae.addObservation(state, movement);
-
-        correlations = new double[state.length];
-
-        for (int index = 0; index < state.length; index++) {
-            if (!correlationCalculators.containsKey(index)) {
-                correlationCalculators.put(index, new CorrelationCalculator());
-            }
-            CorrelationCalculator calculator = correlationCalculators.get(index);
-            correlations[index] = calculator.getCorrelationCoefficient(state[index], movement);
-        }
     }
 
     public double[] updateAndGetCorrelationWeights(int[] state) {
@@ -205,7 +169,7 @@ public class LearnerService {
             TreeMap<Double, StateActionPair> top2 = new TreeMap<Double, StateActionPair>();
             for (Map.Entry<Double, StateActionPair> pair : top.entrySet()) {
                 updateAndGetCorrelationWeights(pair.getValue().getAmalgamate());
-                double deviation = Math.sqrt(getDeviation(pair.getValue().getAmalgamate(), state, correlationWeights) * pair.getKey());
+                double deviation = StateActionPair.getDeviation(pair.getValue().getAmalgamate(), state, correlationWeights) * pair.getKey();
                 top2.put(deviation, pair.getValue());
                 double skew = getSkewness(pair.getValue());
                 skews.put(pair.getValue(), skew);
@@ -279,7 +243,7 @@ public class LearnerService {
     }
 
     private double getDeviation(int[] state, StateActionPair pair) {
-        return pair.getDeviation(state, correlationWeights);
+        return StateActionPair.getDeviation(state, pair.getAmalgamate(), correlationWeights);
     }
 
     private synchronized double getWeightForDeviation(double deviation) {
@@ -287,17 +251,16 @@ public class LearnerService {
             return 1;
         }
 
-        double x = Math.log(deviation);
-        double min = Math.log(minDev);
-        double max = Math.log(maxDev);
+        double x = Math.exp(deviation);
+        double min = Math.exp(minDev);
+        double max = Math.exp(maxDev);
 
         if (max == min) {
             return 0;
         }
+        //return Math.pow((maxDev - deviation) / (maxDev - minDev), 1);
         return Math.pow((max - x) / (max - min), 1);
     }
-
-    private boolean initialMerge = true;
 
     private synchronized void mergeStates(){
         merging = true;
@@ -379,6 +342,10 @@ public class LearnerService {
             }
         }
         System.err.println("Ending merge: " + (System.currentTimeMillis() - t) + "ms  (" + minDevForMerge + ") Points consumed: " + pointsConsumed);
+
+        if(minDevIncrements > 10 * PropertiesHolder.numberOfMergeTries){
+            reset();
+        }
         initialMerge = false;
         merging = false;
     }
@@ -401,22 +368,23 @@ public class LearnerService {
         }
 
         double cum = 0;
+        double toReturn = -1;
         for(Map.Entry<Double, Count> entry: dist.entrySet()){
             if(entry.getKey() > 0){
                 cum += entry.getValue().val;
+                toReturn = entry.getKey();
                 if(cum/max > fractionToMerge){
-                    return entry.getKey();
+                    break;
                 }
             }
         }
-        return -1;
+        return toReturn;
     }
 
     public double getSkewDiff(StateActionPair sap1, StateActionPair sap2){
         return Math.abs(getSkewness(sap1) - getSkewness(sap2));
     }
 
-    int lastUpwardsCorrection = 0;
     private boolean merge(StateActionPair sap1, StateActionPair sap2) {
         lastUpwardsCorrection++;
         if(population.size() < PropertiesHolder.maxPopulation/3){
@@ -428,9 +396,9 @@ public class LearnerService {
         }
 
         double w = Math.exp(-((double)pointsConsumed / 4*PropertiesHolder.maxPopulation)) + 1;
-        if(sap1.getTotalWeight() > w && sap2.getTotalWeight() > w){
+        /*if(sap1.getTotalWeight() > w && sap2.getTotalWeight() > w){
             return false;
-        }
+        }*/
         if (population.containsKey(sap1.getId()) && population.containsKey(sap2.getId())) {
             StateActionPair newState = sap1.merge(sap2);
             removeState(sap1);
@@ -511,14 +479,6 @@ public class LearnerService {
         return copulae;
     }
 
-    public TreeMap<Integer, CorrelationCalculator> getCorrelationCalculators() {
-        return correlationCalculators;
-    }
-
-    public void setCorrelationCalculators(TreeMap<Integer, CorrelationCalculator> correlationCalculators) {
-        this.correlationCalculators = correlationCalculators;
-    }
-
     public void setCopulae(ClusteredCopulae copulae) {
         this.copulae = copulae;
     }
@@ -535,28 +495,32 @@ public class LearnerService {
         return minDevIncrements;
     }
 
-    public double getDeviation(int[] state, int[] counterpart, double[] correlationWeights) {
-        double deviation = 0;
+    private void reset(){
+        sumSkewDiff = 0;
+        skewDiffsCount = 0;
 
-        int dimensions = 0;
-        for (int i = 0; i < state.length || i < counterpart.length; i++) {
-            if (correlationWeights[i] >= 0) {
-                deviation += (Math.abs(state[i] - counterpart[i]) * correlationWeights[i]);
-                dimensions++;
-            }
-        }
-        deviation = deviation/dimensions;
-        return deviation;
+        pointsConsumed = 0;
+        minDevIncrements = 0;
+        numberOfMerges = 0;
+        lastUpwardsCorrection = 0;
+        initialMerge = true;
+
+        merging = false;
+        minDev = -1;
+        maxDev = -1;
+        minDevForMerge = -1;
+
+        population = new ConcurrentHashMap<String, StateActionPair>();
+        copulae = new ClusteredCopulae();
+        populationVariation = new int[200];
+        System.err.println("Resetting this LearnerService...");
     }
 
     @Override
     public String toString() {
         return "population=" + AmalgamateUtils.getMapString(population) +
                 ", correlationWeights=" + AmalgamateUtils.getArrayString(correlationWeights) +
-                ", correlationCalculators=" + AmalgamateUtils.getMapString(correlationCalculators) +
-                ", correlations=" + AmalgamateUtils.getArrayString(correlations) +
                 ", copulae=" + System.identityHashCode(copulae) +
-                ", distribution=" + AmalgamateUtils.getMapString(distribution) +
                 ", actionResolution=" + actionResolution +
                 ", maxPopulation=" + PropertiesHolder.maxPopulation +
                 ", tolerance=" + PropertiesHolder.tolerance +

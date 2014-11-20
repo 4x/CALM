@@ -139,4 +139,13 @@ public abstract class SynchronisableFeed implements ISynchFeed {
     public long getLatestTime() {
         return timeStamp.getValue();
     }
+
+    @Override
+    public List<Feed> rawFeeds() {
+        List<Feed> feeds = new ArrayList<>();
+        for(SynchronisableFeed feed : this.feeds){
+            feeds.add(feed.getRawFeed());
+        }
+        return feeds;
+    }
 }

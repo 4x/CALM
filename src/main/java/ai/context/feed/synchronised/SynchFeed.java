@@ -86,6 +86,11 @@ public class SynchFeed implements ISynchFeed {
         rawFeeds.add(wrapper);
     }
 
+    @Override
+    public List<? extends Feed> rawFeeds() {
+        return rawFeeds;
+    }
+
     public void removeRawFeed(Feed rawFeed) {
         rawFeeds.remove(mapping.remove(rawFeed));
     }
@@ -104,6 +109,11 @@ public class SynchFeed implements ISynchFeed {
             }
         }
         time = t;
+    }
+
+    @Override
+    public Feed getRawFeed() {
+        return null;
     }
 
     public void cleanup() {

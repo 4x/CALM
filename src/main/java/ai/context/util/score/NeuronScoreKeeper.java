@@ -1,8 +1,12 @@
 package ai.context.util.score;
 
+import ai.context.util.configuration.PropertiesHolder;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+
+import static ai.context.util.mathematics.Discretiser.getLogarithmicDiscretisation;
 
 public class NeuronScoreKeeper {
 
@@ -46,7 +50,12 @@ public class NeuronScoreKeeper {
         for(Map.Entry<Integer, Double[]> opinionEntry : opinions.entrySet()){
 
             Double[] opinion = opinionEntry.getValue();
-            double weight = Math.exp(-Math.sqrt(Math.pow((opinion[0] - ampU) / ampU, 2) + Math.pow((opinion[1] - ampD) / ampD, 2)));
+
+            double hEffect = (getLogarithmicDiscretisation(opinion[0], 0, PropertiesHolder.marketMakerLeeway/5, 2) - getLogarithmicDiscretisation(ampU, 0, PropertiesHolder.marketMakerLeeway/5, 2))/5;
+            double lEffect = (getLogarithmicDiscretisation(opinion[1], 0, PropertiesHolder.marketMakerLeeway/5, 2) - getLogarithmicDiscretisation(ampD, 0, PropertiesHolder.marketMakerLeeway/5, 2))/5;
+
+            double weight = Math.exp(-Math.sqrt(Math.pow(hEffect, 2) + Math.pow(lEffect, 2)));
+
             int neuronId = opinionEntry.getKey();
 
             for(Map.Entry<Double, HashMap<Integer, Double>> scoreEntry : scores.entrySet()){

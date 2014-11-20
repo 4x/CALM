@@ -198,10 +198,10 @@ public class MarketMakerAnalyser {
                             //(20 * attr.get("wait").longValue())/lifeSpan > 1 &&
                             //(20 * attr.get("wait").longValue())/lifeSpan <= 13  &&
                             //attr.get("wait").longValue()/60000 > 9 &&
-                            attr.get("wait").longValue()/60000 < 110 &&
+                            //attr.get("wait").longValue()/60000 < 110 &&
                             //attr.get("cred").intValue() >= 5 &&
-                            //attr.get("cred").intValue() > 1 &&
-                            lifeSpan/1800000 >= 2 &&
+                            attr.get("cred").intValue() < 4 &&
+                            //lifeSpan/1800000 >= 2 &&
                             //lifeSpan/1800000 <= 15 &&
                             //targetPnL > 0.0011 &&
                             //targetPnL <= 0.0016 &&
@@ -216,7 +216,7 @@ public class MarketMakerAnalyser {
                             //nMonth >= 10 &&
                             //nMonth >= 21 &&
                             //hours.contains(new Date(advised).getHours()) &&
-                            !hoursN.contains(dAdvised.getHours()) &&
+                            //!hoursN.contains(dAdvised.getHours()) &&
                             //dAdvised.getHours() < 16 &&
                             //!hoursNExit.contains(dPlannedExit.getHours()) &&
                             //dExecuted.getHours() <= 19 &&
@@ -241,7 +241,7 @@ public class MarketMakerAnalyser {
                             //dY == 0 &&
                             //slope >= 0.0020 &&
                             //slope <= 0.0031 &&
-                            momentum >= 0 &&
+                            //momentum >= 0 &&
                             //momentum <= 2 &&
                             //priceMovementParameter_1 >= 0 &&
                             //priceMovementParameter_1 <= 1 &&
@@ -257,7 +257,7 @@ public class MarketMakerAnalyser {
                             //tOpen/600000 < 6 &&
                             true) {
 
-                            aggregate(formatOutput.format(date), change);
+                            //aggregate(formatOutput.format(date), change);
                             //aggregate(dir, change);
                             //aggregate(formatOutput.format(date) + " " + dir, change);
                             //aggregate(formatOutput.format(date) +","+ (double)(new Date(advised).getHours())/100, change);
@@ -294,13 +294,13 @@ public class MarketMakerAnalyser {
                             //aggregate((int) (1000 *pnl), change);
                             //aggregate((int) (1000 * reversePnL), change);
 
-                            //aggregate(attr.get("cred").intValue(), change);
+                            //aggregate((int)(attr.get("cred")*10), change);
 
                             //aggregate(lifeSpan/1800000, change);
                             //aggregate(tOpen/600000, change);
                             //aggregate(tLive/1800000, change);
 
-                            //aggregate(attr.get("wait").longValue()/600000, change);
+                            aggregate(attr.get("wait").longValue()/600000, change);
                             //aggregate((20 * attr.get("wait").longValue())/lifeSpan, change);
                             //aggregate(nMonth, change);
                             //aggregate(date.getTime() / (7 * 86400000), change);

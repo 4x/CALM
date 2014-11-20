@@ -1,4 +1,4 @@
-package ai.context.runner.feeding;
+package ai.context.util.feeding;
 
 import ai.context.core.ai.LearnerService;
 import ai.context.core.ai.LearningException;

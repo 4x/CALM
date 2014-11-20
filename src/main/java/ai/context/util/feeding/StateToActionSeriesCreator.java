@@ -1,4 +1,4 @@
-package ai.context.runner.feeding;
+package ai.context.util.feeding;
 
 import ai.context.feed.DataType;
 import ai.context.feed.Feed;

@@ -376,4 +376,9 @@ public class CSVFeed extends RowFeed {
     public int getNumberOfOutputs() {
         return types.length;
     }
+
+    @Override
+    public String toString() {
+        return getDescription(0, "");
+    }
 }

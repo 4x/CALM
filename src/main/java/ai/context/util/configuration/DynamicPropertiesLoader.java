@@ -157,6 +157,12 @@ public class DynamicPropertiesLoader {
                         PropertiesHolder.numberOfMergeTries = Integer.parseInt(parts[1]);
                     } else if (parts[0].equals("mainAsset")) {
                         PropertiesHolder.mainAsset = parts[1];
+                    } else if (parts[0].equals("useStimuliFile")) {
+                        PropertiesHolder.useStimuliFile = Boolean.parseBoolean(parts[1]);
+                    } else if (parts[0].equals("useStimuliGenerator")) {
+                        PropertiesHolder.useStimuliGenerator = Boolean.parseBoolean(parts[1]);
+                    } else if (parts[0].equals("stimuliFile")) {
+                        PropertiesHolder.stimuliFile = parts[1];
                     }
                 }
                 System.out.println("Global configuration changed: " + PropertiesHolder.getInfo());
