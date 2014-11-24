@@ -6,6 +6,7 @@ import ai.context.util.common.Count;
 
 import java.util.*;
 
+import static ai.context.util.mathematics.Discretiser.getLogarithmicDiscretisation;
 import static ai.context.util.mathematics.Operations.tanInverse;
 
 public class RadarOnlineTransformer extends OnlineTransformer {
@@ -115,7 +116,7 @@ public class RadarOnlineTransformer extends OnlineTransformer {
                     if (c > inspect && rise > maxTop) {
                         maxTop = rise;
                         top = a;
-                        topSpace = entry.getKey();
+                        topSpace = entry.getKey() * Math.cos(angle);
                     }
 
                     changes.add(new Double[]{rise, 0.0});
@@ -131,7 +132,7 @@ public class RadarOnlineTransformer extends OnlineTransformer {
                     if (c > inspect && fall > maxBottom) {
                         maxBottom = fall;
                         bottom = a;
-                        bottomSpace = entry.getKey();
+                        bottomSpace = entry.getKey() * Math.cos(angle);
                     }
 
                     changes.get(c - 1)[1] = fall;
@@ -144,13 +145,16 @@ public class RadarOnlineTransformer extends OnlineTransformer {
             lastTSpace = (1 - lambda) * lastTSpace + lambda * topSpace;
             lastBSpace = (1 - lambda) * lastBSpace + lambda * bottomSpace;
 
-            return new Double[]{lastTSpace, lastBSpace, lastTop, lastBottom};
+            double signal = lastTSpace + lastBSpace;
+            signal = Math.signum(signal) * Math.log(Math.abs(signal) + 1);
+
+            return new Double[]{signal, lastTop, lastBottom};
         } else {
             buffer.clear();
             while (buffer.size() < bufferSize) {
                 buffer.add(new FeedObject(0, arriving.getData()));
             }
-            return new Double[]{0.0, 0.0, 0.0, 0.0};
+            return new Double[]{0.0, 0.0, 0.0};
         }
     }
 
@@ -176,6 +180,6 @@ public class RadarOnlineTransformer extends OnlineTransformer {
 
     @Override
     public int getNumberOfOutputs() {
-        return 4;
+        return 3;
     }
 }

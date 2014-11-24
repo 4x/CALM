@@ -9,6 +9,7 @@ import ai.context.feed.synchronised.ISynchFeed;
 import ai.context.runner.MainNeural;
 import ai.context.runner.MainNeural2;
 import ai.context.util.common.MapUtils;
+import ai.context.util.common.ScratchPad;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.Operations;
 import ai.context.util.server.JettyServer;
@@ -262,6 +263,7 @@ public class NeuronCluster implements TimedContainer{
             score = Math.min(score, 1.0);
             score = Math.max(score, 0.0);
             if ((score + "").equals("NaN")) {
+                ScratchPad.incrementCountFor(ScratchPad.NEURON_SCORE_NAN);
                 score = 0.0;
             }
             nodes += "{\"x\": 0, \"y\": 0, " +
@@ -431,5 +433,18 @@ public class NeuronCluster implements TimedContainer{
 
     public int getConsumed() {
         return consumed;
+    }
+
+    public String getStringForStimuli(int n){
+        String s = "";
+        for(FeedObject data : motherFeed.getLatest(n)){
+            List<Object> content = ((List) data.getData());
+            s += data.getTimeStamp();
+            for(Object c : content){
+                s += "," + c;
+            }
+            s += "\n";
+        }
+        return s;
     }
 }

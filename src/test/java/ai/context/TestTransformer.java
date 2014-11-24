@@ -21,9 +21,7 @@ import ai.context.util.learning.AmalgamateUtils;
 import com.tictactec.ta.lib.MAType;
 import org.junit.Test;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,6 +30,8 @@ import java.util.List;
 
 public class TestTransformer {
 
+    private static String fileName = "/opt/dev/data/feeds/30min/EURUSD.csv";
+    
     @Test
     public void testGoLive() {
         TestFeed1 primary = new TestFeed1();
@@ -154,7 +154,7 @@ public class TestTransformer {
 
         String dateFP = PropertiesHolder.startDateTime;
 
-        CSVFeed feed = new CSVFeed("/opt/dev/data/feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
+        CSVFeed feed = new CSVFeed(fileName, "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feed.setSkipWeekends(true);
         ExtractOneFromListFeed feedH = new ExtractOneFromListFeed(feed, 1);
         ExtractOneFromListFeed feedL = new ExtractOneFromListFeed(feed, 2);
@@ -179,7 +179,7 @@ public class TestTransformer {
 
         String dateFP = PropertiesHolder.startDateTime;
 
-        CSVFeed feed = new CSVFeed("/opt/dev/data/feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
+        CSVFeed feed = new CSVFeed(fileName, "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feed.setSkipWeekends(true);
         ExtractOneFromListFeed feedH = new ExtractOneFromListFeed(feed, 1);
         ExtractOneFromListFeed feedL = new ExtractOneFromListFeed(feed, 2);
@@ -204,7 +204,7 @@ public class TestTransformer {
 
         String dateFP = PropertiesHolder.startDateTime;
 
-        CSVFeed feed = new CSVFeed("/opt/dev/data/feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
+        CSVFeed feed = new CSVFeed(fileName, "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feed.setSkipWeekends(true);
         ExtractOneFromListFeed feedH = new ExtractOneFromListFeed(feed, 1);
         ExtractOneFromListFeed feedL = new ExtractOneFromListFeed(feed, 2);
@@ -229,7 +229,7 @@ public class TestTransformer {
 
         String dateFP = "2012.05.01 00:00:00";
 
-        CSVFeed feed = new CSVFeed("/opt/dev/data/feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
+        CSVFeed feed = new CSVFeed(fileName, "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feed.setSkipWeekends(true);
         ExtractOneFromListFeed feedC = new ExtractOneFromListFeed(feed, 3);
 
@@ -255,7 +255,7 @@ public class TestTransformer {
 
         String dateFP = "2012.05.01 00:00:00";
 
-        CSVFeed feed = new CSVFeed("/opt/dev/data/feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
+        CSVFeed feed = new CSVFeed(fileName, "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feed.setSkipWeekends(true);
         ExtractOneFromListFeed feedH = new ExtractOneFromListFeed(feed, 1);
         ExtractOneFromListFeed feedL = new ExtractOneFromListFeed(feed, 2);
@@ -280,8 +280,8 @@ public class TestTransformer {
                 DataType.DOUBLE};
 
         String dateFP = "2012.05.01 00:00:00";
-
-        CSVFeed feed = new CSVFeed("/opt/dev/data/feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
+        
+        CSVFeed feed = new CSVFeed(fileName, "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feed.setSkipWeekends(true);
         ExtractOneFromListFeed feedH = new ExtractOneFromListFeed(feed, 1);
         ExtractOneFromListFeed feedL = new ExtractOneFromListFeed(feed, 2);
@@ -307,7 +307,7 @@ public class TestTransformer {
 
         String dateFP = PropertiesHolder.startDateTime;
 
-        CSVFeed feed = new CSVFeed("/opt/dev/data/feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
+        CSVFeed feed = new CSVFeed(fileName, "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feed.setSkipWeekends(true);
         ExtractOneFromListFeed feedH = new ExtractOneFromListFeed(feed, 1);
         ExtractOneFromListFeed feedL = new ExtractOneFromListFeed(feed, 2);
@@ -318,11 +318,25 @@ public class TestTransformer {
         SynchronisedFeed s = new SynchronisedFeed(feed, null);
         s.addRawFeed(transformer);
 
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream("TestOut");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fos));
+
         for (int i = 0; i < 2000; i++) {
             FeedObject data = s.getNextComposite(this);
             List<Double>  out = new ArrayList<>();
             DataSetUtils.add(data.getData(), out);
             System.out.println(data.getTimeStamp() + " " + out);
+
+            String toPrint = "";
+            for(double d : out){
+                toPrint += d + ",";
+            }
+            appendToFile(toPrint, writer);
         }
     }
 

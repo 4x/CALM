@@ -9,6 +9,7 @@ import ai.context.feed.manipulation.WrapperManipulatorPair;
 import ai.context.feed.synchronised.ISynchFeed;
 import ai.context.learning.DataObject;
 import ai.context.learning.SelectLearnerFeed;
+import ai.context.util.common.ScratchPad;
 import ai.context.util.common.StateActionInformationTracker;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.discretisation.AbsoluteMovementDiscretiser;
@@ -211,7 +212,6 @@ public class NeuralLearner implements Feed, Runnable {
                 int day = new Date(time).getDay();
 
                 if (day != 0 && day != 6){
-                    String inputDates = new Date(data.getTimeStamp()) + " ";
                     int[] signal = new int[data.getSignal().length + getParents().size() + numberOfWrapperOutputs + 3];
                     int index = 0;
                     for (int sig : data.getSignal()) {
@@ -221,9 +221,8 @@ public class NeuralLearner implements Feed, Runnable {
                     for (NeuralLearner parent : getParents()) {
                         FeedObject feedObject = parent.readNext(this);
                         if(feedObject.getTimeStamp() != data.getTimeStamp()){
-                            System.out.println("Motherfeed timestamp: " + data.getTimeStamp() + " Parent " + parent + ": " + feedObject.getTimeStamp());
+                            System.err.println("Motherfeed timestamp: " + data.getTimeStamp() + " Parent " + parent + ": " + feedObject.getTimeStamp());
                         }
-                        inputDates += new Date(feedObject.getTimeStamp()) + " ";
 
                         int sig = ((int[]) (feedObject.getData()))[parentFeeds.get(parent)];
                         signal[index] = sig;
@@ -249,9 +248,11 @@ public class NeuralLearner implements Feed, Runnable {
                     signal[index] = getLogarithmicDiscretisation(ampUX, 0, 1, 2);
                     index++;
 
+                    ScratchPad.memory.put("NEURON_SIG_[" + id + "]", Arrays.toString(signal));
+
                     tStart = System.currentTimeMillis();
                     double result = 0 ;
-                    while (!trackers.isEmpty() && trackers.get(0).getTimeStamp() <= (time - horizon)) {
+                    while (!trackers.isEmpty() && trackers.get(0).getTimeStamp() < (time - horizon)) {
                         StateActionInformationTracker tracker = trackers.remove(0);
                         if(oneCore){
                             core.addStateAction(tracker.getState(), tracker.getMaxUp());
@@ -299,6 +300,7 @@ public class NeuralLearner implements Feed, Runnable {
                     for (StateActionInformationTracker tracker : trackers) {
                         tracker.processHighAndLow(data.getValue()[1], data.getValue()[2], time);
                     }
+                    ScratchPad.memory.put("NEURON_OBS_[" + id + "]", Arrays.toString(data.getValue()));
 
                     int[] outputSignal = new int[getNumberOfOutputs()];
 
@@ -374,6 +376,8 @@ public class NeuralLearner implements Feed, Runnable {
         if(useBackUp){
 
             if(countB < 50){
+                ampDB = 0;
+                ampUB = 0;
                 return null;
             }
             coreUp = coreUpB;
@@ -382,6 +386,14 @@ public class NeuralLearner implements Feed, Runnable {
 
         TreeMap<Integer, Double> distribution = new TreeMap<>();
         if(coreUp.getPopulation().size() < 10 || coreDown.getPopulation().size() < 10){
+            if(useBackUp){
+                ampDB = 0;
+                ampUB = 0;
+            }
+            else {
+                ampDA = 0;
+                ampUA = 0;
+            }
             return null;
         }
         TreeMap<Integer, Double> distUp = coreUp.getActionDistribution(signal);
@@ -396,7 +408,6 @@ public class NeuralLearner implements Feed, Runnable {
             weightDown += w;
         }
 
-
         double ampU = 0;
         double ampD = 0;
         double netWeight = weightDown + weightUp;
@@ -406,6 +417,9 @@ public class NeuralLearner implements Feed, Runnable {
         double cumU = 0;
         for (Map.Entry<Integer, Double> entry : distUp.entrySet()) {
             int key = entry.getKey();
+            if(key < 0){
+                System.err.println("NEURON_[" + id + "] - unexpected negative key in distUp");
+            }
             double val = entry.getValue() * upMult;
             if(key == 0){
                 key = 1;
@@ -426,6 +440,9 @@ public class NeuralLearner implements Feed, Runnable {
         double cumD = 0;
         for (Map.Entry<Integer, Double> entry : distDown.entrySet()) {
             int key = entry.getKey();
+            if(key > 0){
+                System.err.println("NEURON_[" + id + "] - unexpected positive key in distDown");
+            }
             double val = entry.getValue() * downMult;
             if(key == 0){
                 key = -1;
@@ -508,6 +525,8 @@ public class NeuralLearner implements Feed, Runnable {
             score = Math.sqrt(score)/n;
             if(!"NaN".equals("" + score)){
                 neuronRankings.update(this, score);
+            } else{
+                ScratchPad.incrementCountFor(ScratchPad.NEURON_RANKING_NAN);
             }
             return;
         }
@@ -519,6 +538,8 @@ public class NeuralLearner implements Feed, Runnable {
             double increment = Math.pow(entry.getKey(), 2);
             if(!"NaN".equals(increment + "")) {
                 score += increment;
+            } else{
+                ScratchPad.incrementCountFor(ScratchPad.NEURON_RANKING_NAN);
             }
         }
         n += alphas.size();
@@ -528,6 +549,8 @@ public class NeuralLearner implements Feed, Runnable {
             double increment = Math.pow(entry.getKey(), 2);
             if(!"NaN".equals(increment + "")) {
                 score += increment;
+            } else{
+                ScratchPad.incrementCountFor(ScratchPad.NEURON_RANKING_NAN);
             }
         }
         n += alphas.size();

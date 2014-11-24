@@ -237,7 +237,16 @@ public class MotherFeedCreator {
         ExtractOneFromListFeed feedC = new ExtractOneFromListFeed(feed, 3);
         ExtractOneFromListFeed feedV = new ExtractOneFromListFeed(feed, 4);
 
-        //synch.addRawFeed(feedV);
+        RadarOnlineTransformer r0 = new RadarOnlineTransformer(10, feedL, feedH, feedC, res);
+        RadarOnlineTransformer r1 = new RadarOnlineTransformer(20, feedL, feedH, feedC, res);
+        RadarOnlineTransformer r2 = new RadarOnlineTransformer(50, feedL, feedH, feedC, res);
+        RadarOnlineTransformer r3 = new RadarOnlineTransformer(100, feedL, feedH, feedC, res);
+        RadarOnlineTransformer r4 = new RadarOnlineTransformer(200, feedL, feedH, feedC, res);
+        synch.addRawFeed(r0);
+        synch.addRawFeed(r1);
+        synch.addRawFeed(r2);
+        synch.addRawFeed(r3);
+        synch.addRawFeed(r4);
 
         MAOnlineTransformer maV5 = new MAOnlineTransformer(5, feedV);
         SubstractTransformer substract_MAV5 = new SubstractTransformer(feedV, maV5);
@@ -269,10 +278,22 @@ public class MotherFeedCreator {
         synch.addRawFeed(substract_MAC50);
         synch.addRawFeed(substract_MAC100);
 
-        feedsForCorrelation.add(substract_MAC5);
-        feedsForCorrelation.add(substract_MAC10);
-        feedsForCorrelation.add(substract_MAC50);
-        feedsForCorrelation.add(substract_MAC100);
+        SubstractTransformer substract_MA_5_10 = new SubstractTransformer(maC5, maC10);
+        SubstractTransformer substract_MA_5_50 = new SubstractTransformer(maC5, maC50);
+        SubstractTransformer substract_MA_10_50 = new SubstractTransformer(maC10, maC50);
+        SubstractTransformer substract_MA_10_100 = new SubstractTransformer(maC10, maC100);
+        SubstractTransformer substract_MA_50_100 = new SubstractTransformer(maC50, maC100);
+        synch.addRawFeed(substract_MA_5_10);
+        synch.addRawFeed(substract_MA_5_50);
+        synch.addRawFeed(substract_MA_10_50);
+        synch.addRawFeed(substract_MA_10_100);
+        synch.addRawFeed(substract_MA_50_100);
+
+        feedsForCorrelation.add(substract_MA_5_10);
+        feedsForCorrelation.add(substract_MA_5_50);
+        feedsForCorrelation.add(substract_MA_10_50);
+        feedsForCorrelation.add(substract_MA_10_100);
+        feedsForCorrelation.add(substract_MA_50_100);
 
         MAOnlineTransformer maH5 = new MAOnlineTransformer(5, feedH);
         MAOnlineTransformer maH10 = new MAOnlineTransformer(10, feedH);
@@ -370,12 +391,22 @@ public class MotherFeedCreator {
         MinMaxDistanceTransformer mmdT2 = new MinMaxDistanceTransformer(20, feedL, feedH, feedC, res);
         MinMaxDistanceTransformer mmdT5 = new MinMaxDistanceTransformer(50, feedL, feedH, feedC, res);
         MinMaxDistanceTransformer mmdT7 = new MinMaxDistanceTransformer(100, feedL, feedH, feedC, res);
-
         synch.addRawFeed(mmdT0);
         synch.addRawFeed(mmdT1);
         synch.addRawFeed(mmdT2);
         synch.addRawFeed(mmdT5);
         synch.addRawFeed(mmdT7);
+
+        GradientOnlineTransformer g0 = new GradientOnlineTransformer(5, feedL, feedH, feedC, res);
+        GradientOnlineTransformer g1 = new GradientOnlineTransformer(10, feedL, feedH, feedC, res);
+        GradientOnlineTransformer g2 = new GradientOnlineTransformer(20, feedL, feedH, feedC, res);
+        GradientOnlineTransformer g5 = new GradientOnlineTransformer(50, feedL, feedH, feedC, res);
+        GradientOnlineTransformer g7 = new GradientOnlineTransformer(100, feedL, feedH, feedC, res);
+        synch.addRawFeed(g0);
+        synch.addRawFeed(g1);
+        synch.addRawFeed(g2);
+        synch.addRawFeed(g5);
+        synch.addRawFeed(g7);
 
         RSIOnlineTransformer rsiC = new RSIOnlineTransformer(feedC, 5, 25, 0.5);
         RSIOnlineTransformer rsiC2 = new RSIOnlineTransformer(feedC, 10, 50, 0.05);
@@ -391,17 +422,6 @@ public class MotherFeedCreator {
         RSIOnlineTransformer rsiL2 = new RSIOnlineTransformer(feedL, 10, 50, 0.05);
         synch.addRawFeed(rsiL);
         synch.addRawFeed(rsiL2);
-
-        RadarOnlineTransformer r0 = new RadarOnlineTransformer(10, feedL, feedH, feedC, res);
-        RadarOnlineTransformer r1 = new RadarOnlineTransformer(20, feedL, feedH, feedC, res);
-        RadarOnlineTransformer r2 = new RadarOnlineTransformer(50, feedL, feedH, feedC, res);
-        RadarOnlineTransformer r3 = new RadarOnlineTransformer(100, feedL, feedH, feedC, res);
-        RadarOnlineTransformer r4 = new RadarOnlineTransformer(200, feedL, feedH, feedC, res);
-        synch.addRawFeed(r0);
-        synch.addRawFeed(r1);
-        synch.addRawFeed(r2);
-        synch.addRawFeed(r3);
-        synch.addRawFeed(r4);
 
         return synch;
     }

@@ -2,6 +2,7 @@ package ai.context;
 
 import ai.context.core.ai.LearnerService;
 import ai.context.core.ai.LearningException;
+import ai.context.core.ai.StateActionPair;
 import ai.context.util.analysis.SuccessMap;
 import ai.context.util.measurement.LoggerTimer;
 import org.junit.Before;
@@ -15,9 +16,9 @@ public class TestLearning {
 
     private LearnerService learner = new LearnerService();
 
-    private int numInputs = 8;
-    private int degreesOfFreedom = 12;
-    private int numPoints = 20000;
+    private int numInputs = 15;
+    private int degreesOfFreedom = 16;
+    private int numPoints = 10000;
 
     private int numPredict = 1000;
 
@@ -109,7 +110,7 @@ public class TestLearning {
             }
             else {
                 movement =  movement * Math.sin(movement);
-            }
+            }*/
 
             if(index == 10 && val > 5){
                 movement =  Math.sqrt(Math.abs(movement));
@@ -119,12 +120,12 @@ public class TestLearning {
                 neg = true;
             }
 
-            *//*if(index == 5 && movement < 0){
+            /*if(index == 5 && movement < 0){
                 movement = Math.pow(Math.sin(movement), 2);
             }
             else {
                 movement =  Math.pow(Math.cos(movement), 3);
-            }*//*
+            }
 
             if(index == 3 && val > 5){
                 neg = !neg;

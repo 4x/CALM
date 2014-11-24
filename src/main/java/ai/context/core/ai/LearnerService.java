@@ -1,10 +1,10 @@
 package ai.context.core.ai;
 
 import ai.context.util.common.Count;
+import ai.context.util.common.ScratchPad;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.learning.AmalgamateUtils;
 import ai.context.util.learning.ClusteredCopulae;
-import ai.context.util.mathematics.CorrelationCalculator;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,6 +14,7 @@ import static ai.context.util.mathematics.Operations.sum;
 public class LearnerService {
 
     private ConcurrentHashMap<String, StateActionPair> population = new ConcurrentHashMap<String, StateActionPair>();
+    private TreeMap<Integer, Count> dist = new TreeMap<>();
 
     private double[] correlationWeights;
 
@@ -100,6 +101,11 @@ public class LearnerService {
 
         int actionClass = (int) Math.round(movement / actionResolution);
 
+        if(!dist.containsKey(actionClass)){
+            dist.put(actionClass, new Count());
+        }
+        dist.get(actionClass).val++;
+
         refreshCorrelations(state, movement);
 
         if (!correlating) {
@@ -116,7 +122,7 @@ public class LearnerService {
             StateActionPair counterpart = null;
             double currentDev = -1;
 
-            Set<Map.Entry<StateActionPair, Double>> entries = getSimilarStates(state, true).entrySet();
+            Set<Map.Entry<StateActionPair, Double>> entries = getSimilarStates(state, false).entrySet();
             for (Map.Entry<StateActionPair, Double> entry : entries) {
                 double weight = getWeightForDeviation(entry.getValue());
                 entry.getKey().newMovement(movement, weight);
@@ -154,10 +160,9 @@ public class LearnerService {
 
         TreeMap<Double, StateActionPair> top = new TreeMap<>();
         for (StateActionPair pair : population.values()) {
-            double deviation = getDeviation(state, pair);
+            double deviation =  StateActionPair.getDeviation(state, pair.getAmalgamate(), correlationWeights);
             top.put(deviation, pair);
         }
-
         double meanSkew = 0;
         HashMap<StateActionPair, Double> skews = new HashMap<>();
 
@@ -171,51 +176,51 @@ public class LearnerService {
                 updateAndGetCorrelationWeights(pair.getValue().getAmalgamate());
                 double deviation = StateActionPair.getDeviation(pair.getValue().getAmalgamate(), state, correlationWeights) * pair.getKey();
                 top2.put(deviation, pair.getValue());
-                double skew = getSkewness(pair.getValue());
-                skews.put(pair.getValue(), skew);
-                if(i < skewCutOff){
-                    meanSkew += skew * pair.getKey();
-                    skewW += pair.getKey();
-                }
                 if(i++ > cutOff){
                     break;
                 }
+
+                if(useSkewInSimilarity  || this.useSkewInSimilarity || useSkewInSimilarityWhenQuerying) {
+                    double skew = getSkewness(pair.getValue());
+                    skews.put(pair.getValue(), skew);
+                    if (i < skewCutOff) {
+                        meanSkew += skew * pair.getKey();
+                        skewW += pair.getKey();
+                    }
+                }
             }
             top = top2;
         }
-        meanSkew /= skewW;
-        boolean meanSkewUnset = false;
-        if("NaN".equals("" + meanSkew)){
-            meanSkewUnset = true;
-        }
 
-        if(this.useSkewInSimilarity && useSkewInSimilarity){
-            TreeMap<Double, StateActionPair> top2 = new TreeMap<Double, StateActionPair>();
-            for (Map.Entry<Double, StateActionPair> pair : top.entrySet()) {
-                double skewDiff = 1;
-                if(!meanSkewUnset){
-                    skewDiff = Math.abs(skews.get(pair.getValue()) - meanSkew);
-
-                    sumSkewDiff += skewDiff;
-                    skewDiffsCount++;
-                }
-
-                double dev = pair.getKey();
-                if(dev == 0){
-                    dev = 0.0001;
-                }
-                //dev = Math.log(pair.getKey()*skewDiff * Math.log(skewDiff/dev + 1) + 1);
-                //dev = Math.sqrt(pair.getKey()*skewDiff * Math.log(skewDiff/dev + 1));
-                //dev = pair.getKey() * skewDiff * Math.log(skewDiff/dev + 1);
-                //dev = pair.getKey() * skewDiff * Math.log(Math.pow(skewDiff, 2)/dev + 1);
-                //dev = pair.getKey() * skewDiff * Math.pow(Math.log(skewDiff/dev + 1), 2);
-                dev = pair.getKey() * Math.log(skewDiff + 1);
-                //dev = pair.getKey() * 1 * Math.log(skewDiff + 1);
-
-                top2.put(dev, pair.getValue());
+        if(useSkewInSimilarity || this.useSkewInSimilarity || useSkewInSimilarityWhenQuerying) {
+            meanSkew /= skewW;
+            boolean meanSkewUnset = false;
+            if ("NaN".equals("" + meanSkew)) {
+                ScratchPad.incrementCountFor(ScratchPad.MEAN_SKEW_NAN);
+                meanSkewUnset = true;
             }
-            top = top2;
+            if(this.useSkewInSimilarity && useSkewInSimilarity){
+                TreeMap<Double, StateActionPair> top2 = new TreeMap<Double, StateActionPair>();
+                for (Map.Entry<Double, StateActionPair> pair : top.entrySet()) {
+                    double skewDiff = 1;
+                    if(!meanSkewUnset){
+                        skewDiff = Math.abs(skews.get(pair.getValue()) - meanSkew);
+
+                        sumSkewDiff += skewDiff;
+                        skewDiffsCount++;
+                    }
+
+                    double dev = pair.getKey();
+                    if(dev == 0){
+                        dev = 0.0001;
+                    }
+                    dev = pair.getKey() * Math.log(skewDiff + 1);
+                    top2.put(dev, pair.getValue());
+                }
+                top = top2;
+            }
         }
+
 
         HashMap<StateActionPair, Double> map = new HashMap<StateActionPair, Double>();
         TreeMap<Double, StateActionPair> closestNeighbours = new TreeMap<>();
@@ -226,11 +231,11 @@ public class LearnerService {
             pair.getValue().setClosestNeighbours(closestNeighbours);
             closestNeighbours.put(pair.getKey(), pair.getValue());
 
-            if ((minDev == -1 || minDev > pair.getKey()) && pair.getKey() > 0) {
+            if ((minDev == -1 || minDev > pair.getKey())) {
                 minDev = pair.getKey();
             }
 
-            if ((maxDev == -1 || maxDev < pair.getKey()) && pair.getKey() > 0) {
+            if ((maxDev == -1 || maxDev < pair.getKey())) {
                 maxDev = pair.getKey();
             }
 
@@ -239,11 +244,12 @@ public class LearnerService {
                 break;
             }
         }
-        return map;
-    }
 
-    private double getDeviation(int[] state, StateActionPair pair) {
-        return StateActionPair.getDeviation(state, pair.getAmalgamate(), correlationWeights);
+        StateActionPair itself = population.get(AmalgamateUtils.getAmalgamateString(state));
+        if(itself != null) {
+            map.put(itself, 0D);
+        }
+        return map;
     }
 
     private synchronized double getWeightForDeviation(double deviation) {
@@ -258,8 +264,7 @@ public class LearnerService {
         if (max == min) {
             return 0;
         }
-        //return Math.pow((maxDev - deviation) / (maxDev - minDev), 1);
-        return Math.pow((max - x) / (max - min), 1);
+        return (max - x) / (max - min);
     }
 
     private synchronized void mergeStates(){
@@ -323,14 +328,14 @@ public class LearnerService {
             }
 
             System.err.println("Run: " + runs + " x: " + x + " y: " + y + " z: " + z + " Check: " + check.size() + " a: " + a + " MW: " + (meanWeight/a));
-            if(runsSinceLastMerge > 0){
-                minDevForMerge *= 1.25;
-                m = getMinDevToMerge((double)(population.size() - PropertiesHolder.maxPopulation/2)/(double)(population.size()));
-                if(m > minDevForMerge){
-                    minDevForMerge = m;
-                }
-                minDevIncrements++;
+
+            minDevForMerge *= 1.25;
+            m = getMinDevToMerge((double)(population.size() - PropertiesHolder.maxPopulation/2)/(double)(population.size()));
+            if(m > minDevForMerge){
+                minDevForMerge = m;
             }
+            minDevIncrements++;
+
             System.err.println("Using minDevForMerge: " + minDevForMerge);
             if(runsSinceLastMerge > 2){
                 System.err.println("Skipping merging for now");
@@ -378,6 +383,27 @@ public class LearnerService {
                 }
             }
         }
+
+        /*if(toReturn == -1){
+            String toPrint = "Could not get a minDevForMerge...\n";
+            for (StateActionPair pair : population.values()) {
+                double upper = Double.MIN_VALUE;
+                double lower = Double.MAX_VALUE;
+                for (Map.Entry<Double, StateActionPair> entry : pair.getClosestNeighbours().entrySet()) {
+                    if(entry.getKey() > upper){
+                        upper = entry.getKey();
+                    }
+                    if(entry.getKey() < lower){
+                        lower = entry.getKey();
+                    }
+                }
+                toPrint += "\t" + pair.getId() + " -> " + pair.getClosestNeighbours().size() + " [" + lower + ", " + upper + "]" + "\n";
+            }
+            for(Map.Entry<Integer, Count> entry : this.dist.entrySet()){
+                toPrint += "\t\t" + entry.getKey() + " -> " + entry.getValue().val + "\n";
+            }
+            System.err.println(toPrint);
+        }*/
         return toReturn;
     }
 
@@ -395,8 +421,8 @@ public class LearnerService {
             return false;
         }
 
-        double w = Math.exp(-((double)pointsConsumed / 4*PropertiesHolder.maxPopulation)) + 1;
-        /*if(sap1.getTotalWeight() > w && sap2.getTotalWeight() > w){
+        /*double w = Math.exp(-((double)pointsConsumed / 4*PropertiesHolder.maxPopulation)) + 1;
+        if(sap1.getTotalWeight() > w && sap2.getTotalWeight() > w){
             return false;
         }*/
         if (population.containsKey(sap1.getId()) && population.containsKey(sap2.getId())) {

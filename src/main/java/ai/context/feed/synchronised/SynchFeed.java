@@ -140,4 +140,9 @@ public class SynchFeed implements ISynchFeed {
         }
         return number;
     }
+
+    @Override
+    public List<FeedObject> getLatest(int n) {
+        return null;
+    }
 }

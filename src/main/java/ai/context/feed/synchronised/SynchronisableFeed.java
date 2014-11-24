@@ -20,6 +20,8 @@ public abstract class SynchronisableFeed implements ISynchFeed {
     private FeedObject current;
     private Object currentData;
 
+    private List<FeedObject> latest = new ArrayList<>();
+
     protected SynchronisableFeed(SynchronisableFeed sibling) {
         if (sibling != null) {
             this.timeStamp = sibling.getTimeStamp();
@@ -73,6 +75,11 @@ public abstract class SynchronisableFeed implements ISynchFeed {
         }
         for(Feed remove : toRemove){
             buffers.remove(remove);
+        }
+
+        latest.add(feedObject);
+        if(latest.size() > 500){
+            latest.remove(0);
         }
         return feedObject;
     }
@@ -147,5 +154,11 @@ public abstract class SynchronisableFeed implements ISynchFeed {
             feeds.add(feed.getRawFeed());
         }
         return feeds;
+    }
+
+    @Override
+    public List<FeedObject> getLatest(int n) {
+        int start = Math.max(0, latest.size() - n);
+        return latest.subList(start, latest.size() - 1);
     }
 }

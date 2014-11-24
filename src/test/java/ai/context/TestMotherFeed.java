@@ -15,18 +15,24 @@ public class TestMotherFeed {
         Object z = new Object();
         FeedObject dX = motherFeed.getNextComposite(x);
         long tX = dX.getTimeStamp();
+        int i = 0;
         for(Feed f : motherFeed.rawFeeds()){
-            System.out.println(f + " " + (f.getLatestTime() - tX));
+            System.out.println(i + " " + f.getDescription(0,"") + " " + (f.getLatestTime() - tX));
+            i++;
         }
         FeedObject dY = motherFeed.getNextComposite(y);
         long tY = dY.getTimeStamp();
+        i = 0;
         for(Feed f : motherFeed.rawFeeds()){
-            System.out.println(f + " " + (f.getLatestTime() - tY));
+            System.out.println(i + " " + f + " " + (f.getLatestTime() - tY));
+            i++;
         }
         FeedObject dZ = motherFeed.getNextComposite(z);
         long tZ = dZ.getTimeStamp();
+        i = 0;
         for(Feed f : motherFeed.rawFeeds()){
-            System.out.println(f + " " + (f.getLatestTime() - tZ));
+            System.out.println(i + " " + f + " " + (f.getLatestTime() - tZ));
+            i++;
         }
 
         System.out.print((tX - tY) + " " + (tY - tZ));

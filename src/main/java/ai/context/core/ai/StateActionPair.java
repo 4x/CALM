@@ -3,6 +3,7 @@ package ai.context.core.ai;
 import ai.context.util.common.Count;
 import ai.context.util.learning.AmalgamateUtils;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -61,12 +62,10 @@ public class StateActionPair {
     }
 
     public TreeMap<Integer, Double> getActionDistribution() {
-
         TreeMap<Integer, Double> distribution = new TreeMap<>();
         for (Map.Entry<Integer, Count> entry : actionDistribution.entrySet()) {
             distribution.put(entry.getKey(), entry.getValue().val / totalWeight);
         }
-
         return distribution;
     }
 
@@ -99,10 +98,9 @@ public class StateActionPair {
     public static double getDeviation(int[] counterpart, int[] amalgamate, double[] correlationWeights) {
         double deviation = 0;
 
-        for (int i = 0; i < amalgamate.length || i < counterpart.length; i++) {
-            if (correlationWeights[i] >= 0) {
-                deviation += (Math.pow(amalgamate[i] - counterpart[i], 2) * correlationWeights[i]);
-            }
+        for (int i = 0; i < amalgamate.length; i++) {
+            double diff = amalgamate[i] - counterpart[i];
+            deviation += (diff * diff * correlationWeights[i]);
         }
         deviation = Math.sqrt(deviation);
         return deviation;

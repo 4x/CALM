@@ -1,5 +1,6 @@
 package ai.context.util.feeding.stimuli;
 
+import ai.context.util.common.ScratchPad;
 import ai.context.util.feeding.StateToAction;
 import ai.context.util.learning.ClusteredCopulae;
 
@@ -39,6 +40,8 @@ public class StimuliHolder {
         for(double w : weights){
             if(!"NaN".equals("" + w)) {
                 score += w;
+            } else{
+                ScratchPad.incrementCountFor(ScratchPad.STIMULI_HOLDER_NAN);
             }
         }
 
@@ -47,6 +50,8 @@ public class StimuliHolder {
         for(double w : weights){
             if(!"NaN".equals("" + w)) {
                 score += w;
+            } else{
+                ScratchPad.incrementCountFor(ScratchPad.STIMULI_HOLDER_NAN);
             }
         }
     }

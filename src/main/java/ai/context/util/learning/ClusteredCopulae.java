@@ -2,6 +2,8 @@ package ai.context.util.learning;
 
 import ai.context.util.mathematics.CorrelationCalculator;
 
+import java.util.Arrays;
+
 public class ClusteredCopulae {
 
     private int base = 20;
@@ -53,7 +55,7 @@ public class ClusteredCopulae {
                     double correlation = 0;
 
                     if(calc != null){
-                        correlation = Math.pow(calc.getCurrentCorrelation(), 2);
+                        correlation = calc.getCurrentCorrelation() * calc.getCurrentCorrelation();
                     }
                     else{
                         CorrelationCalculator[] calcArr = variableClusteredCorrelations[i][j];
@@ -80,18 +82,23 @@ public class ClusteredCopulae {
                         }
 
                         if (u != null && l != null) {
-                            correlation = Math.pow(((state[i] - l) * (upper - lower) / (u - l) + lower), 2);
+                            correlation = ((state[i] - l) * (upper - lower) / (u - l) + lower);
+                            correlation *= correlation;
                         } else {
-                            correlation = Math.pow(lower + upper, 2);
+                            correlation = lower + upper;
+                            correlation *= correlation;
                         }
                     }
-                    weights[j] += correlation;
+                    if(correlation > 0) {
+                        weights[j] += correlation;
+                    }
                 }
             }
         }
 
+        int div = state.length - 1;
         for (int i = 0; i < state.length; i++) {
-            weights[i] = Math.pow(weights[i] / (state.length - 1), 0.5);
+            weights[i] = Math.sqrt(weights[i] / div);
         }
         return weights;
     }

@@ -11,4 +11,6 @@ public interface ISynchFeed extends Feed {
 
     public List<? extends Feed> rawFeeds();
     public Feed getRawFeed();
+
+    public List<FeedObject> getLatest(int n);
 }

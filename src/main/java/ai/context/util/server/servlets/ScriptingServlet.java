@@ -2,6 +2,7 @@ package ai.context.util.server.servlets;
 
 import ai.context.learning.neural.NeuronCluster;
 import ai.context.util.analysis.ReflectionHelper;
+import ai.context.util.common.ScratchPad;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.feeding.MotherFeedCreator;
 import ai.context.util.score.NeuronScoreHelper;
@@ -39,6 +40,7 @@ public class ScriptingServlet extends HttpServlet {
         jsEngine.put("scoreHelper", new NeuronScoreHelper());
         jsEngine.put("neuronOpinions", PropertiesHolder.neuronOpinions);
         jsEngine.put("coreFeeds", MotherFeedCreator.getRowFeeds());
+        jsEngine.put("scratchPad", ScratchPad.memory);
 
         System.setOut(oldOut);
         System.setErr(oldErr);

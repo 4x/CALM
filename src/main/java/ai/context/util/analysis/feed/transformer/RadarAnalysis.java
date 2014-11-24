@@ -228,7 +228,7 @@ public class RadarAnalysis extends JPanel{
 
         String dateFP = PropertiesHolder.startDateTime;
 
-        CSVFeed feed = new CSVFeed("/opt/dev/data/feeds/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
+        CSVFeed feed = new CSVFeed("/opt/dev/data/feeds/30min/EURUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
         feed.setSkipWeekends(true);
         ExtractOneFromListFeed feedH = new ExtractOneFromListFeed(feed, 1);
         ExtractOneFromListFeed feedL = new ExtractOneFromListFeed(feed, 2);

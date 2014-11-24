@@ -2,6 +2,7 @@ package ai.context.feed.transformer.series.online;
 
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
+import ai.context.util.common.ScratchPad;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,6 +70,7 @@ public class CorrelationOnlineTransformer extends OnlineTransformer {
 
         double currentCorrelation = (x_y_sum - (x_sum * y_sum) / nPoints) / (Math.sqrt((x_2_sum - (x_sum * x_sum) / nPoints) * (y_2_sum - (y_sum * y_sum) / nPoints)));
         if("NaN".equals("" + currentCorrelation)) {
+            ScratchPad.incrementCountFor(ScratchPad.CURRENT_CORRELATION_NAN);
             return 0.0;
         }
         return currentCorrelation;
