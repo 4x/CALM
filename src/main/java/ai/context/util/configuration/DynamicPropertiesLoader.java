@@ -99,6 +99,8 @@ public class DynamicPropertiesLoader {
                         PropertiesHolder.coreStimuliPerNeuron = Integer.parseInt(parts[1]);
                     } else if (parts[0].equals("totalNeurons")) {
                         PropertiesHolder.totalNeurons = Integer.parseInt(parts[1]);
+                    } else if (parts[0].equals("totalRandomisedNeurons")) {
+                        PropertiesHolder.totalRandomisedNeurons = Integer.parseInt(parts[1]);
                     } else if (parts[0].equals("generationNeurons")) {
                         PropertiesHolder.generationNeurons = Integer.parseInt(parts[1]);
                     } else if (parts[0].equals("httpPort")) {
@@ -163,6 +165,8 @@ public class DynamicPropertiesLoader {
                         PropertiesHolder.useStimuliGenerator = Boolean.parseBoolean(parts[1]);
                     } else if (parts[0].equals("stimuliFile")) {
                         PropertiesHolder.stimuliFile = parts[1];
+                    } else if (parts[0].equals("isLiveAccount")) {
+                        PropertiesHolder.isLiveAccount = Boolean.valueOf(parts[1]);
                     }
                 }
                 System.out.println("Global configuration changed: " + PropertiesHolder.getInfo());

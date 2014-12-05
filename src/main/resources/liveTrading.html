@@ -1,0 +1,28 @@
+<html>
+    <head>
+        <title>Live Trading</title>
+        <script>
+            function sendCode(){
+                xmlhttp = new XMLHttpRequest();
+                xmlhttp.onreadystatechange = function() {
+                    if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                        alert(xmlhttp.responseText);
+                    }
+                }
+
+                var code = document.getElementById("code").value;
+                xmlhttp.open("GET", "/live?CMD=CAPTCHA_IMAGE_RESPONSE&CAPTCHA_IMAGE_RESPONSE=" + code, true);
+                xmlhttp.send();
+            }
+        </script>
+    </head>
+    <body bgcolor="black">
+        <br>
+        <br>
+        <br>
+        <center><img src="/live?CMD=CAPTCHA_IMAGE"></center>
+        <br>
+        <br>
+        <center><input id="code"></input> <button onclick="sendCode()">Submit PIN</button></center>
+    </body>
+</html>

@@ -1,5 +1,7 @@
 package ai.context.trading;
 
+import ai.context.util.common.ScratchPad;
+import ai.context.util.configuration.PropertiesHolder;
 import com.dukascopy.api.Instrument;
 import com.dukascopy.api.system.ClientFactory;
 import com.dukascopy.api.system.IClient;
@@ -7,17 +9,28 @@ import com.dukascopy.api.system.ISystemListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Semaphore;
 
 public class DukascopyConnection {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DukascopyConnection.class);
 
-    private String jnlpUrl = "https://www.dukascopy.com/client/demo/jclient/jforex.jnlp";
+    private String jnlpDemoUrl = "https://www.dukascopy.com/client/demo/jclient/jforex.jnlp";
+    private String jnlpLiveUrl = "https://www.dukascopy.com/client/live/jclient/jforex.jnlp";
+
+    private String userName;
+    private String password;
+
     private IClient client = ClientFactory.getDefaultInstance();
 
     public DukascopyConnection(final String userName, final String password) throws Exception {
+
+        this.userName = userName;
+        this.password = password;
 
         //get the instance of the IClient interface
         //set the listener that will receive system events
@@ -57,7 +70,7 @@ public class DukascopyConnection {
                         //ignore
                     }
                     try {
-                        client.connect(jnlpUrl, userName, password);
+                        connectClient();
                     } catch (Exception e) {
                         LOGGER.error(e.getMessage(), e);
                     }
@@ -67,7 +80,7 @@ public class DukascopyConnection {
 
         LOGGER.info("Connecting...");
         //connect to the server using jnlp, user name and password
-        client.connect(jnlpUrl, userName, password);
+        connectClient();
 
         //wait for it to connect
         int i = 10; //wait max ten seconds
@@ -96,5 +109,26 @@ public class DukascopyConnection {
 
     public IClient getClient() {
         return client;
+    }
+
+    private void connectClient() throws Exception {
+        if(PropertiesHolder.isLiveAccount) {
+            Semaphore captchaLock = new Semaphore(0);
+
+            ScratchPad.memory.put(ScratchPad.CAPTCHA_IMAGE, client.getCaptchaImage(jnlpLiveUrl));
+            ScratchPad.memory.put(ScratchPad.CAPTCHA_IMAGE_LOCK, captchaLock);
+
+            System.out.println("Live PIN required. Please go to ~/liveTrading.html");
+            captchaLock.acquire(1);
+            String pin = (String) ScratchPad.memory.remove(ScratchPad.CAPTCHA_IMAGE_RESPONSE);
+            System.out.println("Got PIN: " + pin);
+            client.connect(jnlpLiveUrl, userName, password, pin);
+
+            System.out.println("Connected to live broker account...");
+            ScratchPad.memory.remove(ScratchPad.CAPTCHA_IMAGE);
+            ScratchPad.memory.remove(ScratchPad.CAPTCHA_IMAGE_LOCK);
+        } else {
+            client.connect(jnlpDemoUrl, userName, password);
+        }
     }
 }

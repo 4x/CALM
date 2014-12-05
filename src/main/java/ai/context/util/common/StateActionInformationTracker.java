@@ -15,6 +15,10 @@ public class StateActionInformationTracker {
     private double performance = 0;
     private int expectation;
     private long start;
+
+    private long lowTime;
+    private long highTime;
+
     private Object lockedTime;
 
     public StateActionInformationTracker(long timeStamp, int[] state, double initialLevel, double significantMovement, int expectation) {
@@ -23,6 +27,9 @@ public class StateActionInformationTracker {
         this.initialLevel = initialLevel;
         this.expectation = expectation;
         this.start = timeStamp;
+
+        lowTime = timeStamp;
+        highTime = timeStamp;
 
         this.latcher = new Latcher(initialLevel, timeStamp, significantMovement);
         this.aggregator = new MinMaxAggregator();
@@ -53,8 +60,12 @@ public class StateActionInformationTracker {
 
     public void processHighAndLow(double high, double low, long timeStamp){
         latcher.registerBounds(high, low, timeStamp);
-        aggregator.addValue(low - initialLevel);
-        aggregator.addValue(high - initialLevel);
+        if(aggregator.addValue(low - initialLevel)){
+            lowTime = timeStamp;
+        }
+        if(aggregator.addValue(high - initialLevel)){
+            highTime = timeStamp;
+        }
     }
 
     public double getMaxUp(){
@@ -73,6 +84,16 @@ public class StateActionInformationTracker {
             return discretisation.process(val);
         }
         return val;
+    }
+
+    public int getTimeState(){
+        if(lowTime > highTime){
+            return -1;
+        }
+        if(lowTime < highTime){
+            return 1;
+        }
+        return 0;
     }
 
     public double getPerformance(){

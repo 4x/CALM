@@ -1,14 +1,13 @@
 package ai.context.learning.neural;
 
-import ai.context.core.ai.LearnerService;
-import ai.context.core.ai.LearningException;
-import ai.context.core.ai.StateActionPair;
+import ai.context.core.ai.*;
 import ai.context.feed.Feed;
 import ai.context.feed.FeedObject;
 import ai.context.feed.manipulation.WrapperManipulatorPair;
 import ai.context.feed.synchronised.ISynchFeed;
 import ai.context.learning.DataObject;
 import ai.context.learning.SelectLearnerFeed;
+import ai.context.util.common.LabelledTuple;
 import ai.context.util.common.ScratchPad;
 import ai.context.util.common.StateActionInformationTracker;
 import ai.context.util.configuration.PropertiesHolder;
@@ -24,6 +23,7 @@ import static ai.context.util.mathematics.Discretiser.getLogarithmicDiscretisati
 
 public class NeuralLearner implements Feed, Runnable {
 
+    private final String RECOVERY_STRING = "RECOVERY";
     private NeuronCluster cluster = NeuronCluster.getInstance();
     private final int id = cluster.getNewID();
     private NeuronRankings neuronRankings = NeuronRankings.getInstance();
@@ -99,6 +99,10 @@ public class NeuralLearner implements Feed, Runnable {
     private double ampDA = 0;
     private double ampUB = 0;
     private double ampDB = 0;
+
+    private AdditionalStateActionInformation recInfoA;
+    private AdditionalStateActionInformation recInfoB;
+    private AdditionalStateActionInformation recInfoX;
     private double pCutOff = 0.5;
 
     public NeuralLearner(long horizon, ISynchFeed motherFeed, Integer[] actionElements, Integer[] sigElements, String parentConfig, String wrapperConfig, long outputFutureOffset, double resolution) {
@@ -254,19 +258,35 @@ public class NeuralLearner implements Feed, Runnable {
                     double result = 0 ;
                     while (!trackers.isEmpty() && trackers.get(0).getTimeStamp() < (time - horizon)) {
                         StateActionInformationTracker tracker = trackers.remove(0);
+
+                        double recovery = tracker.getMaxUp() - tracker.getMaxDown();
+                        int trackerState = tracker.getTimeState();
+                        int recoveryId = 0;
+
+                        LabelledTuple[] tuplesUp = new LabelledTuple[0];
+                        LabelledTuple[] tuplesDown = new LabelledTuple[0];
+                        if(trackerState == -1){
+                            recoveryId = getLogarithmicDiscretisation(tracker.getMaxUp(), 0, resolution);
+                            tuplesUp = new LabelledTuple[]{new LabelledTuple(this.RECOVERY_STRING, recoveryId, recovery)};
+                        } else if(trackerState == 1){
+                            recoveryId = getLogarithmicDiscretisation(tracker.getMaxDown(), 0, resolution);
+                            tuplesDown = new LabelledTuple[]{new LabelledTuple(this.RECOVERY_STRING, recoveryId, recovery)};
+                        }
+
+
                         if(oneCore){
                             core.addStateAction(tracker.getState(), tracker.getMaxUp());
                             core.addStateAction(tracker.getState(), tracker.getMaxDown());
                         }
                         else{
-                            coreUpA.addStateAction(tracker.getState(), tracker.getMaxUp());
-                            coreDownA.addStateAction(tracker.getState(), tracker.getMaxDown());
+                            coreUpA.addStateAction(tracker.getState(), tracker.getMaxUp(), tuplesUp);
+                            coreDownA.addStateAction(tracker.getState(), tracker.getMaxDown(), tuplesDown);
 
                             countA++;
                             if(PropertiesHolder.neuronReplacement){
                                 if(coreUpB != null){
-                                    coreUpB.addStateAction(tracker.getState(), tracker.getMaxUp());
-                                    coreDownB.addStateAction(tracker.getState(), tracker.getMaxDown());
+                                    coreUpB.addStateAction(tracker.getState(), tracker.getMaxUp(), tuplesUp);
+                                    coreDownB.addStateAction(tracker.getState(), tracker.getMaxDown(), tuplesDown);
                                     countB++;
 
                                     if(countB == generationalLifespan){
@@ -319,7 +339,7 @@ public class NeuralLearner implements Feed, Runnable {
                     FeedObject output = new FeedObject(time, outputSignal);
                     queue.add(output);
                     latency = (long) ((0.75 * latency) + (0.25 * (System.currentTimeMillis() - tStart)));
-                    checkPerformance(predictionRaw, data);
+                    checkPerformance(predictionRaw, recInfoX, data);
                 }
             }
         } catch (LearningException e) {
@@ -340,6 +360,7 @@ public class NeuralLearner implements Feed, Runnable {
 
         ampUX = ampUA;
         ampDX = ampDA;
+        recInfoX = recInfoA;
         if(dB == null){
             return dA;
         }
@@ -352,6 +373,9 @@ public class NeuralLearner implements Feed, Runnable {
 
         ampUX = fA * ampUA + fB * ampUB;
         ampDX = fA * ampDA + fB * ampDB;
+        recInfoX = new AdditionalStateActionInformation();
+        recInfoX.incorporate(recInfoA, fA);
+        recInfoX.incorporate(recInfoB, fB);
 
         TreeMap<Integer, Double> dist = new TreeMap<>();
 
@@ -396,8 +420,15 @@ public class NeuralLearner implements Feed, Runnable {
             }
             return null;
         }
-        TreeMap<Integer, Double> distUp = coreUp.getActionDistribution(signal);
-        TreeMap<Integer, Double> distDown = coreDown.getActionDistribution(signal);
+
+        ActionInformationBundle bundleUp = coreUp.getActionInformation(signal, RECOVERY_STRING);
+        TreeMap<Integer, Double> distUp = bundleUp.distribution;
+        ActionInformationBundle bundleDown = coreDown.getActionInformation(signal, RECOVERY_STRING);
+        TreeMap<Integer, Double> distDown = bundleDown.distribution;
+
+        AdditionalStateActionInformation recoveryInfo = new AdditionalStateActionInformation();
+        recoveryInfo.incorporate(bundleUp.actionInformationMap.get(RECOVERY_STRING), 1);
+        recoveryInfo.incorporate(bundleDown.actionInformationMap.get(RECOVERY_STRING), 1);
 
         double weightUp = 0;
         double weightDown = 0;
@@ -463,16 +494,18 @@ public class NeuralLearner implements Feed, Runnable {
         if(useBackUp){
             ampDB = ampD;
             ampUB = ampU;
+            recInfoB = recoveryInfo;
         }
         else {
             ampDA = ampD;
             ampUA = ampU;
+            recInfoA = recoveryInfo;
         }
 
         return distribution;
     }
 
-    public void checkPerformance(TreeMap<Integer, Double> predictionRaw, DataObject data) {
+    public void checkPerformance(TreeMap<Integer, Double> predictionRaw, AdditionalStateActionInformation recInfoX, DataObject data) {
         if (!adapting) {
             Date executionInstant = new Date(time);
             if (!(executionInstant.getDay() == 0 || executionInstant.getDay() == 6)) {
@@ -483,7 +516,7 @@ public class NeuralLearner implements Feed, Runnable {
                         prediction.put(data.getValue()[0] + entry.getKey() * resolution, entry.getValue());
                     }
                 }
-                DecisionAggregatorA.aggregateDecision(data, data.getValue()[0], prediction, horizon, false);
+                DecisionAggregatorA.aggregateDecision(data, data.getValue()[0], prediction, recInfoX, horizon, false);
             }
 
         }

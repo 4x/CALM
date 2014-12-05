@@ -1,5 +1,6 @@
 package ai.context.util.trading.version_1;
 
+import ai.context.core.ai.AdditionalStateActionInformation;
 import ai.context.learning.DataObject;
 import ai.context.learning.neural.NeuronCluster;
 import ai.context.util.analysis.StatsHolder;
@@ -18,6 +19,7 @@ public class DecisionAggregatorA {
     private static long time = 0;
     private static TreeMap<Long, TreeMap<Double, Double>> timeBasedHistogramsPositional = new TreeMap<>();
     private static TreeMap<Long, TreeMap<Double, Double>> timeBasedHistogramsMarketMaker = new TreeMap<>();
+    private static TreeMap<Long, AdditionalStateActionInformation> recoveryInformation = new TreeMap<>();
     private static TreeMap<Long, HashMap<Integer, Double[]>> timeBasedNeuronOpinions = new TreeMap<>();
 
     private static double latestH;
@@ -33,7 +35,7 @@ public class DecisionAggregatorA {
     private static int participantsMM = 0;
     private static int participantsP = 0;
 
-    public static void aggregateDecision(DataObject data, double pivot, TreeMap<Double, Double> histogram, long timeSpan, boolean goodTillClosed){
+    public static void aggregateDecision(DataObject data, double pivot, TreeMap<Double, Double> histogram, AdditionalStateActionInformation recInfoX, long timeSpan, boolean goodTillClosed){
 
         long time = data.getTimeStamp();
         latestH = data.getValue()[1];
@@ -45,6 +47,7 @@ public class DecisionAggregatorA {
             timeBasedHistogramsPositional.clear();
             timeBasedHistogramsMarketMaker.clear();
             timeBasedNeuronOpinions.clear();
+            recoveryInformation.clear();
             decisionsCollected = 0;
         }
 
@@ -72,6 +75,7 @@ public class DecisionAggregatorA {
             if(!timeBasedHistogramsMarketMaker.containsKey(tExit)){
                 timeBasedHistogramsMarketMaker.put(tExit, new TreeMap<Double, Double>());
                 timeBasedNeuronOpinions.put(tExit, new HashMap<Integer, Double[]>());
+                recoveryInformation.put(tExit, new AdditionalStateActionInformation());
             }
 
             TreeMap<Double, Double> hist = timeBasedHistogramsMarketMaker.get(tExit);
@@ -83,6 +87,7 @@ public class DecisionAggregatorA {
                 }
                 hist.put(entry.getKey(), hist.get(entry.getKey()) + weight * entry.getValue()/cred);
             }
+            recoveryInformation.get(tExit).incorporate(recInfoX, weight);
         }
 
         if(PropertiesHolder.tradeNormal){
@@ -144,7 +149,7 @@ public class DecisionAggregatorA {
 
                 if (results[4] + results[5] > PositionFactory.cost * PropertiesHolder.marketMakerAmplitude) {
 
-                    MarketMakerPosition advice = new MarketMakerPosition(time, latestC, latestC + results[4], latestC - results[5], latestC + results[6], latestC - results[7], time + entry.getKey());
+                    MarketMakerPosition advice = new MarketMakerPosition(time, latestC, latestC + results[4], latestC - results[5], latestC + results[6], latestC - results[7], time + entry.getKey(), recoveryInformation.get(entry.getKey()));
                     advice.adjustTimes(PropertiesHolder.timeQuantum);
                     advice.attributes.put("cred", results[0]);
                     advice.constituentOpinions = timeBasedNeuronOpinions.get(entry.getKey());
@@ -161,7 +166,7 @@ public class DecisionAggregatorA {
                     } else if (marketMakerDeciderTest != null) {
                        marketMakerDeciderTest.addAdvice(advice);
                     } else {
-                        marketMakerPositions.add(new MarketMakerPosition(time, latestC, latestC + results[4], latestC - results[5], latestC + results[6], latestC - results[7], time + entry.getKey()));
+                        marketMakerPositions.add(new MarketMakerPosition(time, latestC, latestC + results[4], latestC - results[5], latestC + results[6], latestC - results[7], time + entry.getKey(), recoveryInformation.get(entry.getKey())));
                     }
                 }
             }

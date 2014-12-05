@@ -118,13 +118,30 @@ public class MainNeural {
             series = StateToActionSeriesCreator.createSeries(motherFeed, path, start, end, 16);
             System.out.println("STA series created from: " + PropertiesHolder.startDateTime + " to: " + format.format(new Date(end)));
             StimuliGenerator stimuliGenerator = new StimuliGenerator();
-            stimuliGenerator.process(series, motherFeed, StateToActionSeriesCreator.horizons, 2, PropertiesHolder.coreStimuliPerNeuron);
+            stimuliGenerator.process(series, motherFeed, StateToActionSeriesCreator.horizons, 10, PropertiesHolder.coreStimuliPerNeuron);
             System.out.println("Top stimuli generated");
 
             for (StimuliInformation holder : stimuliGenerator.getTop(PropertiesHolder.totalNeurons)) {
                 NeuronCluster.getInstance().start(new NeuralLearner(holder.getHorizon(), motherFeed, actionElements, holder.getSignalsSources(), null, null, outputFutureOffset, resolution));
             }
             stimuliGenerator.reset();
+
+            for (int i = 0; i < PropertiesHolder.totalRandomisedNeurons; i++) {
+                Integer[] sigElements = new Integer[PropertiesHolder.coreStimuliPerNeuron];
+                for (int sig = 0; sig < sigElements.length; sig++) {
+                    if (availableStimuli.isEmpty()) {
+                        for (int index = 0; index < motherFeed.getNumberOfOutputs(); index++) {
+                            availableStimuli.add(index);
+                        }
+                        availableStimuli.removeAll(Arrays.asList(actionElements));
+                    }
+                    List<Integer> available = new ArrayList<>(availableStimuli);
+                    int chosenSig = available.get((int) (Math.random() * available.size()));
+                    availableStimuli.remove(chosenSig);
+                    sigElements[sig] = chosenSig;
+                }
+                NeuronCluster.getInstance().start(new NeuralLearner(horizonRange, motherFeed, actionElements, sigElements, null, null, outputFutureOffset, resolution));
+            }
         } else if (config != null) {
             try {
                 BufferedReader br = new BufferedReader(new FileReader(config));

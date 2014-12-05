@@ -5,18 +5,22 @@ public class MinMaxAggregator {
     private Double min;
     private Double max;
 
-    public void addValue(double value) {
+    public boolean addValue(double value) {
+        boolean altered = false;
         if (max == null) {
             max = value;
         } else if (value > max) {
             max = value;
+            altered = true;
         }
 
         if (min == null) {
             min = value;
         } else if (value < min) {
             min = value;
+            altered = true;
         }
+        return altered;
     }
 
     public Double getMin() {

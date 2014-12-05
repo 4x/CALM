@@ -1,5 +1,6 @@
 package ai.context.util.trading.version_1;
 
+import ai.context.core.ai.AdditionalStateActionInformation;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.Operations;
 import ai.context.util.score.NeuronScoreKeeper;
@@ -33,8 +34,9 @@ public class MarketMakerPosition {
     public TreeMap<String, Object> attributes = new TreeMap<>();
 
     public HashMap<Integer, Double[]> constituentOpinions = new HashMap<>();
+    public AdditionalStateActionInformation recoveryInfo;
 
-    public MarketMakerPosition(long time, double pivot, double targetHigh, double targetLow, double high1, double low1, long goodTill) {
+    public MarketMakerPosition(long time, double pivot, double targetHigh, double targetLow, double high1, double low1, long goodTill, AdditionalStateActionInformation recoveryInfo) {
         this.time = time;
         this.pivot = pivot;
         this.targetHigh = targetHigh;
@@ -42,6 +44,7 @@ public class MarketMakerPosition {
         this.goodTill = goodTill;
         this.high1 = high1;
         this.low1 = low1;
+        this.recoveryInfo = recoveryInfo;
 
         this.attributes.put("timeSpan", (goodTill - time));
     }
@@ -206,6 +209,10 @@ public class MarketMakerPosition {
 
     public double getMaxAmpDown(){
         return pivot - low;
+    }
+
+    public double getPivot(){
+        return pivot;
     }
 
     public long getOpenTime() {

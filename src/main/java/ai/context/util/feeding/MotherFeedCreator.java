@@ -196,10 +196,20 @@ public class MotherFeedCreator {
     }
 
     public static void initFXAPI() {
-        try {
-            MotherFeedCreator.client = new DukascopyConnection(PropertiesHolder.dukascopyLogin, PropertiesHolder.dukascopyPass).getClient();
-        } catch (Exception e) {
-            e.printStackTrace();
+        while(true) {
+            try {
+                MotherFeedCreator.client = new DukascopyConnection(PropertiesHolder.dukascopyLogin, PropertiesHolder.dukascopyPass).getClient();
+                break;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            try {
+                System.err.println("Could not connect to Broker, trying again in 10 seconds...");
+                Thread.sleep(10000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 

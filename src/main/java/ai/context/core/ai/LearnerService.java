@@ -1,6 +1,7 @@
 package ai.context.core.ai;
 
 import ai.context.util.common.Count;
+import ai.context.util.common.LabelledTuple;
 import ai.context.util.common.ScratchPad;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.learning.AmalgamateUtils;
@@ -94,7 +95,7 @@ public class LearnerService {
         PropertiesHolder.copulaToUniversal = copulaToUniversal;
     }
 
-    public synchronized void addStateAction(int[] state, double movement) throws LearningException {
+    public synchronized void addStateAction(int[] state, double movement, LabelledTuple... additionalInformation) throws LearningException {
 
         pointsConsumed++;
         numberOfMerges = 0;
@@ -126,6 +127,10 @@ public class LearnerService {
             for (Map.Entry<StateActionPair, Double> entry : entries) {
                 double weight = getWeightForDeviation(entry.getValue());
                 entry.getKey().newMovement(movement, weight);
+
+                for(LabelledTuple tuple : additionalInformation) {
+                    entry.getKey().getAdditionInformation(tuple.name).addValue(tuple.key, tuple.value, weight);
+                }
 
                 if (currentDev == -1 && !entry.getKey().getId().equals(id)) {
                     currentDev = entry.getValue();
@@ -174,7 +179,7 @@ public class LearnerService {
             TreeMap<Double, StateActionPair> top2 = new TreeMap<Double, StateActionPair>();
             for (Map.Entry<Double, StateActionPair> pair : top.entrySet()) {
                 updateAndGetCorrelationWeights(pair.getValue().getAmalgamate());
-                double deviation = StateActionPair.getDeviation(pair.getValue().getAmalgamate(), state, correlationWeights) * pair.getKey();
+                double deviation = (StateActionPair.getDeviation(pair.getValue().getAmalgamate(), state, correlationWeights) + pair.getKey())/2;
                 top2.put(deviation, pair.getValue());
                 if(i++ > cutOff){
                     break;
@@ -383,27 +388,6 @@ public class LearnerService {
                 }
             }
         }
-
-        /*if(toReturn == -1){
-            String toPrint = "Could not get a minDevForMerge...\n";
-            for (StateActionPair pair : population.values()) {
-                double upper = Double.MIN_VALUE;
-                double lower = Double.MAX_VALUE;
-                for (Map.Entry<Double, StateActionPair> entry : pair.getClosestNeighbours().entrySet()) {
-                    if(entry.getKey() > upper){
-                        upper = entry.getKey();
-                    }
-                    if(entry.getKey() < lower){
-                        lower = entry.getKey();
-                    }
-                }
-                toPrint += "\t" + pair.getId() + " -> " + pair.getClosestNeighbours().size() + " [" + lower + ", " + upper + "]" + "\n";
-            }
-            for(Map.Entry<Integer, Count> entry : this.dist.entrySet()){
-                toPrint += "\t\t" + entry.getKey() + " -> " + entry.getValue().val + "\n";
-            }
-            System.err.println(toPrint);
-        }*/
         return toReturn;
     }
 
@@ -421,10 +405,6 @@ public class LearnerService {
             return false;
         }
 
-        /*double w = Math.exp(-((double)pointsConsumed / 4*PropertiesHolder.maxPopulation)) + 1;
-        if(sap1.getTotalWeight() > w && sap2.getTotalWeight() > w){
-            return false;
-        }*/
         if (population.containsKey(sap1.getId()) && population.containsKey(sap2.getId())) {
             StateActionPair newState = sap1.merge(sap2);
             removeState(sap1);
@@ -463,6 +443,35 @@ public class LearnerService {
             }
         }
         return distribution;
+    }
+
+    public ActionInformationBundle getActionInformation(int[] state, String ... addtionalInfomation) {
+        TreeMap<Integer, Double> distribution = new TreeMap<Integer, Double>();
+        HashMap<String, AdditionalStateActionInformation> actionInformationMap = new HashMap<>();
+        for(String info : addtionalInfomation){
+            actionInformationMap.put(info, new AdditionalStateActionInformation());
+        }
+
+        for (Map.Entry<StateActionPair, Double> entry : getSimilarStates(state, useSkewInSimilarityWhenQuerying).entrySet()) {
+            double weight = getWeightForDeviation(entry.getValue());
+            StateActionPair pair = entry.getKey();
+
+            for (Map.Entry<Integer, Double> distEntry : pair.getActionDistribution().entrySet()) {
+                double value = 0;
+                if (distribution.containsKey(distEntry.getKey())) {
+                    value = distribution.get(distEntry.getKey());
+                }
+                distribution.put(distEntry.getKey(), value + (weight * distEntry.getValue()));
+            }
+
+            for(String info : addtionalInfomation){
+                AdditionalStateActionInformation pairInfo = pair.getAdditionInformation(info);
+                if(pairInfo != null) {
+                    actionInformationMap.get(info).incorporate(pairInfo, weight);
+                }
+            }
+        }
+        return new ActionInformationBundle(distribution, actionInformationMap);
     }
 
     public Map<Integer, Double> getCorrelationMap() {

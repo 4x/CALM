@@ -3,7 +3,7 @@ package ai.context.core.ai;
 import ai.context.util.common.Count;
 import ai.context.util.learning.AmalgamateUtils;
 
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -15,15 +15,9 @@ public class StateActionPair {
     private TreeMap<Integer, Count> actionDistribution = new TreeMap<>();
     private TreeMap<Double, StateActionPair> closestNeighbours = new TreeMap<>();
 
-    private double totalWeight = 0.0;
+    private HashMap<String, AdditionalStateActionInformation> additionalInformation = new HashMap<>();
 
-    public StateActionPair(String id, int[] amalgamate, double actionResolution, TreeMap<Integer, Count> actionDistribution, double totalWeight) {
-        this.id = id;
-        this.amalgamate = amalgamate;
-        this.actionResolution = actionResolution;
-        this.actionDistribution = actionDistribution;
-        this.totalWeight = totalWeight;
-    }
+    private double totalWeight = 0.0;
 
     public StateActionPair(String id, int[] amalgamate, double actionResolution) {
         this.id = id;
@@ -69,6 +63,13 @@ public class StateActionPair {
         return distribution;
     }
 
+    public AdditionalStateActionInformation getAdditionInformation(String key){
+        if(!additionalInformation.containsKey(key)){
+            additionalInformation.put(key, new AdditionalStateActionInformation());
+        }
+        return additionalInformation.get(key);
+    }
+
     public double getTotalWeight() {
         return totalWeight;
     }
@@ -92,6 +93,12 @@ public class StateActionPair {
             merged.populate(entry.getKey(), entry.getValue().val);
         }
 
+        for(Map.Entry<String, AdditionalStateActionInformation> entry : additionalInformation.entrySet()){
+            AdditionalStateActionInformation cInformation = counterpart.getAdditionInformation(entry.getKey());
+            AdditionalStateActionInformation tmp = cInformation.merge(entry.getValue());
+            AdditionalStateActionInformation mInformation = merged.getAdditionInformation(entry.getKey());
+            mInformation.setData(tmp.getData());
+        }
         return merged;
     }
 

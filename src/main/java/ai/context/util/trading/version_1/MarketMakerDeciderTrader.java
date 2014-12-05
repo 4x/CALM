@@ -4,6 +4,7 @@ import ai.context.feed.DataType;
 import ai.context.feed.FeedObject;
 import ai.context.feed.row.CSVFeed;
 import ai.context.util.configuration.PropertiesHolder;
+import ai.context.util.mathematics.AverageAggregator;
 import ai.context.util.mathematics.Operations;
 import ai.context.util.trading.OnTickDecider;
 import com.dukascopy.api.*;
@@ -13,6 +14,8 @@ import org.slf4j.LoggerFactory;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
+
+import static ai.context.util.mathematics.Discretiser.getLogarithmicDiscretisation;
 
 public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
 
@@ -24,6 +27,8 @@ public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
     private long time = 0;
 
     private double available = 10000;
+
+    private double resolution = 0.0001;
 
     private IEngine engine = null;
     private TreeMap<String, IOrder> positions = new TreeMap<>();
@@ -95,32 +100,52 @@ public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
             for(MarketMakerPosition advice : advices){
                 if(!advice.isOpen() && advice.getTimeAdvised() <= time){
 
-                    if(bid > advice.getTargetHigh() + PropertiesHolder.marketMakerBeyond && !advice.containsFlag("S")){
-                        advice.addFlag("S");
+                    double expectedRecovery = 0;
+                    if(advice.recoveryInfo != null) {
+                        double up = Math.abs(bid - advice.getPivot());
+                        double down = Math.abs(advice.getPivot() - ask);
+                        double amp = Math.max(up, down);
+                        if (ask < advice.getOpen()) {
+                            amp *= -1;
+                        }
+
+                        int recoveryKey = getLogarithmicDiscretisation(amp, 0, resolution);
+                        double sum = 0;
+                        double count = 0;
+                        for (double i = 0; i < 3; i++) {
+                            AverageAggregator averageAggregator = advice.recoveryInfo.getData().get((int)(recoveryKey + i));
+                            if (averageAggregator != null) {
+                                double coefficient = Math.pow(2, -i);
+                                sum += coefficient * averageAggregator.getSum();
+                                count += coefficient * averageAggregator.getCount();
+                            }
+                        }
+                        expectedRecovery = sum / count;
                     }
-                    else if(advice.containsFlag("S")
-                            && bid < advice.getTargetHigh() +  PropertiesHolder.marketMakerBeyond/2
+
+                    if (bid > advice.getTargetHigh() + PropertiesHolder.marketMakerBeyond && !advice.containsFlag("S")) {
+                        advice.addFlag("S");
+                    } else if (advice.containsFlag("S")
+                            && bid < advice.getTargetHigh() + PropertiesHolder.marketMakerBeyond / 2
                             && avgLow.containsKey(advice.getGoodTillTime())
                             && advice.getTargetLow() > avgLow.get(advice.getGoodTillTime())
                             && avgHigh.containsKey(advice.getGoodTillTime())
                             && avgHigh.get(advice.getGoodTillTime()) - bid < PropertiesHolder.maxLeewayAmplitude
-                            ){
+                            ) {
                         advice.setHasOpenedWithShort(true, bid, time);
-                    }
-                    else if(ask < advice.getTargetLow() - PropertiesHolder.marketMakerBeyond && !advice.containsFlag("L")){
+                    } else if (ask < advice.getTargetLow() - PropertiesHolder.marketMakerBeyond && !advice.containsFlag("L")) {
                         advice.addFlag("L");
-                    }
-                    else if(advice.containsFlag("L")
-                            && ask > advice.getTargetLow() - PropertiesHolder.marketMakerBeyond/2
+                    } else if (advice.containsFlag("L")
+                            && ask > advice.getTargetLow() - PropertiesHolder.marketMakerBeyond / 2
                             && avgHigh.containsKey(advice.getGoodTillTime())
                             && advice.getTargetHigh() < avgHigh.get(advice.getGoodTillTime())
                             && avgLow.containsKey(advice.getGoodTillTime())
                             && ask - avgLow.get(advice.getGoodTillTime()) < PropertiesHolder.maxLeewayAmplitude
-                            ){
+                            ) {
                         advice.setHasOpenedWithLong(true, ask, time);
                     }
 
-                    if(advice.isOpen()){
+                    if (advice.isOpen()) {
                         advice.attributes.put("wait", time - advice.getTimeAdvised());
 
                         advice.attributes.put("targetHigh", advice.getTargetHigh() - advice.getOpen());
@@ -133,14 +158,14 @@ public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
                         advice.attributes.put("d50", d50);
                         advice.attributes.put("d100", d100);
                         advice.attributes.put("d199", d199);
+                        advice.attributes.put("recovery", expectedRecovery);
 
-
-                        if(PropertiesHolder.liveTrading && engine != null){
+                        if (PropertiesHolder.liveTrading && engine != null) {
                             try {
                                 double amount = Operations.round((available * PropertiesHolder.tradeToCreditRatio) / 1000000, 4);
                                 if (amount > 0 && PropertiesHolder.filterFunction.pass(advice)) {
                                     long tNow = System.currentTimeMillis();
-                                    if(advice.isHasOpenedWithShort()) {
+                                    if (advice.isHasOpenedWithShort()) {
                                         String direction = "SHORT";
                                         IOrder out = engine.submitOrder("EUR_" + tNow, Instrument.EURUSD, IEngine.OrderCommand.SELLLIMIT, amount,
                                                 Operations.round(bid, 5), 0,
@@ -151,7 +176,7 @@ public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
                                         positions.put(out.getLabel(), out);
                                         advice.setOrderId(out.getLabel());
                                         Thread.sleep(2);
-                                    } else if(advice.isHasOpenedWithLong()) {
+                                    } else if (advice.isHasOpenedWithLong()) {
                                         String direction = "LONG";
                                         IOrder out = engine.submitOrder("EUR_" + tNow, Instrument.EURUSD, IEngine.OrderCommand.BUYLIMIT, amount,
                                                 Operations.round(ask, 5), 0,
@@ -164,7 +189,7 @@ public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
                                         Thread.sleep(2);
                                     }
                                 }
-                            } catch (InterruptedException e){
+                            } catch (InterruptedException e) {
                                 e.printStackTrace();
                             } catch (JFException e) {
                                 e.printStackTrace();

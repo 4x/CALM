@@ -9,6 +9,10 @@ public class ScratchPad {
     public static final String NEURON_SCORE_NAN = "NEURON_SCORE_NAN";
     public static final String STIMULI_HOLDER_NAN = "STIMULI_HOLDER_NAN";
 
+    public static final String CAPTCHA_IMAGE = "CAPTCHA_IMAGE";
+    public static final String CAPTCHA_IMAGE_LOCK = "CAPTCHA_IMAGE_LOCK";
+    public static final String CAPTCHA_IMAGE_RESPONSE = "CAPTCHA_IMAGE_RESPONSE";
+
     public static TreeMap<String, Object> memory = new TreeMap<>();
 
     public static void incrementCountFor(String id){
