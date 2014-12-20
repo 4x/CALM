@@ -112,35 +112,36 @@ public class MarketMakerAnalyser {
                         long tOpen = date.getTime() - dExecuted.getTime();
                         long tLive = date.getTime() - dAdvised.getTime();
 
-                        /*O_MMP order = new O_MMP();
+                        O_MMP order = new O_MMP();
                         order.dir = 1;
                         if(dir.equals("SHORT")){
                             order.dir = -1;
                         }
                         order.change = change;
-                        order.timeOpened = advised;
+                        order.timeOpened = dExecuted.getTime();
                         order.timeClosed = date.getTime();
-                        orders.add(order);
+                        //orders.add(order);
 
-                        trimOrdersWhereClosedBefore(advised - 7200000);
+                        trimOrdersWhereClosedBefore(advised - 3600000);
 
                         double[] stats = getStatsFromOrders(0, advised, 1800000L);
                         int opennedWithin = (int) stats[2];
+                        int closedBy = (int) stats[1];
 
-                        /*stats = getStatsFromOrders(-1, advised);
+                        stats = getStatsFromOrders(-1, advised, 1800000L);
                         int nShort = (int) stats[0];
                         double shortPnl = stats[1];
 
-                        stats = getStatsFromOrders(1, advised);
+                        stats = getStatsFromOrders(1, advised, 1800000L);
                         int nLong = (int) stats[0];
                         double longPnl = stats[1];
 
-                        stats = getStatsFromOrders(0, advised);
+                        stats = getStatsFromOrders(0, advised, 1800000L);
                         int nOrders = (int) stats[0];
                         double pnl = stats[1];
 
                         double reversePnL = longPnl - shortPnl;
-                        int nDir = nLong - nShort;*/
+                        int nDir = nLong - nShort;
 
 
 
@@ -185,6 +186,11 @@ public class MarketMakerAnalyser {
                         int momentum = getLogarithmicDiscretisation(slope/moment, 0, 1);
                         int slopeL = getLogarithmicDiscretisation(10000 * slope, 0, 1);
 
+                        int recoveryRatio = (int) (10 * attr.get("recoveryRatio"));
+                        if(recoveryRatio > 30){
+                            recoveryRatio = 100;
+                        }
+
                         double priceMovementParameter_1 = (int) (10000 * dP50 * 10000 *dP20);
                         double priceMovementParameter_2 = (int) (10000 * dP100 * 10000 *dP20);
                         double priceMovementParameter_3 = (int) (10000 * dP * 10000 *dP10);
@@ -194,29 +200,29 @@ public class MarketMakerAnalyser {
 
                         if (
                             //true ||
-                            attr.get("recovery") >= 0.0020 &&
-                            attr.get("recovery") < 0.0050 &&
-                            //(100 * attr.get("wait").longValue())/lifeSpan > 3 &&
-                            //(20 * attr.get("wait").longValue())/lifeSpan > 1 &&
-                            (20 * attr.get("wait").longValue())/lifeSpan <= 10  &&
-                            //attr.get("wait").longValue()/60000 > 9 &&
-                            //attr.get("wait").longValue()/60000 < 110 &&
-                            //attr.get("cred").intValue() > 25 &&
-                            //attr.get("cred").intValue() < 50 &&
-                            lifeSpan/1800000 >= 3 &&
-                            lifeSpan/1800000 <= 12 &&
-                            //targetPnL > 0.0011 &&
-                            //targetPnL <= 0.0017 &&
-                            //minAmp == -0.0001 &&
+                            //attr.get("recovery") >= 0.0020 &&
+                            //attr.get("recovery") < 0.0050 &&
+                            (100 * attr.get("wait").longValue())/lifeSpan >= 1 &&
+                            //(20 * attr.get("wait").longValue())/lifeSpan < 2 &&
+                            (20 * attr.get("wait").longValue())/lifeSpan <= 15  &&
+                            //attr.get("wait").longValue()/60000 > 2 &&
+                            //attr.get("wait").longValue()/60000 < 180 &&
+                            attr.get("cred").intValue() >= 5 &&
+                            //attr.get("cred").intValue() < 120 &&
+                            lifeSpan/1800000 >= 5 &&
+                            //lifeSpan/1800000 <= 14 &&
+                            //targetPnL >= 0.0014 &&
+                            //targetPnL <= 0.0020 &&
+                            minAmp == -0.0001 &&
                             //minAmp <= 0.0000 &&
                             //maxAmp > 0.0012 &&
                             //dAmp >= 0.0011 &&
                             //hours.contains(startHour) &&
-                            //(nMonth == 10 || nMonth == 12) &&
+                            //(nMonth == 3 || nMonth == 6) &&
                             //(nMonth == 3 || nMonth == 12 || nMonth == 13 || nMonth == 18) &&
-                            //nMonth < 9 &&
+                            //nMonth > 22 &&
                             //!(nMonth >= 18) &&
-                            //nMonth >= 21 &&
+                            //nMonth == 10 &&
                             //hours.contains(new Date(advised).getHours()) &&
                             //!hoursN.contains(dAdvised.getHours()) &&
                             //dAdvised.getHours() < 16 &&
@@ -228,7 +234,7 @@ public class MarketMakerAnalyser {
                             //dExecuted.getHours() > 0 &&
                             //dExecuted.getHours() != 10 &&
                             //dExecuted.getHours() != 11 &&
-                            //dExecuted.getHours() <= 21 &&
+                            //dExecuted.getHours() <= 19 &&
                             //dAdvised.getHours() < 18 &&
                             //startHour > 8 &&
                             //Math.abs(pnl) > 0.001 &&
@@ -248,24 +254,29 @@ public class MarketMakerAnalyser {
                             //moment <= 0.0005 &&
                             //momentum >= 0 &&
                             //momentum <= 2 &&
-                            //priceMovementParameter_1 >= -1 &&
-                            //priceMovementParameter_1 <= 8 &&
-                            //priceMovementParameter_2 >= -8 &&
-                            //priceMovementParameter_2 <= 8 &&
+                            priceMovementParameter_1 >= -3 &&
+                            priceMovementParameter_1 <= 4 &&
+                            priceMovementParameter_2 >= -8 &&
+                            priceMovementParameter_2 <= 5 &&
                             //priceMovementParameter_3 >= -6 &&
-                            //priceMovementParameter_3 <= 11 &&
-                            //Math.abs(priceMovementParameter_4) <= 1 &&
-                            //priceMovementParameter_4 <= 6 &&
-                            //priceMovementParameter_5 >= -5 &&
-                            //priceMovementParameter_6 >= -21 &&
+                            priceMovementParameter_3 <= 1 &&
+                            //Math.abs(priceMovementParameter_4) <= 5 &&
+                            priceMovementParameter_4 >= -3 &&
+                            priceMovementParameter_4 <= 6 &&
+                            priceMovementParameter_5 != -1 &&
+                            //priceMovementParameter_6 < 50 &&
                             //momentum > -2 &&
                             //tOpen/600000 < 6 &&
                             //dExecuted.getDay() != 5
                             //dAdvised.getHours() != 15 &&
                             //!(dExecuted.getDay() + "_" + (dExecuted.getHours() > 11)).equals("1_false") &&
+                            //attr.get("recoveryRatio") > 0.5 &&
+                            //attr.get("recoveryRatio") < 10 &&
+                            //(int)(priceMovementParameter_4 * priceMovementParameter_5) == 0 &&
                             true) {
 
-                            //aggregate(formatOutput.format(date), change);
+                            orders.add(order);
+                            aggregate(formatOutput.format(date), change);
                             //aggregate(dir, change);
                             //aggregate(formatOutput.format(date) + " " + dir, change);
                             //aggregate(formatOutput.format(date) +","+ (double)(new Date(advised).getHours())/100, change);
@@ -276,7 +287,7 @@ public class MarketMakerAnalyser {
                             //aggregate(slopeL , change);
                             //aggregate((int) (10000 *moment) , change);
                             //aggregate(momentum , change);
-                            aggregate((int)(10000 * minAmp) , change);
+                            //aggregate((int)(10000 * minAmp) , change);
                             //aggregate((int)(10000 * maxAmp) , change);
                             //aggregate((int)(10000 * dAmp) , change);
 
@@ -288,27 +299,27 @@ public class MarketMakerAnalyser {
 
                             //aggregate((int) (10000 * dP50 * 10000 *dP20) , change);
 
-                            //aggregate((int)(priceMovementParameter_1/10) , change);
-                            //aggregate((int)(priceMovementParameter_2/10) , change);
-                            //aggregate((int)(priceMovementParameter_3/1) , change);
-                            //aggregate((int)(priceMovementParameter_4/10) , change);
-                            //aggregate((int)(priceMovementParameter_5/10) , change);
-                            //aggregate((int)(priceMovementParameter_6/1) , change);
+                            //aggregate((int)(priceMovementParameter_1) , change);
+                            //aggregate((int)(priceMovementParameter_2) , change);
+                            //aggregate((int)(priceMovementParameter_3) , change);
+                            //aggregate((int)(priceMovementParameter_4 * priceMovementParameter_5) , change);
+                            //aggregate((int)(priceMovementParameter_5) , change);
+                            //aggregate((int)(priceMovementParameter_6/10) , change);
 
-                            //aggregate(nOrders, change);
+                            //aggregate((int)(pnl * 1000), change);
                             //aggregate(nDir/10, change);
 
                             //aggregate((int) (1000 *pnl), change);
                             //aggregate((int) (1000 * reversePnL), change);
 
-                            //aggregate((attr.get("cred")).intValue()/5, change);
+                            //aggregate((attr.get("cred")).intValue(), change);
 
                             //aggregate(lifeSpan/1800000, change);
                             //aggregate(tOpen/600000, change);
                             //aggregate(tLive/1800000, change);
 
                             //aggregate(attr.get("wait").longValue()/600000, change);
-                            //aggregate((20 * attr.get("wait").longValue())/lifeSpan, change);
+                            //aggregate((100 * attr.get("wait").longValue())/lifeSpan, change);
                             //aggregate(nMonth, change);
                             //aggregate(date.getTime() / (7 * 86400000), change);
                             //aggregate(1900 + date.getYear(), change);
@@ -328,7 +339,9 @@ public class MarketMakerAnalyser {
                             //aggregate(span, change);
                             //aggregate(credClass, change);
                             //aggregate((int)(targetPnL * 10000), change);
-                            //aggregate((int)(attr.get("recovery") * 1000), change);
+                            //aggregate((int)(attr.get("recovery") * 1000 ), change);
+                            //aggregate(recoveryRatio, change);
+                            //aggregate((int)(attr.get("recoveryRatio") / (attr.get("recovery") * 1000)), change);
 
                             double commision = 2 * tradeToCapRatio * capital * costPerMillion / 1000000;
                             capital += (tradeToCapRatio * capital * change) - commision;
@@ -339,6 +352,9 @@ public class MarketMakerAnalyser {
 
                 }catch (Exception e){
                     e.printStackTrace();
+                    if(e instanceof ClassCastException){
+                        System.exit(1);
+                    }
                 }
             }
             printStats();
@@ -355,7 +371,7 @@ public class MarketMakerAnalyser {
     }
 
     public void trimOrdersWhereClosedBefore(long time){
-        while (orders.peekFirst().timeClosed < time){
+        while (!orders.isEmpty() && orders.peekFirst().timeClosed < time){
             orders.pollFirst();
         }
     }

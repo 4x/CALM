@@ -52,6 +52,7 @@ public class MotherFeedCreator {
     private static StitchableFeed liveFXRateJPY;
     private static StitchableFeed liveFXRateAUD;
     private static StitchableFeed liveFXRateCHF;
+    private static StitchableFeed liveFXRateXAU;
 
     public static ISynchFeed getMotherFeed(String path){
         if (PropertiesHolder.liveTrading) {
@@ -163,15 +164,21 @@ public class MotherFeedCreator {
         feedPriceCHF.setSkipWeekends(true);
         rowFeeds.add(feedPriceCHF);
 
+        CSVFeed feedPriceXAU = new CSVFeed(path + "feeds/" + PropertiesHolder.fxFolder + "XAUUSD.csv", "yyyy.MM.dd HH:mm:ss", typesPrice, dateFP);
+        feedPriceXAU.setStitchableFeed(liveFXRateXAU);
+        feedPriceXAU.setSkipWeekends(true);
+        rowFeeds.add(feedPriceXAU);
+
         ISynchFeed feed = buildSynchFeed(null, 0.0001,feedPriceEUR, true);
         feed = buildSynchFeed(feed, 0.0001,feedPriceGBP, false);
         feed = buildSynchFeed(feed, 0.01, feedPriceJPY, false);
         feed = buildSynchFeed(feed, 0.0001, feedPriceCHF, false);
         feed = buildSynchFeed(feed, 0.0001, feedPriceAUD, false);
+        feed = buildSynchFeed(feed, 0.1, feedPriceXAU, false);
 
         createCorrelationFeeds(feed, new ExtractOneFromListFeed(feedPriceEUR, 3));
 
-        MinMaxAggregatorDiscretiser sFeed = new MinMaxAggregatorDiscretiser(feed, PropertiesHolder.initialSeriesOffset, 12);
+        MinMaxAggregatorDiscretiser sFeed = new MinMaxAggregatorDiscretiser(feed, PropertiesHolder.initialSeriesOffset, 16);
         sFeed.lock();
 
         TimeVariablesAppenderFeed tFeed = new TimeVariablesAppenderFeed(sFeed);
@@ -219,13 +226,15 @@ public class MotherFeedCreator {
         liveFXRateJPY = new StitchableFXRate(path + "tmp/FX3Rate.csv", new DukascopyFeed(client, Period.THIRTY_MINS, Instrument.USDJPY, path + "feeds/" + PropertiesHolder.fxFolder + "USDJPY.csv"));
         liveFXRateCHF = new StitchableFXRate(path + "tmp/FX4Rate.csv", new DukascopyFeed(client, Period.THIRTY_MINS, Instrument.USDCHF, path + "feeds/" + PropertiesHolder.fxFolder + "USDCHF.csv"));
         liveFXRateAUD = new StitchableFXRate(path + "tmp/FX5Rate.csv", new DukascopyFeed(client, Period.THIRTY_MINS, Instrument.AUDUSD, path + "feeds/" + PropertiesHolder.fxFolder + "AUDUSD.csv"));
+        liveFXRateXAU = new StitchableFXRate(path + "tmp/FX5Rate.csv", new DukascopyFeed(client, Period.THIRTY_MINS, Instrument.XAUUSD, path + "feeds/" + PropertiesHolder.fxFolder + "XAUUSD.csv"));
+
     }
 
     private static ISynchFeed createCorrelationFeeds(ISynchFeed synchFeed, Feed observable){
         for(Feed feed : feedsForCorrelation){
+            synchFeed.addRawFeed(new CorrelationOnlineTransformer(observable, feed, 10));
             synchFeed.addRawFeed(new CorrelationOnlineTransformer(observable, feed, 20));
             synchFeed.addRawFeed(new CorrelationOnlineTransformer(observable, feed, 50));
-            synchFeed.addRawFeed(new CorrelationOnlineTransformer(observable, feed, 200));
         }
         return synchFeed;
     }
@@ -245,6 +254,7 @@ public class MotherFeedCreator {
         ExtractOneFromListFeed feedH = new ExtractOneFromListFeed(feed, 1);
         ExtractOneFromListFeed feedL = new ExtractOneFromListFeed(feed, 2);
         ExtractOneFromListFeed feedC = new ExtractOneFromListFeed(feed, 3);
+        feedsForCorrelation.add(feedC);
         ExtractOneFromListFeed feedV = new ExtractOneFromListFeed(feed, 4);
 
         RadarOnlineTransformer r0 = new RadarOnlineTransformer(10, feedL, feedH, feedC, res);
@@ -257,6 +267,15 @@ public class MotherFeedCreator {
         synch.addRawFeed(r2);
         synch.addRawFeed(r3);
         synch.addRawFeed(r4);
+
+        AccumulationDistributionOnlineTransformer ad10 = new AccumulationDistributionOnlineTransformer(10, feedC, feedV);
+        AccumulationDistributionOnlineTransformer ad20 = new AccumulationDistributionOnlineTransformer(20, feedC, feedV);
+        AccumulationDistributionOnlineTransformer ad50 = new AccumulationDistributionOnlineTransformer(50, feedC, feedV);
+        AccumulationDistributionOnlineTransformer ad100 = new AccumulationDistributionOnlineTransformer(100, feedC, feedV);
+        synch.addRawFeed(ad10);
+        synch.addRawFeed(ad20);
+        synch.addRawFeed(ad50);
+        synch.addRawFeed(ad100);
 
         MAOnlineTransformer maV5 = new MAOnlineTransformer(5, feedV);
         SubstractTransformer substract_MAV5 = new SubstractTransformer(feedV, maV5);

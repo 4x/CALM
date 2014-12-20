@@ -1,42 +1,42 @@
 defaultFilter = function(advice){
 	var wait = advice.attributes.get("wait");
     var cred = advice.attributes.get("cred");
-
     var lifeSpan = advice.attributes.get("timeSpan");
-    var d = new Date();
-    var executeHour = (d.getTime() % 86400000)/3600000;
 
     var targetHigh = advice.attributes.get("targetHigh");
     var targetLow = advice.attributes.get("targetLow");
     var targetPnL = targetHigh + targetLow;
     var minAmp = Math.min(targetHigh, targetLow);
 
-    var dU = advice.attributes.get("dU_8");
-    var dD = advice.attributes.get("dD_8");
-    var ddU = dU - advice.attributes.get("dU_4");
-    var ddD = dD - advice.attributes.get("dD_4");
+    var dP = advice.attributes.get("d199");
+    var dP10 = advice.attributes.get("d10");
+    var dP20 = advice.attributes.get("d20");
+    var dP50 = advice.attributes.get("d50");
+    var dP100 = advice.attributes.get("d100");
 
-    var dY = (dU - dD);
-    var moment = ddU - ddD;
+    var priceMovementParameter_1 = (10000 * dP50 * 10000 *dP20);
+    var priceMovementParameter_2 = (10000 * dP100 * 10000 *dP20);
+    var priceMovementParameter_3 = (10000 * dP * 10000 *dP10);
+    var priceMovementParameter_4 = (10000 * dP50 * 10000 *dP10);
+    var priceMovementParameter_5 = (10000 * dP100 * 10000 *dP10);
+    var priceMovementParameter_6 = (10000 * dP * 10000 *dP50);
 
-    if(advice.isHasOpenedWithShort()){
-        dY *= -1;
-        moment *= -1;
-    }
-
-    if (wait/60000 <= 110 &&
-        cred >= 15 &&
-        targetPnL <= 0.0017 &&
+    if ((100*wait/lifeSpan) >= 1 &&
+        (20*wait/lifeSpan) <= 15 &&
+        lifeSpan/1800000 >= 5 &&
+        cred >= 5 &&
+        targetPnL > 0.0011 &&
+        targetPnL <= 0.0020 &&
         minAmp >= -0.0001 &&
         minAmp < 0 &&
-        lifeSpan/1800000 >= 5 &&
-        lifeSpan/1800000 <= 12 &&
-        dY <= 0 &&
-        moment <= 0.0005 &&
-        executeHour > 0 &&
-        executeHour != 10 &&
-        executeHour != 11 &&
-        executeHour <= 21){
+        priceMovementParameter_1 >= -3 &&
+        priceMovementParameter_1 <= 4 &&
+        priceMovementParameter_2 >= -8 &&
+        priceMovementParameter_2 <= 5 &&
+        priceMovementParameter_3 <= 1 &&
+        priceMovementParameter_4 >= -3 &&
+        priceMovementParameter_4 <= 6 &&
+        priceMovementParameter_5 != -1){
         return true;
     }
     return false;

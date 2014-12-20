@@ -69,6 +69,8 @@ public class DecisionAggregatorA {
             double cred = 1;
             if(PropertiesHolder.normalisationOfSuggestion){
                 cred = results[0];
+            } else{
+                cred = results[0] / Math.log(1 + results[0]);
             }
 
             long tExit = (long) Math.ceil((double) timeSpan / (double) PropertiesHolder.timeQuantum) * PropertiesHolder.timeQuantum;
@@ -79,7 +81,7 @@ public class DecisionAggregatorA {
             }
 
             TreeMap<Double, Double> hist = timeBasedHistogramsMarketMaker.get(tExit);
-            timeBasedNeuronOpinions.get(tExit).put(decisionsCollected, new Double[]{results[4], results[5]});
+            timeBasedNeuronOpinions.get(tExit).put(decisionsCollected, new Double[]{results[4], results[5], Math.log(1 + results[0])});
             double weight = NeuronScoreKeeper.getWeightFor(decisionsCollected);
             for(Map.Entry<Double, Double> entry : histogram.entrySet()){
                 if(!hist.containsKey(entry.getKey())){

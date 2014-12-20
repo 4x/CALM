@@ -9,7 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class NeuronAnalyser {
-    private String address = "http://hyophorbe-associates.com:8056";
+    private String address = "http://62.210.245.198:8056";
 
     public static void main(String[] args){
        NeuronAnalyser analyser = new NeuronAnalyser();

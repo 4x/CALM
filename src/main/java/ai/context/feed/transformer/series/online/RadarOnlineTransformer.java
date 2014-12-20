@@ -139,7 +139,7 @@ public class RadarOnlineTransformer extends OnlineTransformer {
                     c++;
                 }
             }
-            double lambda = 1;
+            double lambda = 0.5;
             lastTop = (1 - lambda) * lastTop + lambda * top;
             lastBottom = (1 - lambda) * lastBottom + lambda * bottom;
             lastTSpace = (1 - lambda) * lastTSpace + lambda * topSpace;
@@ -148,13 +148,13 @@ public class RadarOnlineTransformer extends OnlineTransformer {
             double signal = lastTSpace + lastBSpace;
             signal = Math.signum(signal) * Math.log(Math.abs(signal) + 1);
 
-            return new Double[]{signal, lastTop, lastBottom};
+            return new Double[]{signal, lastTop - lastBottom};
         } else {
             buffer.clear();
             while (buffer.size() < bufferSize) {
                 buffer.add(new FeedObject(0, arriving.getData()));
             }
-            return new Double[]{0.0, 0.0, 0.0};
+            return new Double[]{0.0, 0.0};
         }
     }
 
@@ -180,6 +180,6 @@ public class RadarOnlineTransformer extends OnlineTransformer {
 
     @Override
     public int getNumberOfOutputs() {
-        return 3;
+        return 2;
     }
 }

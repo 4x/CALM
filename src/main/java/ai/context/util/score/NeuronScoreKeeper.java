@@ -25,7 +25,7 @@ public class NeuronScoreKeeper {
     }
 
     public static double getWeightFor(int neuronId) {
-        double weight = 0.1;
+        double weight = 0.01;
         int div = 1;
         for(HashMap<Integer, Double> scoreMap : scores.values()){
             if(scoreMap.containsKey(neuronId)){
@@ -54,7 +54,7 @@ public class NeuronScoreKeeper {
             double hEffect = (getLogarithmicDiscretisation(opinion[0], 0, PropertiesHolder.marketMakerLeeway/5, 2) - getLogarithmicDiscretisation(ampU, 0, PropertiesHolder.marketMakerLeeway/5, 2))/5;
             double lEffect = (getLogarithmicDiscretisation(opinion[1], 0, PropertiesHolder.marketMakerLeeway/5, 2) - getLogarithmicDiscretisation(ampD, 0, PropertiesHolder.marketMakerLeeway/5, 2))/5;
 
-            double weight = Math.exp(-Math.sqrt(Math.pow(hEffect, 2) + Math.pow(lEffect, 2)));
+            double weight = Math.exp(-Math.sqrt(Math.pow(hEffect, 2) + Math.pow(lEffect, 2)) * opinion[2]);
 
             int neuronId = opinionEntry.getKey();
 

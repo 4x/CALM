@@ -100,30 +100,7 @@ public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
             for(MarketMakerPosition advice : advices){
                 if(!advice.isOpen() && advice.getTimeAdvised() <= time){
 
-                    double expectedRecovery = 0;
-                    if(advice.recoveryInfo != null) {
-                        double up = Math.abs(bid - advice.getPivot());
-                        double down = Math.abs(advice.getPivot() - ask);
-                        double amp = Math.max(up, down);
-                        if (ask < advice.getOpen()) {
-                            amp *= -1;
-                        }
-
-                        int recoveryKey = getLogarithmicDiscretisation(amp, 0, resolution);
-                        double sum = 0;
-                        double count = 0;
-                        for (double i = 0; i < 3; i++) {
-                            AverageAggregator averageAggregator = advice.recoveryInfo.getData().get((int)(recoveryKey + i));
-                            if (averageAggregator != null) {
-                                double coefficient = Math.pow(2, -i);
-                                sum += coefficient * averageAggregator.getSum();
-                                count += coefficient * averageAggregator.getCount();
-                            }
-                        }
-                        expectedRecovery = sum / count;
-                    }
-
-                    if (bid > advice.getTargetHigh() + PropertiesHolder.marketMakerBeyond && !advice.containsFlag("S")) {
+                    if (!advice.containsFlag("S") && bid > advice.getTargetHigh() + PropertiesHolder.marketMakerBeyond) {
                         advice.addFlag("S");
                     } else if (advice.containsFlag("S")
                             && bid < advice.getTargetHigh() + PropertiesHolder.marketMakerBeyond / 2
@@ -133,7 +110,7 @@ public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
                             && avgHigh.get(advice.getGoodTillTime()) - bid < PropertiesHolder.maxLeewayAmplitude
                             ) {
                         advice.setHasOpenedWithShort(true, bid, time);
-                    } else if (ask < advice.getTargetLow() - PropertiesHolder.marketMakerBeyond && !advice.containsFlag("L")) {
+                    } else if (!advice.containsFlag("L") && ask < advice.getTargetLow() - PropertiesHolder.marketMakerBeyond) {
                         advice.addFlag("L");
                     } else if (advice.containsFlag("L")
                             && ask > advice.getTargetLow() - PropertiesHolder.marketMakerBeyond / 2
@@ -158,7 +135,47 @@ public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
                         advice.attributes.put("d50", d50);
                         advice.attributes.put("d100", d100);
                         advice.attributes.put("d199", d199);
+
+                        double expectedRecovery = 0;
+                        double recoveryRatio = 1;
+
+                        if(advice.recoveryInfo != null) {
+                            double up = Math.abs(bid - advice.getPivot());
+                            double down = Math.abs(advice.getPivot() - ask);
+                            double amp = Math.max(up, down);
+                            if (ask < advice.getPivot()) {
+                                amp *= -1;
+                            }
+
+                            int dir = 1;
+                            if(amp < 0){
+                                dir = -1;
+                            }
+
+                            int recoveryKey = getLogarithmicDiscretisation(amp, 0, resolution);
+                            AverageAggregator a1 = advice.recoveryInfo.getData().get(recoveryKey);
+                            AverageAggregator a2 = advice.recoveryInfo.getData().get(-recoveryKey);
+                            if(a1 != null && a2 != null){
+                                recoveryRatio = a1.getSum()/a2.getSum();
+                            }
+                            double sum = 0;
+                            double count = 0;
+                            if(a1 != null) {
+                                sum += a1.getSum();
+                                count += a1.getCount();
+                            }
+                            for (double i = 1; i < 2; i++) {
+                                AverageAggregator averageAggregator = advice.recoveryInfo.getData().get((int)(recoveryKey + (dir * i)));
+                                if (averageAggregator != null) {
+                                    double coefficient = Math.pow(2, -i);
+                                    sum += coefficient * averageAggregator.getSum();
+                                    count += coefficient * averageAggregator.getCount();
+                                }
+                            }
+                            expectedRecovery = sum / count;
+                        }
                         advice.attributes.put("recovery", expectedRecovery);
+                        advice.attributes.put("recoveryRatio", recoveryRatio);
 
                         if (PropertiesHolder.liveTrading && engine != null) {
                             try {
@@ -355,20 +372,23 @@ public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
         }
 
         while(lastTime <= time + PropertiesHolder.timeQuantum){
-            data = priceFeed.readNext(this);
-            if(data != null){
-                lastTime = data.getTimeStamp();
-                lastBid = (double) ((Object[])data.getData())[1];
-                lastAsk = (double) ((Object[])data.getData())[0];
-                if(lastTime > time + PropertiesHolder.timeQuantum){
+            try {
+                data = priceFeed.readNext(this);
+                if (data != null) {
+                    lastTime = data.getTimeStamp();
+                    lastBid = (double) ((Object[]) data.getData())[1];
+                    lastAsk = (double) ((Object[]) data.getData())[0];
+                    if (lastTime > time + PropertiesHolder.timeQuantum) {
+                        break;
+                    }
+
+                    onTick(lastTime, lastBid, lastAsk);
+                } else {
+                    adviceByGoodTillTime.clear();
                     break;
                 }
-
-                onTick(lastTime, lastBid, lastAsk);
-            }
-            else {
-                adviceByGoodTillTime.clear();
-                break;
+            }catch (Exception e){
+                e.printStackTrace();
             }
         }
     }

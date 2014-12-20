@@ -2,8 +2,6 @@ package ai.context.util.server.servlets;
 
 import ai.context.learning.neural.NeuronCluster;
 import ai.context.util.common.ScratchPad;
-import com.sun.image.codec.jpeg.JPEGCodec;
-import com.sun.image.codec.jpeg.JPEGImageEncoder;
 
 import javax.imageio.ImageIO;
 import javax.servlet.ServletException;
