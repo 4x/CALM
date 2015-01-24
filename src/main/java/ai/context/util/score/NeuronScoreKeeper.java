@@ -51,15 +51,15 @@ public class NeuronScoreKeeper {
 
             Double[] opinion = opinionEntry.getValue();
 
-            double hEffect = (getLogarithmicDiscretisation(opinion[0], 0, PropertiesHolder.marketMakerLeeway/5, 2) - getLogarithmicDiscretisation(ampU, 0, PropertiesHolder.marketMakerLeeway/5, 2))/5;
-            double lEffect = (getLogarithmicDiscretisation(opinion[1], 0, PropertiesHolder.marketMakerLeeway/5, 2) - getLogarithmicDiscretisation(ampD, 0, PropertiesHolder.marketMakerLeeway/5, 2))/5;
+            double hEffect = (getLogarithmicDiscretisation(opinion[0], 0, PropertiesHolder.marketMakerBeyond/5, 2) - getLogarithmicDiscretisation(ampU, 0, PropertiesHolder.marketMakerBeyond/5, 2))/5;
+            double lEffect = (getLogarithmicDiscretisation(opinion[1], 0, PropertiesHolder.marketMakerBeyond/5, 2) - getLogarithmicDiscretisation(ampD, 0, PropertiesHolder.marketMakerBeyond/5, 2))/5;
 
-            double weight = Math.exp(-Math.sqrt(Math.pow(hEffect, 2) + Math.pow(lEffect, 2)) * opinion[2]);
+            double weight = Math.exp(-Math.sqrt(Math.pow(hEffect, 2) + Math.pow(lEffect, 2)));
 
             int neuronId = opinionEntry.getKey();
 
             for(Map.Entry<Double, HashMap<Integer, Double>> scoreEntry : scores.entrySet()){
-                double lambda = scoreEntry.getKey();
+                double lambda = scoreEntry.getKey() - opinion[2]/1000;
                 HashMap<Integer, Double> scoreMap = scoreEntry.getValue();
 
                 if(!scoreMap.containsKey(neuronId)){

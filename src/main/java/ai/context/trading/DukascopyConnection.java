@@ -1,5 +1,6 @@
 package ai.context.trading;
 
+import ai.context.learning.neural.NeuronCluster;
 import ai.context.util.common.ScratchPad;
 import ai.context.util.configuration.PropertiesHolder;
 import com.dukascopy.api.Instrument;
@@ -15,7 +16,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
-public class DukascopyConnection {
+public class DukascopyConnection implements Runnable{
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DukascopyConnection.class);
 
@@ -62,18 +63,6 @@ public class DukascopyConnection {
                 if (lightReconnects > 0) {
                     client.reconnect();
                     --lightReconnects;
-                } else {
-                    try {
-                        //sleep for 10 seconds before attempting to reconnect
-                        Thread.sleep(10000);
-                    } catch (InterruptedException e) {
-                        //ignore
-                    }
-                    try {
-                        connectClient();
-                    } catch (Exception e) {
-                        LOGGER.error(e.getMessage(), e);
-                    }
                 }
             }
         });
@@ -92,6 +81,12 @@ public class DukascopyConnection {
             LOGGER.error("Failed to connect Dukascopy servers");
             System.exit(1);
         }
+        NeuronCluster.getInstance().addTask(this);
+        NeuronCluster.getInstance().getEmailSendingService().queueEmail(
+                "algo@balgobin.london",
+                "hans@balgobin.london",
+                "Dukascopy Client Connected",
+                "The algo is now connected to the broker API");
 
         //subscribe to the instruments
         Set<Instrument> instruments = new HashSet<Instrument>();
@@ -131,6 +126,26 @@ public class DukascopyConnection {
             ScratchPad.memory.remove(ScratchPad.CAPTCHA_IMAGE_LOCK);
         } else {
             client.connect(jnlpDemoUrl, userName, password);
+        }
+    }
+
+    @Override
+    public void run() {
+        while (true){
+            try {
+                Thread.sleep(10000);
+
+                if(!client.isConnected()){
+                    NeuronCluster.getInstance().getEmailSendingService().queueEmail(
+                            "algo@balgobin.london",
+                            "hans@balgobin.london",
+                            "Dukascopy Client Disconnected",
+                            "Please reconnect via the web page asap!");
+                    connectClient();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 }

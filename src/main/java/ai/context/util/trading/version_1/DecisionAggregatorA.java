@@ -227,6 +227,11 @@ public class DecisionAggregatorA {
     public static void setInLiveTrading(boolean inLiveTrading) {
         DecisionAggregatorA.inLiveTrading = inLiveTrading;
         System.out.println("Going into LIVE TRADING");
+        NeuronCluster.getInstance().getEmailSendingService().queueEmail(
+                "algo@balgobin.london",
+                "hans@balgobin.london",
+                "Algo Going Live", "We are now in live trading....");
+
     }
 
     public static boolean isInLiveTrading() {

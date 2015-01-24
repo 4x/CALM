@@ -10,6 +10,7 @@ import ai.context.runner.MainNeural;
 import ai.context.runner.MainNeural2;
 import ai.context.util.common.MapUtils;
 import ai.context.util.common.ScratchPad;
+import ai.context.util.common.email.EmailSendingService;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.Operations;
 import ai.context.util.server.JettyServer;
@@ -51,6 +52,8 @@ public class NeuronCluster implements TimedContainer{
     private List<NeuralLearner> neurons = new CopyOnWriteArrayList<>();
     private List<FeedWrapper> feedWrappers = new ArrayList<>();
 
+    private EmailSendingService emailSendingService = new EmailSendingService();
+
     public MainNeural container;
     public MainNeural2 container2;
 
@@ -63,6 +66,7 @@ public class NeuronCluster implements TimedContainer{
     public void start() {
         service.submit(stepper);
         service.submit(environmentCheck);
+        service.submit(emailSendingService);
     }
 
     public void setContainer(MainNeural container) {
@@ -233,6 +237,10 @@ public class NeuronCluster implements TimedContainer{
             this.year = year;
             generateNeurons();
         }
+    }
+
+    public void addTask(Runnable task){
+        service.submit(task);
     }
 
     public int size() {
@@ -427,6 +435,10 @@ public class NeuronCluster implements TimedContainer{
 
     public NeuralLearner getNeuronForId(int id) {
         return idToNeuron.get(id);
+    }
+
+    public EmailSendingService getEmailSendingService() {
+        return emailSendingService;
     }
 
     public Collection<MarketMakerPosition> getMarketMakerPositions() {

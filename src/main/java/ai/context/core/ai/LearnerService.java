@@ -564,4 +564,8 @@ public class LearnerService {
                 ", maxDev=" + maxDev +
                 ", minDevForMerge=" + minDevForMerge;
     }
+
+    public long getCount() {
+        return pointsConsumed;
+    }
 }

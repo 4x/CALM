@@ -43,6 +43,9 @@ public class NeuralLearner implements Feed, Runnable {
     private long generationalLifespan = (long) (Math.random() * (PropertiesHolder.generationLifespan - PropertiesHolder.minGenerationLifespan) + PropertiesHolder.minGenerationLifespan);
     private long countA = 0;
     private long countB = 0;
+
+    private long weightA = 0;
+    private long weightB = 0;
     private long countForFlip = generationalLifespan;
     private int generation = 0;
 
@@ -310,6 +313,11 @@ public class NeuralLearner implements Feed, Runnable {
                                     coreDownB.setActionResolution(resolution);
                                     System.out.println("Neuron [" + id + "]: Initial coreB creation");
                                 }
+
+                                weightA = (coreUpA.getCount() + coreDownA.getCount())/2;
+                                if(coreUpB != null) {
+                                    weightB = (coreUpA.getCount() + coreDownA.getCount()) / 2;
+                                }
                             }
                         }
 
@@ -368,7 +376,7 @@ public class NeuralLearner implements Feed, Runnable {
             return null;
         }
 
-        double fA = (double)countA/(double)(countA + countB);
+        double fA = (double)weightA/(double)(weightA + weightB);
         double fB = 1 - fA;
 
         ampUX = fA * ampUA + fB * ampUB;

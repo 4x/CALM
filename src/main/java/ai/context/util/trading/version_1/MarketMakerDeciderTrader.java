@@ -3,9 +3,13 @@ package ai.context.util.trading.version_1;
 import ai.context.feed.DataType;
 import ai.context.feed.FeedObject;
 import ai.context.feed.row.CSVFeed;
+import ai.context.learning.neural.NeuronCluster;
+import ai.context.util.common.email.EmailSendingService;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.mathematics.AverageAggregator;
+import ai.context.util.mathematics.MinMaxAggregator;
 import ai.context.util.mathematics.Operations;
+import ai.context.util.mathematics.SimpleLinearRegressor;
 import ai.context.util.trading.OnTickDecider;
 import com.dukascopy.api.*;
 import com.dukascopy.api.system.IClient;
@@ -21,7 +25,12 @@ public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MarketMakerDeciderTrader.class);
 
+    private Set<MarketMakerPosition> advices = new HashSet<>();
     private TreeMap<Long, Set<MarketMakerPosition>> adviceByGoodTillTime = new TreeMap<>();
+    private TreeMap<Long, MinMaxAggregator> highLowByAdvisedTime = new TreeMap<>();
+
+    private EmailSendingService emailSendingService = NeuronCluster.getInstance().getEmailSendingService();
+
     private double pnl = 0;
     private double pnlSpecial = 0;
     private long time = 0;
@@ -29,6 +38,8 @@ public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
     private double available = 10000;
 
     private double resolution = 0.0001;
+
+    private double equity = 0;
 
     private IEngine engine = null;
     private TreeMap<String, IOrder> positions = new TreeMap<>();
@@ -54,6 +65,10 @@ public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
     @Override
     public void onTick(long time, double bid, double ask){
 
+        for(MinMaxAggregator aggregator : highLowByAdvisedTime.values()){
+            aggregator.addValue(bid);
+        }
+
         for(int i = lastMids.length - 1; i > 0; i--){
             lastMids[i] = lastMids[i - 1];
         }
@@ -68,7 +83,7 @@ public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
 
         while(!adviceByGoodTillTime.isEmpty() && adviceByGoodTillTime.firstKey() < time){
             Set<MarketMakerPosition> ending = adviceByGoodTillTime.remove(adviceByGoodTillTime.firstKey());
-
+            advices.removeAll(ending);
             for(MarketMakerPosition advice : ending){
                 if(advice.isOpen() && !advice.isClosed()){
                     if(advice.isHasOpenedWithLong()){
@@ -135,6 +150,13 @@ public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
                         advice.attributes.put("d50", d50);
                         advice.attributes.put("d100", d100);
                         advice.attributes.put("d199", d199);
+                        advice.attributes.put("avgW", averagesWeights.get(advice.getGoodTillTime()));
+                        advice.attributes.put("avgWL", averagesWeightsBasedOnL.get(advice.getGoodTillTime()));
+                        advice.attributes.put("avgWH", averagesWeightsBasedOnH.get(advice.getGoodTillTime()));
+                        advice.attributes.put("gradHLineA", gradHLineA);
+                        advice.attributes.put("gradLLineA", gradLLineA);
+                        advice.attributes.put("gradHLineE", gradHLineE);
+                        advice.attributes.put("gradLLineE", gradLLineE);
 
                         double expectedRecovery = 0;
                         double recoveryRatio = 1;
@@ -182,6 +204,7 @@ public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
                                 double amount = Operations.round((available * PropertiesHolder.tradeToCreditRatio) / 1000000, 4);
                                 if (amount > 0 && PropertiesHolder.filterFunction.pass(advice)) {
                                     long tNow = System.currentTimeMillis();
+                                    String info = null;
                                     if (advice.isHasOpenedWithShort()) {
                                         String direction = "SHORT";
                                         IOrder out = engine.submitOrder("EUR_" + tNow, Instrument.EURUSD, IEngine.OrderCommand.SELLLIMIT, amount,
@@ -189,7 +212,10 @@ public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
                                                 Operations.round(bid + PropertiesHolder.marketMakerStopLoss, 5),
                                                 Operations.round(advice.getTargetLow(), 5),
                                                 advice.getGoodTillTime());
-                                        LOGGER.info("OPENING: " + out.getLabel() + ", " + (out.getOriginalAmount() * 1000000D) + ", " + direction);
+
+                                        info = "OPENING: " + out.getLabel() + ", " + (out.getOriginalAmount() * 1000000D) + ", " + direction;
+                                        LOGGER.info(info);
+
                                         positions.put(out.getLabel(), out);
                                         advice.setOrderId(out.getLabel());
                                         Thread.sleep(2);
@@ -200,11 +226,15 @@ public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
                                                 Operations.round(ask - PropertiesHolder.marketMakerStopLoss, 5),
                                                 Operations.round(advice.getTargetHigh(), 5),
                                                 advice.getGoodTillTime());
-                                        LOGGER.info("OPENING: " + out.getLabel() + ", " + (out.getOriginalAmount() * 1000000D) + ", " + direction);
+
+                                        info = "OPENING: " + out.getLabel() + ", " + (out.getOriginalAmount() * 1000000D) + ", " + direction;
+                                        LOGGER.info(info);
+
                                         positions.put(out.getLabel(), out);
                                         advice.setOrderId(out.getLabel());
                                         Thread.sleep(2);
                                     }
+                                    emailSendingService.queueEmail("algo@balgobin.london", "hans@balgobin.london","Algo Trade Open", info);
                                 }
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
@@ -298,6 +328,11 @@ public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
                 adviceByGoodTillTime.put(advice.getGoodTillTime(), new HashSet<MarketMakerPosition>());
             }
             adviceByGoodTillTime.get(advice.getGoodTillTime()).add(advice);
+
+            advices.add(advice);
+            if(!highLowByAdvisedTime.containsKey(advice.getTimeAdvised())){
+                highLowByAdvisedTime.put(advice.getTimeAdvised(), new MinMaxAggregator());
+            }
         } else{
             if(advice.getTimeAdvised() > System.currentTimeMillis() - 30000){
                 time = Math.max(time, advice.getTimeAdvised());
@@ -305,12 +340,18 @@ public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
                     adviceByGoodTillTime.put(advice.getGoodTillTime(), new HashSet<MarketMakerPosition>());
                 }
                 adviceByGoodTillTime.get(advice.getGoodTillTime()).add(advice);
+
+                advices.add(advice);
+                if(!highLowByAdvisedTime.containsKey(advice.getTimeAdvised())){
+                    highLowByAdvisedTime.put(advice.getTimeAdvised(), new MinMaxAggregator());
+                }
                 LOGGER.info("Added advice [" + Operations.round(advice.getTargetLow(), 5) + " -> " + Operations.round(advice.getTargetHigh(), 5) + "] good till " + new Date(advice.getGoodTillTime()));
             }
             else {
                 LOGGER.info("Discarded advice [" + Operations.round(advice.getTargetLow(), 5) + " -> " + Operations.round(advice.getTargetHigh(), 5) + "] expired time " + new Date(advice.getTimeAdvised()));
             }
         }
+        refreshHighLows();
         refreshAverages();
     }
 
@@ -325,35 +366,86 @@ public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
         }
     }
 
+    private void refreshHighLows(){
+        long earliest = Long.MAX_VALUE;
+
+        for(MarketMakerPosition advice : advices){
+            if(advice.getTimeAdvised() < earliest){
+                earliest = advice.getTimeAdvised();
+            }
+        }
+
+        while(highLowByAdvisedTime.firstKey() < earliest){
+            highLowByAdvisedTime.remove(highLowByAdvisedTime.firstKey());
+        }
+    }
+
     private TreeMap<Long, Double> avgHigh = new TreeMap<>();
     private TreeMap<Long, Double> avgLow = new TreeMap<>();
+    private TreeMap<Long, Double> averagesWeights = new TreeMap<>();
+    private TreeMap<Long, Double> averagesWeightsBasedOnH = new TreeMap<>();
+    private TreeMap<Long, Double> averagesWeightsBasedOnL = new TreeMap<>();
+
+    private double gradHLineA = 0;
+    private double gradLLineA = 0;
+    private double gradHLineE = 0;
+    private double gradLLineE = 0;
+
     private void refreshAverages(){
         avgHigh.clear();
         avgLow.clear();
+        averagesWeights.clear();
+        averagesWeightsBasedOnH.clear();
+        averagesWeightsBasedOnL.clear();
 
+        SimpleLinearRegressor sAH = new SimpleLinearRegressor();
+        SimpleLinearRegressor sAL = new SimpleLinearRegressor();
+        SimpleLinearRegressor sEH = new SimpleLinearRegressor();
+        SimpleLinearRegressor sEL = new SimpleLinearRegressor();
         for(long t = time + PropertiesHolder.timeQuantum; t <= time + PropertiesHolder.horizonUpperBound; t += PropertiesHolder.timeQuantum){
             double avgHigh = 0;
             double avgLow = 0;
 
+            double avgHDisparity = 0;
+            double avgLDisparity = 0;
+
             double sumW = 0;
 
-            for(Set<MarketMakerPosition> set : adviceByGoodTillTime.values()){
-                for(MarketMakerPosition advice : set){
-                    double tA = advice.getTimeAdvised();
-                    double tE = advice.getGoodTillTime();
-                    double tS = tE - tA;
+            for(MarketMakerPosition advice : advices){
+                double tA = advice.getTimeAdvised();
+                double tE = advice.getGoodTillTime();
+                double tS = tE - tA;
 
-                    double w = Math.sqrt(Math.exp(-Math.pow((t - tA)/tS, 2)) * Math.exp(-Math.pow((t - tE)/PropertiesHolder.horizonUpperBound, 2))) * Math.log((Double) advice.attributes.get("cred") + 1);
-                    sumW += w;
+                double w = Math.sqrt(Math.exp(-Math.pow((t - tA)/tS, 2)) * Math.exp(-Math.pow((t - tE)/PropertiesHolder.horizonUpperBound, 2))) * Math.log((Double) advice.attributes.get("cred") + 1);
+                sumW += w;
 
-                    avgHigh += w * advice.getHigh1();
-                    avgLow += w * advice.getLow1();
+                avgHigh += (w * advice.getHigh1());
+                avgLow += (w * advice.getLow1());
+
+                MinMaxAggregator mmAgg = highLowByAdvisedTime.get(advice.getTimeAdvised());
+                if(mmAgg.getMax() != null) {
+                    avgHDisparity += (w * getLogarithmicDiscretisation(mmAgg.getMax() - advice.getHigh1(), 0, resolution));
+                    avgLDisparity += (w * getLogarithmicDiscretisation(advice.getLow1() - mmAgg.getMin(), 0, resolution));
+                }
+
+                for(int i = 0; i < w*20; i++) {
+                    sAH.aggregate(tA, advice.getHigh1()/resolution);
+                    sAL.aggregate(tA, advice.getLow1()/resolution);
+                    sEH.aggregate(tE, advice.getHigh1()/resolution);
+                    sEL.aggregate(tE, advice.getLow1()/resolution);
                 }
             }
 
             this.avgHigh.put(t, avgHigh/sumW);
             this.avgLow.put(t, avgLow/sumW);
+            averagesWeights.put(t, sumW);
+            averagesWeightsBasedOnH.put(t, avgHDisparity/sumW);
+            averagesWeightsBasedOnL.put(t, avgLDisparity/sumW);
         }
+        gradHLineA = sAH.grad;
+        gradLLineA = sAL.grad;
+        gradHLineE = sEH.grad;
+        gradLLineE = sEL.grad;
     }
 
     private long lastTime = 0;
@@ -394,11 +486,7 @@ public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
     }
 
     public Collection<MarketMakerPosition> getAdvices() {
-        ArrayList<MarketMakerPosition> list = new ArrayList<>();
-        for(Set<MarketMakerPosition> set : adviceByGoodTillTime.values()){
-            list.addAll(set);
-        }
-        return list;
+        return advices;
     }
 
     @Override
@@ -422,7 +510,10 @@ public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
         if (message.getType() == IMessage.Type.ORDER_CLOSE_OK) {
             IOrder order = message.getOrder();
             positions.remove(order.getLabel());
-            LOGGER.info(order.getLabel() + " has closed, PNL: " + order.getProfitLossInUSD() + ", COMMISSION: " + order.getCommissionInUSD() + ", AVAILABLE: " + available);
+
+            String info = order.getLabel() + " has closed, PNL: " + order.getProfitLossInUSD() + ", COMMISSION: " + order.getCommissionInUSD() + ", AVAILABLE: " + available;
+            LOGGER.info(info);
+            emailSendingService.queueEmail("algo@balgobin.london", "hans@balgobin.london","Algo Trade Close", info + " Equity: " + equity);
         } else if (message.getType() == IMessage.Type.ORDER_FILL_OK) {
             IOrder order = message.getOrder();
             LOGGER.info(order.getLabel() + " has been filled at " + order.getOpenPrice() + " for " + order.getOriginalAmount());
@@ -432,6 +523,7 @@ public class MarketMakerDeciderTrader implements OnTickDecider, IStrategy {
     @Override
     public void onAccount(IAccount account) throws JFException {
         available = account.getCreditLine();
+        equity = account.getEquity();
     }
 
     @Override

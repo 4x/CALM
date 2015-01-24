@@ -18,6 +18,7 @@ import ai.context.feed.transformer.single.unpadded.LogarithmicDiscretiser;
 import ai.context.util.DataSetUtils;
 import ai.context.util.configuration.PropertiesHolder;
 import ai.context.util.learning.AmalgamateUtils;
+import ai.context.util.mathematics.Operations;
 import com.tictactec.ta.lib.MAType;
 import org.junit.Test;
 
@@ -338,6 +339,11 @@ public class TestTransformer {
             }
             appendToFile(toPrint, writer);
         }
+    }
+
+    @Test
+    public void testRounder(){
+        System.out.print(Operations.round((481033.0 * 0.02) / 1000000, 4));
     }
 
 
